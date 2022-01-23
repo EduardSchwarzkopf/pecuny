@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Numeric, DateTime, text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import TIMESTAMP
+from sqlalchemy.ext.declarative import declared_attr
 from .database import Base
 
 
@@ -20,7 +21,15 @@ class BaseModel(Base):
 class UserId(Base):
     __abstract__ = True
 
-    user_id = Column(Integer, ForeignKey("user.id"))
+    @declared_attr
+    def user_id(cls):
+        return Column(
+            Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        )
+
+    @declared_attr
+    def user(cls):
+        return relationship("Users")
 
 
 class User(BaseModel):
@@ -32,8 +41,8 @@ class User(BaseModel):
     last_seen = Column(DateTime, default=text("now()"))
 
 
-class Account(BaseModel):
-    __tablename__ = "account"
+class Account(BaseModel, UserId):
+    __tablename__ = "accounts"
 
     label = Column(String(36))
     description = Column(String(128))
@@ -47,10 +56,10 @@ class Account(BaseModel):
 
 
 class Transaction(BaseModel):
-    __tablename__ = "transaction"
+    __tablename__ = "transactions"
 
-    account_id = Column(Integer, ForeignKey("account.id"))
-    information_id = Column(Integer, ForeignKey("transaction_information.id"))
+    account_id = Column(Integer, ForeignKey("accounts.id"))
+    information_id = Column(Integer, ForeignKey("transactions_information.id"))
     information = relationship(
         "TransactionInformation",
         backref="transaction",
@@ -59,66 +68,66 @@ class Transaction(BaseModel):
         foreign_keys=[information_id],
     )
 
-    offset_transaction_id = Column(
-        Integer, ForeignKey("transaction.id", use_alter=True), nullable=True
+    offset_transactions_id = Column(
+        Integer, ForeignKey("transactions.id", use_alter=True), nullable=True
     )
     offset_transaction = relationship(
         "Transaction",
-        primaryjoin=("transaction.c.id==transaction.c.offset_transaction_id"),
-        remote_side="Transaction.id",
-        foreign_keys=[offset_transaction_id],
+        primaryjoin=("transactions.c.id==transactions.c.offset_transactions_id"),
+        remote_side="transactions.id",
+        foreign_keys=[offset_transactions_id],
         post_update=True,
     )
 
 
 class TransactionScheduled(BaseModel):
-    __tablename__ = "transaction_scheduled"
+    __tablename__ = "transactions_scheduled"
 
-    account_id = Column(Integer, ForeignKey("account.id"))
+    account_id = Column(Integer, ForeignKey("accounts.id"))
     information = relationship(
         "TransactionInformation",
-        backref="transaction_scheduled",
+        backref="transactions_scheduled",
         uselist=False,
         cascade="all,delete",
     )
-    information_id = Column(Integer, ForeignKey("transaction_information.id"))
+    information_id = Column(Integer, ForeignKey("transactions_information.id"))
 
-    frequency = relationship("Frequency")
-    frequency_id = Column(Integer, ForeignKey("frequency.id"))
+    frequency = relationship("Frequency", cascade="all,delete")
+    frequency_id = Column(Integer, ForeignKey("frequencies.id", ondelete="CASCADE"))
     interval = Column(Integer, default=1)
     date_start = Column(DateTime)
     date_end = Column(DateTime)
 
 
 class TransactionInformation(BaseModel):
-    __tablename__ = "transaction_information"
+    __tablename__ = "transactions_information"
 
     amount = Column(
         Numeric(10, 2, asdecimal=False, decimal_return_scale=None), default=0
     )
     reference = Column(String(128))
     date = Column(DateTime, default=text("now()"))
-    subcategory = relationship("TransactionSubcategory")
-    subcategory_id = Column(Integer, ForeignKey("transaction_subcategory.id"))
+    subcategory = relationship("TransactionSubcategory", cascade="all,delete")
+    subcategory_id = Column(Integer, ForeignKey("transactions_subcategories.id"))
 
 
 class Frequency(BaseModel):
-    __tablename__ = "frequency"
+    __tablename__ = "frequencies"
 
     name = Column(String(36))
     label = Column(String(36))
 
 
 class TransactionCategory(BaseModel):
-    __tablename__ = "transaction_category"
+    __tablename__ = "transactions_categories"
 
     label = Column(String(36))
     subcategories = relationship("TransactionSubcategory", lazy="dynamic")
 
 
-class TransactionSubcategory(BaseModel):
-    __tablename__ = "transaction_subcategory"
+class TransactionSubcategory(BaseModel, UserId):
+    __tablename__ = "transactions_subcategories"
 
     label = Column(String(36))
     parent_category = relationship("TransactionCategory")
-    parent_category_id = Column(Integer, ForeignKey("transaction_category.id"))
+    parent_category_id = Column(Integer, ForeignKey("transactions_categories.id"))
