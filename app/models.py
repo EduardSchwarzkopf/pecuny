@@ -1,8 +1,7 @@
-from sqlalchemy import Column, Integer, String, Numeric, DateTime
+from sqlalchemy import Column, Integer, String, Numeric, DateTime, text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import TIMESTAMP
-from datetime import datetime
 from .database import Base
 
 
@@ -11,10 +10,10 @@ class BaseModel(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     created_at = Column(
-        TIMESTAMP(timezone=True), nullable=False, server_default=datetime.utcnow
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
     updated_at = Column(
-        TIMESTAMP(timezone=True), nullable=False, server_default=datetime.utcnow
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
 
 
@@ -30,7 +29,7 @@ class User(BaseModel):
     username = Column(String(64), nullable=False, unique=True)
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
-    last_seen = Column(DateTime, default=datetime.utcnow)
+    last_seen = Column(DateTime, default=text("now()"))
 
 
 class Account(BaseModel):
@@ -61,7 +60,7 @@ class Transaction(BaseModel):
     )
 
     offset_transaction_id = Column(
-        Integer, ForeignKey("transaction.id"), nullable=True, use_alter=True
+        Integer, ForeignKey("transaction.id", use_alter=True), nullable=True
     )
     offset_transaction = relationship(
         "Transaction",
@@ -98,7 +97,7 @@ class TransactionInformation(BaseModel):
         Numeric(10, 2, asdecimal=False, decimal_return_scale=None), default=0
     )
     reference = Column(String(128))
-    date = Column(DateTime, default=datetime.utcnow)
+    date = Column(DateTime, default=text("now()"))
     subcategory = relationship("TransactionSubcategory")
     subcategory_id = Column(Integer, ForeignKey("transaction_subcategory.id"))
 
