@@ -29,7 +29,7 @@ class UserId(Base):
 
     @declared_attr
     def user(cls):
-        return relationship("Users")
+        return relationship("User")
 
 
 class User(BaseModel):
@@ -38,7 +38,7 @@ class User(BaseModel):
     username = Column(String(64), nullable=False, unique=True)
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
-    last_seen = Column(DateTime, default=text("now()"))
+    last_seen = Column(DateTime)
 
 
 class Account(BaseModel, UserId):
