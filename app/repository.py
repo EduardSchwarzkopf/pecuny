@@ -1,18 +1,16 @@
 import sys
 
-from fastapi import Depends
-from sqlalchemy.orm import Session
 from sqlalchemy import or_, extract
-from . import database
 from .models import *
+from fastapi_sqlalchemy import db
 
 
 def __str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
 
-def __db_action(action_name, object, db: Session = Depends(database.get_db)):
-    method = getattr(db, action_name)
+def __db_action(action_name, object):
+    method = getattr(db.session, action_name)
     method(object)
 
 
@@ -68,3 +66,7 @@ def save(object):
 
 def delete(object):
     return __db_action("delete", object)
+
+
+def refresh(object):
+    return __db_action("refresh", object)
