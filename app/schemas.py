@@ -11,6 +11,7 @@ class Base(BaseModel):
 
 
 class UserBase(Base):
+    username: str
     email: EmailStr
 
 
