@@ -62,7 +62,7 @@ class Transaction(BaseModel):
     information_id = Column(Integer, ForeignKey("transactions_information.id"))
     information = relationship(
         "TransactionInformation",
-        backref="transaction",
+        backref="transactions",
         uselist=False,
         cascade="all,delete",
         foreign_keys=[information_id],
@@ -74,7 +74,7 @@ class Transaction(BaseModel):
     offset_transaction = relationship(
         "Transaction",
         primaryjoin=("transactions.c.id==transactions.c.offset_transactions_id"),
-        remote_side="transactions.id",
+        remote_side="Transaction.id",
         foreign_keys=[offset_transactions_id],
         post_update=True,
     )
@@ -122,12 +122,13 @@ class TransactionCategory(BaseModel):
     __tablename__ = "transactions_categories"
 
     label = Column(String(36))
-    subcategories = relationship("TransactionSubcategory", lazy="dynamic")
+    subcategories = relationship(
+        "TransactionSubcategory", lazy="dynamic", backref="transactions_categories"
+    )
 
 
 class TransactionSubcategory(BaseModel, UserId):
     __tablename__ = "transactions_subcategories"
 
     label = Column(String(36))
-    parent_category = relationship("TransactionCategory")
     parent_category_id = Column(Integer, ForeignKey("transactions_categories.id"))
