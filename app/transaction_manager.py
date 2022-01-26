@@ -1,17 +1,14 @@
-from fastapi import Depends
-from sqlalchemy.orm import Session
-from . import database
+from fastapi_sqlalchemy import db
 
 
-def transaction(
-    handler: function, *args: dict, db: Session = Depends(database.get_db)
-) -> dict:
+def transaction(handler, *args: dict) -> dict:
     try:
         result = handler(*args)
-        db.commit()
+        db.session.commit()
+        db.session.refresh(result)
 
     except Exception as e:
         result = {}
-        db.rollback()
+        db.session.rollback()
     finally:
         return result
