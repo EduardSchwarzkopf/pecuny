@@ -1,5 +1,5 @@
 from .. import repository as repo
-from models import Account, User
+from ..models import Account, User
 
 
 def get_accounts(current_user: User):
