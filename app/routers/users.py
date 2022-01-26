@@ -1,36 +1,35 @@
 from typing import List
 from fastapi import Depends, APIRouter, status
-from fastapi.exceptions import HTTPException
-from .. import models, schemas, oauth2
-from ..transaction_manager import transaction as tm
-from ..services import accounts as service
+from .. import models, schemas, oauth2, transaction_manager as tm
+from ..services import users as service
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
-response_model = schemas.Accounts
+response_model = schemas.UserData
 
 
 @router.post("/", response_model=response_model)
 def create_user(
-    account: schemas.Account,
-    current_user: models.User = Depends(oauth2.get_current_user),
+    user: schemas.UserCreate,
 ):
-    account = tm.transaction(service.create_account, current_user, account)
-    return account
+    new_user = tm.transaction(service.create_user, user)
+    return new_user
 
 
-@router.put("/{account_id}")
+@router.put("/{user_id}", response_model=response_model)
 def update_user(
-    account: schemas.Account,
+    user: schemas.UserData,
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
-    account = tm.transaction(service.update, data)
-    return account
+    user = tm.transaction(service.update_user, user)
+    return user
 
 
-@router.get("/{account_id}", methods=["DELETE"])
+@router.delete(
+    "/{user_id}",
+)
 def delete_user(
-    account_id: int, current_user: models.User = Depends(oauth2.get_current_user)
+    user_id: int, current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    result = tm.transaction(service.delete, account_id)
+    result = tm.transaction(service.delete_user, user_id)
     return result
