@@ -8,7 +8,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 response_model = schemas.UserData
 
 
-@router.post("/", response_model=response_model)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
 def create_user(
     user: schemas.UserCreate,
 ):
