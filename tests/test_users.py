@@ -21,6 +21,8 @@ def test_create_user(client):
     new_user = schemas.UserData(**res.json())
 
     assert new_user.email == "hello123@pytest.de"
+    assert new_user.username == "my_username"
+    assert type(new_user.id) == int
     assert res.status_code == 201
 
 
