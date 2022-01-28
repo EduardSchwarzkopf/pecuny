@@ -69,7 +69,13 @@ class Transaction(BaseModel):
     )
 
     offset_transactions_id = Column(
-        Integer, ForeignKey("transactions.id", use_alter=True), nullable=True
+        Integer,
+        ForeignKey(
+            "transactions.id",
+            use_alter=True,
+            name="transactions_offset_transactions_id_fkey",
+        ),
+        nullable=True,
     )
     offset_transaction = relationship(
         "Transaction",

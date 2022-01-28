@@ -1,8 +1,8 @@
 """new init
 
-Revision ID: 0c692cb41fa5
+Revision ID: c9de12976d24
 Revises: 
-Create Date: 2022-01-26 07:16:23.221737
+Create Date: 2022-01-28 10:51:36.034737
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '0c692cb41fa5'
+revision = 'c9de12976d24'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -87,7 +87,7 @@ def upgrade():
     sa.Column('offset_transactions_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['account_id'], ['accounts.id'], ),
     sa.ForeignKeyConstraint(['information_id'], ['transactions_information.id'], ),
-    sa.ForeignKeyConstraint(['offset_transactions_id'], ['transactions.id'], use_alter=True),
+    sa.ForeignKeyConstraint(['offset_transactions_id'], ['transactions.id'], name='transactions_offset_transactions_id_fkey', use_alter=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('transactions_scheduled',
