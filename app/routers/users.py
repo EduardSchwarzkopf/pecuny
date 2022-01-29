@@ -47,7 +47,7 @@ def update_user(
             status.HTTP_409_CONFLICT, detail="Username address already in use"
         )
 
-    if not user_data.password and not user_data.password.strip():
+    if user_data.password is not None and not user_data.password.strip():
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, detail="Empty Password not allowed"
         )
