@@ -1,12 +1,10 @@
-import sys
-
 from sqlalchemy import or_, extract
-from .models import *
+from . import models
 from fastapi_sqlalchemy import db
 
 
 def __str_to_class(classname):
-    return getattr(sys.modules[__name__], classname)
+    return getattr(models, classname)
 
 
 def __db_action(action_name, object):
@@ -16,18 +14,18 @@ def __db_action(action_name, object):
 
 def get_all(name):
     class_ = __str_to_class(name)
-    return class_.query.all()
+    return db.session.query(class_).all()
 
 
 def filter(name, attribute, value):
     class_ = __str_to_class(name)
     attr = getattr(class_, attribute)
-    return class_.query.filter(attr == value).all()
+    return db.session.query(class_).filter(attr == value)
 
 
 def get(name, id):
     class_ = __str_to_class(name)
-    return class_.query.get(id)
+    return db.session.query(class_).get(id)
 
 
 def get_from_month(name, date, attribute, value):
@@ -40,7 +38,8 @@ def get_from_month(name, date, attribute, value):
     year = extract("year", class_date)
 
     return (
-        class_.query.join(class_.information)
+        db.session.query(class_)
+        .join(class_.information)
         .filter(year == date.year)
         .filter(month == date.month)
         .filter(value == attribute)
@@ -49,9 +48,10 @@ def get_from_month(name, date, attribute, value):
 
 
 def get_scheduled_transactions_for_date(date):
-    ts = TransactionScheduled
+    ts = models.TransactionScheduled
     return (
-        ts.query.filter(ts.date_start <= date)
+        db.query(ts)
+        .filter(ts.date_start <= date)
         .filter(or_(ts.date_end == None, ts.date_end >= date))
         .all()
     )
