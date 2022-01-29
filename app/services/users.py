@@ -1,3 +1,4 @@
+from pyexpat import model
 from .. import models, schemas, utils, repository as repo
 
 
@@ -48,4 +49,7 @@ def update_user(user_id: int, user: schemas.UserUpdate):
 
 
 def delete_user(user_id: int):
-    pass
+    user = repo.get("User", user_id)
+    repo.delete(user)
+
+    return True
