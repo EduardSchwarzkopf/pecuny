@@ -23,6 +23,12 @@ class UserData(UserBase):
     id: int
 
 
+class UserUpdate(Base):
+    username: Optional[str] = ""
+    email: Optional[EmailStr] = ""
+    password: Optional[str] = ""
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
