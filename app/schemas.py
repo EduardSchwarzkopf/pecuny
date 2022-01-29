@@ -2,7 +2,7 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
-from pydantic.types import conint
+from pydantic.types import constr
 
 
 class Base(BaseModel):
@@ -11,7 +11,7 @@ class Base(BaseModel):
 
 
 class UserBase(Base):
-    username: str
+    username: constr(to_lower=True)
     email: EmailStr
 
 
@@ -23,5 +23,10 @@ class UserData(UserBase):
     id: int
 
 
-class UserLogin(UserCreate):
-    pass
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    id: Optional[str]
