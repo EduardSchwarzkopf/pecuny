@@ -12,15 +12,23 @@ def __db_action(action_name, object):
     method(object)
 
 
+def __db_query_action(filter_option, name, attribute, value):
+    class_ = __str_to_class(name)
+    attr = getattr(class_, attribute)
+    return getattr(db.session.query(class_), filter_option)(attr == value)
+
+
 def get_all(name):
     class_ = __str_to_class(name)
     return db.session.query(class_).all()
 
 
 def filter(name, attribute, value):
-    class_ = __str_to_class(name)
-    attr = getattr(class_, attribute)
-    return db.session.query(class_).filter(attr == value)
+    return __db_query_action("filter", name, attribute, value)
+
+
+def filter_by(name, attribute, value):
+    return __db_query_action("filter_by", name, attribute, value)
 
 
 def get(name, id):
@@ -50,7 +58,7 @@ def get_from_month(name, date, attribute, value):
 def get_scheduled_transactions_for_date(date):
     ts = models.TransactionScheduled
     return (
-        db.query(ts)
+        db.session.query(ts)
         .filter(ts.date_start <= date)
         .filter(or_(ts.date_end == None, ts.date_end >= date))
         .all()
