@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, validator
 from typing import Optional
@@ -5,13 +6,13 @@ from typing import Optional
 from pydantic.types import constr
 
 
-def username_alphanumeric(username: str):
-    assert username.isalnum(), "must be alphanumeric"
+def username_validator(username: str):
+    assert re.match(r"^\w+$", username), "must be alphanumeric"
     return username
 
 
 def _validate_username():
-    return validator("username", allow_reuse=True)(username_alphanumeric)
+    return validator("username", allow_reuse=True)(username_validator)
 
 
 class Base(BaseModel):
