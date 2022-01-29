@@ -96,3 +96,57 @@ def test_invalid_login(client, test_user, username, password, status_code):
     res = client.post("/login", data={"username": username, "password": password})
 
     assert res.status_code == status_code
+
+
+@pytest.mark.parametrize(
+    "values, status_code",
+    [
+        ({"username": "neuernutzer"}, 200),
+        ({"email": "mew@mew.de"}, 200),
+        ({"password": "newpassword"}, 200),
+        (
+            {
+                "email": "another@mail.com",
+                "username": "next_username",
+                "password": "password456",
+            },
+            200,
+        ),
+    ],
+)
+def test_valid_updated_user(authorized_client, test_user, values, status_code):
+    res = authorized_client.put("/users/1", json=values)
+
+    assert res.status_code == status_code
+    user = schemas.UserData(**res.json())
+
+    for key, value in values.items():
+        if key == "password":
+            login_res = authorized_client.post(
+                "/login", data={"username": user.username, "password": value}
+            )
+            assert login_res.status_code == 200
+            continue
+
+        assert getattr(user, key) == value
+
+
+@pytest.mark.parametrize(
+    "values, status_code",
+    [
+        ({"username": "%§$"}, 422),
+        ({"email": "mewmew.de"}, 422),
+        ({"password": ""}, 400),
+        (
+            {
+                "email": "anothermail.com",
+                "username": "%=§",
+            },
+            422,
+        ),
+    ],
+)
+def test_invalid_updated_user(authorized_client, test_user, values, status_code):
+    res = authorized_client.put("/users/1", json=values)
+
+    assert res.status_code == status_code
