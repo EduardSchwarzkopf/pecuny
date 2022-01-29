@@ -150,3 +150,15 @@ def test_invalid_updated_user(authorized_client, test_user, values, status_code)
     res = authorized_client.put("/users/1", json=values)
 
     assert res.status_code == status_code
+
+
+def test_valid_delete_user(authorized_client):
+    res = authorized_client.delete("/users/1")
+
+    assert res.status_code == 204
+
+
+def test_invalid_delete_user(authorized_client):
+    res = authorized_client.delete("/users/2")
+
+    assert res.status_code == 403
