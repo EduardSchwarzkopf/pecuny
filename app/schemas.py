@@ -1,8 +1,17 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, validator
 from typing import Optional
 
 from pydantic.types import constr
+
+
+def username_alphanumeric(username: str):
+    assert username.isalnum(), "must be alphanumeric"
+    return username
+
+
+def _validate_username():
+    return validator("username", allow_reuse=True)(username_alphanumeric)
 
 
 class Base(BaseModel):
@@ -13,6 +22,8 @@ class Base(BaseModel):
 class UserBase(Base):
     username: constr(to_lower=True)
     email: EmailStr
+
+    _validate_username = _validate_username()
 
 
 class UserCreate(UserBase):
@@ -26,7 +37,9 @@ class UserData(UserBase):
 class UserUpdate(Base):
     username: Optional[str] = ""
     email: Optional[EmailStr] = ""
-    password: Optional[str] = ""
+    password: Optional[str] = None
+
+    _validate_username = _validate_username()
 
 
 class Token(BaseModel):
