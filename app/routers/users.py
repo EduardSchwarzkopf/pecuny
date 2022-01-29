@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import Depends, APIRouter, status
+from fastapi import Depends, APIRouter, status, HTTPException
 from .. import models, schemas, oauth2, transaction_manager as tm
 from ..services import users as service
 
@@ -12,6 +12,14 @@ response_model = schemas.UserData
 def create_user(
     user: schemas.UserCreate,
 ):
+    if service.get_user_by_email(user.email):
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, detail="E-Mail address already in use"
+        )
+
+    if service.get_user_by_username(user.username):
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="Username already in use")
+
     new_user = tm.transaction(service.create_user, user)
     return new_user
 
