@@ -1,5 +1,4 @@
-from typing import List
-from fastapi import Depends, APIRouter, status, HTTPException
+from fastapi import Depends, APIRouter, Response, status, HTTPException
 from .. import models, schemas, oauth2, transaction_manager as tm
 from ..services import users as service
 
@@ -56,11 +55,14 @@ def update_user(
     return updated_user
 
 
-@router.delete(
-    "/{user_id}",
-)
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(
     user_id: int, current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    result = tm.transaction(service.delete_user, user_id)
-    return result
+    # TODO: Add more permissions later
+    if current_user.id != user_id:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, detail="You are not allowed to delete this user"
+        )
+    tm.transaction(service.delete_user, user_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
