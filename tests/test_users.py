@@ -27,6 +27,34 @@ def test_create_user(client):
 
 
 @pytest.mark.parametrize(
+    "username, email, message, status_code",
+    [
+        (
+            "testuser",
+            "my@email.com",
+            "Username already in use",
+            409,
+        ),
+        (
+            "new_testuser",
+            "hello123@pytest.de",
+            "E-Mail address already in use",
+            409,
+        ),
+    ],
+)
+def test_invalid_create_user(client, test_user, username, email, message, status_code):
+    res = client.post(
+        "/users/",
+        json={"username": username, "email": email, "password": "testpassword"},
+    )
+
+    res_json = res.json()
+    assert res.status_code == status_code
+    assert res_json["detail"] == message
+
+
+@pytest.mark.parametrize(
     "username, password, status_code",
     [
         ("hello123@pytest.de", "password123", 200),
