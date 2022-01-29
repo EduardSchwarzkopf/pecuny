@@ -1,13 +1,19 @@
 from .. import models, schemas, utils, repository as repo
 
 
+def get_user_by_email(email):
+    return repo.filter("User", "email", email.lower()).first()
+
+
+def get_user_by_username(username):
+    return repo.filter("User", "username", username.lower()).first()
+
+
 def auth_user(user_credentials):
-
-    username = user_credentials.username.lower()
-    user = repo.filter("User", "email", username).first()
-
+    username = user_credentials.username
+    user = get_user_by_email(username)
     if not user:
-        user = repo.filter("User", "username", username).first()
+        user = get_user_by_username(username)
 
     if not user or not utils.verify(user_credentials.password, user.password):
         return None
