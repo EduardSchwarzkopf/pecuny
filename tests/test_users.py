@@ -78,7 +78,7 @@ def test_valid_login(client, test_user, username, password, status_code):
 
     assert id == test_user["id"]
     assert login_res.token_type == "bearer"
-    assert res.status_code == 200
+    assert res.status_code == status_code
 
 
 @pytest.mark.parametrize(
