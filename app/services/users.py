@@ -35,17 +35,7 @@ def create_user(user: schemas.UserCreate):
 def update_user(user_id: int, user: schemas.UserUpdate):
     db_user = repo.get("User", user_id)
 
-    for key, value in user.dict().items():
-        # skip empty values or same as previous
-        if not value or value == getattr(db_user, key):
-            continue
-
-        if key == "password":
-            value = utils.hash(value)
-
-        setattr(db_user, key, value)
-
-    return db_user
+    return utils.update_model_object(db_user, user)
 
 
 def delete_user(user_id: int):
