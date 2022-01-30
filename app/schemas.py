@@ -57,3 +57,7 @@ class Account(Base):
     label: constr(strip_whitespace=True, min_length=1, max_length=36)
     description: Optional[str]
     balance: Optional[Decimal]
+
+
+class AccountData(Account):
+    id: int
