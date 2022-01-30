@@ -1,14 +1,13 @@
-from .. import repository as repo
-from ..models import Account, User
+from .. import repository as repo, models, schemas
 
 
-def get_accounts(current_user: User):
+def get_accounts(current_user: models.User):
     accounts = repo.filter("Account", "user_id", current_user.id)
 
     return accounts
 
 
-def get_account(current_user: User, account_id: int) -> Account:
+def get_account(current_user: models.User, account_id: int) -> models.Account:
 
     account = repo.get("Account", account_id)
     if account.user_id == current_user.id:
@@ -17,19 +16,19 @@ def get_account(current_user: User, account_id: int) -> Account:
     return None
 
 
-def create_account(current_user: User, account: Account) -> Account:
+def create_account(user: models.User, account: schemas.Account) -> models.Account:
 
-    account = Account(
-        user_id=current_user.id,
+    db_account = models.Account(
+        user=user,
         **account.dict(),
     )
 
-    repo.save(account)
+    repo.save(db_account)
 
-    return account
+    return db_account
 
 
-def update(current_user: User, account: Account) -> Account:
+def update(current_user: models.User, account: models.Account) -> models.Account:
 
     if account._user_id == current_user.id:
         repo.save(account)
@@ -37,7 +36,7 @@ def update(current_user: User, account: Account) -> Account:
         return account
 
 
-def delete(current_user: User, account_id: int):
+def delete(current_user: models.User, account_id: int):
 
     account = repo.get("Account", account_id)
 
