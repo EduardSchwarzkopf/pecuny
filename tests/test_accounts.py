@@ -49,11 +49,7 @@ def test_delete_account(authorized_client, test_account):
 
 @pytest.mark.parametrize(
     "account_id, status_code",
-    [
-        ("1", 404),
-        ("2", 404),
-        ("3", 404),
-    ],
+    [("1", 404), ("2", 404), ("3", 404), ("999999", 404)],
 )
 def test_invalid_delete_account(
     authorized_client, test_accounts, account_id, status_code
