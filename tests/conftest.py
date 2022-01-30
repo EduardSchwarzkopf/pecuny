@@ -97,3 +97,39 @@ def test_account(authorized_client):
     assert res.status_code == 201
     new_account = res.json()
     return new_account
+
+
+@pytest.fixture()
+def test_accounts(test_users):
+    accounts_data = [
+        {
+            "user_id": test_users[1].id,
+            "label": "account_01",
+            "description": "description_01",
+            "balance": 200,
+        },
+        {
+            "user_id": test_users[2].id,
+            "label": "account_02",
+            "description": "description_02",
+            "balance": 500,
+        },
+        {
+            "user_id": test_users[3].id,
+            "label": "account_03",
+            "description": "description_03",
+            "balance": 1000,
+        },
+    ]
+
+    def create_accounts_model(account):
+        return models.Account(**account)
+
+    accounts_map = map(create_accounts_model, accounts_data)
+    accounts = list(accounts_map)
+
+    with db():
+        db.session.add_all(accounts)
+
+        db.session.commit()
+        return db.session.query(models.User).all()
