@@ -1,13 +1,12 @@
 from typing import List
 from fastapi import Depends, APIRouter, status
 from fastapi.exceptions import HTTPException
-from .. import models, schemas, oauth2
-from ..transaction_manager import transaction as tm
+from .. import models, schemas, oauth2, transaction_manager as tm
 from ..services import accounts as service
 
 
 router = APIRouter(prefix="/accounts", tags=["Accounts"])
-response_model = schemas.Accounts
+response_model = schemas.Account
 
 
 @router.get("/", response_model=List[response_model])
@@ -27,7 +26,7 @@ def get_account(
     return account
 
 
-@router.post("/", response_model=response_model)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
 def create_account(
     account: schemas.Account,
     current_user: models.User = Depends(oauth2.get_current_user),
@@ -45,7 +44,7 @@ def update_account(
     return account
 
 
-@router.get("/{account_id}", methods=["DELETE"])
+@router.get("/{account_id}")
 def delete(
     account_id: int, current_user: models.User = Depends(oauth2.get_current_user)
 ):
