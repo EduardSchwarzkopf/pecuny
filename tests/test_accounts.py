@@ -57,3 +57,35 @@ def test_invalid_delete_account(
     res = authorized_client.delete(f"/accounts/{account_id}")
 
     assert res.status_code == status_code
+
+
+@pytest.mark.parametrize(
+    "values, status_code",
+    [
+        ({"label": "new_label"}, 200),
+        ({"description": "my new description"}, 200),
+        ({"balance": 1234}, 200),
+        (
+            {
+                "label": "My new Label",
+                "description": "very new description",
+                "balance": 1111.3,
+            },
+            200,
+        ),
+    ],
+)
+def test_update_account(authorized_client, test_account, values, status_code):
+    res = authorized_client.put("/accounts/1", json=values)
+
+    assert res.status_code == 200
+
+    account = schemas.AccountData(**res.json())
+
+    for key, value in values.items():
+        if key == "id":
+            continue
+
+        account_val = getattr(account, key)
+        print(f"key: {key} | value: {value} | account_val: {account_val}")
+        assert account_val == value
