@@ -39,13 +39,16 @@ def create_account(
     return account
 
 
-@router.put("/{account_id}")
+@router.put("/{account_id}", response_model=response_model)
 def update_account(
-    account: schemas.Account,
+    account_id: int,
+    account_data: schemas.AccountUpdate,
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
-    account = tm.transaction(service.update, data)
-    return account
+    updated_account = tm.transaction(
+        service.update_account, current_user, account_id, account_data
+    )
+    return updated_account
 
 
 @router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
