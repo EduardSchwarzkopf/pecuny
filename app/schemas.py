@@ -56,8 +56,14 @@ class TokenData(BaseModel):
 class Account(Base):
     label: constr(strip_whitespace=True, min_length=1, max_length=36)
     description: Optional[str]
-    balance: Optional[Decimal]
+    balance: Optional[float]
 
 
 class AccountData(Account):
     id: int
+
+
+class AccountUpdate(Base):
+    label: Optional[constr(strip_whitespace=True, min_length=1, max_length=36)]
+    description: Optional[str]
+    balance: Optional[float]
