@@ -6,7 +6,7 @@ from ..services import accounts as service
 
 
 router = APIRouter(prefix="/accounts", tags=["Accounts"])
-response_model = schemas.Account
+response_model = schemas.AccountData
 
 
 @router.get("/", response_model=List[response_model])
@@ -22,7 +22,11 @@ def get_account(
     account_id: int,
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
-    account = service.get_account(account_id)
+    account = service.get_account(current_user, account_id)
+
+    if account is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
+
     return account
 
 
