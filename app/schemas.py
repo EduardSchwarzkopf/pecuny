@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from decimal import Decimal
 from pydantic import BaseModel, EmailStr, validator
 from typing import Optional
 
@@ -50,3 +51,9 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: Optional[str]
+
+
+class Account(Base):
+    label: str
+    description: Optional[str]
+    balance: Optional[Decimal]
