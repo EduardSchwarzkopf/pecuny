@@ -2,10 +2,13 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from fastapi_sqlalchemy import DBSessionMiddleware
+from fastapi_sqlalchemy import db
 from app.main import app
 from app.config import settings
 from app.database import Base
 from app.oauth2 import create_access_token
+from app.services import accounts as account_service, users as users_service
+from app import models
 
 SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.db_username}:{settings.db_passwort}@{settings.db_host}:{settings.db_port}/{settings.db_name}_test"
 
@@ -50,3 +53,47 @@ def authorized_client(client, token):
     client.headers = {**client.headers, "Authorization": "Bearer " + token}
 
     return client
+
+
+@pytest.fixture()
+def test_users():
+    users_data = [
+        {
+            "username": "user01",
+            "email": "user01@pytest.de",
+            "password": "password123",
+        },
+        {
+            "username": "user02",
+            "email": "user02@pytest.de",
+            "password": "password123",
+        },
+        {
+            "username": "user03",
+            "email": "user03@pytest.de",
+            "password": "password123",
+        },
+    ]
+
+    def create_users_model(user):
+        return models.User(**user)
+
+    users_map = map(create_users_model, users_data)
+    users = list(users_map)
+
+    with db():
+        db.session.add_all(users)
+
+        db.session.commit()
+        return db.session.query(models.User).all()
+
+
+@pytest.fixture()
+def test_account(authorized_client):
+    account_data = {"label": "test_account", "description": "test", "balance": 5000}
+
+    res = authorized_client.post("/accounts/", json=account_data)
+
+    assert res.status_code == 201
+    new_account = res.json()
+    return new_account
