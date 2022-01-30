@@ -36,11 +36,12 @@ def update(current_user: models.User, account: models.Account) -> models.Account
         return account
 
 
-def delete(current_user: models.User, account_id: int):
+def delete(current_user: models.User, account_id: int) -> bool:
 
     account = repo.get("Account", account_id)
-
-    if account.user_id == current_user.id:
+    if account and account.user_id == current_user.id:
 
         repo.delete(account)
         return True
+
+    return None
