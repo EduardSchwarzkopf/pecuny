@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import Depends, APIRouter, status
+from fastapi import Depends, APIRouter, status, Response
 from fastapi.exceptions import HTTPException
 from .. import models, schemas, oauth2, transaction_manager as tm
 from ..services import accounts as service
@@ -48,9 +48,18 @@ def update_account(
     return account
 
 
-@router.get("/{account_id}")
+@router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete(
     account_id: int, current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    result = tm.transaction(service.delete, account_id)
-    return result
+    result = tm.transaction(service.delete, current_user, account_id)
+    if result:
+        return Response(
+            status_code=status.HTTP_204_NO_CONTENT,
+            content="Account deleted successfully",
+        )
+
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
+        )
