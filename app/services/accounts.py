@@ -1,5 +1,5 @@
 from typing import List
-from .. import repository as repo, models, schemas
+from .. import repository as repo, models, schemas, utils
 
 
 def get_accounts(current_user: models.User) -> List[models.Account]:
@@ -30,13 +30,17 @@ def create_account(user: models.User, account: schemas.Account) -> models.Accoun
 
 
 def update_account(
-    current_user: models.User, account: models.Account
+    current_user: models.User, account_id, account: schemas.AccountData
 ) -> models.Account:
 
-    if account._user_id == current_user.id:
-        repo.save(account)
+    db_account = repo.get("Account", account_id)
+    if db_account.user_id == current_user.id:
+        utils.update_model_object(db_account, account)
+        repo.save(db_account)
 
-        return account
+        return db_account
+
+    return None
 
 
 def delete_account(current_user: models.User, account_id: int) -> bool:
