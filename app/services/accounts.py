@@ -1,3 +1,4 @@
+from typing import List
 from .. import repository as repo, models, schemas
 
 
@@ -28,7 +29,9 @@ def create_account(user: models.User, account: schemas.Account) -> models.Accoun
     return db_account
 
 
-def update(current_user: models.User, account: models.Account) -> models.Account:
+def update_account(
+    current_user: models.User, account: models.Account
+) -> models.Account:
 
     if account._user_id == current_user.id:
         repo.save(account)
