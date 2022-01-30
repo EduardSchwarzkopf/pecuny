@@ -39,3 +39,25 @@ def test_invalid_create_account(
     )
 
     assert res.status_code == status_code
+
+
+def test_delete_account(authorized_client, test_account):
+    res = authorized_client.delete("/accounts/1")
+
+    assert res.status_code == 204
+
+
+@pytest.mark.parametrize(
+    "account_id, status_code",
+    [
+        ("1", 404),
+        ("2", 404),
+        ("3", 404),
+    ],
+)
+def test_invalid_delete_account(
+    authorized_client, test_accounts, account_id, status_code
+):
+    res = authorized_client.delete(f"/accounts/{account_id}")
+
+    assert res.status_code == status_code
