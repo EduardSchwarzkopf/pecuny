@@ -49,10 +49,10 @@ def update_account(
 
 
 @router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete(
+def delete_account(
     account_id: int, current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    result = tm.transaction(service.delete, current_user, account_id)
+    result = tm.transaction(service.delete_account, current_user, account_id)
     if result:
         return Response(
             status_code=status.HTTP_204_NO_CONTENT,

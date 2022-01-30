@@ -39,7 +39,7 @@ def update_account(
         return account
 
 
-def delete(current_user: models.User, account_id: int) -> bool:
+def delete_account(current_user: models.User, account_id: int) -> bool:
 
     account = repo.get("Account", account_id)
     if account and account.user_id == current_user.id:
