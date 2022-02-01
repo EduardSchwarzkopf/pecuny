@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi_sqlalchemy import DBSessionMiddleware
 from . import models
 from .database import engine, SQLALCHEMY_DATABASE_URL
-from .routers import users, auth, accounts
+from .routers import users, auth, accounts, transactions
 
 # from .routers import users, posts, auth, vote
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,6 +31,7 @@ app.add_middleware(DBSessionMiddleware, db_url=SQLALCHEMY_DATABASE_URL)
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(accounts.router)
+app.include_router(transactions.router)
 
 
 @app.get("/")
