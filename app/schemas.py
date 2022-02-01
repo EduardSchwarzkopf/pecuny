@@ -1,6 +1,5 @@
 import re
-from datetime import datetime
-from decimal import Decimal
+from datetime import date
 from pydantic import BaseModel, EmailStr, validator
 from typing import Optional
 
@@ -67,3 +66,23 @@ class AccountUpdate(Base):
     label: Optional[constr(strip_whitespace=True, min_length=1, max_length=36)]
     description: Optional[str]
     balance: Optional[float]
+
+
+class TransactionInformation(Base):
+    amount: float
+    reference: str
+    date: date
+    subcategory_id: int
+
+
+class TransactionInformationCreate(TransactionInformation):
+    account_id: int
+
+
+class TransactionInformationData(TransactionInformation):
+    id: int
+
+
+class Transaction(Base):
+    account_id: int
+    information: TransactionInformationData
