@@ -23,7 +23,6 @@ def create_transaction(
     account = repo.get("Account", transaction_information.account_id)
 
     # TODO: Check if user is also auth for offset account
-    # current_user = oauth2.get_current_user()
     if user.id == account.user_id:
 
         transaction_information.amount = _handle_transaction_amount(
