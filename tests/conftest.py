@@ -103,6 +103,12 @@ def test_account(authorized_client):
 def test_accounts(test_users):
     accounts_data = [
         {
+            "user_id": test_users[0].id,
+            "label": "account_00",
+            "description": "description_00",
+            "balance": 100,
+        },
+        {
             "user_id": test_users[1].id,
             "label": "account_01",
             "description": "description_01",
