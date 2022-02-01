@@ -7,7 +7,6 @@ from app.main import app
 from app.config import settings
 from app.database import Base
 from app.oauth2 import create_access_token
-from app.services import accounts as account_service, users as users_service
 from app import models
 
 SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.db_username}:{settings.db_passwort}@{settings.db_host}:{settings.db_port}/{settings.db_name}_test"
