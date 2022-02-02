@@ -1,7 +1,7 @@
 import re
-from datetime import date
+from datetime import datetime, date
 from pydantic import BaseModel, EmailStr, validator
-from typing import Optional
+from typing import Optional, List
 
 from pydantic.types import constr
 
@@ -52,16 +52,6 @@ class TokenData(BaseModel):
     id: Optional[str]
 
 
-class Account(Base):
-    label: constr(strip_whitespace=True, min_length=1, max_length=36)
-    description: Optional[str]
-    balance: Optional[float]
-
-
-class AccountData(Account):
-    id: int
-
-
 class AccountUpdate(Base):
     label: Optional[constr(strip_whitespace=True, min_length=1, max_length=36)]
     description: Optional[str]
@@ -71,7 +61,7 @@ class AccountUpdate(Base):
 class TransactionInformation(Base):
     amount: float
     reference: str
-    date: date
+    date: datetime
     subcategory_id: int
 
 
@@ -86,3 +76,20 @@ class TransactionInformationData(TransactionInformation):
 class Transaction(Base):
     account_id: int
     information: TransactionInformationData
+
+
+class Account(Base):
+    label: constr(strip_whitespace=True, min_length=1, max_length=36)
+    description: Optional[str]
+    balance: Optional[float]
+
+
+class AccountData(Account):
+    id: int
+    transactions: List[Transaction]
+
+
+class TransactionQuery(BaseModel):
+    account_id: int
+    date_start: datetime
+    date_end: datetime
