@@ -2,18 +2,16 @@ from copy import copy, deepcopy
 from .. import date_manager, repository as repo, models, schemas, oauth2
 
 
-# def get(data):
+def get_transactions(user: models.User, transaction_query: schemas.TransactionQuery):
 
-#     account = repo.get("Account", data["account_id"])
-#     if auth.is_owner(account):
+    account_id = transaction_query.account_id
+    account = repo.get("Account", account_id)
+    if account.user_id == user.id:
 
-#         date = date_manager.string_to_datetime(data["date"])
-
-#         transactions = repo.get_from_month(
-#             "Transaction", date, "account_id", account.id
-#         )
-
-#         return transactions
+        transactions = repo.get_transactions_from_period(
+            account_id, transaction_query.date_start, transaction_query.date_end
+        )
+        return transactions
 
 
 def create_transaction(
