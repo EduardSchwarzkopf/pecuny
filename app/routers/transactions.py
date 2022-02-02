@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List
 from fastapi import Depends, APIRouter, status
 from fastapi.exceptions import HTTPException
@@ -8,12 +9,13 @@ router = APIRouter(prefix="/transactions", tags=["Transactions"])
 response_model = schemas.Transaction
 
 
-# @router.get("/{id}", response_model=List[response_model])
-# def get_transactions(
-#     current_user: models.User = Depends(oauth2.get_current_user),
-# ):
-#     transactions = service.get(current_user)
-#    return transactions
+@router.get("/", response_model=List[response_model])
+def get_transactions(
+    transaction_query: schemas.TransactionQuery,
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    transactions = service.get_transactions(current_user, transaction_query)
+    return transactions
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
