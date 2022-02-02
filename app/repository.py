@@ -1,4 +1,4 @@
-from sqlalchemy import or_, extract
+from sqlalchemy import or_, extract, and_
 from . import models
 from fastapi_sqlalchemy import db
 from datetime import datetime
@@ -37,21 +37,22 @@ def get(name: str, id: int):
     return db.session.query(class_).get(id)
 
 
-def get_from_month(name: str, date: datetime, attribute: str, value: str):
-    class_ = __str_to_class(name)
-    attribute = getattr(class_, attribute)
+def get_transactions_from_period(
+    account_id: int, start_date: datetime, end_date: datetime
+):
+    model_name = "Transaction"
+    class_ = __str_to_class(model_name)
+    attribute = getattr(class_, "account_id")
 
-    information_class = __str_to_class(name + "Information")
+    information_class = __str_to_class(model_name + "Information")
     class_date = information_class.date
-    month = extract("month", class_date)
-    year = extract("year", class_date)
 
     return (
         db.session.query(class_)
         .join(class_.information)
-        .filter(year == date.year)
-        .filter(month == date.month)
-        .filter(value == attribute)
+        .filter(class_date <= end_date)
+        .filter(class_date >= start_date)
+        .filter(account_id == attribute)
         .all()
     )
 
