@@ -1,8 +1,9 @@
+from typing import Any
 from fastapi_sqlalchemy import db
 from . import models
 
 
-def transaction(handler, *args: dict) -> dict:
+def transaction(handler, *args: Any) -> Any:
     try:
         result = handler(*args)
         db.session.commit()
