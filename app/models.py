@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, DateTime, text
+from sqlalchemy import Column, Integer, String, Numeric, DateTime, text, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import TIMESTAMP
@@ -113,7 +113,7 @@ class TransactionInformation(BaseModel):
     )
     reference = Column(String(128))
     date = Column(DateTime, default=text("now()"))
-    subcategory = relationship("TransactionSubcategory", cascade="all,delete")
+    subcategory = relationship("TransactionSubcategory")
     subcategory_id = Column(Integer, ForeignKey("transactions_subcategories.id"))
 
 
@@ -133,8 +133,11 @@ class TransactionCategory(BaseModel):
     )
 
 
-class TransactionSubcategory(BaseModel, UserId):
+class TransactionSubcategory(BaseModel):
     __tablename__ = "transactions_subcategories"
 
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    user = relationship("User")
     label = Column(String(36))
+    is_income = Column(Boolean, default=False)
     parent_category_id = Column(Integer, ForeignKey("transactions_categories.id"))
