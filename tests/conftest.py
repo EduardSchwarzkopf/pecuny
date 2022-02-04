@@ -1,4 +1,5 @@
 import pytest
+import datetime
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from fastapi_sqlalchemy import DBSessionMiddleware
@@ -7,7 +8,7 @@ from app.main import app
 from app.config import settings
 from app.database import Base
 from app.oauth2 import create_access_token
-from app import models
+from app import models, events
 
 SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.db_username}:{settings.db_passwort}@{settings.db_host}:{settings.db_port}/{settings.db_name}_test"
 
@@ -141,3 +142,12 @@ def test_accounts(test_users):
 
         db.session.commit()
         return db.session.query(models.User).all()
+
+
+def get_date_range(date_start, days=5):
+    return [date_start - datetime.timedelta(days=idx) for idx in range(days)]
+
+
+@pytest.fixture()
+def test_transactions(test_accounts):
+    dates = get_date_range(datetime.datetime.utcnow())
