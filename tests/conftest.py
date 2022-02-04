@@ -20,6 +20,9 @@ def session():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
+    with db():
+        events.create_categories(db.session)
+
 
 @pytest.fixture()
 def client(session):
