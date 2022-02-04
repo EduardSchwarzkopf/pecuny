@@ -58,6 +58,13 @@ class AccountUpdate(Base):
     balance: Optional[float]
 
 
+class TransactionSubcategory(Base):
+    id: int
+    label: str
+    is_income: bool
+    parent_category_id: int
+
+
 class TransactionInformation(Base):
     amount: float
     reference: str
@@ -71,6 +78,7 @@ class TransactionInformationCreate(TransactionInformation):
 
 class TransactionInformationData(TransactionInformation):
     id: int
+    subcategory: TransactionSubcategory
 
 
 class Transaction(Base):
