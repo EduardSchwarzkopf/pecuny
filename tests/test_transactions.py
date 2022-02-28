@@ -47,3 +47,19 @@ def test_create_transaction(
     assert type(new_transaction.information.amount) == float
     assert new_transaction.information.reference == reference
     assert type(new_transaction.information.id) == int
+
+
+def test_updated_transaction(authorized_client, test_transactions):
+    pass
+
+
+def test_delete_transaction(authorized_client, test_transactions):
+    pass
+
+
+def test_create_offset_transaction(authorized_client, test_accounts):
+    pass
+
+
+def test_edit_offset_transaction(authorized_client, test_transactions):
+    pass
