@@ -145,7 +145,9 @@ def test_accounts(test_users):
 
 
 def get_date_range(date_start, days=5):
-    return [date_start - datetime.timedelta(days=idx) for idx in range(days)]
+    return [
+        (date_start - datetime.timedelta(days=idx)).isoformat() for idx in range(days)
+    ]
 
 
 @pytest.fixture()
