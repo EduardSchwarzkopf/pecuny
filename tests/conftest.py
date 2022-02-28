@@ -129,6 +129,12 @@ def test_accounts(test_users):
             "description": "description_03",
             "balance": 1000,
         },
+        {
+            "user_id": test_users[0].id,
+            "label": "account_04",
+            "description": "description_04",
+            "balance": 2000,
+        },
     ]
 
     def create_accounts_model(account):
