@@ -157,5 +157,54 @@ def get_date_range(date_start, days=5):
 
 
 @pytest.fixture()
-def test_transactions(test_accounts):
+def test_transactions(authorized_client, test_accounts):
     dates = get_date_range(datetime.datetime.utcnow())
+
+    transaction_data = [
+        {
+            "account_id": 1,
+            "amount": 200,
+            "reference": "transaction_001",
+            "date": dates[0],
+            "subcategory_id": 1,
+        },
+        {
+            "account_id": 1,
+            "amount": 100,
+            "reference": "transaction_002",
+            "date": dates[1],
+            "subcategory_id": 1,
+        },
+        {
+            "account_id": 1,
+            "amount": 50,
+            "reference": "transaction_003",
+            "date": dates[3],
+            "subcategory_id": 4,
+        },
+        {
+            "account_id": 5,
+            "amount": 100,
+            "reference": "transaction_004",
+            "date": dates[4],
+            "subcategory_id": 8,
+        },
+        {
+            "account_id": 5,
+            "amount": 500,
+            "reference": "transaction_005",
+            "date": dates[3],
+            "subcategory_id": 7,
+        },
+        {
+            "account_id": 5,
+            "amount": 200,
+            "reference": "transaction_006",
+            "date": dates[2],
+            "subcategory_id": 7,
+        },
+    ]
+
+    for transaction in transaction_data:
+        res = authorized_client.post("/transactions/", json=transaction)
+        assert res.status_code == 201
