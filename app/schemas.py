@@ -82,6 +82,7 @@ class TransactionInformationData(TransactionInformation):
 
 
 class Transaction(Base):
+    id: int
     account_id: int
     information: TransactionInformationData
 
@@ -94,7 +95,6 @@ class Account(Base):
 
 class AccountData(Account):
     id: int
-    transactions: List[Transaction]
 
 
 class TransactionQuery(BaseModel):
