@@ -1,6 +1,6 @@
 from datetime import date
 from typing import List
-from fastapi import Depends, APIRouter, status
+from fastapi import Depends, APIRouter, status, Response
 from fastapi.exceptions import HTTPException
 from .. import models, schemas, oauth2, transaction_manager as tm
 from ..services import transactions as service
@@ -16,6 +16,22 @@ def get_transactions(
 ):
     transactions = service.get_transaction_list(current_user, transaction_query)
     return transactions
+
+
+@router.get("/{transaction_id}", response_model=response_model)
+def get_transaction(
+    transaction_id: int,
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+
+    transaction = service.get_transaction(current_user, transaction_id)
+
+    if transaction:
+        return transaction
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
+    )
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
