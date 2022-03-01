@@ -53,8 +53,35 @@ def test_updated_transaction(authorized_client, test_transactions):
     pass
 
 
-def test_delete_transaction(authorized_client, test_transactions):
-    pass
+@pytest.mark.parametrize(
+    "account_id, transaction_id, status_code",
+    [
+        (1, 1, 204),
+        (1, 2, 204),
+        (1, 3, 204),
+        (1, 9999, 404),
+    ],
+)
+def test_delete_transaction(
+    authorized_client, test_transactions, account_id, transaction_id, status_code
+):
+    account_before_res = authorized_client.get(f"/accounts/{account_id}")
+    account_before = schemas.Account(**account_before_res.json())
+
+    transaction_response = authorized_client.get(f"/transactions/{transaction_id}")
+
+    if transaction_response.status_code == 404:
+        return
+
+    res = authorized_client.delete(f"/transactions/{transaction_id}")
+
+    account_after_res = authorized_client.get(f"/accounts/{account_id}")
+    account_after = schemas.Account(**account_after_res.json())
+    new_balance = account_after.balance
+
+    transaction = schemas.Transaction(**transaction_response.json())
+    assert res.status_code == status_code
+    assert new_balance == (account_before.balance - transaction.information.amount)
 
 
 def test_create_offset_transaction(authorized_client, test_accounts):
