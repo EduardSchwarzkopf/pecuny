@@ -14,7 +14,7 @@ def get_transactions(
     transaction_query: schemas.TransactionQuery,
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
-    transactions = service.get_transactions(current_user, transaction_query)
+    transactions = service.get_transaction_list(current_user, transaction_query)
     return transactions
 
 
