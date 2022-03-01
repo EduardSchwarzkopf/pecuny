@@ -8,9 +8,6 @@ from fastapi_sqlalchemy import db
 # from .routers import users, posts, auth, vote
 from fastapi.middleware.cors import CORSMiddleware
 
-# create all tables that are not created yet
-models.Base.metadata.create_all(bind=engine)
-
 app = FastAPI()
 
 # Allowed Domains to talk to this api
