@@ -109,25 +109,33 @@ def create_transaction(
 #     return tf
 
 
-# def delete(data):
+def delete_transaction(current_user: models.User, transaction_id: int) -> bool:
 
-#     transaction = repo.get("Transaction", data["transaction_id"])
-#     account = repo.get("Account", transaction.account_id)
+    transaction = repo.get("Transaction", transaction_id)
 
-#     if auth.is_owner(account):
+    if transaction == None:
+        # No transaction found
+        return
 
-#         amount = transaction.information.amount
-#         account.balance -= amount
+    account = repo.get("Account", transaction.account_id)
 
-#         if transaction.offset_transaction:
-#             offset_transaction = transaction.offset_transaction
-#             offset_account = repo.get("Account", offset_transaction.account_id)
-#             offset_account.balance += amount
-#             repo.delete(transaction.offset_transaction)
+    if current_user.id != account.user_id:
+        # user is not owner of the account
+        return
 
-#         repo.delete(transaction)
+    # handle transaction deletion
+    amount = transaction.information.amount
+    account.balance -= amount
 
-#         return True
+    if transaction.offset_transaction:
+        offset_transaction = transaction.offset_transaction
+        offset_account = repo.get("Account", offset_transaction.account_id)
+        offset_account.balance += amount
+        repo.delete(transaction.offset_transaction)
+
+    repo.delete(transaction)
+
+    return True
 
 
 def _handle_transaction_amount(amount, subcategory_id):
