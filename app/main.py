@@ -32,13 +32,6 @@ app.include_router(accounts.router)
 app.include_router(transactions.router)
 
 
-# Events
-@app.on_event("startup")
-async def startup_event():
-    with db():
-        events.create_categories(db.session)
-
-
 @app.get("/")
 async def root():
     return {"message": "Hello, new stuff"}
