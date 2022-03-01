@@ -2,7 +2,9 @@ from copy import copy, deepcopy
 from .. import date_manager, repository as repo, models, schemas, oauth2
 
 
-def get_transactions(user: models.User, transaction_query: schemas.TransactionQuery):
+def get_transaction_list(
+    user: models.User, transaction_query: schemas.TransactionQuery
+):
 
     account_id = transaction_query.account_id
     account = repo.get("Account", account_id)
