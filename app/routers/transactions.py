@@ -39,11 +39,18 @@ def create_transaction(
 #     return response
 
 
-# @router.delete("/delete/{id}", status=status.HTTP_204_NO_CONTENT)
-# def delete_transaction(
-#     id: int,
-#     current_user: models.User = Depends(oauth2.get_current_user),
-# ):
-#     result = tm.transaction(service.delete, data)
-#     response = arh.response(result)
-#     return response
+@router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_account(
+    transaction_id: int, current_user: models.User = Depends(oauth2.get_current_user)
+):
+    result = tm.transaction(service.delete_transaction, current_user, transaction_id)
+    if result:
+        return Response(
+            status_code=status.HTTP_204_NO_CONTENT,
+            content="Transaction deleted successfully",
+        )
+
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
+        )
