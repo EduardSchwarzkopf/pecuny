@@ -16,6 +16,18 @@ def get_transaction_list(
         return transactions
 
 
+def get_transaction(user: models.User, transaction_id: int) -> models.Transaction:
+    transaction = repo.get("Transaction", transaction_id)
+
+    if transaction == None:
+        return
+
+    account = repo.get("Account", transaction.account_id)
+
+    if account.user_id == user.id:
+        return transaction
+
+
 def create_transaction(
     user: models.User, transaction_information: schemas.TransactionInformationCreate
 ) -> models.Transaction:
