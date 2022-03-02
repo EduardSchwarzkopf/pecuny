@@ -157,7 +157,7 @@ def get_date_range(date_start, days=5):
 
 
 @pytest.fixture()
-def test_transactions(authorized_client, test_accounts):
+def test_transactions(test_accounts):
     dates = get_date_range(datetime.datetime.utcnow())
 
     transaction_data = [
@@ -176,21 +176,21 @@ def test_transactions(authorized_client, test_accounts):
             "subcategory_id": 1,
         },
         {
-            "account_id": 1,
+            "account_id": 2,
             "amount": 50,
             "reference": "transaction_003",
             "date": dates[3],
             "subcategory_id": 4,
         },
         {
-            "account_id": 5,
+            "account_id": 3,
             "amount": 100,
             "reference": "transaction_004",
             "date": dates[4],
             "subcategory_id": 8,
         },
         {
-            "account_id": 5,
+            "account_id": 4,
             "amount": 500,
             "reference": "transaction_005",
             "date": dates[3],
@@ -205,6 +205,34 @@ def test_transactions(authorized_client, test_accounts):
         },
     ]
 
-    for transaction in transaction_data:
-        res = authorized_client.post("/transactions/", json=transaction)
-        assert res.status_code == 201
+    transaction_list = []
+    with db():
+
+        for transaction_info in transaction_data:
+
+            account_id = transaction_info["account_id"]
+            account_index = next(
+                (i for i, item in enumerate(test_accounts) if item.id == account_id), -1
+            )
+            if account_index == -1:
+                raise ValueError("No Account found with that Id")
+
+            del transaction_info["account_id"]
+            db_transaction_information = models.TransactionInformation(
+                **transaction_info
+            )
+
+            account_query = db.session.query(models.Account).filter_by(id=account_id)
+            new_balance = (
+                test_accounts[account_index].balance + db_transaction_information.amount
+            )
+            account_query.update({"balance": new_balance})
+
+            transaction_list.append(
+                models.Transaction(
+                    information=db_transaction_information, account_id=account_id
+                )
+            )
+
+        db.session.add_all(transaction_list)
+        db.session.commit()
