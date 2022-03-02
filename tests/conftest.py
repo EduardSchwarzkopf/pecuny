@@ -43,19 +43,19 @@ def test_user(client):
     assert res.status_code == 201
     new_user = res.json()
     new_user["password"] = user_data["password"]
-    return new_user
+    yield new_user
 
 
 @pytest.fixture()
 def token(test_user):
-    return create_access_token({"user_id": test_user["id"]})
+    yield create_access_token({"user_id": test_user["id"]})
 
 
 @pytest.fixture()
 def authorized_client(client, token):
     client.headers = {**client.headers, "Authorization": "Bearer " + token}
 
-    return client
+    yield client
 
 
 @pytest.fixture()
@@ -88,7 +88,7 @@ def test_users():
         db.session.add_all(users)
 
         db.session.commit()
-        return db.session.query(models.User).all()
+        yield db.session.query(models.User).all()
 
 
 @pytest.fixture()
@@ -99,7 +99,7 @@ def test_account(authorized_client):
 
     assert res.status_code == 201
     new_account = res.json()
-    return new_account
+    yield new_account
 
 
 @pytest.fixture()
@@ -147,7 +147,7 @@ def test_accounts(test_users):
         db.session.add_all(accounts)
 
         db.session.commit()
-        return db.session.query(models.User).all()
+        yield db.session.query(models.Account).all()
 
 
 def get_date_range(date_start, days=5):
