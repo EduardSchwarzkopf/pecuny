@@ -1,5 +1,4 @@
-from copy import copy, deepcopy
-from .. import date_manager, repository as repo, models, schemas, oauth2
+from .. import repository as repo, models, schemas, utils
 
 
 def get_transaction_list(
@@ -41,12 +40,10 @@ def create_transaction(
             transaction_information.amount, transaction_information.subcategory_id
         )
 
-        transaction_information_data = transaction_information.dict()
-        del transaction_information_data["account_id"]
+        delattr(transaction_information, "account_id")
+        db_transaction_information = models.TransactionInformation()
 
-        db_transaction_information = models.TransactionInformation(
-            **transaction_information_data
-        )
+        utils.update_model_object(db_transaction_information, transaction_information)
 
         account.balance += transaction_information.amount
         transaction = models.Transaction(
@@ -59,54 +56,37 @@ def create_transaction(
     return None
 
 
-# def update(data):
-#     account = repo.get("Account", data["account_id"])
+def update_transaction(
+    current_user: models.User,
+    transaction_id: int,
+    transaction_information: schemas.TransactionInformtionUpdate,
+):
+    transaction = repo.get("Transaction", transaction_id)
+    if transaction == None:
+        return
 
-#     if auth.is_owner(account):
-#         reference = data["reference"]
-#         subcategory_id = data["subcategory"]
-#         date = date_manager.string_to_datetime(data["date"])
-#         amount = handle_transaction_amount(float(data["amount"]), subcategory_id)
+    account = repo.get("Account", transaction.account_id)
+    if current_user.id == account.user_id:
 
-#         transaction = repo.get("Transaction", data["transaction_id"])
-#         transaction_information = transaction.information
-#         balance_calc = amount - transaction_information.amount
-#         account.balance += balance_calc
+        amount_updated = transaction_information.amount - transaction.information.amount
+        account.balance += amount_updated
 
-#         if transaction.offset_transaction:
-#             offset_transaction = transaction.offset_transaction
-#             offset_account = repo.get("Account", offset_transaction.account_id)
-#             offset_account.balance -= balance_calc
+        delattr(transaction_information, "account_id")
+        utils.update_model_object(transaction.information, transaction_information)
 
-#             offset_transaction_information = __update_transaction_information(
-#                 offset_transaction.information,
-#                 amount * -1,
-#                 subcategory_id,
-#                 reference,
-#                 date,
-#             )
+        if transaction.offset_transaction:
+            offset_transaction = transaction.offset_transaction
+            offset_account = repo.get("Account", offset_transaction.account_id)
+            offset_account.balance -= amount_updated
 
-#             repo.save([offset_transaction_information, offset_account])
+            offset_info = transaction_information
+            offset_info.amount = offset_info.amount * -1
 
-#         transaction_information = __update_transaction_information(
-#             transaction_information, amount, subcategory_id, reference, date
-#         )
+            utils.update_model_object(
+                transaction.offset_transaction.information, offset_info
+            )
 
-#         repo.save([transaction_information, account])
-
-#         return transaction
-
-
-# def __update_transaction_information(
-#     transaction_information, amount, subcategory_id, reference, date
-# ):
-#     tf = transaction_information
-#     tf.amount = amount
-#     tf.subcatgory_id = subcategory_id
-#     tf.reference = reference
-#     tf.date = date
-
-#     return tf
+        return transaction
 
 
 def delete_transaction(current_user: models.User, transaction_id: int) -> bool:
