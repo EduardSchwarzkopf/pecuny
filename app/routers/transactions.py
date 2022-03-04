@@ -45,14 +45,25 @@ def create_transaction(
     return transaction
 
 
-# @router.put("/{id}", response_model=response_model)
-# def update_transaction(
-#     current_user: models.User = Depends(oauth2.get_current_user),
-# ):
-#     transaction = tm.transaction(service.update, data)
-#     json = mapper.to_json(transaction)
-#     response = arh.response(data=json)
-#     return response
+@router.post("/{transaction_id}", response_model=response_model)
+def update_transaction(
+    transaction_id: int,
+    transaction_information: schemas.TransactionInformtionUpdate,
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    transaction = tm.transaction(
+        service.update_transaction,
+        current_user,
+        transaction_id,
+        transaction_information,
+    )
+
+    if transaction:
+        return transaction
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
+    )
 
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
