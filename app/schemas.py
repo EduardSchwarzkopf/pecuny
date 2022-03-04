@@ -74,10 +74,14 @@ class TransactionInformation(Base):
 
 class TransactionInformationCreate(TransactionInformation):
     account_id: int
+    offset_account_id: Optional[int]
+
+
+class TransactionInformtionUpdate(TransactionInformationCreate):
+    pass
 
 
 class TransactionInformationData(TransactionInformation):
-    id: int
     subcategory: TransactionSubcategory
 
 
