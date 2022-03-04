@@ -49,8 +49,59 @@ def test_create_transaction(
     assert type(new_transaction.information.id) == int
 
 
-def test_updated_transaction(authorized_client, test_transactions):
-    pass
+@pytest.mark.parametrize(
+    "account_id, transaction_id, subcategory_id, amount, status_code",
+    [
+        (1, 1, 1, 2.5, 200),
+        (1, 2, 1, 0, 200),
+        (1, 1, 2, 3.666666666667, 200),
+        (1, 2, 3, 0.133333333334, 200),
+        (1, 2, 4, -25, 200),
+        (1, 1, 1, -35, 200),
+        (1, 1, 1, -0.3333333334, 200),
+        (1, 1, 7, 0, 200),
+    ],
+)
+def test_updated_transaction(
+    authorized_client,
+    test_transactions,
+    account_id,
+    transaction_id,
+    subcategory_id,
+    amount,
+    status_code,
+):
+    reference = f"Updated Val {amount}"
+
+    json = {
+        "account_id": account_id,
+        "amount": amount,
+        "reference": f"Updated Val {amount}",
+        "date": str(datetime.datetime.utcnow()),
+        "subcategory_id": subcategory_id,
+    }
+
+    account_before_res = authorized_client.get(f"/accounts/{account_id}")
+    account_before = schemas.Account(**account_before_res.json())
+
+    transaction_res = authorized_client.get(f"/transactions/{transaction_id}")
+    transaction_before = schemas.Transaction(**transaction_res.json())
+
+    res = authorized_client.post(f"/transactions/{transaction_id}", json=json)
+
+    assert res.status_code == status_code
+
+    account_after_res = authorized_client.get(f"/accounts/{account_id}")
+    account_after = schemas.Account(**account_after_res.json())
+
+    transaction = schemas.Transaction(**res.json())
+
+    difference = round(transaction_before.information.amount - amount, 2)
+
+    assert account_after.balance == account_before.balance - difference
+    assert transaction.information.amount == amount
+    assert transaction.information.reference == reference
+    assert transaction.information.subcategory_id == subcategory_id
 
 
 @pytest.mark.parametrize(
