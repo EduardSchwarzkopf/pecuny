@@ -1,12 +1,19 @@
-FROM python:3.8.12
+# TODO: Use alpine
+FROM python:3.8
 
-# optional, maybe need to change with plesk?
-WORKDIR /usr/src/app
+# TODO: Change user
+# RUN useradd -ms /bin/bash app
+
+# USER app
+
+# WORKDIR /home/app
+
+# RUN export PATH=$PATH:/home/app/.local/bin
 
 COPY requirements.txt ./ 
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY ./app ./app
 
-CMD ["uvicorn", "app.main:app"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
