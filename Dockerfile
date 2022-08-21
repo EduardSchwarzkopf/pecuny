@@ -1,17 +1,13 @@
-# TODO: Use alpine
-FROM python:3.8
+FROM python:3.8-slim-buster
 
-# TODO: Change user
-# RUN useradd -ms /bin/bash app
+# create and switch to user
+RUN useradd -m app
+USER app
 
-# USER app
-
-# WORKDIR /home/app
-
-# RUN export PATH=$PATH:/home/app/.local/bin
+ENV PATH="/home/app/.local/bin:${PATH}"
+WORKDIR /home/app
 
 COPY requirements.txt ./ 
-
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
 COPY ./app ./app
