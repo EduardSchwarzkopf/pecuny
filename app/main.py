@@ -1,9 +1,7 @@
 from fastapi import FastAPI
 from fastapi_sqlalchemy import DBSessionMiddleware
-from . import models, events
-from .database import engine, SQLALCHEMY_DATABASE_URL
+from .database import SQLALCHEMY_DATABASE_URL
 from .routers import users, auth, accounts, transactions
-from fastapi_sqlalchemy import db
 
 # from .routers import users, posts, auth, vote
 from fastapi.middleware.cors import CORSMiddleware
