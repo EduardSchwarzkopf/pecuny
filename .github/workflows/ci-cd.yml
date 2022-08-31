@@ -44,8 +44,6 @@ jobs:
         run: '${{ env.SSH_CMD }} ${{ env.SSH_HOST }}  docker rm --force ${{ env.CONTAINER }} || :'
       - name: copy docker-compose.yml
         run: scp -o "StrictHostKeyChecking=no" docker-compose.yml ${{ env.SSH_HOST }}:docker-compose.yml
-      - name: apply docker-compose
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker-compose up -d
       - name: create .env
         run: |
           set -e
@@ -64,5 +62,7 @@ jobs:
           ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} echo "FIEF_CLIENT_SECRET=${{ secrets.FIEF_CLIENT_SECRET }}" >> .env
           ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} echo "FIEF_ENCRYPTION_KEY=${{ secrets.FIEF_ENCRYPTION_KEY }}" >> .env
           ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} echo "FIEF_SECRET=${{ secrets.FIEF_SECRET }}" >> .env
+      - name: apply docker-compose
+        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker-compose up -d
       - name: ${{ env.CONTAINER }} start
         run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run ${{ env.IMAGE }} --detach --publish=80:8000 --volume=.env:.env --name=${{ env.CONTAINER }}
