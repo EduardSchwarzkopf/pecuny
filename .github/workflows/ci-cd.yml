@@ -23,6 +23,7 @@ jobs:
         run: docker push ${{ env.IMAGE }}
 
   deploy:
+    needs: [build-and-publish]
     runs-on: ubuntu-latest
     env:
       SSH_HOST: webserver
