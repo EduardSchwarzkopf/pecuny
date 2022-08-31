@@ -6,11 +6,10 @@ on:
 
 env:
   IMAGE: ${{ secrets.DOCKER_USERNAME }}/monika-backend:latest
-  OS: ubuntu-latest
 
 jobs:
   build-and-publish:
-    runs-on: ${{ env.OS }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: build docker image
@@ -24,7 +23,7 @@ jobs:
         run: docker push ${{ env.IMAGE }}
 
   deploy:
-    runs-on: ${{ env.OS }}
+    runs-on: ubuntu-latest
     env:
       SSH_HOST: webserver
       CONTAINER: monika
