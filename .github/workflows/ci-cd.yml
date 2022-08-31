@@ -5,19 +5,60 @@ on:
     branches: ["main"]
 
 env:
-  TAG: latest
+  IMAGE: ${{ secrets.DOCKER_USERNAME }}/monika-backend:latest
+  OS: ubuntu-latest
 
 jobs:
   build-and-publish:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.OS }}
     steps:
       - uses: actions/checkout@v3
       - name: build docker image
-        run: docker build --tag=${{ secrets.DOCKER_USERNAME }}/monika-backend:${{ env.TAG }} .
+        run: docker build --tag=${{ env.IMAGE }} .
       - name: login to container registry
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
       - name: publish docker image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/monika-backend:${{ env.TAG }}
+        run: docker push ${{ env.IMAGE }}
+
+  deploy:
+    runs-on: ${{ env.OS }}
+    env:
+      SSH_HOST: webserver
+      CONTAINER: monika
+    steps:
+      - uses: actions/checkout@v3
+      - name: create ssh dir
+        run: mkdir --parents ~/.ssh
+      - name: create ssh key
+        run: echo '${{ secrets.SSH_KEY }}' > ~/.ssh/id_rsa
+      - name: config ssh
+        run: echo -e 'Host ${{ env.SSH_HOST }}\n  HostName schwarzkopf.center\n  Port 22\n  User root\n  IdentityFile ~/.ssh/id_rsa' > ~/.ssh/config
+      - name: stop monika
+        run: docker rm --force ${{ env.CONTAINER }} || :
+      - name: copy docker-compose.yml
+        run: scp docker-compose.yml ${{ env.SSH_HOST }}:docker-compose.yml
+      - name: apply docker-compose
+        run: docker-compose up --detach
+      - name: create .env
+        run: |  
+          set -e
+          touch .env
+          # monika
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+          echo "ALGORITHM=HS256" >> .env
+          echo "ACCESS_TOKEN_EXPIRE_MINUTES=30" >> .env
+          # database
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          # fief 
+          echo "FIEF_CLIENT_ID=${{ secrets.FIEF_CLIENT_ID }}" >> .env
+          echo "FIEF_CLIENT_SECRET=${{ secrets.FIEF_CLIENT_SECRET }}" >> .env
+          echo "FIEF_ENCRYPTION_KEY=${{ secrets.FIEF_ENCRYPTION_KEY }}" >> .env
+          echo "FIEF_SECRET=${{ secrets.FIEF_SECRET }}" >> .env
+      - name: ${{ env.CONTAINER }} start
+        run: docker run ${{ env.IMAGE }} --detach --publish=80:8000 --volume=.env:.env --name=${{ env.CONTAINER }}
