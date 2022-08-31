@@ -34,7 +34,10 @@ jobs:
       - name: create ssh dir
         run: mkdir --parents ~/.ssh
       - name: create ssh key
-        run: echo '${{ secrets.SSH_KEY }}' > ~/.ssh/id_rsa
+        run: |
+          set -e
+          echo '${{ secrets.SSH_KEY }}' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
       - name: config ssh
         run: echo -e 'Host ${{ env.SSH_HOST }}\n  HostName schwarzkopf.center\n  Port 22\n  User root\n  IdentityFile ~/.ssh/id_rsa' > ~/.ssh/config
       - name: stop monika
