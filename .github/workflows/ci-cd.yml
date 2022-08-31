@@ -45,7 +45,7 @@ jobs:
       - name: copy docker-compose.yml
         run: scp -o "StrictHostKeyChecking=no" docker-compose.yml ${{ env.SSH_HOST }}:docker-compose.yml
       - name: apply docker-compose
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker-compose up --detach
+        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker-compose up -d
       - name: create .env
         run: |
           set -e
