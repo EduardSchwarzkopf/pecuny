@@ -68,4 +68,4 @@ jobs:
       - name: apply docker-compose
         run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker-compose up -d
       - name: monika start
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d --publish=8000:8000 --volume=$(pwd)/.env:/home/app/.env --name=${{ env.CONTAINER }} ${{ env.IMAGE }}
+        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d --publish=8000:8000 --env-file ./env --name=${{ env.CONTAINER }} ${{ env.IMAGE }}
