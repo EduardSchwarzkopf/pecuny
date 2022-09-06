@@ -49,18 +49,18 @@ jobs:
       - name: monika start
         run: |
           ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d --publish=8000:8000 \
-          -e SECRET_KEY=${{ secrets.SECRET_KEY }} \
-          -e ALGORITHM=HS256 \
-          -e ACCESS_TOKEN_EXPIRE_MINUTES=30 \
-          -e DB_NAME=${{ secrets.DB_NAME }} \
-          -e DB_HOST=postgres \
-          -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-          -e DB_PORT=${{ secrets.DB_PORT }} \
-          -e DB_USER=${{ secrets.DB_USER }} \
-          -e DB_USERNAME=${{ secrets.DB_USER }} \
-          -e FIEF_CLIENT_ID=${{ secrets.FIEF_CLIENT_ID }} \
-          -e FIEF_CLIENT_SECRET=${{ secrets.FIEF_CLIENT_SECRET }} \
-          -e FIEF_ENCRYPTION_KEY=${{ secrets.FIEF_ENCRYPTION_KEY }} \
-          -e FIEF_SECRET=${{ secrets.FIEF_SECRET }} \
-          --name=${{ env.CONTAINER }} \ 
-          ${{ env.IMAGE }}
+            -e SECRET_KEY=${{ secrets.SECRET_KEY }} \
+            -e ALGORITHM=HS256 \
+            -e ACCESS_TOKEN_EXPIRE_MINUTES=30 \
+            -e DB_NAME=${{ secrets.DB_NAME }} \
+            -e DB_HOST=postgres \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e DB_PORT=${{ secrets.DB_PORT }} \
+            -e DB_USER=${{ secrets.DB_USER }} \
+            -e DB_USERNAME=${{ secrets.DB_USER }} \
+            -e FIEF_CLIENT_ID=${{ secrets.FIEF_CLIENT_ID }} \
+            -e FIEF_CLIENT_SECRET=${{ secrets.FIEF_CLIENT_SECRET }} \
+            -e FIEF_ENCRYPTION_KEY=${{ secrets.FIEF_ENCRYPTION_KEY }} \
+            -e FIEF_SECRET=${{ secrets.FIEF_SECRET }} \
+            --name=${{ env.CONTAINER }} \ 
+            ${{ env.IMAGE }}
