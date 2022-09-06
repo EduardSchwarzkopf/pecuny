@@ -44,28 +44,23 @@ jobs:
         run: '${{ env.SSH_CMD }} ${{ env.SSH_HOST }}  docker rm --force ${{ env.CONTAINER }} || :'
       - name: copy docker-compose.yml
         run: scp -o "StrictHostKeyChecking=no" docker-compose.yml ${{ env.SSH_HOST }}:docker-compose.yml
-      - name: create .env
-        run: |
-          set -e
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} rm -f .env
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} touch .env
-          # monika
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} 'echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env'
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} 'echo "ALGORITHM=HS256" >> .env'
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} 'echo "ACCESS_TOKEN_EXPIRE_MINUTES=30" >> .env'
-          # database
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} 'echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env'
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} 'echo "DB_HOST=postgres" >> .env'
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} 'echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env'
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} 'echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env'
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} 'echo "DB_USER=${{ secrets.DB_USER }}" >> .env'
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} 'echo "DB_USERNAME=${{ secrets.DB_USER }}" >> .env'
-          # fief 
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} 'echo "FIEF_CLIENT_ID=${{ secrets.FIEF_CLIENT_ID }}" >> .env'
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} 'echo "FIEF_CLIENT_SECRET=${{ secrets.FIEF_CLIENT_SECRET }}" >> .env'
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} 'echo "FIEF_ENCRYPTION_KEY=${{ secrets.FIEF_ENCRYPTION_KEY }}" >> .env'
-          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} 'echo "FIEF_SECRET=${{ secrets.FIEF_SECRET }}" >> .env'
       - name: apply docker-compose
         run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker-compose up -d
       - name: monika start
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d --publish=8000:8000 --env-file ~/.env --name=${{ env.CONTAINER }} ${{ env.IMAGE }}
+        run: |
+          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d --publish=8000:8000 \
+          SECRET_KEY=${{ secrets.SECRET_KEY }} \
+          ALGORITHM=HS256 \
+          ACCESS_TOKEN_EXPIRE_MINUTES=30 \
+          DB_NAME=${{ secrets.DB_NAME }} \
+          DB_HOST=postgres \
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+          DB_PORT=${{ secrets.DB_PORT }} \
+          DB_USER=${{ secrets.DB_USER }} \
+          DB_USERNAME=${{ secrets.DB_USER }} \
+          FIEF_CLIENT_ID=${{ secrets.FIEF_CLIENT_ID }} \
+          FIEF_CLIENT_SECRET=${{ secrets.FIEF_CLIENT_SECRET }} \
+          FIEF_ENCRYPTION_KEY=${{ secrets.FIEF_ENCRYPTION_KEY }} \
+          FIEF_SECRET=${{ secrets.FIEF_SECRET }} \
+          --name=${{ env.CONTAINER }} \ 
+          ${{ env.IMAGE }}
