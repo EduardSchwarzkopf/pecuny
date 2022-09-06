@@ -64,5 +64,5 @@ jobs:
           ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} 'echo "FIEF_SECRET=${{ secrets.FIEF_SECRET }}" >> .env'
       - name: apply docker-compose
         run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker-compose up -d
-      - name: ${{ env.CONTAINER }} start
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run ${{ env.IMAGE }} --detach --publish=80:8000 --volume=.env:.env --name=${{ env.CONTAINER }}
+      - name: monika start
+        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run ${{ env.IMAGE }} -d --publish=80:8000 --volume=.env:.env --name=${{ env.CONTAINER }}
