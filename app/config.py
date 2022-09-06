@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     db_name: str
     db_url: str = ""
     db_port: str
-    db_passwort: str
+    db_password: str
     db_username: str
     secret_key: str
     algorithm: str
@@ -18,5 +18,5 @@ settings = Settings(".env")
 setattr(
     settings,
     "db_url",
-    f"postgresql://{settings.db_username}:{settings.db_passwort}@{settings.db_host}:{settings.db_port}/{settings.db_name}",
+    f"postgresql://{settings.db_username}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}",
 )
