@@ -4,7 +4,7 @@ services:
   postgres:
     image: "postgres:14-alpine"
     ports:
-      - ${DB_PORT}:5432
+      - 5432:5432
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -18,7 +18,7 @@ services:
     environment:
       DATABASE_TYPE: POSTGRESQL
       DATABASE_HOST: postgres
-      DATABASE_PORT: ${DB_PORT}
+      DATABASE_PORT: 5432
       DATABASE_USERNAME: ${DB_USER}
       DATABASE_PASSWORD: ${DB_PASSWORD}
       DATABASE_NAME: ${DB_NAME}
