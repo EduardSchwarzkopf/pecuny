@@ -8,7 +8,7 @@ from app.config import settings
 from app.database import Base
 from app import events
 
-SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.db_username}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}_test"
+SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.db_username}:{settings.db_password}@{settings.db_host}:{settings.test_db_port}/{settings.db_name}_test"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 app.add_middleware(DBSessionMiddleware, db_url=SQLALCHEMY_DATABASE_URL)

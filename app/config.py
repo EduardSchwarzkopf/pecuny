@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     secret_key: str
     algorithm: str
     access_token_expire_minutes: int = 30
+    test_db_port: str
 
 
 settings = Settings(".env")

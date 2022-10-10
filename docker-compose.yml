@@ -1,20 +1,32 @@
 version: "3"
 
 services:
-  postgres:
+  db:
     image: "postgres:14-alpine"
-    ports:
-      - 5432:5432
-    environment:
+    environment: 
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+    ports:
+      - ${DB_PORT}:5432
+    volumes:
+    - db_volume:/var/lib/postgresql/data
+
+  db_test:
+    image: "postgres:14-alpine"
+    environment: 
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}_test
+    ports:
+      - ${TEST_DB_PORT}:5432
+
   fief:
     image: "ghcr.io/fief-dev/fief:0.16"
     ports:
       - 9000:9000
     depends_on:
-      - postgres
+      - db
     environment:
       DATABASE_TYPE: POSTGRESQL
       DATABASE_HOST: postgres
@@ -33,3 +45,7 @@ services:
       LOGIN_SESSION_COOKIE_SECURE: 0
       SESSION_COOKIE_SECURE: 0
       FIEF_ADMIN_SESSION_COOKIE_SECURE: 0
+
+volumes:
+  db_volume:
+    driver: local
