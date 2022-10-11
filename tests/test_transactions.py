@@ -46,7 +46,6 @@ def test_create_transaction(
     assert new_transaction.information.amount == expected_amount
     assert type(new_transaction.information.amount) == float
     assert new_transaction.information.reference == reference
-    assert type(new_transaction.information.id) == int
 
 
 @pytest.mark.parametrize(
@@ -96,10 +95,10 @@ def test_updated_transaction(
 
     transaction = schemas.Transaction(**res.json())
 
-    difference = round(transaction_before.information.amount - amount, 2)
+    difference = transaction_before.information.amount - amount
 
-    assert account_after.balance == account_before.balance - difference
-    assert transaction.information.amount == amount
+    assert account_after.balance == round(account_before.balance - difference, 2)
+    assert transaction.information.amount == round(amount, 2)
     assert transaction.information.reference == reference
     assert transaction.information.subcategory_id == subcategory_id
 
