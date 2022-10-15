@@ -1,3 +1,4 @@
+from copy import deepcopy
 from .. import repository as repo, models, schemas, utils
 
 
@@ -33,27 +34,60 @@ def create_transaction(
 
     account = repo.get("Account", transaction_information.account_id)
 
-    # TODO: Check if user is also auth for offset account
-    if user.id == account.user_id:
+    if user.id != account.user_id:
+        return None
 
-        transaction_information.amount = _handle_transaction_amount(
-            transaction_information.amount, transaction_information.subcategory_id
+    transaction_information.amount = _handle_transaction_amount(
+        transaction_information.amount, transaction_information.subcategory_id
+    )
+
+    # TODO: Create a function to remove all attributes from request data
+    # transaction_information does not have a account_id attribute
+    delattr(transaction_information, "account_id")
+
+    offset_account = None
+    if transaction_information.offset_account_id:
+        offset_account_id = transaction_information.offset_account_id
+        offset_account = repo.get("Account", offset_account_id)
+
+        if user.id != offset_account.user_id:
+            return None
+
+        delattr(transaction_information, "offset_account_id")
+
+        # copy the object, so the amount won't get changed on the original transaction
+        offset_info = deepcopy(transaction_information)
+
+        offset_info.amount = offset_info.amount * -1
+        offset_account.balance += offset_info.amount
+
+        db_offset_transaction_information = models.TransactionInformation()
+        utils.update_model_object(db_offset_transaction_information, offset_info)
+
+    db_transaction_information = models.TransactionInformation()
+
+    utils.update_model_object(db_transaction_information, transaction_information)
+
+    account.balance += transaction_information.amount
+    transaction = models.Transaction(
+        information=db_transaction_information, account_id=account.id
+    )
+
+    if offset_account:
+        offset_transcation = models.Transaction(
+            information=db_offset_transaction_information,
+            account_id=offset_account_id,
+            offset_transaction=transaction,
         )
 
-        delattr(transaction_information, "account_id")
-        db_transaction_information = models.TransactionInformation()
+        transaction.offset_transaction = offset_transcation
 
-        utils.update_model_object(db_transaction_information, transaction_information)
+        setattr(transaction, "offset_transcation", offset_transcation)
 
-        account.balance += transaction_information.amount
-        transaction = models.Transaction(
-            information=db_transaction_information, account_id=account.id
-        )
+        repo.save(offset_transcation)
 
-        repo.save([account, transaction, db_transaction_information]),
-        return transaction
-
-    return None
+    repo.save([account, transaction, db_transaction_information])
+    return transaction
 
 
 def update_transaction(
