@@ -89,6 +89,7 @@ class Transaction(Base):
     id: int
     account_id: int
     information: TransactionInformationData
+    offset_transactions_id: Optional[int]
 
 
 class Account(Base):
