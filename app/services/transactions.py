@@ -37,10 +37,6 @@ def create_transaction(
     if user.id != account.user_id:
         return None
 
-    transaction_information.amount = _handle_transaction_amount(
-        transaction_information.amount, transaction_information.subcategory_id
-    )
-
     # TODO: Create a function to remove all attributes from request data
     # transaction_information does not have a account_id attribute
     delattr(transaction_information, "account_id")
@@ -55,7 +51,7 @@ def create_transaction(
 
         delattr(transaction_information, "offset_account_id")
 
-        # copy the object, so the amount won't get changed on the original transaction
+        # copy the object, so the amount won't get changed on the original transaction (referencing)
         offset_info = deepcopy(transaction_information)
 
         offset_info.amount = offset_info.amount * -1
@@ -150,14 +146,3 @@ def delete_transaction(current_user: models.User, transaction_id: int) -> bool:
     repo.delete(transaction)
 
     return True
-
-
-def _handle_transaction_amount(amount, subcategory_id):
-
-    subcategory = repo.get("TransactionSubcategory", subcategory_id)
-    parent_id = subcategory.parent_category_id
-
-    if parent_id != 1 and amount > 0:
-        amount = amount * -1
-
-    return amount
