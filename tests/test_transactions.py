@@ -16,7 +16,7 @@ from app.config import settings
         (1, 10, 10, "Added 10", 1, 201),
         (1, 20.5, 20.5, "Added 20.5", 3, 201),
         (1, -30.5, -30.5, "Substract 30.5", 6, 201),
-        (1, 40.5, -40.5, "Subsctract 40.5", 6, 201),
+        (1, -40.5, -40.5, "Subsctract 40.5", 6, 201),
     ],
 )
 def test_create_transaction(
@@ -135,12 +135,14 @@ def test_delete_transaction(
 
 
 @pytest.mark.parametrize(
-    "account_id, offset_account_id, amount, expected_amount, reference, subcategory_id, status_code",
+    "account_id, offset_account_id, amount, expected_offset_amount, reference, subcategory_id, status_code",
     [
-        (1, 5, 10, 10, "Added 10", 1, 201),
-        (1, 5, 20.5, 20.5, "Added 20.5", 3, 201),
-        (1, 5, -30.5, -30.5, "Substract 30.5", 6, 201),
-        (1, 5, 40.5, -40.5, "Subsctract 40.5", 6, 201),
+        (1, 5, 10, -10, "Added 10", 1, 201),
+        (1, 5, 20.5, -20.5, "Added 20.5", 3, 201),
+        (1, 5, -30.5, 30.5, "Substract 30.5", 6, 201),
+        (1, 5, -40.5, 40.5, "Substract 40.5", 6, 201),
+        (1, 5, 5.9999999999, -6, "Added 6", 6, 201),
+        (1, 5, 1.00000000004, -1, "Added 1", 6, 201),
     ],
 )
 def test_create_offset_transaction(
@@ -149,7 +151,7 @@ def test_create_offset_transaction(
     account_id,
     offset_account_id,
     amount,
-    expected_amount,
+    expected_offset_amount,
     reference,
     subcategory_id,
     status_code,
@@ -166,24 +168,20 @@ def test_create_offset_transaction(
         },
     )
 
+    assert res.status_code == status_code
+
     new_transaction = schemas.Transaction(**res.json())
-
     offset_transactions_id = new_transaction.offset_transactions_id
-
     res_offset = authorized_client.get(f"/transactions/{offset_transactions_id}")
-
     assert res_offset.status_code == 200
+
     new_offset_transaction = schemas.Transaction(**res_offset.json())
 
-    assert res.status_code == status_code
     assert new_transaction.account_id == account_id
     assert new_offset_transaction.account_id == offset_account_id
 
-    assert new_transaction.information.amount == expected_amount
-    assert (
-        new_transaction.information.amount
-        == new_offset_transaction.information.amount * -1
-    )
+    assert new_transaction.information.amount == round(amount, 2)
+    assert new_offset_transaction.information.amount == round(expected_offset_amount, 2)
 
     assert type(new_transaction.information.amount) == float
     assert type(new_offset_transaction.information.amount) == float
