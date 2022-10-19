@@ -37,29 +37,6 @@ def create_transaction(
     if user.id != account.user_id:
         return None
 
-    # TODO: Create a function to remove all attributes from request data
-    # transaction_information does not have a account_id attribute
-    delattr(transaction_information, "account_id")
-
-    offset_account = None
-    if transaction_information.offset_account_id:
-        offset_account_id = transaction_information.offset_account_id
-        offset_account = repo.get("Account", offset_account_id)
-
-        if user.id != offset_account.user_id:
-            return None
-
-        delattr(transaction_information, "offset_account_id")
-
-        # copy the object, so the amount won't get changed on the original transaction (referencing)
-        offset_info = deepcopy(transaction_information)
-
-        offset_info.amount = offset_info.amount * -1
-        offset_account.balance += offset_info.amount
-
-        db_offset_transaction_information = models.TransactionInformation()
-        utils.update_model_object(db_offset_transaction_information, offset_info)
-
     db_transaction_information = models.TransactionInformation()
 
     utils.update_model_object(db_transaction_information, transaction_information)
@@ -69,21 +46,42 @@ def create_transaction(
         information=db_transaction_information, account_id=account.id
     )
 
-    if offset_account:
-        offset_transcation = models.Transaction(
-            information=db_offset_transaction_information,
-            account_id=offset_account_id,
-            offset_transaction=transaction,
-        )
+    if transaction_information.offset_account_id:
+        offset_transaction = _handle_offset_transaction(user, transaction_information)
 
-        transaction.offset_transaction = offset_transcation
-
-        setattr(transaction, "offset_transcation", offset_transcation)
-
-        repo.save(offset_transcation)
+        transaction.offset_transaction = offset_transaction
+        offset_transaction.offset_transaction = transaction
 
     repo.save([account, transaction, db_transaction_information])
+
     return transaction
+
+
+def _handle_offset_transaction(
+    user: models.User, transaction_information: schemas.TransactionInformationCreate
+) -> models.Transaction:
+    offset_account_id = transaction_information.offset_account_id
+    offset_account = repo.get("Account", offset_account_id)
+
+    if user.id != offset_account.user_id:
+        return None
+
+    transaction_information.amount = transaction_information.amount * -1
+    offset_account.balance += transaction_information.amount
+
+    db_offset_transaction_information = models.TransactionInformation()
+    utils.update_model_object(
+        db_offset_transaction_information, transaction_information
+    )
+
+    offset_transcation = models.Transaction(
+        information=db_offset_transaction_information,
+        account_id=offset_account_id,
+    )
+
+    repo.save(offset_transcation)
+
+    return offset_transcation
 
 
 def update_transaction(
