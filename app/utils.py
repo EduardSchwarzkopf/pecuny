@@ -1,3 +1,4 @@
+from ast import Try
 from . import models, schemas
 from passlib.context import CryptContext
 
@@ -15,7 +16,13 @@ def verify(password: str, hashed_password: str):
 def update_model_object(model: models, schema: schemas):
     for key, value in schema.dict().items():
         # skip empty values or same as previous
-        if value == None or value == "" or value == getattr(model, key):
+        if value == None or value == "":
+            continue
+
+        try:
+            if value == getattr(model, key):
+                continue
+        except AttributeError:
             continue
 
         if key == "password":
