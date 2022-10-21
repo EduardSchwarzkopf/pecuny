@@ -94,27 +94,31 @@ def update_transaction(
         return
 
     account = repo.get("Account", transaction.account_id)
-    if current_user.id == account.user_id:
+    if current_user.id != account.user_id:
+        return
 
-        amount_updated = transaction_information.amount - transaction.information.amount
-        account.balance += amount_updated
+    amount_updated = transaction_information.amount - transaction.information.amount
+    account.balance += amount_updated
 
-        delattr(transaction_information, "account_id")
-        utils.update_model_object(transaction.information, transaction_information)
+    if transaction.offset_transaction:
+        offset_transaction = transaction.offset_transaction
+        offset_account = repo.get("Account", offset_transaction.account_id)
 
-        if transaction.offset_transaction:
-            offset_transaction = transaction.offset_transaction
-            offset_account = repo.get("Account", offset_transaction.account_id)
-            offset_account.balance -= amount_updated
+        if offset_account.user_id != current_user.id:
+            return
 
-            offset_info = transaction_information
-            offset_info.amount = offset_info.amount * -1
+        offset_account.balance -= amount_updated
 
-            utils.update_model_object(
-                transaction.offset_transaction.information, offset_info
-            )
+        offset_info = deepcopy(transaction_information)
+        offset_info.amount = offset_info.amount * -1
 
-        return transaction
+        utils.update_model_object(
+            transaction.offset_transaction.information, offset_info
+        )
+
+    utils.update_model_object(transaction.information, transaction_information)
+
+    return transaction
 
 
 def delete_transaction(current_user: models.User, transaction_id: int) -> bool:
@@ -122,16 +126,12 @@ def delete_transaction(current_user: models.User, transaction_id: int) -> bool:
     transaction = repo.get("Transaction", transaction_id)
 
     if transaction == None:
-        # No transaction found
         return
 
     account = repo.get("Account", transaction.account_id)
-
     if current_user.id != account.user_id:
-        # user is not owner of the account
         return
 
-    # handle transaction deletion
     amount = transaction.information.amount
     account.balance -= amount
 
