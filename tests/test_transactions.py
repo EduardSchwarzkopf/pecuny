@@ -197,5 +197,75 @@ def test_create_offset_transaction_other_account_fail(
     pass
 
 
-def test_edit_offset_transaction(authorized_client, test_transactions):
-    pass
+@pytest.mark.parametrize(
+    "account_id, offset_account_id, subcategory_id, amount",
+    [
+        (1, 5, 1, 2.5),
+        (1, 5, 1, 0),
+        (1, 5, 2, 3.666666666667),
+        (1, 5, 3, 0.133333333334),
+        (1, 5, 4, -25),
+        (1, 5, 1, -35),
+        (1, 5, 1, -0.3333333334),
+        (1, 5, 7, 0),
+    ],
+)
+def test_updated_offset_transaction(
+    authorized_client,
+    test_accounts,
+    account_id,
+    offset_account_id,
+    subcategory_id,
+    amount,
+):
+
+    account_before_res = authorized_client.get(f"/accounts/{account_id}")
+    account_before = schemas.Account(**account_before_res.json())
+
+    offset_account_before_res = authorized_client.get(f"/accounts/{offset_account_id}")
+    offset_account_before = schemas.Account(**offset_account_before_res.json())
+
+    transaction_res = authorized_client.post(
+        "/transactions/",
+        json={
+            "account_id": account_id,
+            "amount": 10,
+            "reference": "creation",
+            "date": str(datetime.datetime.utcnow()),
+            "subcategory_id": subcategory_id,
+            "offset_account_id": offset_account_id,
+        },
+    )
+    assert transaction_res.status_code == 201
+
+    transaction_before = schemas.Transaction(**transaction_res.json())
+
+    reference = f"Offset_transaction with {amount}"
+    res = authorized_client.post(
+        f"/transactions/{transaction_before.id}",
+        json={
+            "account_id": account_id,
+            "amount": amount,
+            "reference": reference,
+            "date": str(datetime.datetime.utcnow()),
+            "subcategory_id": subcategory_id,
+        },
+    )
+    assert res.status_code == 200
+
+    account_after_res = authorized_client.get(f"/accounts/{account_id}")
+    account_after = schemas.Account(**account_after_res.json())
+
+    offset_account_after_res = authorized_client.get(f"/accounts/{offset_account_id}")
+    offset_account_after = schemas.Account(**offset_account_after_res.json())
+
+    transaction = schemas.Transaction(**res.json())
+
+    assert account_after.balance == round(account_before.balance + amount, 2)
+    assert offset_account_after.balance == round(
+        offset_account_before.balance - amount, 2
+    )
+
+    assert transaction.information.amount == round(amount, 2)
+    assert transaction.information.reference == reference
+    assert transaction.information.subcategory_id == subcategory_id
