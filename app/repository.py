@@ -80,3 +80,8 @@ def delete(object: models):
 
 def refresh(object: models):
     return __db_action("refresh", object)
+
+
+def refresh_all(object_list: models) -> None:
+    for object in object_list:
+        __db_action("refresh", object)
