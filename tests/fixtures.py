@@ -67,14 +67,19 @@ def test_users():
 
 
 @pytest.fixture()
-def test_account(authorized_client):
+def test_account(test_user):
     account_data = {"label": "test_account", "description": "test", "balance": 5000}
 
-    res = authorized_client.post("/accounts/", json=account_data)
+    with db():
+        user = db.session.query(models.User).first()
+        db_account = models.Account(
+            user=user,
+            **account_data,
+        )
+        db.session.add(db_account)
 
-    assert res.status_code == 201
-    new_account = res.json()
-    yield new_account
+        db.session.commit()
+        yield db.session.query(models.Account).first()
 
 
 @pytest.fixture()
