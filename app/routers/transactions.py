@@ -43,8 +43,12 @@ def create_transaction(
         service.create_transaction, current_user, transaction_information
     )
 
-    # TODO: Create Not allowed response if user is not account owner
-    return transaction
+    if transaction:
+        return transaction
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="Transaction not created"
+    )
 
 
 @router.post("/{transaction_id}", response_model=response_model)
