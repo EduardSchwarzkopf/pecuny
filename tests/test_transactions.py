@@ -189,14 +189,14 @@ def test_create_offset_transaction(
 
 
 @pytest.mark.parametrize(
-    "account_id, offset_account_id, amount, expected_offset_amount, reference, subcategory_id, status_code",
+    "account_id, offset_account_id, amount",
     [
-        (1, 2, 10, -10, "Added 10", 1, 201),
-        (1, 3, 20.5, -20.5, "Added 20.5", 3, 201),
-        (1, 4, -30.5, 30.5, "Substract 30.5", 6, 201),
-        (1, 2, -40.5, 40.5, "Substract 40.5", 6, 201),
-        (1, 2, 5.9999999999, -6, "Added 6", 6, 201),
-        (1, 2, 1.00000000004, -1, "Added 1", 6, 201),
+        (1, 2, 10),
+        (1, 3, 20.5),
+        (1, 4, -30.5),
+        (1, 2, -40.5),
+        (1, 2, 5.9999999999),
+        (1, 2, 1.00000000004),
     ],
 )
 def test_create_offset_transaction_other_account_fail(
@@ -205,10 +205,7 @@ def test_create_offset_transaction_other_account_fail(
     account_id,
     offset_account_id,
     amount,
-    expected_offset_amount,
-    reference,
     subcategory_id,
-    status_code,
 ):
     account_before = repo.get("Account", account_id)
     offset_account_before = repo.get("Account", offset_account_id)
@@ -218,7 +215,7 @@ def test_create_offset_transaction_other_account_fail(
         json={
             "account_id": account_id,
             "amount": amount,
-            "reference": reference,
+            "reference": "Not allowed",
             "date": str(datetime.datetime.utcnow()),
             "subcategory_id": subcategory_id,
             "offset_account_id": offset_account_id,
