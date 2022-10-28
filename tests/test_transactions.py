@@ -27,6 +27,9 @@ def test_create_transaction(
     subcategory_id,
     status_code,
 ):
+    account = repo.get("Account", account_id)
+    account_balance = account.balance
+
     res = authorized_client.post(
         "/transactions/",
         json={
@@ -39,7 +42,11 @@ def test_create_transaction(
     )
     new_transaction = schemas.Transaction(**res.json())
 
+    repo.refresh(account)
+    account_balance_after = account.balance
+
     assert res.status_code == status_code
+    assert account_balance + amount == account_balance_after
     assert new_transaction.account_id == account_id
     assert new_transaction.information.amount == expected_amount
     assert type(new_transaction.information.amount) == float
@@ -78,24 +85,25 @@ def test_updated_transaction(
         "subcategory_id": subcategory_id,
     }
 
-    account_before_res = authorized_client.get(f"/accounts/{account_id}")
-    account_before = schemas.Account(**account_before_res.json())
+    account = repo.get("Account", account_id)
+    repo.refresh(account)
+    account_balance = account.balance
 
-    transaction_res = authorized_client.get(f"/transactions/{transaction_id}")
-    transaction_before = schemas.Transaction(**transaction_res.json())
+    transaction_before = repo.get("Transaction", transaction_id)
+    transaction_amount_before = transaction_before.information.amount
 
     res = authorized_client.post(f"/transactions/{transaction_id}", json=json)
 
     assert res.status_code == status_code
 
-    account_after_res = authorized_client.get(f"/accounts/{account_id}")
-    account_after = schemas.Account(**account_after_res.json())
+    repo.refresh(account)
+    account_balance_after = account.balance
 
     transaction = schemas.Transaction(**res.json())
 
-    difference = transaction_before.information.amount - amount
+    difference = transaction_amount_before - amount
 
-    assert account_after.balance == round(account_before.balance - difference, 2)
+    assert account_balance_after == round(account_balance - difference, 2)
     assert transaction.information.amount == round(amount, 2)
     assert transaction.information.reference == reference
     assert transaction.information.subcategory_id == subcategory_id
@@ -106,30 +114,47 @@ def test_updated_transaction(
     [
         (1, 1, 204),
         (1, 2, 204),
-        (1, 3, 204),
-        (1, 9999, 404),
     ],
 )
 def test_delete_transaction(
     authorized_client, test_transactions, account_id, transaction_id, status_code
 ):
-    account_before_res = authorized_client.get(f"/accounts/{account_id}")
-    account_before = schemas.Account(**account_before_res.json())
-
-    transaction_response = authorized_client.get(f"/transactions/{transaction_id}")
-
-    if transaction_response.status_code == 404:
-        return
+    account = repo.get("Account", account_id)
+    repo.refresh(account)  # session not updated, so we need to refresh first
+    account_balance = account.balance
+    transaction = repo.get("Transaction", transaction_id)
+    amount = transaction.information.amount
 
     res = authorized_client.delete(f"/transactions/{transaction_id}")
-
-    account_after_res = authorized_client.get(f"/accounts/{account_id}")
-    account_after = schemas.Account(**account_after_res.json())
-    new_balance = account_after.balance
-
-    transaction = schemas.Transaction(**transaction_response.json())
     assert res.status_code == status_code
-    assert new_balance == (account_before.balance - transaction.information.amount)
+
+    repo.refresh(account)
+    account_balance_after = account.balance
+
+    assert account_balance_after == (account_balance - amount)
+
+
+@pytest.mark.parametrize(
+    "account_id, transaction_id, status_code",
+    [
+        (1, 3, 404),
+        (1, 9999, 404),
+    ],
+)
+def test_delete_transaction_fail(
+    authorized_client, test_transactions, account_id, transaction_id, status_code
+):
+    account = repo.get("Account", account_id)
+    repo.refresh(account)  # session not updated, so we need to refresh first
+    account_balance = account.balance
+
+    res = authorized_client.delete(f"/transactions/{transaction_id}")
+    assert res.status_code == status_code
+
+    repo.refresh(account)
+    account_balance_after = account.balance
+
+    assert account_balance_after == account_balance
 
 
 @pytest.mark.parametrize(
@@ -205,10 +230,12 @@ def test_create_offset_transaction_other_account_fail(
     account_id,
     offset_account_id,
     amount,
-    subcategory_id,
 ):
-    account_before = repo.get("Account", account_id)
-    offset_account_before = repo.get("Account", offset_account_id)
+    account = repo.get("Account", account_id)
+    offset_account = repo.get("Account", offset_account_id)
+
+    account_balance = account.balance
+    offset_account_balance = offset_account.balance
 
     res = authorized_client.post(
         "/transactions/",
@@ -217,18 +244,21 @@ def test_create_offset_transaction_other_account_fail(
             "amount": amount,
             "reference": "Not allowed",
             "date": str(datetime.datetime.utcnow()),
-            "subcategory_id": subcategory_id,
+            "subcategory_id": 1,
             "offset_account_id": offset_account_id,
         },
     )
 
-    account_after = repo.get("Account", account_id)
-    offset_account_after = repo.get("Account", offset_account_id)
+    repo.refresh(account)
+    repo.refresh(offset_account)
+
+    account_balance_after = account.balance
+    offset_account_balance_after = offset_account.balance
 
     assert res.status_code == 401
 
-    assert account_before.balance == account_after.balance
-    assert offset_account_before.balance == offset_account_after.balance
+    assert account_balance == account_balance_after
+    assert offset_account_balance == offset_account_balance_after
 
 
 @pytest.mark.parametrize(
@@ -253,11 +283,11 @@ def test_updated_offset_transaction(
     amount,
 ):
 
-    account_before_res = authorized_client.get(f"/accounts/{account_id}")
-    account_before = schemas.Account(**account_before_res.json())
+    account = repo.get("Account", account_id)
+    offset_account = repo.get("Account", offset_account_id)
 
-    offset_account_before_res = authorized_client.get(f"/accounts/{offset_account_id}")
-    offset_account_before = schemas.Account(**offset_account_before_res.json())
+    account_balance = account.balance
+    offset_account_balance = offset_account.balance
 
     transaction_res = authorized_client.post(
         "/transactions/",
@@ -270,8 +300,6 @@ def test_updated_offset_transaction(
             "offset_account_id": offset_account_id,
         },
     )
-    assert transaction_res.status_code == 201
-
     transaction_before = schemas.Transaction(**transaction_res.json())
 
     reference = f"Offset_transaction with {amount}"
@@ -287,18 +315,15 @@ def test_updated_offset_transaction(
     )
     assert res.status_code == 200
 
-    account_after_res = authorized_client.get(f"/accounts/{account_id}")
-    account_after = schemas.Account(**account_after_res.json())
+    repo.refresh_all([account, offset_account])
 
-    offset_account_after_res = authorized_client.get(f"/accounts/{offset_account_id}")
-    offset_account_after = schemas.Account(**offset_account_after_res.json())
+    account_balance_after = account.balance
+    offset_account_balance_after = offset_account.balance
 
     transaction = schemas.Transaction(**res.json())
 
-    assert account_after.balance == round(account_before.balance + amount, 2)
-    assert offset_account_after.balance == round(
-        offset_account_before.balance - amount, 2
-    )
+    assert account_balance_after == round(account_balance + amount, 2)
+    assert offset_account_balance_after == round(offset_account_balance - amount, 2)
 
     assert transaction.information.amount == round(amount, 2)
     assert transaction.information.reference == reference
@@ -327,11 +352,11 @@ def test_delete_offset_transaction(
     amount,
 ):
 
-    account_before_res = authorized_client.get(f"/accounts/{account_id}")
-    account_before = schemas.Account(**account_before_res.json())
+    account = repo.get("Account", account_id)
+    offset_account = repo.get("Account", offset_account_id)
 
-    offset_account_before_res = authorized_client.get(f"/accounts/{offset_account_id}")
-    offset_account_before = schemas.Account(**offset_account_before_res.json())
+    account_balance = account.balance
+    offset_account_balance = offset_account.balance
 
     transaction_res = authorized_client.post(
         "/transactions/",
@@ -355,11 +380,9 @@ def test_delete_offset_transaction(
     assert res.status_code == 204
     assert offset_transaction_res.status_code == 404
 
-    account_after_res = authorized_client.get(f"/accounts/{account_id}")
-    account_after = schemas.Account(**account_after_res.json())
+    repo.refresh_all([account, offset_account])
+    account_balance_after = account.balance
+    offset_account_balance_after = offset_account.balance
 
-    offset_account_after_res = authorized_client.get(f"/accounts/{offset_account_id}")
-    offset_account_after = schemas.Account(**offset_account_after_res.json())
-
-    assert offset_account_before.balance == offset_account_after.balance
-    assert account_before.balance == account_after.balance
+    assert offset_account_balance == offset_account_balance_after
+    assert account_balance_after == account_balance_after
