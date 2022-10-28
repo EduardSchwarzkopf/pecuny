@@ -1,9 +1,7 @@
 import datetime
 import pytest
-from jose import jwt
 
-from app import schemas
-from app.config import settings
+from app import schemas, repository as repo
 
 #
 # use with: pytest --disable-warnings -v -x
@@ -190,11 +188,50 @@ def test_create_offset_transaction(
     assert new_offset_transaction.information.reference == reference
 
 
-# check if offset transaction can pull money from an account, that the user does not own
+@pytest.mark.parametrize(
+    "account_id, offset_account_id, amount, expected_offset_amount, reference, subcategory_id, status_code",
+    [
+        (1, 2, 10, -10, "Added 10", 1, 201),
+        (1, 3, 20.5, -20.5, "Added 20.5", 3, 201),
+        (1, 4, -30.5, 30.5, "Substract 30.5", 6, 201),
+        (1, 2, -40.5, 40.5, "Substract 40.5", 6, 201),
+        (1, 2, 5.9999999999, -6, "Added 6", 6, 201),
+        (1, 2, 1.00000000004, -1, "Added 1", 6, 201),
+    ],
+)
 def test_create_offset_transaction_other_account_fail(
-    authorized_client, test_transactions
+    authorized_client,
+    test_accounts,
+    account_id,
+    offset_account_id,
+    amount,
+    expected_offset_amount,
+    reference,
+    subcategory_id,
+    status_code,
 ):
-    pass
+    account_before = repo.get("Account", account_id)
+    offset_account_before = repo.get("Account", offset_account_id)
+
+    res = authorized_client.post(
+        "/transactions/",
+        json={
+            "account_id": account_id,
+            "amount": amount,
+            "reference": reference,
+            "date": str(datetime.datetime.utcnow()),
+            "subcategory_id": subcategory_id,
+            "offset_account_id": offset_account_id,
+        },
+    )
+
+    account_after = repo.get("Account", account_id)
+    offset_account_after = repo.get("Account", offset_account_id)
+
+    assert res.status_code == 401
+
+    assert account_before.balance == account_after.balance
+    assert offset_account_before.balance == offset_account_after.balance
 
 
 @pytest.mark.parametrize(
@@ -269,3 +306,63 @@ def test_updated_offset_transaction(
     assert transaction.information.amount == round(amount, 2)
     assert transaction.information.reference == reference
     assert transaction.information.subcategory_id == subcategory_id
+
+
+@pytest.mark.parametrize(
+    "account_id, offset_account_id, subcategory_id, amount",
+    [
+        (1, 5, 1, 2.5),
+        (1, 5, 1, 0),
+        (1, 5, 2, 3.666666666667),
+        (1, 5, 3, 0.133333333334),
+        (1, 5, 4, -25),
+        (1, 5, 1, -35),
+        (1, 5, 1, -0.3333333334),
+        (1, 5, 7, 0),
+    ],
+)
+def test_delete_offset_transaction(
+    authorized_client,
+    test_accounts,
+    account_id,
+    offset_account_id,
+    subcategory_id,
+    amount,
+):
+
+    account_before_res = authorized_client.get(f"/accounts/{account_id}")
+    account_before = schemas.Account(**account_before_res.json())
+
+    offset_account_before_res = authorized_client.get(f"/accounts/{offset_account_id}")
+    offset_account_before = schemas.Account(**offset_account_before_res.json())
+
+    transaction_res = authorized_client.post(
+        "/transactions/",
+        json={
+            "account_id": account_id,
+            "amount": amount,
+            "reference": "creation",
+            "date": str(datetime.datetime.utcnow()),
+            "subcategory_id": subcategory_id,
+            "offset_account_id": offset_account_id,
+        },
+    )
+
+    transaction = schemas.Transaction(**transaction_res.json())
+
+    res = authorized_client.delete(f"/transactions/{transaction.id}")
+    offset_transaction_res = authorized_client.get(
+        f"/transactions/{transaction.offset_transactions_id}"
+    )
+
+    assert res.status_code == 204
+    assert offset_transaction_res.status_code == 404
+
+    account_after_res = authorized_client.get(f"/accounts/{account_id}")
+    account_after = schemas.Account(**account_after_res.json())
+
+    offset_account_after_res = authorized_client.get(f"/accounts/{offset_account_id}")
+    offset_account_after = schemas.Account(**offset_account_after_res.json())
+
+    assert offset_account_before.balance == offset_account_after.balance
+    assert account_before.balance == account_after.balance
