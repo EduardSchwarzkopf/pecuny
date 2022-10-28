@@ -50,7 +50,9 @@ def create_transaction(
         offset_transaction = _handle_offset_transaction(user, transaction_information)
 
         if offset_transaction == None:
-            return None
+            raise Exception(
+                f"User[id: {user.id}] not allowed to access offset_account[id: {transaction_information.offset_account_id}"
+            )
 
         transaction.offset_transaction = offset_transaction
         offset_transaction.offset_transaction = transaction
