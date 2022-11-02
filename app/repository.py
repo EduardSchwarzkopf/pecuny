@@ -1,6 +1,7 @@
+import uuid
 from sqlalchemy import or_, extract, and_
 from . import models
-from fastapi_sqlalchemy import db
+from .database import db
 from datetime import datetime
 
 
@@ -9,19 +10,19 @@ def __str_to_class(classname: str):
 
 
 def __db_action(action_name: str, object):
-    method = getattr(db.session, action_name)
+    method = getattr(db._session, action_name)
     method(object)
 
 
 def __db_query_action(filter_option: str, name: str, attribute: str, value: str):
     class_ = __str_to_class(name)
     attr = getattr(class_, attribute)
-    return getattr(db.session.query(class_), filter_option)(attr == value)
+    return getattr(db._session.query(class_), filter_option)(attr == value)
 
 
 def get_all(name: str):
     class_ = __str_to_class(name)
-    return db.session.query(class_).all()
+    return db._session.query(class_).all()
 
 
 def filter(name: str, attribute: str, value: str):
@@ -32,9 +33,13 @@ def filter_by(name: str, attribute: str, value: str):
     return __db_query_action("filter_by", name, attribute, value)
 
 
-def get(name: str, id: int):
+async def get(name: str, id: int):
     class_ = __str_to_class(name)
-    return db.session.query(class_).get(id)
+    return db._session.query(class_).get(id)
+
+
+def get_user(id: uuid):
+    return db._session.query(models.User).get(id)
 
 
 def get_transactions_from_period(
@@ -48,7 +53,7 @@ def get_transactions_from_period(
     class_date = information_class.date
 
     return (
-        db.session.query(class_)
+        db._session.query(class_)
         .join(class_.information)
         .filter(class_date <= end_date)
         .filter(class_date >= start_date)
@@ -60,7 +65,7 @@ def get_transactions_from_period(
 def get_scheduled_transactions_for_date(date: datetime):
     ts = models.TransactionScheduled
     return (
-        db.session.query(ts)
+        db._session.query(ts)
         .filter(ts.date_start <= date)
         .filter(or_(ts.date_end == None, ts.date_end >= date))
         .all()
