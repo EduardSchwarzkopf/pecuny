@@ -22,31 +22,6 @@ services:
     profiles:
       - dev
 
-  fief:
-    image: "ghcr.io/fief-dev/fief:0.16"
-    ports:
-      - 9000:9000
-    depends_on:
-      - db
-    environment:
-      DATABASE_TYPE: POSTGRESQL
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USERNAME: ${DB_USER}
-      DATABASE_PASSWORD: ${DB_PASSWORD}
-      DATABASE_NAME: ${DB_NAME}
-      SECRET: ${FIEF_SECRET}
-      FIEF_CLIENT_ID: ${FIEF_CLIENT_ID}
-      FIEF_CLIENT_SECRET: ${FIEF_CLIENT_SECRET}
-      ENCRYPTION_KEY: ${FIEF_ENCRYPTION_KEY}
-      PORT: 9000
-      ROOT_DOMAIN: "localhost:9000"
-      FIEF_DOMAIN: "localhost:9000"
-      CSRF_COOKIE_SECURE: 0
-      LOGIN_SESSION_COOKIE_SECURE: 0
-      SESSION_COOKIE_SECURE: 0
-      FIEF_ADMIN_SESSION_COOKIE_SECURE: 0
-
 volumes:
   db_volume:
     driver: local
