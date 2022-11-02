@@ -1,5 +1,4 @@
-from typing import AsyncGenerator, List
-from fastapi import Depends
+from typing import List
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from .config import settings
@@ -12,11 +11,28 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 SQLALCHEMY_DATABASE_URL = settings.db_url
 
-engine = create_async_engine(SQLALCHEMY_DATABASE_URL)
 Base = declarative_base()
 
 
-async_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+class AsyncDatabaseSession:
+    def __init__(self):
+        self._session = None
+        self._engine = None
+
+    def __getattr__(self, name):
+        return getattr(self._session, name)
+
+    def init(self):
+        self._engine = create_async_engine(
+            SQLALCHEMY_DATABASE_URL,
+            future=True,
+        )
+        self._session = sessionmaker(
+            self._engine, expire_on_commit=False, class_=AsyncSession
+        )()
+
+
+db = AsyncDatabaseSession()
 
 
 class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
@@ -27,10 +43,5 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     oauth_accounts: List[OAuthAccount] = relationship("OAuthAccount", lazy="joined")
 
 
-async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
-    async with async_session_maker() as session:
-        yield session
-
-
-async def get_user_db(session: AsyncSession = Depends(get_async_session)):
-    yield SQLAlchemyUserDatabase(session, User, OAuthAccount)
+async def get_user_db():
+    yield SQLAlchemyUserDatabase(db._session, User, OAuthAccount)
