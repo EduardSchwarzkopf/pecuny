@@ -127,8 +127,11 @@ class TransactionCategory(BaseModel):
     )
 
 
-class TransactionSubcategory(BaseModel, UserId):
+class TransactionSubcategory(BaseModel):
     __tablename__ = "transactions_subcategories"
+
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"))
+    user = relationship("User")
 
     label = Column(String(36))
     is_income = Column(Boolean, default=False)
