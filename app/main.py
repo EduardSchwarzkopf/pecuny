@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends
 from fastapi_sqlalchemy import DBSessionMiddleware
 import fastapi_users
-from .database import SQLALCHEMY_DATABASE_URL
+from .database import SQLALCHEMY_DATABASE_URL, db
 from .routers import accounts, transactions
 
 from app.database import User
@@ -12,6 +12,7 @@ from app.routers.users import auth_backend, current_active_user, fastapi_users
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+db.init()
 
 # Allowed Domains to talk to this api
 origins = ["http://localhost"]
