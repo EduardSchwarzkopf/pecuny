@@ -1,8 +1,11 @@
 from typing import List
 from fastapi import Depends, APIRouter, status, Response
 from fastapi.exceptions import HTTPException
+
+from app.database import User
 from .. import models, schemas, oauth2, transaction_manager as tm
 from ..services import accounts as service
+from app.routers.users import current_active_user
 
 
 router = APIRouter(prefix="/accounts", tags=["Accounts"])
@@ -31,11 +34,10 @@ def get_account(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
-def create_account(
-    account: schemas.Account,
-    current_user: models.User = Depends(oauth2.get_current_user),
+async def authenticated_route(
+    account: schemas.Account, current_user: User = Depends(current_active_user)
 ):
-    account = tm.transaction(service.create_account, current_user, account)
+    account = await tm.transaction(service.create_account, current_user, account)
     return account
 
 
