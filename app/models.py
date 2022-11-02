@@ -3,7 +3,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.ext.declarative import declared_attr
-from .database import Base
+from .database import Base, User
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class BaseModel(Base):
@@ -24,21 +25,14 @@ class UserId(Base):
     @declared_attr
     def user_id(cls):
         return Column(
-            Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+            UUID(as_uuid=True),
+            ForeignKey("user.id", ondelete="CASCADE"),
+            nullable=False,
         )
 
     @declared_attr
     def user(cls):
         return relationship("User")
-
-
-class User(BaseModel):
-    __tablename__ = "users"
-
-    username = Column(String(64), nullable=False, unique=True)
-    email = Column(String, nullable=False, unique=True)
-    password = Column(String, nullable=False)
-    last_seen = Column(DateTime)
 
 
 class Account(BaseModel, UserId):
@@ -55,7 +49,7 @@ class Account(BaseModel, UserId):
     )
 
 
-class Transaction(BaseModel):
+class Transaction(BaseModel, UserId):
     __tablename__ = "transactions"
 
     account_id = Column(Integer, ForeignKey("accounts.id"))
@@ -133,11 +127,9 @@ class TransactionCategory(BaseModel):
     )
 
 
-class TransactionSubcategory(BaseModel):
+class TransactionSubcategory(BaseModel, UserId):
     __tablename__ = "transactions_subcategories"
 
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
-    user = relationship("User")
     label = Column(String(36))
     is_income = Column(Boolean, default=False)
     parent_category_id = Column(Integer, ForeignKey("transactions_categories.id"))
