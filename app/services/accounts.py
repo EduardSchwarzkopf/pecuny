@@ -1,5 +1,5 @@
 from typing import List
-from .. import models, schemas, utils
+from .. import models, schemas
 
 
 async def get_accounts(current_user: models.User) -> List[models.Account]:

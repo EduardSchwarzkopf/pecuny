@@ -1,5 +1,5 @@
 from copy import deepcopy
-from .. import repository as repo, models, schemas, utils
+from .. import models, schemas, repository as repo
 
 
 def get_transaction_list(
@@ -39,8 +39,6 @@ def create_transaction(
 
     db_transaction_information = models.TransactionInformation()
 
-    utils.update_model_object(db_transaction_information, transaction_information)
-
     account.balance += transaction_information.amount
     transaction = models.Transaction(
         information=db_transaction_information, account_id=account.id
@@ -75,10 +73,6 @@ def _handle_offset_transaction(
     offset_account.balance += transaction_information.amount
 
     db_offset_transaction_information = models.TransactionInformation()
-    utils.update_model_object(
-        db_offset_transaction_information, transaction_information
-    )
-
     offset_transcation = models.Transaction(
         information=db_offset_transaction_information,
         account_id=offset_account_id,
@@ -116,12 +110,6 @@ def update_transaction(
 
         offset_info = deepcopy(transaction_information)
         offset_info.amount = offset_info.amount * -1
-
-        utils.update_model_object(
-            transaction.offset_transaction.information, offset_info
-        )
-
-    utils.update_model_object(transaction.information, transaction_information)
 
     return transaction
 
