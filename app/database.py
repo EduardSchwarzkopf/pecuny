@@ -19,9 +19,6 @@ class AsyncDatabaseSession:
         self._session = None
         self._engine = None
 
-    def __getattr__(self, name):
-        return getattr(self._session, name)
-
     def init(self):
         self._engine = create_async_engine(
             SQLALCHEMY_DATABASE_URL,
