@@ -8,11 +8,11 @@ async def transaction(handler, *args: Any) -> Any:
         result = await handler(*args)
         await db._session.commit()
         if _is_models_object(result):
-            db._session.refresh(result)
+            await db._session.refresh(result)
 
     except Exception as e:
         result = {}
-        db._session.rollback()
+        await db._session.rollback()
     finally:
         return result
 
