@@ -1,26 +1,45 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from fastapi_sqlalchemy import DBSessionMiddleware
-from fastapi_sqlalchemy import db
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from app.main import app
 from app.config import settings
 from app.database import Base
 from app import events
 
-SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.db_username}:{settings.db_password}@{settings.db_host}:{settings.test_db_port}/{settings.db_name}_test"
+SQLALCHEMY_DATABASE_URL = f"{settings.db_url}_test"
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-app.add_middleware(DBSessionMiddleware, db_url=SQLALCHEMY_DATABASE_URL)
+
+class AsyncDatabaseSession:
+    def __init__(self):
+        self._session = None
+        self._engine = None
+
+    def __getattr__(self, name):
+        return getattr(self._session, name)
+
+    def init(self):
+        self._engine = create_async_engine(
+            SQLALCHEMY_DATABASE_URL,
+            future=True,
+        )
+        self._session = sessionmaker(
+            self._engine, expire_on_commit=False, class_=AsyncSession
+        )()
+
+
+db = AsyncDatabaseSession()
 
 
 @pytest.fixture()
 def session():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+    db.init()
+    Base.metadata.drop_all(bind=db._engine)
+    Base.metadata.create_all(bind=db._engine)
 
-    with db():
-        events.create_categories(db.session)
+    events.create_categories(db._session)
+
+    yield db._session
 
 
 @pytest.fixture()
