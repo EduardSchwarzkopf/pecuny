@@ -13,19 +13,19 @@ response_model = schemas.AccountData
 
 
 @router.get("/", response_model=List[response_model])
-def get_accounts(
-    current_user: models.User = Depends(oauth2.get_current_user),
+async def get_accounts(
+    current_user: User = Depends(current_active_user),
 ):
-    accounts = service.get_accounts(current_user)
+    accounts = await service.get_accounts(current_user)
     return accounts
 
 
 @router.get("/{account_id}", response_model=response_model)
-def get_account(
+async def get_account(
     account_id: int,
-    current_user: models.User = Depends(oauth2.get_current_user),
+    current_user: User = Depends(current_active_user),
 ):
-    account = service.get_account(current_user, account_id)
+    account = await service.get_account(current_user, account_id)
 
     if account is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
@@ -34,7 +34,7 @@ def get_account(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
-async def authenticated_route(
+async def create_account(
     account: schemas.Account, current_user: User = Depends(current_active_user)
 ):
     account = await tm.transaction(service.create_account, current_user, account)
@@ -42,22 +42,22 @@ async def authenticated_route(
 
 
 @router.put("/{account_id}", response_model=response_model)
-def update_account(
+async def update_account(
     account_id: int,
     account_data: schemas.AccountUpdate,
-    current_user: models.User = Depends(oauth2.get_current_user),
+    current_user: User = Depends(current_active_user),
 ):
-    updated_account = tm.transaction(
+    updated_account = await tm.transaction(
         service.update_account, current_user, account_id, account_data
     )
     return updated_account
 
 
 @router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_account(
-    account_id: int, current_user: models.User = Depends(oauth2.get_current_user)
+async def delete_account(
+    account_id: int, current_user: User = Depends(current_active_user)
 ):
-    result = tm.transaction(service.delete_account, current_user, account_id)
+    result = await tm.transaction(service.delete_account, current_user, account_id)
     if result:
         return Response(
             status_code=status.HTTP_204_NO_CONTENT,
