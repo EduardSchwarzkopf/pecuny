@@ -1,54 +1,45 @@
 from typing import List
-from .. import repository as repo, models, schemas, utils
+from .. import models, schemas, utils
 
 
-def get_accounts(current_user: models.User) -> List[models.Account]:
-    accounts = repo.filter("Account", "user_id", current_user.id).all()
+async def get_accounts(current_user: models.User) -> List[models.Account]:
+    account_list = await models.Account.filter("user_id", current_user.id)
 
-    return accounts
+    return account_list
 
 
-def get_account(current_user: models.User, account_id: int) -> models.Account:
+async def get_account(current_user: models.User, account_id: int) -> models.Account:
 
-    account = repo.get("Account", account_id)
+    account = await models.Account.get(account_id)
     if account and account.user_id == current_user.id:
         return account
 
     return None
 
 
-def create_account(user: models.User, account: schemas.Account) -> models.Account:
+async def create_account(user: models.User, account: schemas.Account) -> models.Account:
 
-    db_account = models.Account(
-        user=user,
-        **account.dict(),
-    )
-
-    repo.save(db_account)
-
+    db_account = await models.Account.create(user=user, **account.dict())
     return db_account
 
 
-def update_account(
+async def update_account(
     current_user: models.User, account_id, account: schemas.AccountData
 ) -> models.Account:
 
-    db_account = repo.get("Account", account_id)
+    db_account = await models.Account.get(account_id)
     if db_account.user_id == current_user.id:
-        utils.update_model_object(db_account, account)
-        repo.save(db_account)
-
+        await db_account.update(account_id, **account.dict())
         return db_account
 
     return None
 
 
-def delete_account(current_user: models.User, account_id: int) -> bool:
+async def delete_account(current_user: models.User, account_id: int) -> bool:
 
-    account = repo.get("Account", account_id)
+    account = await models.Account.get(account_id)
     if account and account.user_id == current_user.id:
-
-        repo.delete(account)
+        account.delete(account_id)
         return True
 
     return None
