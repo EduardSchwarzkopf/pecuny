@@ -31,6 +31,7 @@ async def get_user(id: uuid):
     return result.scalar_one_or_none()
 
 
+# TODO: update to async sessions
 async def get_transactions_from_period(
     account_id: int, start_date: datetime, end_date: datetime
 ):
@@ -48,6 +49,7 @@ async def get_transactions_from_period(
     )
 
 
+# TODO: update to async sessions
 async def get_scheduled_transactions_for_date(date: datetime):
     ts = models.TransactionScheduled
     return (
@@ -84,7 +86,7 @@ async def refresh(obj: models):
     return db._session.refresh(obj)
 
 
-async def refresh_all(model_list: models) -> None:
+async def refresh_all(object_list: models) -> None:
     print("\033[2;31;43m refresh_all method called, check for odd behaviour \033[0;0m")
-    for obj in model_list:
+    for obj in object_list:
         db._session.refresh(obj)
