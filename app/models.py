@@ -1,23 +1,13 @@
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Numeric,
-    DateTime,
-    text,
-    Boolean,
-    update as sqlalchemy_update,
-    delete as sqlalchemy_delete,
-)
+from sqlalchemy import Column, Integer, String, Numeric, DateTime, text, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.ext.declarative import declared_attr
-from .database import Base, db, User
+from .database import (
+    Base,
+    User,  # import User here, to be consistent with model imports
+)
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.future import select
-from typing import List
-from typing_extensions import Self
 
 
 class BaseModel(Base):
@@ -30,40 +20,6 @@ class BaseModel(Base):
     updated_at = Column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
-
-    @classmethod
-    async def create(cls, **kwargs) -> Self:
-        obj = cls(**kwargs)
-        db._session.add(obj)
-        return obj
-
-    @classmethod
-    async def update(cls, id, **kwargs) -> None:
-        query = (
-            sqlalchemy_update(cls)
-            .where(cls.id == id)
-            .values(**kwargs)
-            .execution_options(synchronize_session="fetch")
-        )
-        await db._session.execute(query)
-
-    @classmethod
-    async def get(cls, id) -> Self:
-        obj = await db._session.query(cls).get(id)
-        return obj
-
-    @classmethod
-    async def filter(cls, attribute: str, value: str) -> List[Self]:
-
-        query = select(cls).where(getattr(cls, attribute) == value)
-        result = await db._session.execute(query)
-        object_list = result.scalars().all()
-        return object_list
-
-    @classmethod
-    async def delete(cls, id):
-        query = sqlalchemy_delete(cls).where(cls.id == id)
-        await db._session.execute(query)
 
 
 class UserId(Base):
