@@ -1,16 +1,16 @@
 from typing import List
-from .. import models, schemas
+from .. import models, schemas, repository as repo
 
 
 async def get_accounts(current_user: models.User) -> List[models.Account]:
-    account_list = await models.Account.filter("user_id", current_user.id)
+    account_list = await repo.filter_by(models.Account, "user_id", current_user.id)
 
     return account_list
 
 
 async def get_account(current_user: models.User, account_id: int) -> models.Account:
 
-    account = await models.Account.get(account_id)
+    account = await repo.get(models.Account, account_id)
     if account and account.user_id == current_user.id:
         return account
 
@@ -19,7 +19,8 @@ async def get_account(current_user: models.User, account_id: int) -> models.Acco
 
 async def create_account(user: models.User, account: schemas.Account) -> models.Account:
 
-    db_account = await models.Account.create(user=user, **account.dict())
+    db_account = models.Account(user=user, **account.dict())
+    await repo.save(db_account)
     return db_account
 
 
@@ -27,9 +28,9 @@ async def update_account(
     current_user: models.User, account_id, account: schemas.AccountData
 ) -> models.Account:
 
-    db_account = await models.Account.get(account_id)
+    db_account = await repo.get(models.Account, account_id)
     if db_account.user_id == current_user.id:
-        await db_account.update(account_id, **account.dict())
+        await repo.update(models.Account, db_account.id, **account.dict())
         return db_account
 
     return None
@@ -37,9 +38,9 @@ async def update_account(
 
 async def delete_account(current_user: models.User, account_id: int) -> bool:
 
-    account = await models.Account.get(account_id)
+    account = await repo.get(models.Account, account_id)
     if account and account.user_id == current_user.id:
-        account.delete(account_id)
+        await repo.delete(account)
         return True
 
     return None
