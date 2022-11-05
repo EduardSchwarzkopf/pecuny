@@ -30,8 +30,16 @@ app.add_middleware(
 app.add_middleware(DBSessionMiddleware, db_url=SQLALCHEMY_DATABASE_URL)
 
 # Routes
-app.include_router(accounts.router)
-app.include_router(transactions.router)
+app.include_router(
+    accounts.router,
+    prefix="/accounts",
+    tags=["Accounts"],
+)
+app.include_router(
+    transactions.router,
+    prefix="/accounts/{account_id}/transactions",
+    tags=["Transactions"],
+)
 
 
 app.include_router(
