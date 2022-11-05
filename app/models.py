@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, DateTime, text, Boolean
+from sqlalchemy import Column, Integer, String, Numeric, text, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import TIMESTAMP
@@ -20,6 +20,14 @@ class BaseModel(Base):
     updated_at = Column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
+
+    def add_attributes_from_dict(self, attribute_list: dict) -> None:
+        model_attribute_list = self.__mapper__.attrs.keys()
+
+        for key, value in attribute_list.items():
+
+            if key in model_attribute_list:
+                setattr(self, key, value)
 
 
 class UserId(Base):
@@ -52,7 +60,7 @@ class Account(BaseModel, UserId):
     )
 
 
-class Transaction(BaseModel, UserId):
+class Transaction(BaseModel):
     __tablename__ = "transactions"
 
     account_id = Column(Integer, ForeignKey("accounts.id"))
@@ -98,8 +106,8 @@ class TransactionScheduled(BaseModel):
     frequency = relationship("Frequency", cascade="all,delete")
     frequency_id = Column(Integer, ForeignKey("frequencies.id", ondelete="CASCADE"))
     interval = Column(Integer, default=1)
-    date_start = Column(DateTime)
-    date_end = Column(DateTime)
+    date_start = Column(type_=TIMESTAMP(timezone=True))
+    date_end = Column(type_=TIMESTAMP(timezone=True))
 
 
 class TransactionInformation(BaseModel):
@@ -109,7 +117,7 @@ class TransactionInformation(BaseModel):
         Numeric(10, 2, asdecimal=False, decimal_return_scale=None), default=0
     )
     reference = Column(String(128))
-    date = Column(DateTime, default=text("now()"))
+    date = Column(type_=TIMESTAMP(timezone=True), default=text("now()"))
     subcategory = relationship("TransactionSubcategory")
     subcategory_id = Column(Integer, ForeignKey("transactions_subcategories.id"))
 
