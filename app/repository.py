@@ -60,9 +60,10 @@ async def get_scheduled_transactions_for_date(date: datetime):
     )
 
 
-async def save(obj: models):
+async def save(obj):
     if isinstance(obj, list):
         db._session.add_all(obj)
+        return
 
     db._session.add(obj)
 
