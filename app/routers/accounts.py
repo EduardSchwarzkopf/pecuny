@@ -1,28 +1,25 @@
 from typing import List
-from fastapi import APIRouter, status, Response
+from fastapi import Depends, APIRouter, status, Response
 from fastapi.exceptions import HTTPException
 
-from app.database import User
 from .. import schemas, transaction_manager as tm
 from ..services import accounts as service
-
+from app.routers.users import current_active_user
+from app.database import User
 
 router = APIRouter()
 response_model = schemas.AccountData
 
 
 @router.get("/", response_model=List[response_model])
-async def get_accounts(
-    current_user: User,
-):
+async def get_accounts(current_user: User = Depends(current_active_user)):
     accounts = await service.get_accounts(current_user)
     return accounts
 
 
 @router.get("/{account_id}", response_model=response_model)
 async def get_account(
-    account_id: int,
-    current_user: User,
+    account_id: int, current_user: User = Depends(current_active_user)
 ):
     account = await service.get_account(current_user, account_id)
 
@@ -33,7 +30,9 @@ async def get_account(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
-async def create_account(account: schemas.Account, current_user: User):
+async def create_account(
+    account: schemas.Account, current_user: User = Depends(current_active_user)
+):
     account = await tm.transaction(service.create_account, current_user, account)
     return account
 
@@ -42,7 +41,7 @@ async def create_account(account: schemas.Account, current_user: User):
 async def update_account(
     account_id: int,
     account_data: schemas.AccountUpdate,
-    current_user: User,
+    current_user: User = Depends(current_active_user),
 ):
     updated_account = await tm.transaction(
         service.update_account, current_user, account_id, account_data
@@ -51,7 +50,9 @@ async def update_account(
 
 
 @router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_account(account_id: int, current_user: User):
+async def delete_account(
+    account_id: int, current_user: User = Depends(current_active_user)
+):
     result = await tm.transaction(service.delete_account, current_user, account_id)
     if result:
         return Response(
