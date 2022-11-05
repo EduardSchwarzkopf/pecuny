@@ -1,30 +1,32 @@
-from datetime import date
 from typing import List
 from fastapi import Depends, APIRouter, status, Response
 from fastapi.exceptions import HTTPException
-from .. import models, schemas, oauth2, transaction_manager as tm
+from .. import schemas, transaction_manager as tm
 from ..services import transactions as service
+from app.routers.users import current_active_user
+from app.database import User
 
-router = APIRouter(prefix="/transactions", tags=["Transactions"])
+router = APIRouter()
 response_model = schemas.Transaction
 
 
 @router.get("/", response_model=List[response_model])
-def get_transactions(
+async def get_transactions(
     transaction_query: schemas.TransactionQuery,
-    current_user: models.User = Depends(oauth2.get_current_user),
+    account_id: int,
+    current_user: User = Depends(current_active_user),
 ):
-    transactions = service.get_transaction_list(current_user, transaction_query)
+    transactions = await service.get_transaction_list(current_user, transaction_query)
     return transactions
 
 
 @router.get("/{transaction_id}", response_model=response_model)
-def get_transaction(
+async def get_transaction(
     transaction_id: int,
-    current_user: models.User = Depends(oauth2.get_current_user),
+    current_user: User = Depends(current_active_user),
 ):
 
-    transaction = service.get_transaction(current_user, transaction_id)
+    transaction = await service.get_transaction(current_user, transaction_id)
 
     if transaction:
         return transaction
@@ -35,11 +37,13 @@ def get_transaction(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
-def create_transaction(
+async def create_transaction(
+    account_id: int,
     transaction_information: schemas.TransactionInformationCreate,
-    current_user: models.User = Depends(oauth2.get_current_user),
+    current_user: User = Depends(current_active_user),
 ):
-    transaction = tm.transaction(
+    r = router.dependencies
+    transaction = await tm.transaction(
         service.create_transaction, current_user, transaction_information
     )
 
@@ -52,12 +56,12 @@ def create_transaction(
 
 
 @router.post("/{transaction_id}", response_model=response_model)
-def update_transaction(
+async def update_transaction(
     transaction_id: int,
     transaction_information: schemas.TransactionInformtionUpdate,
-    current_user: models.User = Depends(oauth2.get_current_user),
+    current_user: User = Depends(current_active_user),
 ):
-    transaction = tm.transaction(
+    transaction = await tm.transaction(
         service.update_transaction,
         current_user,
         transaction_id,
@@ -73,10 +77,12 @@ def update_transaction(
 
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_account(
-    transaction_id: int, current_user: models.User = Depends(oauth2.get_current_user)
+async def delete_account(
+    transaction_id: int, current_user: User = Depends(current_active_user)
 ):
-    result = tm.transaction(service.delete_transaction, current_user, transaction_id)
+    result = await tm.transaction(
+        service.delete_transaction, current_user, transaction_id
+    )
     if result:
         return Response(
             status_code=status.HTTP_204_NO_CONTENT,
