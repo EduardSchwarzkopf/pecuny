@@ -2,42 +2,43 @@ from copy import deepcopy
 from .. import models, schemas, repository as repo
 
 
-def get_transaction_list(
+async def get_transaction_list(
     user: models.User, transaction_query: schemas.TransactionQuery
 ):
 
     account_id = transaction_query.account_id
-    account = repo.get("Account", account_id)
+    account = await repo.get(models.Account, account_id)
     if account.user_id == user.id:
 
-        transactions = repo.get_transactions_from_period(
+        transactions = await repo.get_transactions_from_period(
             account_id, transaction_query.date_start, transaction_query.date_end
         )
         return transactions
 
 
-def get_transaction(user: models.User, transaction_id: int) -> models.Transaction:
-    transaction = repo.get("Transaction", transaction_id)
+async def get_transaction(user: models.User, transaction_id: int) -> models.Transaction:
+    transaction = await repo.get(models.Transaction, transaction_id)
 
     if transaction == None:
         return
 
-    account = repo.get("Account", transaction.account_id)
+    account = await repo.get(models.Account, transaction.account_id)
 
     if account.user_id == user.id:
         return transaction
 
 
-def create_transaction(
+async def create_transaction(
     user: models.User, transaction_information: schemas.TransactionInformationCreate
 ) -> models.Transaction:
 
-    account = repo.get("Account", transaction_information.account_id)
+    account = await repo.get(models.Account, transaction_information.account_id)
 
-    if user.id != account.user_id:
+    if user.id.bytes != account.user_id.bytes:
         return None
 
     db_transaction_information = models.TransactionInformation()
+    db_transaction_information.add_attributes_from_dict(transaction_information.dict())
 
     account.balance += transaction_information.amount
     transaction = models.Transaction(
@@ -49,22 +50,22 @@ def create_transaction(
 
         if offset_transaction == None:
             raise Exception(
-                f"User[id: {user.id}] not allowed to access offset_account[id: {transaction_information.offset_account_id}"
+                f"User[id: {user.id}] not allowed to access offset_account[id: {transaction_information.offset_account_id}]"
             )
 
         transaction.offset_transaction = offset_transaction
         offset_transaction.offset_transaction = transaction
 
-    repo.save([account, transaction, db_transaction_information])
+    await repo.save([account, transaction, db_transaction_information])
 
     return transaction
 
 
-def _handle_offset_transaction(
+async def _handle_offset_transaction(
     user: models.User, transaction_information: schemas.TransactionInformationCreate
 ) -> models.Transaction:
     offset_account_id = transaction_information.offset_account_id
-    offset_account = repo.get("Account", offset_account_id)
+    offset_account = await repo.get(models.Account, offset_account_id)
 
     if user.id != offset_account.user_id:
         return None
@@ -73,26 +74,29 @@ def _handle_offset_transaction(
     offset_account.balance += transaction_information.amount
 
     db_offset_transaction_information = models.TransactionInformation()
+    db_offset_transaction_information.add_attributes_from_dict(
+        transaction_information.dict()
+    )
     offset_transcation = models.Transaction(
         information=db_offset_transaction_information,
         account_id=offset_account_id,
     )
 
-    repo.save(offset_transcation)
+    await repo.save(offset_transcation)
 
     return offset_transcation
 
 
-def update_transaction(
+async def update_transaction(
     current_user: models.User,
     transaction_id: int,
     transaction_information: schemas.TransactionInformtionUpdate,
 ):
-    transaction = repo.get("Transaction", transaction_id)
+    transaction = await repo.get(models.Transaction, transaction_id)
     if transaction == None:
         return
 
-    account = repo.get("Account", transaction.account_id)
+    account = await repo.get(models.Account, transaction.account_id)
     if current_user.id != account.user_id:
         return
 
@@ -101,7 +105,7 @@ def update_transaction(
 
     if transaction.offset_transaction:
         offset_transaction = transaction.offset_transaction
-        offset_account = repo.get("Account", offset_transaction.account_id)
+        offset_account = await repo.get(models.Account, offset_transaction.account_id)
 
         if offset_account.user_id != current_user.id:
             return
@@ -114,14 +118,14 @@ def update_transaction(
     return transaction
 
 
-def delete_transaction(current_user: models.User, transaction_id: int) -> bool:
+async def delete_transaction(current_user: models.User, transaction_id: int) -> bool:
 
-    transaction = repo.get("Transaction", transaction_id)
+    transaction = await repo.get(models.Transaction, transaction_id)
 
     if transaction == None:
         return
 
-    account = repo.get("Account", transaction.account_id)
+    account = await repo.get(models.Account, transaction.account_id)
     if current_user.id != account.user_id:
         return
 
@@ -130,10 +134,10 @@ def delete_transaction(current_user: models.User, transaction_id: int) -> bool:
 
     if transaction.offset_transaction:
         offset_transaction = transaction.offset_transaction
-        offset_account = repo.get("Account", offset_transaction.account_id)
+        offset_account = await repo.get(models.Account, offset_transaction.account_id)
         offset_account.balance += amount
-        repo.delete(transaction.offset_transaction)
+        await repo.delete(transaction.offset_transaction)
 
-    repo.delete(transaction)
+    await repo.delete(transaction)
 
     return True
