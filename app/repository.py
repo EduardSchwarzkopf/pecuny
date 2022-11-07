@@ -39,25 +39,29 @@ async def get_transactions_from_period(
     information = models.TransactionInformation
     class_date = information.date
 
-    return (
-        db._session.query(transaction)
+    query = (
+        select(transaction)
         .join(transaction.information)
         .filter(class_date <= end_date)
         .filter(class_date >= start_date)
         .filter(account_id == transaction.account_id)
-        .all()
     )
 
+    result = await db._session.execute(query)
+    return result.scalars().all()
 
-# TODO: update to async sessions
+
 async def get_scheduled_transactions_for_date(date: datetime):
     ts = models.TransactionScheduled
-    return (
-        db._session.query(ts)
+    query = (
+        select(ts)
         .filter(ts.date_start <= date)
         .filter(or_(ts.date_end == None, ts.date_end >= date))
-        .all()
     )
+
+    result = await db._session.execute(query)
+
+    return result.scalars().all()
 
 
 async def save(obj):
