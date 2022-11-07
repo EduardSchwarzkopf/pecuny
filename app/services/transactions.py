@@ -46,7 +46,9 @@ async def create_transaction(
     )
 
     if transaction_information.offset_account_id:
-        offset_transaction = _handle_offset_transaction(user, transaction_information)
+        offset_transaction = await _handle_offset_transaction(
+            user, transaction_information
+        )
 
         if offset_transaction == None:
             raise Exception(
