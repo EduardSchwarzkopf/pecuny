@@ -71,6 +71,7 @@ class Transaction(BaseModel):
         uselist=False,
         cascade="all,delete",
         foreign_keys=[information_id],
+        lazy="selectin",
     )
 
     offset_transactions_id = Column(
@@ -118,7 +119,7 @@ class TransactionInformation(BaseModel):
     )
     reference = Column(String(128))
     date = Column(type_=TIMESTAMP(timezone=True), default=text("now()"))
-    subcategory = relationship("TransactionSubcategory")
+    subcategory = relationship("TransactionSubcategory", lazy="selectin")
     subcategory_id = Column(Integer, ForeignKey("transactions_subcategories.id"))
 
 
@@ -134,7 +135,7 @@ class TransactionCategory(BaseModel):
 
     label = Column(String(36))
     subcategories = relationship(
-        "TransactionSubcategory", lazy="dynamic", backref="transactions_categories"
+        "TransactionSubcategory", lazy="selectin", backref="transactions_categories"
     )
 
 
