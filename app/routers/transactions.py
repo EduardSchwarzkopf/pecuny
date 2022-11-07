@@ -13,7 +13,6 @@ response_model = schemas.Transaction
 @router.get("/", response_model=List[response_model])
 async def get_transactions(
     transaction_query: schemas.TransactionQuery,
-    account_id: int,
     current_user: User = Depends(current_active_user),
 ):
     transactions = await service.get_transaction_list(current_user, transaction_query)
@@ -38,11 +37,9 @@ async def get_transaction(
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
 async def create_transaction(
-    account_id: int,
     transaction_information: schemas.TransactionInformationCreate,
     current_user: User = Depends(current_active_user),
 ):
-    r = router.dependencies
     transaction = await tm.transaction(
         service.create_transaction, current_user, transaction_information
     )
