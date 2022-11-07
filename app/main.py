@@ -37,7 +37,7 @@ app.include_router(
 )
 app.include_router(
     transactions.router,
-    prefix="/accounts/{account_id}/transactions",
+    prefix="/transactions",
     tags=["Transactions"],
 )
 
