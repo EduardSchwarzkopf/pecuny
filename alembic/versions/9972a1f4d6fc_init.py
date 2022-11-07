@@ -1,17 +1,17 @@
-"""INIT
+"""init
 
-Revision ID: 83be10279770
+Revision ID: 9972a1f4d6fc
 Revises: 
-Create Date: 2022-11-01 22:22:32.408702
+Create Date: 2022-11-07 19:46:35.293744
 
 """
 from alembic import op
-import fastapi_users_db_sqlalchemy
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+import fastapi_users_db_sqlalchemy
 
 # revision identifiers, used by Alembic.
-revision = "83be10279770"
+revision = "9972a1f4d6fc"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -133,10 +133,10 @@ def upgrade():
             server_default=sa.text("now()"),
             nullable=False,
         ),
+        sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("label", sa.String(length=36), nullable=True),
         sa.Column("is_income", sa.Boolean(), nullable=True),
         sa.Column("parent_category_id", sa.Integer(), nullable=True),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.ForeignKeyConstraint(
             ["parent_category_id"],
             ["transactions_categories.id"],
@@ -163,7 +163,7 @@ def upgrade():
             "amount", sa.Numeric(precision=10, scale=2, asdecimal=False), nullable=True
         ),
         sa.Column("reference", sa.String(length=128), nullable=True),
-        sa.Column("date", sa.DateTime(), nullable=True),
+        sa.Column("date", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("subcategory_id", sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(
             ["subcategory_id"],
@@ -189,7 +189,6 @@ def upgrade():
         sa.Column("account_id", sa.Integer(), nullable=True),
         sa.Column("information_id", sa.Integer(), nullable=True),
         sa.Column("offset_transactions_id", sa.Integer(), nullable=True),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.ForeignKeyConstraint(
             ["account_id"],
             ["accounts.id"],
@@ -204,7 +203,6 @@ def upgrade():
             name="transactions_offset_transactions_id_fkey",
             use_alter=True,
         ),
-        sa.ForeignKeyConstraint(["user_id"], ["user.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
@@ -226,8 +224,8 @@ def upgrade():
         sa.Column("information_id", sa.Integer(), nullable=True),
         sa.Column("frequency_id", sa.Integer(), nullable=True),
         sa.Column("interval", sa.Integer(), nullable=True),
-        sa.Column("date_start", sa.DateTime(), nullable=True),
-        sa.Column("date_end", sa.DateTime(), nullable=True),
+        sa.Column("date_start", sa.TIMESTAMP(timezone=True), nullable=True),
+        sa.Column("date_end", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(
             ["account_id"],
             ["accounts.id"],
