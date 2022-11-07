@@ -24,9 +24,7 @@ class AsyncDatabaseSession:
             SQLALCHEMY_DATABASE_URL,
             future=True,
         )
-        self._session = sessionmaker(
-            self._engine, expire_on_commit=False, class_=AsyncSession
-        )()
+        self._session = sessionmaker(self._engine, class_=AsyncSession)()
 
 
 db = AsyncDatabaseSession()
