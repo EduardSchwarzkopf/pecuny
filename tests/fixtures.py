@@ -1,19 +1,19 @@
-import pytest
+import pytest_asyncio
 import datetime
-from fastapi_sqlalchemy import db
 from app.oauth2 import create_access_token
 from app import models
+from fastapi_async_sqlalchemy import db
 
 
-@pytest.fixture()
-def test_user(client):
+@pytest_asyncio.fixture()
+async def test_user(client):
     user_data = {
         "username": "testuser",
         "email": "hello123@pytest.de",
         "password": "password123",
     }
 
-    res = client.post("/users/", json=user_data)
+    res = client.post("/auth/register", json=user_data)
 
     assert res.status_code == 201
     new_user = res.json()
@@ -21,20 +21,20 @@ def test_user(client):
     yield new_user
 
 
-@pytest.fixture()
-def token(test_user):
+@pytest_asyncio.fixture()
+async def token(test_user):
     yield create_access_token({"user_id": test_user["id"]})
 
 
-@pytest.fixture()
-def authorized_client(client, token):
+@pytest_asyncio.fixture()
+async def authorized_client(client, token):
     client.headers = {**client.headers, "Authorization": "Bearer " + token}
 
     yield client
 
 
-@pytest.fixture()
-def test_users():
+@pytest_asyncio.fixture()
+async def test_users():
     users_data = [
         {
             "username": "user01",
@@ -53,37 +53,37 @@ def test_users():
         },
     ]
 
-    def create_users_model(user):
+    async def create_users_model(user):
         return models.User(**user)
 
     users_map = map(create_users_model, users_data)
     users = list(users_map)
 
     with db():
-        db.session.add_all(users)
+        db._session.add_all(users)
 
-        db.session.commit()
-        yield db.session.query(models.User).all()
+        db._session.commit()
+        yield db._session.query(models.User).all()
 
 
-@pytest.fixture()
-def test_account(test_user):
+@pytest_asyncio.fixture()
+async def test_account(test_user):
     account_data = {"label": "test_account", "description": "test", "balance": 5000}
 
     with db():
-        user = db.session.query(models.User).first()
+        user = db._session.query(models.User).first()
         db_account = models.Account(
             user=user,
             **account_data,
         )
-        db.session.add(db_account)
+        db._session.add(db_account)
 
-        db.session.commit()
-        yield db.session.query(models.Account).first()
+        db._session.commit()
+        yield db._session.query(models.Account).first()
 
 
-@pytest.fixture()
-def test_accounts(test_users):
+@pytest_asyncio.fixture()
+async def test_accounts(test_users):
     accounts_data = [
         {
             "user_id": test_users[0].id,
@@ -117,27 +117,27 @@ def test_accounts(test_users):
         },
     ]
 
-    def create_accounts_model(account):
+    async def create_accounts_model(account):
         return models.Account(**account)
 
     accounts_map = map(create_accounts_model, accounts_data)
     accounts = list(accounts_map)
 
     with db():
-        db.session.add_all(accounts)
+        db._session.add_all(accounts)
 
-        db.session.commit()
-        yield db.session.query(models.Account).all()
+        db._session.commit()
+        yield db._session.query(models.Account).all()
 
 
-def get_date_range(date_start, days=5):
+async def get_date_range(date_start, days=5):
     return [
         (date_start - datetime.timedelta(days=idx)).isoformat() for idx in range(days)
     ]
 
 
-@pytest.fixture()
-def test_transactions(test_accounts):
+@pytest_asyncio.fixture()
+async def test_transactions(test_accounts):
     dates = get_date_range(datetime.datetime.utcnow())
 
     transaction_data = [
@@ -186,33 +186,30 @@ def test_transactions(test_accounts):
     ]
 
     transaction_list = []
-    with db():
 
-        for transaction_info in transaction_data:
+    for transaction_info in transaction_data:
 
-            account_id = transaction_info["account_id"]
-            account_index = next(
-                (i for i, item in enumerate(test_accounts) if item.id == account_id), -1
+        account_id = transaction_info["account_id"]
+        account_index = next(
+            (i for i, item in enumerate(test_accounts) if item.id == account_id), -1
+        )
+        if account_index == -1:
+            raise ValueError("No Account found with that Id")
+
+        del transaction_info["account_id"]
+        db_transaction_information = models.TransactionInformation(**transaction_info)
+
+        account_query = db._session.query(models.Account).filter_by(id=account_id)
+        new_balance = (
+            test_accounts[account_index].balance + db_transaction_information.amount
+        )
+        account_query.update({"balance": new_balance})
+
+        transaction_list.append(
+            models.Transaction(
+                information=db_transaction_information, account_id=account_id
             )
-            if account_index == -1:
-                raise ValueError("No Account found with that Id")
+        )
 
-            del transaction_info["account_id"]
-            db_transaction_information = models.TransactionInformation(
-                **transaction_info
-            )
-
-            account_query = db.session.query(models.Account).filter_by(id=account_id)
-            new_balance = (
-                test_accounts[account_index].balance + db_transaction_information.amount
-            )
-            account_query.update({"balance": new_balance})
-
-            transaction_list.append(
-                models.Transaction(
-                    information=db_transaction_information, account_id=account_id
-                )
-            )
-
-        db.session.add_all(transaction_list)
-        db.session.commit()
+    db._session.add_all(transaction_list)
+    db._session.commit()
