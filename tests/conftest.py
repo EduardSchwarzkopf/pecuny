@@ -1,50 +1,30 @@
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from app.main import app
-from app.config import settings
-from app.database import Base
+from httpx import AsyncClient
 from app import events
+from app.config import settings
+from fastapi_async_sqlalchemy import SQLAlchemyMiddleware
+from sqlalchemy.ext.asyncio import create_async_engine
+from app.main import app
+from app.database import Base
+import pytest_asyncio
 
-SQLALCHEMY_DATABASE_URL = f"{settings.db_url}_test"
-
-
-class AsyncDatabaseSession:
-    def __init__(self):
-        self._session = None
-        self._engine = None
-
-    def __getattr__(self, name):
-        return getattr(self._session, name)
-
-    def init(self):
-        self._engine = create_async_engine(
-            SQLALCHEMY_DATABASE_URL,
-            future=True,
-        )
-        self._session = sessionmaker(
-            self._engine, expire_on_commit=False, class_=AsyncSession
-        )()
+engine = create_async_engine(settings.test_db_url)
+app.add_middleware(SQLAlchemyMiddleware, custom_engine=engine)
 
 
-db = AsyncDatabaseSession()
+@pytest_asyncio.fixture()
+async def async_session():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+
+    async with db():
+        await events.create_categories(db.session)
 
 
-@pytest.fixture()
-def session():
-    db.init()
-    Base.metadata.drop_all(bind=db._engine)
-    Base.metadata.create_all(bind=db._engine)
-
-    events.create_categories(db._session)
-
-    yield db._session
-
-
-@pytest.fixture()
-def client(session):
-    yield TestClient(app)
+@pytest_asyncio.fixture()
+async def client(async_session):
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        yield client
 
 
 from .fixtures import *
