@@ -2,6 +2,7 @@ import pytest
 import datetime
 from app.oauth2 import create_access_token
 from app import models, repository as repo
+from fastapi_async_sqlalchemy import db
 
 pytestmark = pytest.mark.anyio
 
@@ -12,13 +13,19 @@ async def test_user(client):
         "email": "hello123@pytest.de",
         "password": "password123",
     }
+    async with db():
+        user_list = await repo.get_all(models.User)
 
-    res = await client.post("/auth/register", json=user_data)
+    if len(user_list) > 0:
+        user = user_list[0]
+    else:
+        res = await client.post("/auth/register", json=user_data)
+        assert res.status_code == 201
 
-    assert res.status_code == 201
-    new_user = res.json()
-    new_user["password"] = user_data["password"]
-    yield new_user
+        user = res
+
+    user_data = user.json()
+    yield user_data
 
 
 @pytest.fixture
@@ -40,7 +47,7 @@ async def authorized_client(client, token):
 
 
 @pytest.fixture
-async def test_users(session):
+async def test_users():
     users_data = [
         {
             "email": "user01@pytest.de",
@@ -62,31 +69,31 @@ async def test_users(session):
     users_map = map(create_users_model, users_data)
     users = list(users_map)
 
-    session.add_all(users)
+    async with db():
+        db.session.add_all(users)
 
-    session.commit()
+        await db.session.commit()
 
-    user_list = await repo.get_all(models.User)
+        user_list = await repo.get_all(models.User)
     yield user_list
 
 
 @pytest.fixture
-async def test_account(test_user, session):
+async def test_account(test_user):
     account_data = {"label": "test_account", "description": "test", "balance": 5000}
 
-    result = await session.get(models.User, test_user["id"])
-    user = result.scalar()
+    async with db():
+        user = await repo.get(models.User, test_user["id"])
+        db_account = models.Account(
+            user=user,
+            **account_data,
+        )
 
-    db_account = models.Account(
-        user=user,
-        **account_data,
-    )
+        db.session.add(db_account)
 
-    session.add(db_account)
+        await db.session.commit()
 
-    await session.commit()
-
-    account = await repo.get(models.Account, db_account.id)
+        account = await repo.get(models.Account, db_account.id)
 
     yield account
 
@@ -132,12 +139,12 @@ async def test_accounts(test_users, session):
     accounts_map = map(create_accounts_model, accounts_data)
     accounts = list(accounts_map)
 
-    async with session:
-        await session.add_all(accounts)
-        await session.commit()
+    async with db():
+        db.session.add_all(accounts)
+        await db.session.commit()
 
         account_list = await repo.get_all(models.Account)
-        yield account_list
+    yield account_list
 
 
 async def get_date_range(date_start, days=5):
@@ -197,28 +204,31 @@ async def test_transactions(test_accounts, session):
 
     transaction_list = []
 
-    for transaction_info in transaction_data:
+    async with db():
+        for transaction_info in transaction_data:
 
-        account_id = transaction_info["account_id"]
-        account_index = next(
-            (i for i, item in enumerate(test_accounts) if item.id == account_id), -1
-        )
-        if account_index == -1:
-            raise ValueError("No Account found with that Id")
-
-        del transaction_info["account_id"]
-        db_transaction_information = models.TransactionInformation(**transaction_info)
-
-        new_balance = (
-            test_accounts[account_index].balance + db_transaction_information.amount
-        )
-        await repo.update(models.Account, account_id, {"balance": new_balance})
-
-        transaction_list.append(
-            models.Transaction(
-                information=db_transaction_information, account_id=account_id
+            account_id = transaction_info["account_id"]
+            account_index = next(
+                (i for i, item in enumerate(test_accounts) if item.id == account_id), -1
             )
-        )
+            if account_index == -1:
+                raise ValueError("No Account found with that Id")
 
-    session.add_all(transaction_list)
-    session.commit()
+            del transaction_info["account_id"]
+            db_transaction_information = models.TransactionInformation(
+                **transaction_info
+            )
+
+            new_balance = (
+                test_accounts[account_index].balance + db_transaction_information.amount
+            )
+            await repo.update(models.Account, account_id, {"balance": new_balance})
+
+            transaction_list.append(
+                models.Transaction(
+                    information=db_transaction_information, account_id=account_id
+                )
+            )
+
+        db.session.add_all(transaction_list)
+        db.session.commit()

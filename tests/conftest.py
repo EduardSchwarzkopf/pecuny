@@ -8,8 +8,9 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from app.main import app
 from app.database import Base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
-engine = create_async_engine(settings.test_db_url)
+engine = create_async_engine(settings.test_db_url, poolclass=NullPool)
 app.add_middleware(SQLAlchemyMiddleware, db_url=settings.test_db_url)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -28,12 +29,13 @@ pytestmark = pytest.mark.anyio
 
 
 @pytest.fixture
-async def session():
-    yield async_session()
+async def session() -> AsyncSession:
+    async with async_session() as session:
+        yield session
 
 
 @pytest.fixture
-async def client():
+async def client(session):
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
 

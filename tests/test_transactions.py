@@ -2,10 +2,13 @@ import datetime
 import pytest
 
 from app import schemas, repository as repo, models
+from fastapi_async_sqlalchemy import db
 
 #
 # use with: pytest --disable-warnings -v -x
 #
+
+pytestmark = pytest.mark.anyio
 
 
 @pytest.mark.parametrize(
@@ -17,11 +20,9 @@ from app import schemas, repository as repo, models
         (1, -40.5, -40.5, "Subsctract 40.5", 6, 201),
     ],
 )
-@pytest.mark.anyio
 async def test_create_transaction(
     authorized_client,
     test_account,
-    session,
     account_id,
     amount,
     expected_amount,
@@ -29,23 +30,24 @@ async def test_create_transaction(
     subcategory_id,
     status_code,
 ):
-    account = await repo.get(models.Account, account_id)
+    async with db():
+        account = await repo.get(models.Account, account_id)
 
-    account_balance = account.balance
+        account_balance = account.balance
 
-    res = await authorized_client.post(
-        "/transactions/",
-        json={
-            "account_id": account_id,
-            "amount": amount,
-            "reference": reference,
-            "date": str(datetime.datetime.utcnow()),
-            "subcategory_id": subcategory_id,
-        },
-    )
-    new_transaction = schemas.Transaction(**res.json())
+        res = await authorized_client.post(
+            "/transactions/",
+            json={
+                "account_id": account_id,
+                "amount": amount,
+                "reference": reference,
+                "date": str(datetime.datetime.utcnow()),
+                "subcategory_id": subcategory_id,
+            },
+        )
+        new_transaction = schemas.Transaction(**res.json())
 
-    await repo.refresh(account)
+        await repo.refresh(account)
 
     account_balance_after = account.balance
 
@@ -70,7 +72,6 @@ async def test_create_transaction(
         (1, 1, 7, 0, 200),
     ],
 )
-@pytest.mark.anyio
 async def test_updated_transaction(
     authorized_client,
     test_transactions,
@@ -121,7 +122,6 @@ async def test_updated_transaction(
         (1, 2, 204),
     ],
 )
-@pytest.mark.anyio
 async def test_delete_transaction(
     authorized_client, test_transactions, account_id, transaction_id, status_code
 ):
@@ -147,7 +147,6 @@ async def test_delete_transaction(
         (1, 9999, 404),
     ],
 )
-@pytest.mark.anyio
 async def test_delete_transaction_fail(
     authorized_client, test_transactions, account_id, transaction_id, status_code
 ):
@@ -175,7 +174,6 @@ async def test_delete_transaction_fail(
         (1, 5, 1.00000000004, -1, "Added 1", 6, 201),
     ],
 )
-@pytest.mark.anyio
 async def test_create_offset_transaction(
     authorized_client,
     test_accounts,
@@ -232,7 +230,6 @@ async def test_create_offset_transaction(
         (1, 2, 1.00000000004),
     ],
 )
-@pytest.mark.anyio
 async def test_create_offset_transaction_other_account_fail(
     authorized_client,
     test_accounts,
@@ -283,7 +280,6 @@ async def test_create_offset_transaction_other_account_fail(
         (1, 5, 7, 0),
     ],
 )
-@pytest.mark.anyio
 async def test_updated_offset_transaction(
     authorized_client,
     test_accounts,
@@ -353,7 +349,6 @@ async def test_updated_offset_transaction(
         (1, 5, 7, 0),
     ],
 )
-@pytest.mark.anyio
 async def test_delete_offset_transaction(
     authorized_client,
     test_accounts,
