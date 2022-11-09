@@ -25,7 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Database
+# Database Session
 app.add_middleware(SQLAlchemyMiddleware, db_url=SQLALCHEMY_DATABASE_URL)
 
 # Routes

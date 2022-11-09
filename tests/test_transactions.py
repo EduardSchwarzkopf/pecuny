@@ -1,7 +1,7 @@
 import datetime
 import pytest
 
-from app import schemas, repository as repo
+from app import schemas, repository as repo, models
 
 #
 # use with: pytest --disable-warnings -v -x
@@ -17,9 +17,11 @@ from app import schemas, repository as repo
         (1, -40.5, -40.5, "Subsctract 40.5", 6, 201),
     ],
 )
-def test_create_transaction(
+@pytest.mark.anyio
+async def test_create_transaction(
     authorized_client,
     test_account,
+    session,
     account_id,
     amount,
     expected_amount,
@@ -27,10 +29,11 @@ def test_create_transaction(
     subcategory_id,
     status_code,
 ):
-    account = repo.get("Account", account_id)
+    account = await repo.get(models.Account, account_id)
+
     account_balance = account.balance
 
-    res = authorized_client.post(
+    res = await authorized_client.post(
         "/transactions/",
         json={
             "account_id": account_id,
@@ -42,7 +45,8 @@ def test_create_transaction(
     )
     new_transaction = schemas.Transaction(**res.json())
 
-    repo.refresh(account)
+    await repo.refresh(account)
+
     account_balance_after = account.balance
 
     assert res.status_code == status_code
@@ -66,7 +70,8 @@ def test_create_transaction(
         (1, 1, 7, 0, 200),
     ],
 )
-def test_updated_transaction(
+@pytest.mark.anyio
+async def test_updated_transaction(
     authorized_client,
     test_transactions,
     account_id,
@@ -85,11 +90,11 @@ def test_updated_transaction(
         "subcategory_id": subcategory_id,
     }
 
-    account = repo.get("Account", account_id)
+    account = repo.get(models.Account, account_id)
     repo.refresh(account)
     account_balance = account.balance
 
-    transaction_before = repo.get("Transaction", transaction_id)
+    transaction_before = repo.get(models.Transaction, transaction_id)
     transaction_amount_before = transaction_before.information.amount
 
     res = authorized_client.post(f"/transactions/{transaction_id}", json=json)
@@ -116,13 +121,14 @@ def test_updated_transaction(
         (1, 2, 204),
     ],
 )
-def test_delete_transaction(
+@pytest.mark.anyio
+async def test_delete_transaction(
     authorized_client, test_transactions, account_id, transaction_id, status_code
 ):
-    account = repo.get("Account", account_id)
+    account = repo.get(models.Account, account_id)
     repo.refresh(account)  # session not updated, so we need to refresh first
     account_balance = account.balance
-    transaction = repo.get("Transaction", transaction_id)
+    transaction = repo.get(models.Transaction, transaction_id)
     amount = transaction.information.amount
 
     res = authorized_client.delete(f"/transactions/{transaction_id}")
@@ -141,10 +147,11 @@ def test_delete_transaction(
         (1, 9999, 404),
     ],
 )
-def test_delete_transaction_fail(
+@pytest.mark.anyio
+async def test_delete_transaction_fail(
     authorized_client, test_transactions, account_id, transaction_id, status_code
 ):
-    account = repo.get("Account", account_id)
+    account = repo.get(models.Account, account_id)
     repo.refresh(account)  # session not updated, so we need to refresh first
     account_balance = account.balance
 
@@ -168,7 +175,8 @@ def test_delete_transaction_fail(
         (1, 5, 1.00000000004, -1, "Added 1", 6, 201),
     ],
 )
-def test_create_offset_transaction(
+@pytest.mark.anyio
+async def test_create_offset_transaction(
     authorized_client,
     test_accounts,
     account_id,
@@ -224,15 +232,16 @@ def test_create_offset_transaction(
         (1, 2, 1.00000000004),
     ],
 )
-def test_create_offset_transaction_other_account_fail(
+@pytest.mark.anyio
+async def test_create_offset_transaction_other_account_fail(
     authorized_client,
     test_accounts,
     account_id,
     offset_account_id,
     amount,
 ):
-    account = repo.get("Account", account_id)
-    offset_account = repo.get("Account", offset_account_id)
+    account = repo.get(models.Account, account_id)
+    offset_account = repo.get(models.Account, offset_account_id)
 
     account_balance = account.balance
     offset_account_balance = offset_account.balance
@@ -274,7 +283,8 @@ def test_create_offset_transaction_other_account_fail(
         (1, 5, 7, 0),
     ],
 )
-def test_updated_offset_transaction(
+@pytest.mark.anyio
+async def test_updated_offset_transaction(
     authorized_client,
     test_accounts,
     account_id,
@@ -283,8 +293,8 @@ def test_updated_offset_transaction(
     amount,
 ):
 
-    account = repo.get("Account", account_id)
-    offset_account = repo.get("Account", offset_account_id)
+    account = repo.get(models.Account, account_id)
+    offset_account = repo.get(models.Account, offset_account_id)
 
     account_balance = account.balance
     offset_account_balance = offset_account.balance
@@ -343,7 +353,8 @@ def test_updated_offset_transaction(
         (1, 5, 7, 0),
     ],
 )
-def test_delete_offset_transaction(
+@pytest.mark.anyio
+async def test_delete_offset_transaction(
     authorized_client,
     test_accounts,
     account_id,
@@ -352,8 +363,8 @@ def test_delete_offset_transaction(
     amount,
 ):
 
-    account = repo.get("Account", account_id)
-    offset_account = repo.get("Account", offset_account_id)
+    account = repo.get(models.Account, account_id)
+    offset_account = repo.get(models.Account, offset_account_id)
 
     account_balance = account.balance
     offset_account_balance = offset_account.balance

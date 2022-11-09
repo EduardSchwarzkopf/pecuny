@@ -9,21 +9,23 @@ from app.config import settings
 #
 
 
-def test_create_user(client):
-    res = client.post(
-        "/users/",
+@pytest.mark.anyio
+async def test_create_user(client):
+    res = await client.post(
+        "/auth/register",
         json={
-            "username": "my_username",
             "email": "hello123@pytest.de",
             "password": "password123",
         },
     )
-    new_user = schemas.UserData(**res.json())
+    assert res.status_code == 201
+
+    new_user = schemas.UserRead(**res.json())
 
     assert new_user.email == "hello123@pytest.de"
-    assert new_user.username == "my_username"
-    assert type(new_user.id) == int
-    assert res.status_code == 201
+    assert new_user.is_active == True
+    assert new_user.is_superuser == False
+    assert new_user.is_verified == False
 
 
 @pytest.mark.parametrize(
