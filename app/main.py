@@ -1,9 +1,8 @@
 from fastapi import FastAPI, Depends
 from fastapi_async_sqlalchemy import SQLAlchemyMiddleware
 import fastapi_users
-from .database import SQLALCHEMY_DATABASE_URL
 from .routers import accounts, transactions
-
+from .config import settings
 from app.database import User
 from app.schemas import UserCreate, UserRead, UserUpdate
 from app.routers.users import auth_backend, current_active_user, fastapi_users
@@ -25,8 +24,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Database Session
-app.add_middleware(SQLAlchemyMiddleware, db_url=SQLALCHEMY_DATABASE_URL)
+# Database Session in routes
+app.add_middleware(SQLAlchemyMiddleware, db_url=settings.db_url)
 
 # Routes
 app.include_router(
