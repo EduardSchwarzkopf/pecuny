@@ -2,19 +2,19 @@ import pytest
 import datetime
 from app.oauth2 import create_access_token
 from app import models, repository as repo
-from fastapi_async_sqlalchemy import db
+from app.database import db
 
 pytestmark = pytest.mark.anyio
 
 
 @pytest.fixture
-async def test_user(client):
+async def test_user(client, session):
     user_data = {
         "email": "hello123@pytest.de",
         "password": "password123",
     }
-    async with db():
-        user_list = await repo.get_all(models.User)
+
+    user_list = await repo.get_all(models.User)
 
     if len(user_list) > 0:
         user = user_list[0]
@@ -47,7 +47,7 @@ async def authorized_client(client, token):
 
 
 @pytest.fixture
-async def test_users():
+async def test_users(session):
     users_data = [
         {
             "email": "user01@pytest.de",
@@ -69,29 +69,29 @@ async def test_users():
     users_map = map(create_users_model, users_data)
     users = list(users_map)
 
-    async with db():
-        db.session.add_all(users)
+    async with session:
+        session.add_all(users)
 
-        await db.session.commit()
+        await session.commit()
 
         user_list = await repo.get_all(models.User)
     yield user_list
 
 
 @pytest.fixture
-async def test_account(test_user):
+async def test_account(test_user, session):
     account_data = {"label": "test_account", "description": "test", "balance": 5000}
 
-    async with db():
+    async with session:
         user = await repo.get(models.User, test_user["id"])
         db_account = models.Account(
             user=user,
             **account_data,
         )
 
-        db.session.add(db_account)
+        session.add(db_account)
 
-        await db.session.commit()
+        await session.commit()
 
         account = await repo.get(models.Account, db_account.id)
 
@@ -139,10 +139,10 @@ async def test_accounts(test_users, session):
     accounts_map = map(create_accounts_model, accounts_data)
     accounts = list(accounts_map)
 
-    async with db():
-        db.session.add_all(accounts)
-        await db.session.commit()
+    session.add_all(accounts)
+    await session.commit()
 
+    async with session:
         account_list = await repo.get_all(models.Account)
     yield account_list
 
@@ -204,31 +204,29 @@ async def test_transactions(test_accounts, session):
 
     transaction_list = []
 
-    async with db():
-        for transaction_info in transaction_data:
+    for transaction_info in transaction_data:
 
-            account_id = transaction_info["account_id"]
-            account_index = next(
-                (i for i, item in enumerate(test_accounts) if item.id == account_id), -1
-            )
-            if account_index == -1:
-                raise ValueError("No Account found with that Id")
+        account_id = transaction_info["account_id"]
+        account_index = next(
+            (i for i, item in enumerate(test_accounts) if item.id == account_id), -1
+        )
+        if account_index == -1:
+            raise ValueError("No Account found with that Id")
 
-            del transaction_info["account_id"]
-            db_transaction_information = models.TransactionInformation(
-                **transaction_info
-            )
+        del transaction_info["account_id"]
+        db_transaction_information = models.TransactionInformation(**transaction_info)
 
-            new_balance = (
-                test_accounts[account_index].balance + db_transaction_information.amount
-            )
+        new_balance = (
+            test_accounts[account_index].balance + db_transaction_information.amount
+        )
+        async with session:
             await repo.update(models.Account, account_id, {"balance": new_balance})
 
-            transaction_list.append(
-                models.Transaction(
-                    information=db_transaction_information, account_id=account_id
-                )
+        transaction_list.append(
+            models.Transaction(
+                information=db_transaction_information, account_id=account_id
             )
+        )
 
-        db.session.add_all(transaction_list)
-        db.session.commit()
+    session.add_all(transaction_list)
+    session.commit()
