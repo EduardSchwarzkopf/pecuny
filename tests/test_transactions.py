@@ -2,7 +2,7 @@ import datetime
 import pytest
 
 from app import schemas, repository as repo, models
-from fastapi_async_sqlalchemy import db
+
 
 #
 # use with: pytest --disable-warnings -v -x
@@ -22,6 +22,7 @@ pytestmark = pytest.mark.anyio
 )
 async def test_create_transaction(
     authorized_client,
+    session,
     test_account,
     account_id,
     amount,
@@ -30,7 +31,7 @@ async def test_create_transaction(
     subcategory_id,
     status_code,
 ):
-    async with db():
+    async with session:
         account = await repo.get(models.Account, account_id)
 
         account_balance = account.balance
