@@ -1,9 +1,7 @@
 from fastapi import FastAPI, Depends
-from fastapi_async_sqlalchemy import SQLAlchemyMiddleware
 import fastapi_users
 from .routers import accounts, transactions
-from .config import settings
-from app.database import User
+from app.database import User, db
 from app.schemas import UserCreate, UserRead, UserUpdate
 from app.routers.users import auth_backend, current_active_user, fastapi_users
 
@@ -24,8 +22,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Database Session in routes
-app.add_middleware(SQLAlchemyMiddleware, db_url=settings.db_url)
+
+@app.on_event("startup")
+async def startup_event():
+    await db.init()
+    await db.create_all()
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await db.session.close()
+
 
 # Routes
 app.include_router(
