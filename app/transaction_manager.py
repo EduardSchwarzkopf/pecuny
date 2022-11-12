@@ -1,6 +1,6 @@
 from typing import Any
-from . import models
-from fastapi_async_sqlalchemy import db
+from app import models
+from app.database import db
 
 
 async def transaction(handler, *args: Any) -> Any:
