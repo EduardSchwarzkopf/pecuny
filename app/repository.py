@@ -2,7 +2,7 @@ from sqlalchemy import or_, update as sql_update
 from sqlalchemy.future import select
 from . import models
 from datetime import datetime
-from fastapi_async_sqlalchemy import db
+from app.database import db
 
 
 async def get_all(cls: models):
