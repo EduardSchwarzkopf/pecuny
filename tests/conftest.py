@@ -16,12 +16,6 @@ pytestmark = pytest.mark.anyio
 
 
 @pytest.fixture
-async def client() -> AsyncClient:
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        yield client
-
-
-@pytest.fixture
 async def session():
     await db.init()
     async with db.engine.begin() as conn:
@@ -30,6 +24,12 @@ async def session():
 
     await events.create_categories(db.session)
     yield db.session
+
+
+@pytest.fixture
+async def client(session) -> AsyncClient:
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        yield client
 
 
 @pytest.fixture
