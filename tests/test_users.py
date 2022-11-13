@@ -1,8 +1,9 @@
 import pytest
 from jose import jwt
 
-from app import schemas
+from app import schemas, repository as repo, models
 from app.config import settings
+from httpx import AsyncClient
 
 #
 # use with: pytest --disable-warnings -v -x
@@ -30,85 +31,88 @@ async def test_create_user(client):
     assert new_user.is_verified == False
 
 
-async def test_invalid_create_user(client, test_user):
-    res = await client.post(
-        "/auth/register",
-        json={"email": "hello123@pytest.de", "password": "testpassword"},
-    )
+async def test_invalid_create_user(session, client: AsyncClient, test_user):
+    async with session:
+        res = await client.post(
+            "/auth/register",
+            json={"email": "hello123@pytest.de", "password": "testpassword"},
+        )
 
     assert res.status_code == 400
 
 
 @pytest.mark.parametrize(
-    "username, password, status_code",
+    "username, password",
     [
-        ("hello123@pytest.de", "password123", 200),
-        ("testuser", "password123", 200),
-        ("TESTUSER", "password123", 200),
-        ("TestUser", "password123", 200),
-        ("testUser", "password123", 200),
+        ("hello123@pytest.de", "password123"),
+        ("hellO123@pytest.de", "password123"),
+        ("HELLO123@pytest.de", "password123"),
+        ("hello123@PyTeSt.De", "password123"),
+        ("hELLO123@pytest.de", "password123"),
     ],
 )
-def test_login(client, test_user, username, password, status_code):
-    res = client.post(
-        "/login",
-        data={"username": username, "password": password},
-    )
+async def test_login(session, client: AsyncClient, test_user, username, password):
+    async with session:
+        res = await client.post(
+            "/auth/jwt/login",
+            data={"username": username, "password": password},
+        )
 
     login_res = schemas.Token(**res.json())
     payload = jwt.decode(
-        login_res.access_token, settings.secret_key, algorithms=[settings.algorithm]
+        login_res.access_token,
+        settings.secret_key,
+        algorithms=settings.algorithm,
+        audience="fastapi-users:auth",
     )
     id = payload["user_id"]
 
-    assert id == test_user["id"]
+    assert id == str(test_user.id)
     assert login_res.token_type == "bearer"
-    assert res.status_code == status_code
+    assert res.status_code == 200
 
 
 @pytest.mark.parametrize(
     "username, password, status_code",
     [
-        ("wrongemail@gmail.com", "password123", 403),
-        ("hello123@pytest.de", "wrongPassword", 403),
-        ("aaaa", "wrongPassword", 403),
-        ("*39goa", "wrongPassword", 403),
+        ("wrongemail@gmail.com", "password123", 400),
+        ("hello123@pytest.de", "wrongPassword", 400),
+        ("aaaa", "wrongPassword", 400),
+        ("*39goa", "wrongPassword", 400),
         (None, "wrongPassword", 422),
         ("wrongemail@gmail.com", None, 422),
     ],
 )
-def test_invalid_login(client, test_user, username, password, status_code):
-    res = client.post("/login", data={"username": username, "password": password})
+async def test_invalid_login(
+    session, client: AsyncClient, test_user, username, password, status_code
+):
+    async with session:
+        res = await client.post(
+            "/auth/jwt/login", data={"username": username, "password": password}
+        )
 
     assert res.status_code == status_code
 
 
 @pytest.mark.parametrize(
-    "values, status_code",
+    "values",
     [
-        ({"username": "neuernutzer"}, 200),
-        ({"email": "mew@mew.de"}, 200),
-        ({"password": "newpassword"}, 200),
-        (
-            {
-                "email": "another@mail.com",
-                "username": "next_username",
-                "password": "password456",
-            },
-            200,
-        ),
+        ({"email": "mew@mew.de"}),
+        ({"email": "another@mail.com"}),
+        ({"password": "lancelot"}),
     ],
 )
-def test_updated_user(authorized_client, test_user, values, status_code):
-    res = authorized_client.put("/users/1", json=values)
+async def test_updated_user(session, authorized_client: AsyncClient, test_user, values):
+    async with session:
+        res = await authorized_client.patch("/users/me", json=values)
 
-    assert res.status_code == status_code
-    user = schemas.UserData(**res.json())
+    assert res.status_code == 200
+    user = schemas.UserRead(**res.json())
 
     for key, value in values.items():
         if key == "password":
-            login_res = authorized_client.post(
-                "/login", data={"username": user.username, "password": value}
+            login_res = await authorized_client.post(
+                "/auth/jwt/login", data={"username": user.email, "password": value}
             )
             assert login_res.status_code == 200
             continue
@@ -117,33 +121,37 @@ def test_updated_user(authorized_client, test_user, values, status_code):
 
 
 @pytest.mark.parametrize(
-    "values, status_code",
+    "values",
     [
-        ({"username": "%§$"}, 422),
-        ({"email": "mewmew.de"}, 422),
-        ({"password": ""}, 400),
-        (
-            {
-                "email": "anothermail.com",
-                "username": "%=§",
-            },
-            422,
-        ),
+        ({"email": "mewmew.de"}),
+        ({"password": ""}),
+        ({"is_superuser": True}),
+        ({"email": "anothermail.com"}),
     ],
 )
-def test_invalid_updated_user(authorized_client, test_user, values, status_code):
-    res = authorized_client.put("/users/1", json=values)
+async def test_invalid_updated_user(
+    session, authorized_client: AsyncClient, test_user, values
+):
+    id = str(test_user.id)
+    async with session:
+        res = await authorized_client.patch(f"/users/{id}", json=values)
 
-    assert res.status_code == status_code
-
-
-def test_delete_user(authorized_client):
-    res = authorized_client.delete("/users/1")
-
-    assert res.status_code == 204
+    assert res.status_code == 403
 
 
-def test_invalid_delete_user(authorized_client, session):
-    res = authorized_client.delete("/users/2")
+async def test_delete_user(session, client, test_user, authorized_client):
+    async with session:
+        res = await authorized_client.delete(f"/users/me")
+
+        assert res.status_code == 204
+
+        user = await repo.get(models.User, test_user.id)
+
+    assert user == None
+
+
+async def test_invalid_delete_user(authorized_client: AsyncClient, session):
+    async with session:
+        res = await authorized_client.delete("/users/2")
 
     assert res.status_code == 403
