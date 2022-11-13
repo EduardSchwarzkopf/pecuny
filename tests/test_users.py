@@ -8,6 +8,8 @@ from app.config import settings
 # use with: pytest --disable-warnings -v -x
 #
 
+pytestmark = pytest.mark.anyio
+
 
 @pytest.mark.anyio
 async def test_create_user(client):
@@ -28,32 +30,13 @@ async def test_create_user(client):
     assert new_user.is_verified == False
 
 
-@pytest.mark.parametrize(
-    "username, email, message, status_code",
-    [
-        (
-            "testuser",
-            "my@email.com",
-            "Username already in use",
-            409,
-        ),
-        (
-            "new_testuser",
-            "hello123@pytest.de",
-            "E-Mail address already in use",
-            409,
-        ),
-    ],
-)
-def test_invalid_create_user(client, test_user, username, email, message, status_code):
-    res = client.post(
-        "/users/",
-        json={"username": username, "email": email, "password": "testpassword"},
+async def test_invalid_create_user(client, test_user):
+    res = await client.post(
+        "/auth/register",
+        json={"email": "hello123@pytest.de", "password": "testpassword"},
     )
 
-    res_json = res.json()
-    assert res.status_code == status_code
-    assert res_json["detail"] == message
+    assert res.status_code == 400
 
 
 @pytest.mark.parametrize(
@@ -160,7 +143,7 @@ def test_delete_user(authorized_client):
     assert res.status_code == 204
 
 
-def test_invalid_delete_user(authorized_client):
+def test_invalid_delete_user(authorized_client, session):
     res = authorized_client.delete("/users/2")
 
     assert res.status_code == 403
