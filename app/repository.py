@@ -8,6 +8,7 @@ from app.database import db
 async def get_all(cls: models):
     q = select(cls)
     result = await db.session.execute(q)
+    result.unique()
     return result.scalars().all()
 
 

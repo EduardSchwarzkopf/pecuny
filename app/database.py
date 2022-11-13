@@ -31,9 +31,10 @@ class Database:
             await self.session.close()
 
         self.engine = create_async_engine(self.url, future=True)
-        self.session = sessionmaker(
-            self.engine, expire_on_commit=False, class_=AsyncSession
-        )()
+        self.session = self.get_session()
+
+    def get_session(self) -> AsyncSession:
+        return sessionmaker(self.engine, expire_on_commit=False, class_=AsyncSession)()
 
 
 class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):

@@ -8,9 +8,11 @@ from app.config import settings
 # use with: pytest --disable-warnings -v -x
 #
 
+pytestmark = pytest.mark.anyio
 
-def test_create_account(authorized_client):
-    res = authorized_client.post(
+
+async def test_create_account(authorized_client):
+    res = await authorized_client.post(
         "/accounts/",
         json={"label": "test_account", "description": "test", "balance": 500},
     )
@@ -30,10 +32,10 @@ def test_create_account(authorized_client):
         ("test", "test", "0,3", 422),
     ],
 )
-def test_invalid_create_account(
+async def test_invalid_create_account(
     authorized_client, label, description, balance, status_code
 ):
-    res = authorized_client.post(
+    res = await authorized_client.post(
         "/accounts/",
         json={"label": label, "description": description, "balance": balance},
     )
@@ -41,8 +43,8 @@ def test_invalid_create_account(
     assert res.status_code == status_code
 
 
-def test_delete_account(authorized_client, test_account):
-    res = authorized_client.delete("/accounts/1")
+async def test_delete_account(authorized_client, test_account):
+    res = await authorized_client.delete("/accounts/1")
 
     assert res.status_code == 204
 
@@ -51,10 +53,10 @@ def test_delete_account(authorized_client, test_account):
     "account_id, status_code",
     [("2", 404), ("3", 404), ("4", 404), ("999999", 404)],
 )
-def test_invalid_delete_account(
+async def test_invalid_delete_account(
     authorized_client, test_accounts, account_id, status_code
 ):
-    res = authorized_client.delete(f"/accounts/{account_id}")
+    res = await authorized_client.delete(f"/accounts/{account_id}")
 
     assert res.status_code == status_code
 
@@ -75,8 +77,8 @@ def test_invalid_delete_account(
         ),
     ],
 )
-def test_update_account(authorized_client, test_account, values, status_code):
-    res = authorized_client.put("/accounts/1", json=values)
+async def test_update_account(authorized_client, test_account, values, status_code):
+    res = await authorized_client.put("/accounts/1", json=values)
 
     assert res.status_code == 200
 

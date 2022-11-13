@@ -50,7 +50,7 @@ async def test_create_transaction(
 
         await repo.refresh(account)
 
-    account_balance_after = account.balance
+        account_balance_after = account.balance
 
     assert res.status_code == status_code
     assert account_balance + amount == account_balance_after
@@ -74,6 +74,7 @@ async def test_create_transaction(
     ],
 )
 async def test_updated_transaction(
+    session,
     authorized_client,
     test_transactions,
     account_id,
@@ -92,18 +93,19 @@ async def test_updated_transaction(
         "subcategory_id": subcategory_id,
     }
 
-    account = repo.get(models.Account, account_id)
-    repo.refresh(account)
+    account = await repo.get(models.Account, account_id)
+    # await repo.refresh(account)
     account_balance = account.balance
 
-    transaction_before = repo.get(models.Transaction, transaction_id)
+    transaction_before = await repo.get(models.Transaction, transaction_id)
     transaction_amount_before = transaction_before.information.amount
 
-    res = authorized_client.post(f"/transactions/{transaction_id}", json=json)
+    res = await authorized_client.post(f"/transactions/{transaction_id}", json=json)
 
     assert res.status_code == status_code
 
-    repo.refresh(account)
+    await repo.refresh(account)
+
     account_balance_after = account.balance
 
     transaction = schemas.Transaction(**res.json())

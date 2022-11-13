@@ -3,36 +3,53 @@ import datetime
 from app.oauth2 import create_access_token
 from app import models, repository as repo
 from app.database import db
+from app.routers.users import get_user_manager
+
+import contextlib
+
+from app.database import get_user_db
+from app.schemas import UserCreate
+from fastapi_users.exceptions import UserAlreadyExists
+
+get_user_db_context = contextlib.asynccontextmanager(get_user_db)
+get_user_manager_context = contextlib.asynccontextmanager(get_user_manager)
+
+
+async def create_user(email: str, password: str, is_superuser: bool = False):
+    try:
+        async with get_user_db_context() as user_db:
+            async with get_user_manager_context(user_db) as user_manager:
+                user = await user_manager.create(
+                    UserCreate(
+                        email=email, password=password, is_superuser=is_superuser
+                    )
+                )
+                print(f"User created {user}")
+                return user
+    except UserAlreadyExists:
+        print(f"User {email} already exists")
+
 
 pytestmark = pytest.mark.anyio
 
 
 @pytest.fixture
-async def test_user(client, session):
-    user_data = {
-        "email": "hello123@pytest.de",
-        "password": "password123",
-    }
-
+async def test_user(session):
     user_list = await repo.get_all(models.User)
 
     if len(user_list) > 0:
         user = user_list[0]
     else:
-        res = await client.post("/auth/register", json=user_data)
-        assert res.status_code == 201
+        user = await create_user("hello123@pytest.de", "password123")
 
-        user = res
-
-    user_data = user.json()
-    yield user_data
+    yield user
 
 
 @pytest.fixture
 async def token(test_user):
     token = create_access_token(
         {
-            "user_id": test_user["id"],
+            "user_id": str(test_user.id),
             "aud": ["fastapi-users:auth"],
         }
     )
@@ -49,51 +66,33 @@ async def authorized_client(client, token):
 @pytest.fixture
 async def test_users(session):
     users_data = [
-        {
-            "email": "user01@pytest.de",
-            "password": "password123",
-        },
-        {
-            "email": "user02@pytest.de",
-            "password": "password123",
-        },
-        {
-            "email": "user03@pytest.de",
-            "password": "password123",
-        },
+        ["user01@pytest.de", "password123"],
+        ["user02@pytest.de", "password123"],
+        ["user03@pytest.de", "password123"],
     ]
 
-    async def create_users_model(user):
-        return models.User(**user)
+    for data in users_data:
+        await create_user(data[0], data[1])
 
-    users_map = map(create_users_model, users_data)
-    users = list(users_map)
+    user_list = await repo.get_all(models.User)
 
-    async with session:
-        session.add_all(users)
-
-        await session.commit()
-
-        user_list = await repo.get_all(models.User)
     yield user_list
 
 
 @pytest.fixture
-async def test_account(test_user, session):
+async def test_account(test_user: models.User, session):
     account_data = {"label": "test_account", "description": "test", "balance": 5000}
 
-    async with session:
-        user = await repo.get(models.User, test_user["id"])
-        db_account = models.Account(
-            user=user,
-            **account_data,
-        )
+    db_account = models.Account(
+        user=test_user,
+        **account_data,
+    )
 
-        session.add(db_account)
+    session.add(db_account)
 
-        await session.commit()
+    await session.commit()
 
-        account = await repo.get(models.Account, db_account.id)
+    account = await repo.get(models.Account, db_account.id)
 
     yield account
 
@@ -102,38 +101,38 @@ async def test_account(test_user, session):
 async def test_accounts(test_users, session):
     accounts_data = [
         {
-            "user_id": test_users[0].id,
+            "user": test_users[0],
             "label": "account_00",
             "description": "description_00",
             "balance": 100,
         },
         {
-            "user_id": test_users[1].id,
+            "user": test_users[1],
             "label": "account_01",
             "description": "description_01",
             "balance": 200,
         },
         {
-            "user_id": test_users[2].id,
+            "user": test_users[2],
             "label": "account_02",
             "description": "description_02",
             "balance": 500,
         },
         {
-            "user_id": test_users[3].id,
+            "user": test_users[3],
             "label": "account_03",
             "description": "description_03",
             "balance": 1000,
         },
         {
-            "user_id": test_users[0].id,
+            "user": test_users[0],
             "label": "account_04",
             "description": "description_04",
             "balance": 2000,
         },
     ]
 
-    async def create_accounts_model(account):
+    def create_accounts_model(account):
         return models.Account(**account)
 
     accounts_map = map(create_accounts_model, accounts_data)
@@ -142,20 +141,18 @@ async def test_accounts(test_users, session):
     session.add_all(accounts)
     await session.commit()
 
-    async with session:
-        account_list = await repo.get_all(models.Account)
+    account_list = await repo.get_all(models.Account)
+
     yield account_list
 
 
 async def get_date_range(date_start, days=5):
-    return [
-        (date_start - datetime.timedelta(days=idx)).isoformat() for idx in range(days)
-    ]
+    return [(date_start - datetime.timedelta(days=idx)) for idx in range(days)]
 
 
 @pytest.fixture
 async def test_transactions(test_accounts, session):
-    dates = get_date_range(datetime.datetime.utcnow())
+    dates = await get_date_range(datetime.datetime.utcnow())
 
     transaction_data = [
         {
@@ -213,14 +210,14 @@ async def test_transactions(test_accounts, session):
         if account_index == -1:
             raise ValueError("No Account found with that Id")
 
-        del transaction_info["account_id"]
-        db_transaction_information = models.TransactionInformation(**transaction_info)
+        db_transaction_information = models.TransactionInformation()
+        db_transaction_information.add_attributes_from_dict(transaction_info)
 
         new_balance = (
             test_accounts[account_index].balance + db_transaction_information.amount
         )
-        async with session:
-            await repo.update(models.Account, account_id, {"balance": new_balance})
+
+        await repo.update(models.Account, account_id, **{"balance": new_balance})
 
         transaction_list.append(
             models.Transaction(
@@ -229,4 +226,4 @@ async def test_transactions(test_accounts, session):
         )
 
     session.add_all(transaction_list)
-    session.commit()
+    await session.commit()
