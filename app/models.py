@@ -89,6 +89,7 @@ class Transaction(BaseModel):
         remote_side="Transaction.id",
         foreign_keys=[offset_transactions_id],
         post_update=True,
+        lazy="selectin",
     )
 
 
@@ -101,10 +102,11 @@ class TransactionScheduled(BaseModel):
         backref="transactions_scheduled",
         uselist=False,
         cascade="all,delete",
+        lazy="selectin",
     )
     information_id = Column(Integer, ForeignKey("transactions_information.id"))
 
-    frequency = relationship("Frequency", cascade="all,delete")
+    frequency = relationship("Frequency", cascade="all,delete", lazy="selectin")
     frequency_id = Column(Integer, ForeignKey("frequencies.id", ondelete="CASCADE"))
     interval = Column(Integer, default=1)
     date_start = Column(type_=TIMESTAMP(timezone=True))
@@ -143,7 +145,10 @@ class TransactionSubcategory(BaseModel):
     __tablename__ = "transactions_subcategories"
 
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"))
-    user = relationship("User")
+    user = relationship(
+        "User",
+        lazy="selectin",
+    )
 
     label = Column(String(36))
     is_income = Column(Boolean, default=False)
