@@ -103,7 +103,9 @@ async def update_transaction(
         return
 
     amount_updated = transaction_information.amount - transaction.information.amount
-    account.balance += amount_updated
+    await repo.update(
+        models.Account, account.id, **{"balance": account.balance + amount_updated}
+    )
 
     if transaction.offset_transaction:
         offset_transaction = transaction.offset_transaction
@@ -117,6 +119,16 @@ async def update_transaction(
         offset_info = deepcopy(transaction_information)
         offset_info.amount = offset_info.amount * -1
 
+    await repo.update(
+        models.TransactionInformation,
+        transaction.information.id,
+        **{
+            "amount": transaction_information.amount,
+            "reference": transaction_information.reference,
+            "date": transaction_information.date,
+            "subcategory_id": transaction_information.subcategory_id,
+        },
+    )
     return transaction
 
 
