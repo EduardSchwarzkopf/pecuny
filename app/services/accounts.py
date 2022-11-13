@@ -30,7 +30,7 @@ async def update_account(
 
     db_account = await repo.get(models.Account, account_id)
     if db_account.user_id == current_user.id:
-        await repo.update(db_account, **account.dict())
+        await repo.update(models.Account, db_account.id, **account.dict())
         return db_account
 
     return None
