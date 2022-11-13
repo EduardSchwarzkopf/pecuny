@@ -57,6 +57,7 @@ async def create_transaction(
 
         transaction.offset_transaction = offset_transaction
         offset_transaction.offset_transaction = transaction
+        await repo.save(offset_transaction)
 
     await repo.save([account, transaction, db_transaction_information])
 
@@ -107,7 +108,7 @@ async def update_transaction(
         models.Account, account.id, **{"balance": account.balance + amount_updated}
     )
 
-    if transaction.offset_transaction:
+    if transaction.offset_transactions_id:
         offset_transaction = transaction.offset_transaction
         offset_account = await repo.get(models.Account, offset_transaction.account_id)
 
