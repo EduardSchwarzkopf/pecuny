@@ -18,7 +18,7 @@ async def filter_by(cls: models, attribute: str, value: str):
     return result.scalars().all()
 
 
-async def get(cls: models, id: int):
+async def get(cls: models, id: int) -> models:
     result = await db.session.get(cls, id)
     return result
 
@@ -86,11 +86,9 @@ async def delete(obj: models) -> None:
 
 
 async def refresh(obj: models):
-    print("\033[2;31;43m refresh method called, check for odd behaviour \033[0;0m")
     return await db.session.refresh(obj)
 
 
 async def refresh_all(object_list: models) -> None:
-    print("\033[2;31;43m refresh_all method called, check for odd behaviour \033[0;0m")
     for obj in object_list:
-        db.session.refresh(obj)
+        await db.session.refresh(obj)
