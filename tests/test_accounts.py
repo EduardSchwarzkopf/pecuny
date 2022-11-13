@@ -25,22 +25,23 @@ async def test_create_account(authorized_client):
 
 
 @pytest.mark.parametrize(
-    "label, description, balance, status_code",
+    "label, description, balance",
     [
-        ("", None, None, 422),
-        ("test", "test", "aaaa", 422),
-        ("test", "test", "0,3", 422),
+        ("", None, None),
+        ("test", "test", "aaaa"),
+        ("test", "test", "0,3"),
     ],
 )
 async def test_invalid_create_account(
-    authorized_client, label, description, balance, status_code
+    session, authorized_client, label, description, balance
 ):
-    res = await authorized_client.post(
-        "/accounts/",
-        json={"label": label, "description": description, "balance": balance},
-    )
+    async with session:
+        res = await authorized_client.post(
+            "/accounts/",
+            json={"label": label, "description": description, "balance": balance},
+        )
 
-    assert res.status_code == status_code
+    assert res.status_code == 422
 
 
 async def test_delete_account(authorized_client, test_account):

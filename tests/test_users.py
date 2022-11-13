@@ -13,14 +13,15 @@ pytestmark = pytest.mark.anyio
 
 
 @pytest.mark.anyio
-async def test_create_user(client):
-    res = await client.post(
-        "/auth/register",
-        json={
-            "email": "hello123@pytest.de",
-            "password": "password123",
-        },
-    )
+async def test_create_user(session, client):
+    async with session:
+        res = await client.post(
+            "/auth/register",
+            json={
+                "email": "hello123@pytest.de",
+                "password": "password123",
+            },
+        )
     assert res.status_code == 201
 
     new_user = schemas.UserRead(**res.json())
@@ -106,18 +107,18 @@ async def test_updated_user(session, authorized_client: AsyncClient, test_user, 
     async with session:
         res = await authorized_client.patch("/users/me", json=values)
 
-    assert res.status_code == 200
-    user = schemas.UserRead(**res.json())
+        assert res.status_code == 200
+        user = schemas.UserRead(**res.json())
 
-    for key, value in values.items():
-        if key == "password":
-            login_res = await authorized_client.post(
-                "/auth/jwt/login", data={"username": user.email, "password": value}
-            )
-            assert login_res.status_code == 200
-            continue
+        for key, value in values.items():
+            if key == "password":
+                login_res = await authorized_client.post(
+                    "/auth/jwt/login", data={"username": user.email, "password": value}
+                )
+                assert login_res.status_code == 200
+                continue
 
-        assert getattr(user, key) == value
+            assert getattr(user, key) == value
 
 
 @pytest.mark.parametrize(
