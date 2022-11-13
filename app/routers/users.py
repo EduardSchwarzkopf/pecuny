@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from fastapi import Depends, Request
+from fastapi import Depends, Request, APIRouter, status, Response, HTTPException
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
 from fastapi_users.authentication import (
     AuthenticationBackend,
@@ -12,6 +12,10 @@ from fastapi_users.db import SQLAlchemyUserDatabase
 from app.config import settings
 
 from app.database import User, get_user_db
+from app import transaction_manager as tm
+from app.services import users as service
+
+router = APIRouter()
 
 SECRET = settings.secret_key
 
@@ -54,3 +58,19 @@ auth_backend = AuthenticationBackend(
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 
 current_active_user = fastapi_users.current_user(active=True)
+
+
+# override fastapi_users functionality
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_me(current_user: User = Depends(current_active_user)):
+    result = await tm.transaction(service.delete_self, current_user)
+    if result:
+        return Response(
+            status_code=status.HTTP_204_NO_CONTENT,
+            content="Transaction deleted successfully",
+        )
+
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
+        )
