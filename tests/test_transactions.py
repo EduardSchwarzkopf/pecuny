@@ -2,7 +2,7 @@ import datetime
 import pytest
 
 from app import schemas, repository as repo, models
-
+import time
 
 #
 # use with: pytest --disable-warnings -v -x
@@ -127,18 +127,24 @@ async def test_updated_transaction(
     ],
 )
 async def test_delete_transaction(
-    authorized_client, test_transactions, account_id, transaction_id, status_code
+    session,
+    authorized_client,
+    test_transactions,
+    account_id,
+    transaction_id,
+    status_code,
 ):
-    account = repo.get(models.Account, account_id)
-    repo.refresh(account)  # session not updated, so we need to refresh first
-    account_balance = account.balance
-    transaction = repo.get(models.Transaction, transaction_id)
-    amount = transaction.information.amount
+    async with session:
+        account = await repo.get(models.Account, account_id)
+        await repo.refresh(account)  # session not updated, so we need to refresh first
+        account_balance = account.balance
+        transaction = await repo.get(models.Transaction, transaction_id)
+        amount = transaction.information.amount
 
-    res = authorized_client.delete(f"/transactions/{transaction_id}")
-    assert res.status_code == status_code
+        res = await authorized_client.delete(f"/transactions/{transaction_id}")
+        assert res.status_code == status_code
 
-    repo.refresh(account)
+        await repo.refresh(account)
     account_balance_after = account.balance
 
     assert account_balance_after == (account_balance - amount)
@@ -152,16 +158,22 @@ async def test_delete_transaction(
     ],
 )
 async def test_delete_transaction_fail(
-    authorized_client, test_transactions, account_id, transaction_id, status_code
+    session,
+    authorized_client,
+    test_transactions,
+    account_id,
+    transaction_id,
+    status_code,
 ):
-    account = repo.get(models.Account, account_id)
-    repo.refresh(account)  # session not updated, so we need to refresh first
-    account_balance = account.balance
+    async with session:
+        account = await repo.get(models.Account, account_id)
+        await repo.refresh(account)  # session not updated, so we need to refresh first
+        account_balance = account.balance
 
-    res = authorized_client.delete(f"/transactions/{transaction_id}")
-    assert res.status_code == status_code
+        res = await authorized_client.delete(f"/transactions/{transaction_id}")
+        assert res.status_code == status_code
 
-    repo.refresh(account)
+        await repo.refresh(account)
     account_balance_after = account.balance
 
     assert account_balance_after == account_balance
@@ -179,6 +191,7 @@ async def test_delete_transaction_fail(
     ],
 )
 async def test_create_offset_transaction(
+    session,
     authorized_client,
     test_accounts,
     account_id,
@@ -189,26 +202,28 @@ async def test_create_offset_transaction(
     subcategory_id,
     status_code,
 ):
-    res = authorized_client.post(
-        "/transactions/",
-        json={
-            "account_id": account_id,
-            "amount": amount,
-            "reference": reference,
-            "date": str(datetime.datetime.utcnow()),
-            "subcategory_id": subcategory_id,
-            "offset_account_id": offset_account_id,
-        },
-    )
+    async with session:
+        res = await authorized_client.post(
+            "/transactions/",
+            json={
+                "account_id": account_id,
+                "amount": amount,
+                "reference": reference,
+                "date": str(datetime.datetime.utcnow()),
+                "subcategory_id": subcategory_id,
+                "offset_account_id": offset_account_id,
+            },
+        )
 
-    assert res.status_code == status_code
+        assert res.status_code == status_code
 
-    new_transaction = schemas.Transaction(**res.json())
-    offset_transactions_id = new_transaction.offset_transactions_id
-    res_offset = authorized_client.get(f"/transactions/{offset_transactions_id}")
-    assert res_offset.status_code == 200
+        new_transaction = schemas.Transaction(**res.json())
+        offset_transactions_id = new_transaction.offset_transactions_id
 
-    new_offset_transaction = schemas.Transaction(**res_offset.json())
+        new_offset_transaction = await repo.get(
+            models.Transaction, offset_transactions_id
+        )
+        await repo.refresh(new_offset_transaction)
 
     assert new_transaction.account_id == account_id
     assert new_offset_transaction.account_id == offset_account_id
@@ -235,32 +250,33 @@ async def test_create_offset_transaction(
     ],
 )
 async def test_create_offset_transaction_other_account_fail(
+    session,
     authorized_client,
     test_accounts,
     account_id,
     offset_account_id,
     amount,
 ):
-    account = repo.get(models.Account, account_id)
-    offset_account = repo.get(models.Account, offset_account_id)
+    async with session:
+        account = await repo.get(models.Account, account_id)
+        offset_account = await repo.get(models.Account, offset_account_id)
 
-    account_balance = account.balance
-    offset_account_balance = offset_account.balance
+        account_balance = account.balance
+        offset_account_balance = offset_account.balance
 
-    res = authorized_client.post(
-        "/transactions/",
-        json={
-            "account_id": account_id,
-            "amount": amount,
-            "reference": "Not allowed",
-            "date": str(datetime.datetime.utcnow()),
-            "subcategory_id": 1,
-            "offset_account_id": offset_account_id,
-        },
-    )
+        res = await authorized_client.post(
+            "/transactions/",
+            json={
+                "account_id": account_id,
+                "amount": amount,
+                "reference": "Not allowed",
+                "date": str(datetime.datetime.utcnow()),
+                "subcategory_id": 1,
+                "offset_account_id": offset_account_id,
+            },
+        )
 
-    repo.refresh(account)
-    repo.refresh(offset_account)
+        await repo.refresh_all([account, offset_account])
 
     account_balance_after = account.balance
     offset_account_balance_after = offset_account.balance
@@ -285,6 +301,7 @@ async def test_create_offset_transaction_other_account_fail(
     ],
 )
 async def test_updated_offset_transaction(
+    session,
     authorized_client,
     test_accounts,
     account_id,
@@ -292,40 +309,43 @@ async def test_updated_offset_transaction(
     subcategory_id,
     amount,
 ):
+    async with session:
+        account = await repo.get(models.Account, account_id)
+        offset_account = await repo.get(models.Account, offset_account_id)
 
-    account = repo.get(models.Account, account_id)
-    offset_account = repo.get(models.Account, offset_account_id)
+        account_balance = account.balance
+        offset_account_balance = offset_account.balance
 
-    account_balance = account.balance
-    offset_account_balance = offset_account.balance
+        transaction_res = await authorized_client.post(
+            "/transactions/",
+            json={
+                "account_id": account_id,
+                "amount": 10,
+                "reference": "creation",
+                "date": str(datetime.datetime.utcnow()),
+                "subcategory_id": subcategory_id,
+                "offset_account_id": offset_account_id,
+            },
+        )
 
-    transaction_res = authorized_client.post(
-        "/transactions/",
-        json={
-            "account_id": account_id,
-            "amount": 10,
-            "reference": "creation",
-            "date": str(datetime.datetime.utcnow()),
-            "subcategory_id": subcategory_id,
-            "offset_account_id": offset_account_id,
-        },
-    )
-    transaction_before = schemas.Transaction(**transaction_res.json())
+        transaction_before = schemas.Transaction(**transaction_res.json())
 
-    reference = f"Offset_transaction with {amount}"
-    res = authorized_client.post(
-        f"/transactions/{transaction_before.id}",
-        json={
-            "account_id": account_id,
-            "amount": amount,
-            "reference": reference,
-            "date": str(datetime.datetime.utcnow()),
-            "subcategory_id": subcategory_id,
-        },
-    )
-    assert res.status_code == 200
+        reference = f"Offset_transaction with {amount}"
+        print(f"t-id: {transaction_before.id}")
+        res = await authorized_client.post(
+            f"/transactions/{transaction_before.id}",
+            json={
+                "account_id": account_id,
+                "amount": amount,
+                "reference": reference,
+                "date": str(datetime.datetime.utcnow()),
+                "subcategory_id": subcategory_id,
+            },
+        )
+        status = res.status_code
+        assert status == 200
 
-    repo.refresh_all([account, offset_account])
+        await repo.refresh_all([account, offset_account])
 
     account_balance_after = account.balance
     offset_account_balance_after = offset_account.balance
@@ -354,6 +374,7 @@ async def test_updated_offset_transaction(
     ],
 )
 async def test_delete_offset_transaction(
+    session,
     authorized_client,
     test_accounts,
     account_id,
@@ -361,36 +382,37 @@ async def test_delete_offset_transaction(
     subcategory_id,
     amount,
 ):
+    async with session:
+        account = await repo.get(models.Account, account_id)
+        offset_account = await repo.get(models.Account, offset_account_id)
 
-    account = repo.get(models.Account, account_id)
-    offset_account = repo.get(models.Account, offset_account_id)
+        account_balance = account.balance
+        offset_account_balance = offset_account.balance
 
-    account_balance = account.balance
-    offset_account_balance = offset_account.balance
+        transaction_res = await authorized_client.post(
+            "/transactions/",
+            json={
+                "account_id": account_id,
+                "amount": amount,
+                "reference": "creation",
+                "date": str(datetime.datetime.utcnow()),
+                "subcategory_id": subcategory_id,
+                "offset_account_id": offset_account_id,
+            },
+        )
 
-    transaction_res = authorized_client.post(
-        "/transactions/",
-        json={
-            "account_id": account_id,
-            "amount": amount,
-            "reference": "creation",
-            "date": str(datetime.datetime.utcnow()),
-            "subcategory_id": subcategory_id,
-            "offset_account_id": offset_account_id,
-        },
-    )
+        transaction = schemas.Transaction(**transaction_res.json())
 
-    transaction = schemas.Transaction(**transaction_res.json())
+        res = await authorized_client.delete(f"/transactions/{transaction.id}")
+        offset_transaction_res = await authorized_client.get(
+            f"/transactions/{transaction.offset_transactions_id}"
+        )
 
-    res = authorized_client.delete(f"/transactions/{transaction.id}")
-    offset_transaction_res = authorized_client.get(
-        f"/transactions/{transaction.offset_transactions_id}"
-    )
+        assert res.status_code == 204
+        assert offset_transaction_res.status_code == 404
 
-    assert res.status_code == 204
-    assert offset_transaction_res.status_code == 404
+        await repo.refresh_all([account, offset_account])
 
-    repo.refresh_all([account, offset_account])
     account_balance_after = account.balance
     offset_account_balance_after = offset_account.balance
 
