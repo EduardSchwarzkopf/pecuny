@@ -11,11 +11,13 @@ from app.config import settings
 pytestmark = pytest.mark.anyio
 
 
-async def test_create_account(authorized_client):
-    res = await authorized_client.post(
-        "/accounts/",
-        json={"label": "test_account", "description": "test", "balance": 500},
-    )
+async def test_create_account(session, authorized_client):
+    async with session:
+        res = await authorized_client.post(
+            "/accounts/",
+            json={"label": "test_account", "description": "test", "balance": 500},
+        )
+
     new_account = schemas.Account(**res.json())
 
     assert res.status_code == 201
@@ -63,26 +65,44 @@ async def test_invalid_delete_account(
 
 
 @pytest.mark.parametrize(
-    "values, status_code",
+    "values",
     [
-        ({"label": "new_label"}, 200),
-        ({"description": "my new description"}, 200),
-        ({"balance": 1234}, 200),
         (
             {
                 "label": "My new Label",
                 "description": "very new description",
                 "balance": 1111.3,
-            },
-            200,
+            }
+        ),
+        (
+            {
+                "label": "11113",
+                "description": "cool story bro '",
+                "balance": 2000,
+            }
+        ),
+        (
+            {
+                "label": "My new Label",
+                "description": "very new description",
+                "balance": -0.333333334,
+            }
+        ),
+        (
+            {
+                "label": "My new Label",
+                "description": "very new description",
+                "balance": -1000000.3,
+            }
         ),
     ],
 )
-async def test_update_account(authorized_client, test_account, values, status_code):
-    res = await authorized_client.put("/accounts/1", json=values)
+async def test_update_account(session, authorized_client, test_account, values):
+    async with session:
+        res = await authorized_client.put("/accounts/1", json=values)
 
     assert res.status_code == 200
-
+    d = res.json()
     account = schemas.AccountData(**res.json())
 
     for key, value in values.items():
@@ -91,4 +111,7 @@ async def test_update_account(authorized_client, test_account, values, status_co
 
         account_val = getattr(account, key)
         print(f"key: {key} | value: {value} | account_val: {account_val}")
-        assert account_val == value
+        if isinstance(value, str):
+            assert account_val == value
+        else:
+            assert account_val == round(value, 2)
