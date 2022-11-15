@@ -1,3 +1,4 @@
+from datetime import timezone
 from fastapi import Depends, status, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from app.database import db
@@ -17,25 +18,24 @@ ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 def create_access_token(data: dict):
     to_encode = data.copy()
 
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    access_token = jwt.encode(to_encode, SECRET_KEY, ALGORITHM)
+    to_encode["exp"] = expire
 
-    return access_token
+    return jwt.encode(to_encode, SECRET_KEY, ALGORITHM)
 
 
 def verify_access_token(token: str, credentials_exception):
     try:
         payload = jwt.decode(token, SECRET_KEY, ALGORITHM)
 
-        id: str = payload.get("user_id")
-        if id is None:
+        string_id = payload.get("user_id")
+        if string_id is None:
             raise credentials_exception
 
-        token_data = schemas.TokenData(id=id)
-    except JWTError:
-        raise credentials_exception
+        token_data = schemas.TokenData(id=string_id)
+    except JWTError as e:
+        raise credentials_exception from e
 
     return token_data
 
@@ -48,6 +48,4 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     )
 
     token = verify_access_token(token, credentials_exception)
-    user = db.session.query(models.User).get(token.id)
-
-    return user
+    return db.session.query(models.User).get(token.id)

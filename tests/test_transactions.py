@@ -2,7 +2,6 @@ import datetime
 import pytest
 
 from app import schemas, repository as repo, models
-import time
 
 #
 # use with: pytest --disable-warnings -v -x
@@ -42,10 +41,11 @@ async def test_create_transaction(
                 "account_id": account_id,
                 "amount": amount,
                 "reference": reference,
-                "date": str(datetime.datetime.utcnow()),
+                "date": str(datetime.datetime.now(datetime.timezone.utc)),
                 "subcategory_id": subcategory_id,
             },
         )
+
         new_transaction = schemas.Transaction(**res.json())
 
         await repo.refresh(account)
@@ -89,7 +89,7 @@ async def test_updated_transaction(
         "account_id": account_id,
         "amount": amount,
         "reference": f"Updated Val {amount}",
-        "date": str(datetime.datetime.utcnow()),
+        "date": str(datetime.datetime.now(datetime.timezone.utc)),
         "subcategory_id": subcategory_id,
     }
 
@@ -209,7 +209,7 @@ async def test_create_offset_transaction(
                 "account_id": account_id,
                 "amount": amount,
                 "reference": reference,
-                "date": str(datetime.datetime.utcnow()),
+                "date": str(datetime.datetime.now(datetime.timezone.utc)),
                 "subcategory_id": subcategory_id,
                 "offset_account_id": offset_account_id,
             },
@@ -270,7 +270,7 @@ async def test_create_offset_transaction_other_account_fail(
                 "account_id": account_id,
                 "amount": amount,
                 "reference": "Not allowed",
-                "date": str(datetime.datetime.utcnow()),
+                "date": str(datetime.datetime.now(datetime.timezone.utc)),
                 "subcategory_id": 1,
                 "offset_account_id": offset_account_id,
             },
@@ -322,7 +322,7 @@ async def test_updated_offset_transaction(
                 "account_id": account_id,
                 "amount": 10,
                 "reference": "creation",
-                "date": str(datetime.datetime.utcnow()),
+                "date": str(datetime.datetime.now(datetime.timezone.utc)),
                 "subcategory_id": subcategory_id,
                 "offset_account_id": offset_account_id,
             },
@@ -331,17 +331,17 @@ async def test_updated_offset_transaction(
         transaction_before = schemas.Transaction(**transaction_res.json())
 
         reference = f"Offset_transaction with {amount}"
-        print(f"t-id: {transaction_before.id}")
         res = await authorized_client.post(
             f"/transactions/{transaction_before.id}",
             json={
                 "account_id": account_id,
                 "amount": amount,
                 "reference": reference,
-                "date": str(datetime.datetime.utcnow()),
+                "date": str(datetime.datetime.now(datetime.timezone.utc)),
                 "subcategory_id": subcategory_id,
             },
         )
+
         status = res.status_code
         assert status == 200
 
@@ -395,7 +395,7 @@ async def test_delete_offset_transaction(
                 "account_id": account_id,
                 "amount": amount,
                 "reference": "creation",
-                "date": str(datetime.datetime.utcnow()),
+                "date": str(datetime.datetime.now(datetime.timezone.utc)),
                 "subcategory_id": subcategory_id,
                 "offset_account_id": offset_account_id,
             },

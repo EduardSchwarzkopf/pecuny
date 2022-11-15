@@ -3,18 +3,13 @@ from .. import models, schemas, repository as repo
 
 
 async def get_accounts(current_user: models.User) -> List[models.Account]:
-    account_list = await repo.filter_by(models.Account, "user_id", current_user.id)
-
-    return account_list
+    return await repo.filter_by(models.Account, "user_id", current_user.id)
 
 
 async def get_account(current_user: models.User, account_id: int) -> models.Account:
 
     account = await repo.get(models.Account, account_id)
-    if account and account.user_id == current_user.id:
-        return account
-
-    return None
+    return account if account and account.user_id == current_user.id else None
 
 
 async def create_account(user: models.User, account: schemas.Account) -> models.Account:

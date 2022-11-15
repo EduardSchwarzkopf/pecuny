@@ -19,8 +19,7 @@ async def filter_by(cls: models, attribute: str, value: str):
 
 
 async def get(cls: models, id: int) -> models:
-    result = await db.session.get(cls, id)
-    return result
+    return await db.session.get(cls, id)
 
 
 async def get_transactions_from_period(
@@ -47,7 +46,7 @@ async def get_scheduled_transactions_for_date(date: datetime):
     query = (
         select(ts)
         .filter(ts.date_start <= date)
-        .filter(or_(ts.date_end == None, ts.date_end >= date))
+        .filter(or_(ts.date_end is None, ts.date_end >= date))
     )
 
     result = await db.session.execute(query)

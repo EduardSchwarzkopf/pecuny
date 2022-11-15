@@ -13,8 +13,7 @@ response_model = schemas.AccountData
 
 @router.get("/", response_model=List[response_model])
 async def get_accounts(current_user: User = Depends(current_active_user)):
-    accounts = await service.get_accounts(current_user)
-    return accounts
+    return await service.get_accounts(current_user)
 
 
 @router.get("/{account_id}", response_model=response_model)
@@ -43,10 +42,9 @@ async def update_account(
     account_data: schemas.AccountUpdate,
     current_user: User = Depends(current_active_user),
 ):
-    updated_account = await tm.transaction(
+    return await tm.transaction(
         service.update_account, current_user, account_id, account_data
     )
-    return updated_account
 
 
 @router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)

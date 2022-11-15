@@ -34,7 +34,7 @@ class UserId(Base):
     __abstract__ = True
 
     @declared_attr
-    def user_id(cls):
+    def user_id(self):
         return Column(
             UUID(as_uuid=True),
             ForeignKey("user.id", ondelete="CASCADE"),
@@ -42,7 +42,7 @@ class UserId(Base):
         )
 
     @declared_attr
-    def user(cls):
+    def user(self):
         return relationship("User")
 
 

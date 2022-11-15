@@ -47,13 +47,12 @@ async def test_user(session):
 
 @pytest.fixture
 async def token(test_user):
-    token = create_access_token(
+    yield create_access_token(
         {
             "user_id": str(test_user.id),
             "aud": ["fastapi-users:auth"],
         }
     )
-    yield token
 
 
 @pytest.fixture
@@ -74,9 +73,7 @@ async def test_users(session):
     for data in users_data:
         await create_user(data[0], data[1])
 
-    user_list = await repo.get_all(models.User)
-
-    yield user_list
+    yield await repo.get_all(models.User)
 
 
 @pytest.fixture
@@ -92,9 +89,7 @@ async def test_account(test_user: models.User, session):
 
     await session.commit()
 
-    account = await repo.get(models.Account, db_account.id)
-
-    yield account
+    yield await repo.get(models.Account, db_account.id)
 
 
 @pytest.fixture
@@ -141,9 +136,7 @@ async def test_accounts(test_users, session):
     session.add_all(accounts)
     await session.commit()
 
-    account_list = await repo.get_all(models.Account)
-
-    yield account_list
+    yield await repo.get_all(models.Account)
 
 
 async def get_date_range(date_start, days=5):
@@ -152,7 +145,7 @@ async def get_date_range(date_start, days=5):
 
 @pytest.fixture
 async def test_transactions(test_accounts, session):
-    dates = await get_date_range(datetime.datetime.utcnow())
+    dates = await get_date_range(datetime.datetime.now(datetime.timezone.utc))
 
     transaction_data = [
         {
