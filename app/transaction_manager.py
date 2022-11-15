@@ -14,6 +14,7 @@ async def transaction(handler, *args: Any) -> Any:
         result = {}
         await db.session.rollback()
     finally:
+        await db.engine.dispose()
         return result
 
 
