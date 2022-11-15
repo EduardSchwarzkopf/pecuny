@@ -19,8 +19,7 @@ def create_user(
     if service.get_user_by_username(user.username):
         raise HTTPException(status.HTTP_409_CONFLICT, detail="Username already in use")
 
-    new_user = tm.transaction(service.create_user, user)
-    return new_user
+    return tm.transaction(service.create_user, user)
 
 
 @router.put("/{user_id}", response_model=response_model)
@@ -51,8 +50,7 @@ def update_user(
             status.HTTP_400_BAD_REQUEST, detail="Empty Password not allowed"
         )
 
-    updated_user = tm.transaction(service.update_user, user_id, user_data)
-    return updated_user
+    return tm.transaction(service.update_user, user_id, user_data)
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)

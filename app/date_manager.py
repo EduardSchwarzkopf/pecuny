@@ -3,7 +3,7 @@ from dateutil.relativedelta import relativedelta
 
 
 def today():
-    return datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    return datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
 
 def get_datetime_from_timestamp(timestamp):
@@ -35,7 +35,7 @@ def get_end_date(start_date, frequency, interval):
 
     if frequency in frequencies:
         # create function call to add to date
-        function_call = "relativedelta({}={})".format(frequency, interval)
+        function_call = f"relativedelta({frequency}={interval})"
         end_date += eval(function_call)
 
     return end_date

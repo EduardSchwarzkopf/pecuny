@@ -10,16 +10,17 @@ def get_transaction_list(
     account = repo.get("Account", account_id)
     if account.user_id == user.id:
 
-        transactions = repo.get_transactions_from_period(
-            account_id, transaction_query.date_start, transaction_query.date_end
+        return repo.get_transactions_from_period(
+            account_id,
+            transaction_query.date_start,
+            transaction_query.date_end,
         )
-        return transactions
 
 
 def get_transaction(user: models.User, transaction_id: int) -> models.Transaction:
     transaction = repo.get("Transaction", transaction_id)
 
-    if transaction == None:
+    if transaction is None:
         return
 
     account = repo.get("Account", transaction.account_id)
@@ -49,7 +50,7 @@ def create_transaction(
     if transaction_information.offset_account_id:
         offset_transaction = _handle_offset_transaction(user, transaction_information)
 
-        if offset_transaction == None:
+        if offset_transaction is None:
             raise Exception(
                 f"User[id: {user.id}] not allowed to access offset_account[id: {transaction_information.offset_account_id}"
             )
@@ -95,7 +96,7 @@ def update_transaction(
     transaction_information: schemas.TransactionInformtionUpdate,
 ):
     transaction = repo.get("Transaction", transaction_id)
-    if transaction == None:
+    if transaction is None:
         return
 
     account = repo.get("Account", transaction.account_id)
@@ -130,7 +131,7 @@ def delete_transaction(current_user: models.User, transaction_id: int) -> bool:
 
     transaction = repo.get("Transaction", transaction_id)
 
-    if transaction == None:
+    if transaction is None:
         return
 
     account = repo.get("Account", transaction.account_id)

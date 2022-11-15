@@ -18,11 +18,9 @@ def create_access_token(data: dict):
     to_encode = data.copy()
 
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
+    to_encode["exp"] = expire
 
-    access_token = jwt.encode(to_encode, SECRET_KEY, ALGORITHM)
-
-    return access_token
+    return jwt.encode(to_encode, SECRET_KEY, ALGORITHM)
 
 
 def verify_access_token(token: str, credentials_exception):
@@ -48,6 +46,4 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     )
 
     token = verify_access_token(token, credentials_exception)
-    user = db.session.query(models.User).get(token.id)
-
-    return user
+    return db.session.query(models.User).get(token.id)

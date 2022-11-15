@@ -16,7 +16,7 @@ def verify(password: str, hashed_password: str):
 def update_model_object(model: models, schema: schemas):
     for key, value in schema.dict().items():
         # skip empty values or same as previous
-        if value == None or value == "":
+        if value is None or value == "":
             continue
 
         try:

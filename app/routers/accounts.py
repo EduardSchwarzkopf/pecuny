@@ -13,8 +13,7 @@ response_model = schemas.AccountData
 def get_accounts(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
-    accounts = service.get_accounts(current_user)
-    return accounts
+    return service.get_accounts(current_user)
 
 
 @router.get("/{account_id}", response_model=response_model)
@@ -45,10 +44,9 @@ def update_account(
     account_data: schemas.AccountUpdate,
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
-    updated_account = tm.transaction(
+    return tm.transaction(
         service.update_account, current_user, account_id, account_data
     )
-    return updated_account
 
 
 @router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -44,7 +44,7 @@ def get_transactions_from_period(
     class_ = __str_to_class(model_name)
     attribute = getattr(class_, "account_id")
 
-    information_class = __str_to_class(model_name + "Information")
+    information_class = __str_to_class(f"{model_name}Information")
     class_date = information_class.date
 
     return (

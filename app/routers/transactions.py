@@ -14,8 +14,7 @@ def get_transactions(
     transaction_query: schemas.TransactionQuery,
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
-    transactions = service.get_transaction_list(current_user, transaction_query)
-    return transactions
+    return service.get_transaction_list(current_user, transaction_query)
 
 
 @router.get("/{transaction_id}", response_model=response_model)
@@ -24,9 +23,7 @@ def get_transaction(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
-    transaction = service.get_transaction(current_user, transaction_id)
-
-    if transaction:
+    if transaction := service.get_transaction(current_user, transaction_id):
         return transaction
 
     raise HTTPException(
@@ -39,11 +36,9 @@ def create_transaction(
     transaction_information: schemas.TransactionInformationCreate,
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
-    transaction = tm.transaction(
+    if transaction := tm.transaction(
         service.create_transaction, current_user, transaction_information
-    )
-
-    if transaction:
+    ):
         return transaction
 
     raise HTTPException(
@@ -57,14 +52,12 @@ def update_transaction(
     transaction_information: schemas.TransactionInformtionUpdate,
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
-    transaction = tm.transaction(
+    if transaction := tm.transaction(
         service.update_transaction,
         current_user,
         transaction_id,
         transaction_information,
-    )
-
-    if transaction:
+    ):
         return transaction
 
     raise HTTPException(

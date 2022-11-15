@@ -22,13 +22,13 @@ class UserId(Base):
     __abstract__ = True
 
     @declared_attr
-    def user_id(cls):
+    def user_id(self):
         return Column(
             Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
         )
 
     @declared_attr
-    def user(cls):
+    def user(self):
         return relationship("User")
 
 
