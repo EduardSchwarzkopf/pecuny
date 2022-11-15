@@ -15,8 +15,7 @@ async def get_transactions(
     transaction_query: schemas.TransactionQuery,
     current_user: User = Depends(current_active_user),
 ):
-    transactions = await service.get_transaction_list(current_user, transaction_query)
-    return transactions
+    return await service.get_transaction_list(current_user, transaction_query)
 
 
 @router.get("/{transaction_id}", response_model=response_model)
