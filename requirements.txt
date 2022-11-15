@@ -65,7 +65,7 @@ toml==0.10.2
 tomli==1.2.3
 types-cryptography==3.3.23.1
 typing_extensions==4.0.1
-ujson==4.3.0
+ujson==5.4.0
 urllib3==1.26.7
 uvicorn==0.15.0
 uvloop==0.16.0
