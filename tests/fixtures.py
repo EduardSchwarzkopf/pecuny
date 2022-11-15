@@ -37,12 +37,9 @@ pytestmark = pytest.mark.anyio
 async def test_user(session):
     user_list = await repo.get_all(models.User)
 
-    if len(user_list) > 0:
-        user = user_list[0]
-    else:
-        user = await create_user("hello123@pytest.de", "password123")
-
-    yield user
+    yield user_list[0] if len(user_list) > 0 else await create_user(
+        "hello123@pytest.de", "password123"
+    )
 
 
 @pytest.fixture

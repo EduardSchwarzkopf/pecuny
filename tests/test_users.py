@@ -142,13 +142,13 @@ async def test_invalid_updated_user(
 
 async def test_delete_user(session, client, test_user, authorized_client):
     async with session:
-        res = await authorized_client.delete(f"/users/me")
+        res = await authorized_client.delete("/users/me")
 
         assert res.status_code == 204
 
         user = await repo.get(models.User, test_user.id)
 
-    assert user == None
+    assert user is None
 
 
 async def test_invalid_delete_user(authorized_client: AsyncClient, session):
