@@ -1,54 +1,41 @@
 from typing import List
-from .. import repository as repo, models, schemas, utils
+from .. import models, schemas, repository as repo
 
 
-def get_accounts(current_user: models.User) -> List[models.Account]:
-    accounts = repo.filter("Account", "user_id", current_user.id).all()
-
-    return accounts
+async def get_accounts(current_user: models.User) -> List[models.Account]:
+    return await repo.filter_by(models.Account, "user_id", current_user.id)
 
 
-def get_account(current_user: models.User, account_id: int) -> models.Account:
+async def get_account(current_user: models.User, account_id: int) -> models.Account:
 
-    account = repo.get("Account", account_id)
-    if account and account.user_id == current_user.id:
-        return account
-
-    return None
+    account = await repo.get(models.Account, account_id)
+    return account if account and account.user_id == current_user.id else None
 
 
-def create_account(user: models.User, account: schemas.Account) -> models.Account:
+async def create_account(user: models.User, account: schemas.Account) -> models.Account:
 
-    db_account = models.Account(
-        user=user,
-        **account.dict(),
-    )
-
-    repo.save(db_account)
-
+    db_account = models.Account(user=user, **account.dict())
+    await repo.save(db_account)
     return db_account
 
 
-def update_account(
+async def update_account(
     current_user: models.User, account_id, account: schemas.AccountData
 ) -> models.Account:
 
-    db_account = repo.get("Account", account_id)
+    db_account = await repo.get(models.Account, account_id)
     if db_account.user_id == current_user.id:
-        utils.update_model_object(db_account, account)
-        repo.save(db_account)
-
+        await repo.update(models.Account, db_account.id, **account.dict())
         return db_account
 
     return None
 
 
-def delete_account(current_user: models.User, account_id: int) -> bool:
+async def delete_account(current_user: models.User, account_id: int) -> bool:
 
-    account = repo.get("Account", account_id)
+    account = await repo.get(models.Account, account_id)
     if account and account.user_id == current_user.id:
-
-        repo.delete(account)
+        await repo.delete(account)
         return True
 
     return None

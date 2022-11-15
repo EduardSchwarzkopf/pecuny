@@ -8,12 +8,16 @@ from app.config import settings
 # use with: pytest --disable-warnings -v -x
 #
 
+pytestmark = pytest.mark.anyio
 
-def test_create_account(authorized_client):
-    res = authorized_client.post(
-        "/accounts/",
-        json={"label": "test_account", "description": "test", "balance": 500},
-    )
+
+async def test_create_account(session, authorized_client):
+    async with session:
+        res = await authorized_client.post(
+            "/accounts/",
+            json={"label": "test_account", "description": "test", "balance": 500},
+        )
+
     new_account = schemas.Account(**res.json())
 
     assert res.status_code == 201
@@ -23,26 +27,27 @@ def test_create_account(authorized_client):
 
 
 @pytest.mark.parametrize(
-    "label, description, balance, status_code",
+    "label, description, balance",
     [
-        ("", None, None, 422),
-        ("test", "test", "aaaa", 422),
-        ("test", "test", "0,3", 422),
+        ("", None, None),
+        ("test", "test", "aaaa"),
+        ("test", "test", "0,3"),
     ],
 )
-def test_invalid_create_account(
-    authorized_client, label, description, balance, status_code
+async def test_invalid_create_account(
+    session, authorized_client, label, description, balance
 ):
-    res = authorized_client.post(
-        "/accounts/",
-        json={"label": label, "description": description, "balance": balance},
-    )
+    async with session:
+        res = await authorized_client.post(
+            "/accounts/",
+            json={"label": label, "description": description, "balance": balance},
+        )
 
-    assert res.status_code == status_code
+    assert res.status_code == 422
 
 
-def test_delete_account(authorized_client, test_account):
-    res = authorized_client.delete("/accounts/1")
+async def test_delete_account(authorized_client, test_account):
+    res = await authorized_client.delete("/accounts/1")
 
     assert res.status_code == 204
 
@@ -51,35 +56,53 @@ def test_delete_account(authorized_client, test_account):
     "account_id, status_code",
     [("2", 404), ("3", 404), ("4", 404), ("999999", 404)],
 )
-def test_invalid_delete_account(
+async def test_invalid_delete_account(
     authorized_client, test_accounts, account_id, status_code
 ):
-    res = authorized_client.delete(f"/accounts/{account_id}")
+    res = await authorized_client.delete(f"/accounts/{account_id}")
 
     assert res.status_code == status_code
 
 
 @pytest.mark.parametrize(
-    "values, status_code",
+    "values",
     [
-        ({"label": "new_label"}, 200),
-        ({"description": "my new description"}, 200),
-        ({"balance": 1234}, 200),
         (
             {
                 "label": "My new Label",
                 "description": "very new description",
                 "balance": 1111.3,
-            },
-            200,
+            }
+        ),
+        (
+            {
+                "label": "11113",
+                "description": "cool story bro '",
+                "balance": 2000,
+            }
+        ),
+        (
+            {
+                "label": "My new Label",
+                "description": "very new description",
+                "balance": -0.333333334,
+            }
+        ),
+        (
+            {
+                "label": "My new Label",
+                "description": "very new description",
+                "balance": -1000000.3,
+            }
         ),
     ],
 )
-def test_update_account(authorized_client, test_account, values, status_code):
-    res = authorized_client.put("/accounts/1", json=values)
+async def test_update_account(session, authorized_client, test_account, values):
+    async with session:
+        res = await authorized_client.put("/accounts/1", json=values)
 
     assert res.status_code == 200
-
+    d = res.json()
     account = schemas.AccountData(**res.json())
 
     for key, value in values.items():
@@ -88,4 +111,7 @@ def test_update_account(authorized_client, test_account, values, status_code):
 
         account_val = getattr(account, key)
         print(f"key: {key} | value: {value} | account_val: {account_val}")
-        assert account_val == value
+        if isinstance(value, str):
+            assert account_val == value
+        else:
+            assert account_val == round(value, 2)

@@ -1,87 +1,93 @@
-from sqlalchemy import or_, extract, and_
+from sqlalchemy import or_, update as sql_update
+from sqlalchemy.future import select
 from . import models
-from fastapi_sqlalchemy import db
 from datetime import datetime
+from app.database import db
 
 
-def __str_to_class(classname: str):
-    return getattr(models, classname)
+async def get_all(cls: models):
+    q = select(cls)
+    result = await db.session.execute(q)
+    result.unique()
+    return result.scalars().all()
 
 
-def __db_action(action_name: str, object):
-    method = getattr(db.session, action_name)
-    method(object)
+async def filter_by(cls: models, attribute: str, value: str):
+    query = select(cls).where(getattr(cls, attribute) == value)
+    result = await db.session.execute(query)
+    return result.scalars().all()
 
 
-def __db_query_action(filter_option: str, name: str, attribute: str, value: str):
-    class_ = __str_to_class(name)
-    attr = getattr(class_, attribute)
-    return getattr(db.session.query(class_), filter_option)(attr == value)
+async def get(cls: models, id: int) -> models:
+    return await db.session.get(cls, id)
 
 
-def get_all(name: str):
-    class_ = __str_to_class(name)
-    return db.session.query(class_).all()
-
-
-def filter(name: str, attribute: str, value: str):
-    return __db_query_action("filter", name, attribute, value)
-
-
-def filter_by(name: str, attribute: str, value: str):
-    return __db_query_action("filter_by", name, attribute, value)
-
-
-def get(name: str, id: int):
-    class_ = __str_to_class(name)
-    return db.session.query(class_).get(id)
-
-
-def get_transactions_from_period(
+async def get_transactions_from_period(
     account_id: int, start_date: datetime, end_date: datetime
 ):
-    model_name = "Transaction"
-    class_ = __str_to_class(model_name)
-    attribute = getattr(class_, "account_id")
+    transaction = models.Transaction
+    information = models.TransactionInformation
+    class_date = information.date
 
-    information_class = __str_to_class(model_name + "Information")
-    class_date = information_class.date
-
-    return (
-        db.session.query(class_)
-        .join(class_.information)
+    query = (
+        select(transaction)
+        .join(transaction.information)
         .filter(class_date <= end_date)
         .filter(class_date >= start_date)
-        .filter(account_id == attribute)
-        .all()
+        .filter(account_id == transaction.account_id)
     )
 
+    result = await db.session.execute(query)
+    return result.scalars().all()
 
-def get_scheduled_transactions_for_date(date: datetime):
+
+async def get_scheduled_transactions_for_date(date: datetime):
     ts = models.TransactionScheduled
-    return (
-        db.session.query(ts)
+    query = (
+        select(ts)
         .filter(ts.date_start <= date)
-        .filter(or_(ts.date_end == None, ts.date_end >= date))
-        .all()
+        .filter(or_(ts.date_end is None, ts.date_end >= date))
     )
 
+    result = await db.session.execute(query)
 
-def save(object: models):
-    if isinstance(object, list):
-        return __db_action("add_all", object)
-
-    return __db_action("add", object)
+    return result.scalars().all()
 
 
-def delete(object: models):
-    return __db_action("delete", object)
+async def save(obj):
+    if isinstance(obj, list):
+        db.session.add_all(obj)
+        return
+
+    db.session.add(obj)
 
 
-def refresh(object: models):
-    return __db_action("refresh", object)
+async def get_session():
+    return db.session
 
 
-def refresh_all(object_list: models) -> None:
-    for object in object_list:
-        __db_action("refresh", object)
+async def commit(session):
+    await session.commit()
+
+
+async def update(cls: models, id: int, **kwargs):
+    query = (
+        sql_update(cls)
+        .where(cls.id == id)
+        .values(**kwargs)
+        .execution_options(synchronize_session="fetch")
+    )
+    await db.session.execute(query)
+
+
+async def delete(obj: models) -> None:
+    await db.session.delete(obj)
+
+
+async def refresh(obj: models):
+    return await db.session.refresh(obj)
+
+
+async def refresh_all(object_list: models) -> None:
+    for obj in object_list:
+        await db.session.refresh(obj)

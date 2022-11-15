@@ -2,7 +2,7 @@ from app import models
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import table, column
-from sqlalchemy.orm.session import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 INCOME_ID = 1
@@ -255,14 +255,14 @@ def _get_category_list():
     ]
 
 
-def create_categories(db_session: Session = None):
+async def create_categories(db_session: AsyncSession = None):
     """Create transaction categories."""
 
     subcategory_list = _get_subcategory_list()
     category_list = _get_category_list()
 
     if db_session:
-        _add_category_via_session(db_session, category_list, subcategory_list)
+        await _add_category_via_session(db_session, category_list, subcategory_list)
     else:
         _add_category_via_alembic_operator(category_list, subcategory_list)
 
@@ -283,7 +283,7 @@ def _add_category_via_alembic_operator(category_list, subcategory_list):
     op.bulk_insert(subcategory_table, subcategory_list)
 
 
-def _add_category_via_session(db_session, category_list, subcategory_list):
+async def _add_category_via_session(db_session, category_list, subcategory_list):
     def create_subcategory_model(subcategory):
         return models.TransactionSubcategory(**subcategory)
 
@@ -294,4 +294,4 @@ def _add_category_via_session(db_session, category_list, subcategory_list):
     category = list(map(create_category_model, category_list))
 
     db_session.add_all(category + subcategory)
-    db_session.commit()
+    await db_session.commit()

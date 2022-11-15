@@ -1,19 +1,20 @@
 from typing import Any
-from fastapi_sqlalchemy import db
-from . import models
+from app import models
+from app.database import db
 
 
-def transaction(handler, *args: Any) -> Any:
+async def transaction(handler, *args: Any) -> Any:
     try:
-        result = handler(*args)
-        db.session.commit()
+        result = await handler(*args)
+        await db.session.commit()
         if _is_models_object(result):
-            db.session.refresh(result)
+            await db.session.refresh(result)
 
     except Exception as e:
         result = {}
-        db.session.rollback()
+        await db.session.rollback()
     finally:
+        await db.engine.dispose()
         return result
 
 

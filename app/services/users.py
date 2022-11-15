@@ -1,45 +1,8 @@
-from pyexpat import model
-from .. import models, schemas, utils, repository as repo
+from .. import models, repository as repo
 
 
-def get_user_by_email(email):
-    return repo.filter("User", "email", email.lower()).first()
+async def delete_self(current_user: models.User) -> bool:
 
-
-def get_user_by_username(username):
-    return repo.filter("User", "username", username.lower()).first()
-
-
-def auth_user(user_credentials):
-    username = user_credentials.username
-    user = get_user_by_email(username)
-    if not user:
-        user = get_user_by_username(username)
-
-    if not user or not utils.verify(user_credentials.password, user.password):
-        return None
-
-    return user
-
-
-def create_user(user: schemas.UserCreate):
-
-    user.password = utils.hash(user.password)
-    new_user = models.User(**user.dict())
-
-    repo.save(new_user)
-
-    return new_user
-
-
-def update_user(user_id: int, user: schemas.UserUpdate):
-    db_user = repo.get("User", user_id)
-
-    return utils.update_model_object(db_user, user)
-
-
-def delete_user(user_id: int):
-    user = repo.get("User", user_id)
-    repo.delete(user)
+    await repo.delete(current_user)
 
     return True

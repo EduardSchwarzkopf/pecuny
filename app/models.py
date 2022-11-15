@@ -1,9 +1,13 @@
-from sqlalchemy import Column, Integer, String, Numeric, DateTime, text, Boolean
+from sqlalchemy import Column, Integer, String, Numeric, text, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.ext.declarative import declared_attr
-from .database import Base
+from .database import (
+    Base,
+    User,  # import User here, to be consistent with model imports
+)
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class BaseModel(Base):
@@ -17,28 +21,29 @@ class BaseModel(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
 
+    def add_attributes_from_dict(self, attribute_list: dict) -> None:
+        model_attribute_list = self.__mapper__.attrs.keys()
+
+        for key, value in attribute_list.items():
+
+            if key in model_attribute_list:
+                setattr(self, key, value)
+
 
 class UserId(Base):
     __abstract__ = True
 
     @declared_attr
-    def user_id(cls):
+    def user_id(self):
         return Column(
-            Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+            UUID(as_uuid=True),
+            ForeignKey("user.id", ondelete="CASCADE"),
+            nullable=False,
         )
 
     @declared_attr
-    def user(cls):
+    def user(self):
         return relationship("User")
-
-
-class User(BaseModel):
-    __tablename__ = "users"
-
-    username = Column(String(64), nullable=False, unique=True)
-    email = Column(String, nullable=False, unique=True)
-    password = Column(String, nullable=False)
-    last_seen = Column(DateTime)
 
 
 class Account(BaseModel, UserId):
@@ -66,6 +71,7 @@ class Transaction(BaseModel):
         uselist=False,
         cascade="all,delete",
         foreign_keys=[information_id],
+        lazy="selectin",
     )
 
     offset_transactions_id = Column(
@@ -83,6 +89,7 @@ class Transaction(BaseModel):
         remote_side="Transaction.id",
         foreign_keys=[offset_transactions_id],
         post_update=True,
+        lazy="selectin",
     )
 
 
@@ -95,14 +102,15 @@ class TransactionScheduled(BaseModel):
         backref="transactions_scheduled",
         uselist=False,
         cascade="all,delete",
+        lazy="selectin",
     )
     information_id = Column(Integer, ForeignKey("transactions_information.id"))
 
-    frequency = relationship("Frequency", cascade="all,delete")
+    frequency = relationship("Frequency", cascade="all,delete", lazy="selectin")
     frequency_id = Column(Integer, ForeignKey("frequencies.id", ondelete="CASCADE"))
     interval = Column(Integer, default=1)
-    date_start = Column(DateTime)
-    date_end = Column(DateTime)
+    date_start = Column(type_=TIMESTAMP(timezone=True))
+    date_end = Column(type_=TIMESTAMP(timezone=True))
 
 
 class TransactionInformation(BaseModel):
@@ -112,8 +120,8 @@ class TransactionInformation(BaseModel):
         Numeric(10, 2, asdecimal=False, decimal_return_scale=None), default=0
     )
     reference = Column(String(128))
-    date = Column(DateTime, default=text("now()"))
-    subcategory = relationship("TransactionSubcategory")
+    date = Column(type_=TIMESTAMP(timezone=True), default=text("now()"))
+    subcategory = relationship("TransactionSubcategory", lazy="selectin")
     subcategory_id = Column(Integer, ForeignKey("transactions_subcategories.id"))
 
 
@@ -129,15 +137,19 @@ class TransactionCategory(BaseModel):
 
     label = Column(String(36))
     subcategories = relationship(
-        "TransactionSubcategory", lazy="dynamic", backref="transactions_categories"
+        "TransactionSubcategory", lazy="selectin", backref="transactions_categories"
     )
 
 
 class TransactionSubcategory(BaseModel):
     __tablename__ = "transactions_subcategories"
 
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
-    user = relationship("User")
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"))
+    user = relationship(
+        "User",
+        lazy="selectin",
+    )
+
     label = Column(String(36))
     is_income = Column(Boolean, default=False)
     parent_category_id = Column(Integer, ForeignKey("transactions_categories.id"))

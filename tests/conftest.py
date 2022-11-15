@@ -1,31 +1,40 @@
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from fastapi_sqlalchemy import DBSessionMiddleware
-from fastapi_sqlalchemy import db
-from app.main import app
-from app.config import settings
-from app.database import Base
 from app import events
-
-SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.db_username}:{settings.db_password}@{settings.db_host}:{settings.test_db_port}/{settings.db_name}_test"
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-app.add_middleware(DBSessionMiddleware, db_url=SQLALCHEMY_DATABASE_URL)
-
-
-@pytest.fixture()
-def session():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
-
-    with db():
-        events.create_categories(db.session)
+from app.config import settings
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from app.main import app
+from app.database import Base, db
+from sqlalchemy.orm import sessionmaker
+from httpx import AsyncClient
 
 
-@pytest.fixture()
-def client(session):
-    yield TestClient(app)
+engine = create_async_engine(settings.test_db_url)
+async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+
+pytestmark = pytest.mark.anyio
+
+
+@pytest.fixture
+async def session():
+    await db.init()
+    async with db.engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+
+    await events.create_categories(db.session)
+    yield db.session
+
+
+@pytest.fixture
+async def client(session) -> AsyncClient:
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        yield client
+
+
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
 
 
 from .fixtures import *

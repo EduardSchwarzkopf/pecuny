@@ -1,7 +1,9 @@
-from fastapi import FastAPI
-from fastapi_sqlalchemy import DBSessionMiddleware
-from .database import SQLALCHEMY_DATABASE_URL
-from .routers import users, auth, accounts, transactions
+from fastapi import FastAPI, Depends
+import fastapi_users
+from .routers import accounts, transactions, users
+from app.database import User, db
+from app.schemas import UserCreate, UserRead, UserUpdate
+from app.routers.users import auth_backend, current_active_user, fastapi_users
 
 # from .routers import users, posts, auth, vote
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,14 +22,66 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Database
-app.add_middleware(DBSessionMiddleware, db_url=SQLALCHEMY_DATABASE_URL)
+
+@app.on_event("startup")
+async def startup_event():
+    await db.init()
+    await db.create_all()
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await db.session.close()
+
 
 # Routes
-app.include_router(users.router)
-app.include_router(auth.router)
-app.include_router(accounts.router)
-app.include_router(transactions.router)
+app.include_router(
+    accounts.router,
+    prefix="/accounts",
+    tags=["Accounts"],
+)
+app.include_router(
+    transactions.router,
+    prefix="/transactions",
+    tags=["Transactions"],
+)
+
+
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"]
+)
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/auth",
+    tags=["auth"],
+)
+app.include_router(
+    fastapi_users.get_reset_password_router(),
+    prefix="/auth",
+    tags=["auth"],
+)
+app.include_router(
+    fastapi_users.get_verify_router(UserRead),
+    prefix="/auth",
+    tags=["auth"],
+)
+
+app.include_router(
+    users.router,
+    prefix="/users",
+    tags=["users"],
+)
+
+app.include_router(
+    fastapi_users.get_users_router(UserRead, UserUpdate),
+    prefix="/users",
+    tags=["users"],
+)
+
+
+@app.get("/authenticated-route")
+async def authenticated_route(user: User = Depends(current_active_user)):
+    return {"message": f"Hello {user.email}!"}
 
 
 @app.get("/")

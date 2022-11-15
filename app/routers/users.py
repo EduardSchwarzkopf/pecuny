@@ -1,68 +1,76 @@
-from fastapi import Depends, APIRouter, Response, status, HTTPException
-from .. import models, schemas, oauth2, transaction_manager as tm
-from ..services import users as service
+import uuid
+from typing import Optional
+
+from fastapi import Depends, Request, APIRouter, status, Response, HTTPException
+from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
+from fastapi_users.authentication import (
+    AuthenticationBackend,
+    BearerTransport,
+    JWTStrategy,
+)
+from fastapi_users.db import SQLAlchemyUserDatabase
+from app.config import settings
+
+from app.database import User, get_user_db
+from app import transaction_manager as tm
+from app.services import users as service
+
+router = APIRouter()
+
+SECRET = settings.secret_key
 
 
-router = APIRouter(prefix="/users", tags=["Users"])
-response_model = schemas.UserData
+class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
+    reset_password_token_secret = SECRET
+    verification_token_secret = SECRET
+
+    async def on_after_register(self, user: User, request: Optional[Request] = None):
+        print(f"User {user.id} has registered.")
+
+    async def on_after_forgot_password(
+        self, user: User, token: str, request: Optional[Request] = None
+    ):
+        print(f"User {user.id} has forgot their password. Reset token: {token}")
+
+    async def on_after_request_verify(
+        self, user: User, token: str, request: Optional[Request] = None
+    ):
+        print(f"Verification requested for user {user.id}. Verification token: {token}")
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
-def create_user(
-    user: schemas.UserCreate,
-):
-    if service.get_user_by_email(user.email):
-        raise HTTPException(
-            status.HTTP_409_CONFLICT, detail="E-Mail address already in use"
+async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):
+    yield UserManager(user_db)
+
+
+bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
+
+
+def get_jwt_strategy() -> JWTStrategy:
+    return JWTStrategy(secret=SECRET, lifetime_seconds=3600)
+
+
+auth_backend = AuthenticationBackend(
+    name="jwt",
+    transport=bearer_transport,
+    get_strategy=get_jwt_strategy,
+)
+
+fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
+
+current_active_user = fastapi_users.current_user(active=True)
+
+
+# override fastapi_users functionality
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_me(current_user: User = Depends(current_active_user)):
+    result = await tm.transaction(service.delete_self, current_user)
+    if result:
+        return Response(
+            status_code=status.HTTP_204_NO_CONTENT,
+            content="Transaction deleted successfully",
         )
 
-    if service.get_user_by_username(user.username):
-        raise HTTPException(status.HTTP_409_CONFLICT, detail="Username already in use")
-
-    new_user = tm.transaction(service.create_user, user)
-    return new_user
-
-
-@router.put("/{user_id}", response_model=response_model)
-def update_user(
-    user_id: int,
-    user_data: schemas.UserUpdate,
-    current_user: models.User = Depends(oauth2.get_current_user),
-):
-    if current_user.id != user_id:
+    if result is None:
         raise HTTPException(
-            status.HTTP_403_FORBIDDEN, detail="You are not allowed to update this user"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
         )
-
-    email_user = service.get_user_by_email(user_data.email)
-    if email_user and current_user != email_user:
-        raise HTTPException(
-            status.HTTP_409_CONFLICT, detail="E-Mail address already in use"
-        )
-
-    username_user = service.get_user_by_username(user_data.username)
-    if username_user and current_user != username_user:
-        raise HTTPException(
-            status.HTTP_409_CONFLICT, detail="Username address already in use"
-        )
-
-    if user_data.password is not None and not user_data.password.strip():
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, detail="Empty Password not allowed"
-        )
-
-    updated_user = tm.transaction(service.update_user, user_id, user_data)
-    return updated_user
-
-
-@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(
-    user_id: int, current_user: models.User = Depends(oauth2.get_current_user)
-):
-    # TODO: Add more permissions later
-    if current_user.id != user_id:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN, detail="You are not allowed to delete this user"
-        )
-    tm.transaction(service.delete_user, user_id)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
