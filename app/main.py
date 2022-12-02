@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 # Allowed Domains to talk to this api
-origins = ["http://localhost"]
+origins = ["http://localhost:5173", "http://localhost"]
 
 # CORS
 app.add_middleware(
@@ -48,7 +48,7 @@ app.include_router(
 
 
 app.include_router(
-    fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["Auth"]
+    fastapi_users.get_auth_router(auth_backend), prefix="/auth", tags=["Auth"]
 )
 app.include_router(
     fastapi_users.get_register_router(UserRead, UserCreate),
