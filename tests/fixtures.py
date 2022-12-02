@@ -2,7 +2,6 @@ import pytest
 import datetime
 from app.oauth2 import create_access_token
 from app import models, repository as repo
-from app.database import db
 from app.routers.users import get_user_manager
 
 import contextlib
@@ -10,6 +9,7 @@ import contextlib
 from app.database import get_user_db
 from app.schemas import UserCreate
 from fastapi_users.exceptions import UserAlreadyExists
+from httpx import AsyncClient
 
 get_user_db_context = contextlib.asynccontextmanager(get_user_db)
 get_user_manager_context = contextlib.asynccontextmanager(get_user_manager)
@@ -53,8 +53,8 @@ async def token(test_user):
 
 
 @pytest.fixture
-async def authorized_client(client, token):
-    client.headers = {**client.headers, "Authorization": "Bearer " + token}
+async def authorized_client(client: AsyncClient, token):
+    client.cookies = {**client.cookies, "fastapiusersauth": token}
 
     yield client
 

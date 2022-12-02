@@ -55,21 +55,20 @@ async def test_invalid_create_user(session, client: AsyncClient, test_user):
 async def test_login(session, client: AsyncClient, test_user, username, password):
     async with session:
         res = await client.post(
-            "/auth/jwt/login",
+            "/auth/login",
             data={"username": username, "password": password},
         )
 
-    login_res = schemas.Token(**res.json())
+    cookie = res.cookies.get("fastapiusersauth")
     payload = jwt.decode(
-        login_res.access_token,
+        cookie,
         settings.secret_key,
         algorithms=settings.algorithm,
         audience="fastapi-users:auth",
     )
-    id = payload["user_id"]
+    user_id = payload["user_id"]
 
-    assert id == str(test_user.id)
-    assert login_res.token_type == "bearer"
+    assert user_id == str(test_user.id)
     assert res.status_code == 200
 
 
