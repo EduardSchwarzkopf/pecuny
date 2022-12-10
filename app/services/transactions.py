@@ -1,18 +1,16 @@
 from copy import deepcopy
+from datetime import datetime
 from .. import models, schemas, repository as repo
 
 
 async def get_transaction_list(
-    user: models.User, transaction_query: schemas.TransactionQuery
+    user: models.User, account_id: int, date_start: datetime, date_end: datetime
 ):
 
-    account_id = transaction_query.account_id
     account = await repo.get(models.Account, account_id)
     if account.user_id == user.id:
 
-        return await repo.get_transactions_from_period(
-            account_id, transaction_query.date_start, transaction_query.date_end
-        )
+        return await repo.get_transactions_from_period(account_id, date_start, date_end)
 
 
 async def get_transaction(user: models.User, transaction_id: int) -> models.Transaction:

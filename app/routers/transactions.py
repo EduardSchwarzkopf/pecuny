@@ -1,4 +1,5 @@
 from typing import List
+from datetime import datetime
 from fastapi import Depends, APIRouter, status, Response
 from fastapi.exceptions import HTTPException
 from .. import schemas, transaction_manager as tm
@@ -12,10 +13,14 @@ response_model = schemas.Transaction
 
 @router.get("/", response_model=List[response_model])
 async def get_transactions(
-    transaction_query: schemas.TransactionQuery,
+    account_id: int,
+    date_start: datetime,
+    date_end: datetime,
     current_user: User = Depends(current_active_user),
 ):
-    return await service.get_transaction_list(current_user, transaction_query)
+    return await service.get_transaction_list(
+        current_user, account_id, date_start, date_end
+    )
 
 
 @router.get("/{transaction_id}", response_model=response_model)

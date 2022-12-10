@@ -78,9 +78,3 @@ class Account(Base):
 
 class AccountData(Account):
     id: int
-
-
-class TransactionQuery(BaseModel):
-    account_id: int
-    date_start: datetime
-    date_end: datetime
