@@ -11,7 +11,7 @@ pytestmark = pytest.mark.anyio
 
 
 @pytest.mark.parametrize(
-    "account_id, amount, expected_amount, reference, subcategory_id, status_code",
+    "account_id, amount, expected_amount, reference, category_id, status_code",
     [
         (1, 10, 10, "Added 10", 1, 201),
         (1, 20.5, 20.5, "Added 20.5", 3, 201),
@@ -27,7 +27,7 @@ async def test_create_transaction(
     amount,
     expected_amount,
     reference,
-    subcategory_id,
+    category_id,
     status_code,
 ):
     async with session:
@@ -42,7 +42,7 @@ async def test_create_transaction(
                 "amount": amount,
                 "reference": reference,
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
-                "subcategory_id": subcategory_id,
+                "category_id": category_id,
             },
         )
 
@@ -61,7 +61,7 @@ async def test_create_transaction(
 
 
 @pytest.mark.parametrize(
-    "account_id, transaction_id, subcategory_id, amount, status_code",
+    "account_id, transaction_id, category_id, amount, status_code",
     [
         (1, 1, 1, 2.5, 200),
         (1, 2, 1, 0, 200),
@@ -79,7 +79,7 @@ async def test_updated_transaction(
     test_transactions,
     account_id,
     transaction_id,
-    subcategory_id,
+    category_id,
     amount,
     status_code,
 ):
@@ -90,7 +90,7 @@ async def test_updated_transaction(
         "amount": amount,
         "reference": f"Updated Val {amount}",
         "date": str(datetime.datetime.now(datetime.timezone.utc)),
-        "subcategory_id": subcategory_id,
+        "category_id": category_id,
     }
 
     async with session:
@@ -116,7 +116,7 @@ async def test_updated_transaction(
     assert account_balance_after == round(account_balance - difference, 2)
     assert transaction.information.amount == round(amount, 2)
     assert transaction.information.reference == reference
-    assert transaction.information.subcategory_id == subcategory_id
+    assert transaction.information.category_id == category_id
 
 
 @pytest.mark.parametrize(
@@ -180,7 +180,7 @@ async def test_delete_transaction_fail(
 
 
 @pytest.mark.parametrize(
-    "account_id, offset_account_id, amount, expected_offset_amount, reference, subcategory_id, status_code",
+    "account_id, offset_account_id, amount, expected_offset_amount, reference, category_id, status_code",
     [
         (1, 5, 10, -10, "Added 10", 1, 201),
         (1, 5, 20.5, -20.5, "Added 20.5", 3, 201),
@@ -199,7 +199,7 @@ async def test_create_offset_transaction(
     amount,
     expected_offset_amount,
     reference,
-    subcategory_id,
+    category_id,
     status_code,
 ):
     async with session:
@@ -210,7 +210,7 @@ async def test_create_offset_transaction(
                 "amount": amount,
                 "reference": reference,
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
-                "subcategory_id": subcategory_id,
+                "category_id": category_id,
                 "offset_account_id": offset_account_id,
             },
         )
@@ -271,7 +271,7 @@ async def test_create_offset_transaction_other_account_fail(
                 "amount": amount,
                 "reference": "Not allowed",
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
-                "subcategory_id": 1,
+                "category_id": 1,
                 "offset_account_id": offset_account_id,
             },
         )
@@ -288,7 +288,7 @@ async def test_create_offset_transaction_other_account_fail(
 
 
 @pytest.mark.parametrize(
-    "account_id, offset_account_id, subcategory_id, amount",
+    "account_id, offset_account_id, category_id, amount",
     [
         (1, 5, 1, 2.5),
         (1, 5, 1, 0),
@@ -306,7 +306,7 @@ async def test_updated_offset_transaction(
     test_accounts,
     account_id,
     offset_account_id,
-    subcategory_id,
+    category_id,
     amount,
 ):
     async with session:
@@ -323,7 +323,7 @@ async def test_updated_offset_transaction(
                 "amount": 10,
                 "reference": "creation",
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
-                "subcategory_id": subcategory_id,
+                "category_id": category_id,
                 "offset_account_id": offset_account_id,
             },
         )
@@ -338,7 +338,7 @@ async def test_updated_offset_transaction(
                 "amount": amount,
                 "reference": reference,
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
-                "subcategory_id": subcategory_id,
+                "category_id": category_id,
             },
         )
 
@@ -357,11 +357,11 @@ async def test_updated_offset_transaction(
 
     assert transaction.information.amount == round(amount, 2)
     assert transaction.information.reference == reference
-    assert transaction.information.subcategory_id == subcategory_id
+    assert transaction.information.category_id == category_id
 
 
 @pytest.mark.parametrize(
-    "account_id, offset_account_id, subcategory_id, amount",
+    "account_id, offset_account_id, category_id, amount",
     [
         (1, 5, 1, 2.5),
         (1, 5, 1, 0),
@@ -379,7 +379,7 @@ async def test_delete_offset_transaction(
     test_accounts,
     account_id,
     offset_account_id,
-    subcategory_id,
+    category_id,
     amount,
 ):
     async with session:
@@ -396,7 +396,7 @@ async def test_delete_offset_transaction(
                 "amount": amount,
                 "reference": "creation",
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
-                "subcategory_id": subcategory_id,
+                "category_id": category_id,
                 "offset_account_id": offset_account_id,
             },
         )
