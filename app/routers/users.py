@@ -19,6 +19,7 @@ router = APIRouter()
 
 SECRET = settings.secret_key
 TOKEN_EXPIRE = settings.access_token_expire_minutes * 60
+SECURE_COOKIE = settings.enviroment != "dev"
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
@@ -43,7 +44,9 @@ async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db
     yield UserManager(user_db)
 
 
-cookie_transport = CookieTransport(cookie_max_age=TOKEN_EXPIRE)
+cookie_transport = CookieTransport(
+    cookie_max_age=TOKEN_EXPIRE, cookie_secure=SECURE_COOKIE
+)
 
 
 def get_jwt_strategy() -> JWTStrategy:
