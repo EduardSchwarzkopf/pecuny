@@ -88,7 +88,7 @@ async def test_invalid_login(
 ):
     async with session:
         res = await client.post(
-            "/auth/jwt/login", data={"username": username, "password": password}
+            "/auth/login", data={"username": username, "password": password}
         )
 
     assert res.status_code == status_code
@@ -112,7 +112,7 @@ async def test_updated_user(session, authorized_client: AsyncClient, test_user, 
         for key, value in values.items():
             if key == "password":
                 login_res = await authorized_client.post(
-                    "/auth/jwt/login", data={"username": user.email, "password": value}
+                    "/auth/login", data={"username": user.email, "password": value}
                 )
                 assert login_res.status_code == 200
                 continue
