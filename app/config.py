@@ -2,6 +2,7 @@ from pydantic import BaseSettings
 
 # Set all required env variables here
 class Settings(BaseSettings):
+    enviroment: str = "dev"
     db_host: str
     db_name: str
     db_url: str = ""
