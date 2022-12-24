@@ -124,7 +124,7 @@ async def update_transaction(
             "amount": transaction_information.amount,
             "reference": transaction_information.reference,
             "date": transaction_information.date,
-            "subcategory_id": transaction_information.subcategory_id,
+            "category_id": transaction_information.category_id,
         },
     )
     return transaction
