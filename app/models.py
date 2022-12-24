@@ -121,8 +121,8 @@ class TransactionInformation(BaseModel):
     )
     reference = Column(String(128))
     date = Column(type_=TIMESTAMP(timezone=True), default=text("now()"))
-    subcategory = relationship("TransactionSubcategory", lazy="selectin")
-    subcategory_id = Column(Integer, ForeignKey("transactions_subcategories.id"))
+    category = relationship("TransactionCategory", lazy="selectin")
+    category_id = Column(Integer, ForeignKey("transactions_category.id"))
 
 
 class Frequency(BaseModel):
@@ -132,17 +132,14 @@ class Frequency(BaseModel):
     label = Column(String(36))
 
 
-class TransactionCategory(BaseModel):
-    __tablename__ = "transactions_categories"
+class TransactionSection(BaseModel):
+    __tablename__ = "transactions_section"
 
     label = Column(String(36))
-    subcategories = relationship(
-        "TransactionSubcategory", lazy="selectin", backref="transactions_categories"
-    )
 
 
-class TransactionSubcategory(BaseModel):
-    __tablename__ = "transactions_subcategories"
+class TransactionCategory(BaseModel):
+    __tablename__ = "transactions_category"
 
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"))
     user = relationship(
@@ -151,5 +148,5 @@ class TransactionSubcategory(BaseModel):
     )
 
     label = Column(String(36))
-    is_income = Column(Boolean, default=False)
-    parent_category_id = Column(Integer, ForeignKey("transactions_categories.id"))
+    section = relationship("TransactionSection", lazy="selectin")
+    section_id = Column(Integer, ForeignKey("transactions_section.id"))
