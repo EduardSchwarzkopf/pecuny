@@ -1,4 +1,3 @@
-from .events import create_categories
 from fastapi import FastAPI
 import fastapi_users
 from .routers import accounts, transactions, users, categories
