@@ -1,8 +1,8 @@
 """init
 
-Revision ID: 9972a1f4d6fc
+Revision ID: dc4328c6f608
 Revises: 
-Create Date: 2022-11-07 19:46:35.293744
+Create Date: 2022-12-24 07:37:28.323337
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 import fastapi_users_db_sqlalchemy
 
 # revision identifiers, used by Alembic.
-revision = "9972a1f4d6fc"
+revision = "dc4328c6f608"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -39,7 +39,7 @@ def upgrade():
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
-        "transactions_categories",
+        "transactions_section",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column(
             "created_at",
@@ -119,7 +119,7 @@ def upgrade():
         unique=False,
     )
     op.create_table(
-        "transactions_subcategories",
+        "transactions_category",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column(
             "created_at",
@@ -135,11 +135,10 @@ def upgrade():
         ),
         sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("label", sa.String(length=36), nullable=True),
-        sa.Column("is_income", sa.Boolean(), nullable=True),
-        sa.Column("parent_category_id", sa.Integer(), nullable=True),
+        sa.Column("section_id", sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(
-            ["parent_category_id"],
-            ["transactions_categories.id"],
+            ["section_id"],
+            ["transactions_section.id"],
         ),
         sa.ForeignKeyConstraint(["user_id"], ["user.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
@@ -164,10 +163,10 @@ def upgrade():
         ),
         sa.Column("reference", sa.String(length=128), nullable=True),
         sa.Column("date", sa.TIMESTAMP(timezone=True), nullable=True),
-        sa.Column("subcategory_id", sa.Integer(), nullable=True),
+        sa.Column("category_id", sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(
-            ["subcategory_id"],
-            ["transactions_subcategories.id"],
+            ["category_id"],
+            ["transactions_category.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -247,13 +246,13 @@ def downgrade():
     op.drop_table("transactions_scheduled")
     op.drop_table("transactions")
     op.drop_table("transactions_information")
-    op.drop_table("transactions_subcategories")
+    op.drop_table("transactions_category")
     op.drop_index(op.f("ix_oauth_account_oauth_name"), table_name="oauth_account")
     op.drop_index(op.f("ix_oauth_account_account_id"), table_name="oauth_account")
     op.drop_table("oauth_account")
     op.drop_table("accounts")
     op.drop_index(op.f("ix_user_email"), table_name="user")
     op.drop_table("user")
-    op.drop_table("transactions_categories")
+    op.drop_table("transactions_section")
     op.drop_table("frequencies")
     # ### end Alembic commands ###

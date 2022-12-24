@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 import fastapi_users
-from .routers import accounts, transactions, users
+from .routers import accounts, transactions, users, categories
 from app.database import db
 from app.schemas import UserCreate, UserRead, UserUpdate
 from app.routers.users import auth_backend, fastapi_users
@@ -44,6 +44,11 @@ app.include_router(
     transactions.router,
     prefix="/transactions",
     tags=["Transactions"],
+)
+app.include_router(
+    categories.router,
+    prefix="/categories",
+    tags=["Categories"],
 )
 
 
