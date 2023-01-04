@@ -1,9 +1,8 @@
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
+from datetime import datetime, timedelta, timezone
 
 
-def today():  # sourcery skip: use-datetime-now-not-today
-    return datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+def today():
+    return datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
 
 
 def get_datetime_from_timestamp(timestamp):
@@ -16,29 +15,6 @@ def get_datetime_from_timestamp(timestamp):
         date = datetime.fromtimestamp(timestamp / 1000)
     finally:
         return date
-
-
-def get_end_date(start_date, frequency, interval):
-    """Adds days/weeks/months/years to given date
-
-    Args:
-        start_date (datetime): date to add
-        frequency (str): days/weeks/months/years
-        interval (str or int): how many intervals to add
-
-    Returns:
-        end_date (datetime): date with added given frequency and interval
-    """
-
-    end_date = start_date
-    frequencies = ["days", "weeks", "months", "years"]
-
-    if frequency in frequencies:
-        # create function call to add to date
-        function_call = f"relativedelta({frequency}={interval})"
-        end_date += eval(function_call)
-
-    return end_date
 
 
 def string_to_datetime(str_date):
