@@ -108,7 +108,6 @@ class TransactionScheduled(BaseModel):
 
     frequency = relationship("Frequency", cascade="all,delete", lazy="selectin")
     frequency_id = Column(Integer, ForeignKey("frequencies.id", ondelete="CASCADE"))
-    interval = Column(Integer, default=1)
     date_start = Column(type_=TIMESTAMP(timezone=True))
     date_end = Column(type_=TIMESTAMP(timezone=True))
 
