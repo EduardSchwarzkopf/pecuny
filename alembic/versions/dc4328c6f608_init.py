@@ -221,7 +221,6 @@ def upgrade():
         sa.Column("account_id", sa.Integer(), nullable=True),
         sa.Column("information_id", sa.Integer(), nullable=True),
         sa.Column("frequency_id", sa.Integer(), nullable=True),
-        sa.Column("interval", sa.Integer(), nullable=True),
         sa.Column("date_start", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("date_end", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(
