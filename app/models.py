@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, text, Boolean
+from sqlalchemy import Column, Integer, String, Numeric, text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import TIMESTAMP
@@ -128,7 +128,6 @@ class TransactionInformation(BaseModel):
 class Frequency(BaseModel):
     __tablename__ = "frequencies"
 
-    name = Column(String(36))
     label = Column(String(36))
 
 
