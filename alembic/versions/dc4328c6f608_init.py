@@ -34,7 +34,6 @@ def upgrade():
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.Column("name", sa.String(length=36), nullable=True),
         sa.Column("label", sa.String(length=36), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
