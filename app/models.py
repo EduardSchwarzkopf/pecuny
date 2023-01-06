@@ -105,6 +105,7 @@ class TransactionScheduled(BaseModel):
         lazy="selectin",
     )
     information_id = Column(Integer, ForeignKey("transactions_information.id"))
+    offset_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
 
     frequency = relationship("Frequency", cascade="all,delete", lazy="selectin")
     frequency_id = Column(Integer, ForeignKey("frequencies.id", ondelete="CASCADE"))
