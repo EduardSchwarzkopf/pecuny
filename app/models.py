@@ -54,10 +54,6 @@ class Account(BaseModel, UserId):
     balance = Column(
         Numeric(10, 2, asdecimal=False, decimal_return_scale=None), default=0
     )
-    transactions = relationship("Transaction", cascade="all,delete", lazy=True)
-    transactions_scheduled = relationship(
-        "TransactionScheduled", cascade="all,delete", lazy=True
-    )
 
 
 class Transaction(BaseModel):
@@ -97,6 +93,7 @@ class TransactionScheduled(BaseModel):
     __tablename__ = "transactions_scheduled"
 
     account_id = Column(Integer, ForeignKey("accounts.id"))
+    account = relationship("Account", foreign_keys=[account_id])
     information = relationship(
         "TransactionInformation",
         backref="transactions_scheduled",
@@ -106,6 +103,7 @@ class TransactionScheduled(BaseModel):
     )
     information_id = Column(Integer, ForeignKey("transactions_information.id"))
     offset_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
+    offset_account = relationship("Account", foreign_keys=[offset_account_id])
 
     frequency = relationship("Frequency", cascade="all,delete", lazy="selectin")
     frequency_id = Column(Integer, ForeignKey("frequencies.id", ondelete="CASCADE"))
