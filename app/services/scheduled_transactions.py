@@ -16,6 +16,9 @@ async def create_scheduled_transaction(
     if offset_account_id:
         offset_account = await repo.get(models.Account, offset_account_id)
 
+        if offset_account is None:
+            return None
+
         if user.id.bytes != offset_account.user_id.bytes:
             raise Exception(
                 f"User[id: {user.id}] not allowed to access offset_account[id: {transaction_information.offset_account_id}]"
