@@ -15,7 +15,7 @@ async def get_transaction_list(
 
 
 async def get_transaction(user: models.User, transaction_id: int) -> models.Transaction:
-    transaction = await repo.get(models.Transaction, transaction_id)
+    transaction = await repo.get(models.TransactionScheduled, transaction_id)
 
     if transaction is None:
         return
