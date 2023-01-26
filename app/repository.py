@@ -22,6 +22,25 @@ async def get(cls: models, id: int) -> models:
     return await db.session.get(cls, id)
 
 
+async def get_scheduled_transactions_from_period(
+    account_id: int,
+    start_date: datetime,
+    end_date: datetime,
+):
+
+    transaction = models.TransactionScheduled
+
+    query = (
+        select(transaction)
+        .filter(transaction.date_end <= end_date)
+        .filter(transaction.date_start >= start_date)
+        .filter(account_id == transaction.account_id)
+    )
+
+    result = await db.session.execute(query)
+    return result.scalars().all()
+
+
 async def get_transactions_from_period(
     account_id: int, start_date: datetime, end_date: datetime
 ):
