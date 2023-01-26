@@ -1,4 +1,29 @@
 from app import models, schemas, repository as repo
+from datetime import datetime
+
+
+async def get_transaction_list(
+    user: models.User, account_id: int, date_start: datetime, date_end: datetime
+):
+
+    account = await repo.get(models.Account, account_id)
+    if account.user_id == user.id:
+
+        return await repo.get_scheduled_transactions_from_period(
+            account_id, date_start, date_end
+        )
+
+
+async def get_transaction(user: models.User, transaction_id: int) -> models.Transaction:
+    transaction = await repo.get(models.Transaction, transaction_id)
+
+    if transaction is None:
+        return
+
+    account = await repo.get(models.Account, transaction.account_id)
+
+    if account.user_id == user.id:
+        return transaction
 
 
 async def create_scheduled_transaction(
