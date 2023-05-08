@@ -36,22 +36,33 @@ class AccountUpdate(Base):
     balance: Optional[float]
 
 
-class TransactionInformation(Base):
+class TransactionInformationBase(Base):
     amount: float
     reference: str
-    date: datetime
     category_id: int
 
 
-class Section(Base):
+class TransactionInformation(TransactionInformationBase):
+    date: datetime
+
+
+class MinimalResponse(Base):
     id: int
     label: str
+
+
+class SectionData(MinimalResponse):
+    pass
+
+
+class FrequencyData(MinimalResponse):
+    pass
 
 
 class CategoryData(Base):
     id: int
     label: constr(strip_whitespace=True, min_length=1, max_length=36)
-    section: Section
+    section: SectionData
 
 
 class TransactionInformationCreate(TransactionInformation):
@@ -63,15 +74,34 @@ class TransactionInformtionUpdate(TransactionInformationCreate):
     pass
 
 
+class ScheduledTransactionInformationCreate(TransactionInformationBase):
+    date_start: datetime
+    frequency_id: int
+    date_end: datetime
+    account_id: int
+    offset_account_id: Optional[int]
+
+
 class TransactionInformationData(TransactionInformation):
     category: CategoryData
 
 
-class Transaction(Base):
+class TransactionBase(Base):
     id: int
     account_id: int
     information: TransactionInformationData
+
+
+class Transaction(TransactionBase):
     offset_transactions_id: Optional[int]
+
+
+class ScheduledTransactionData(TransactionBase):
+    date_start: datetime
+    frequency: FrequencyData
+    date_end: datetime
+    account_id: int
+    offset_account_id: Optional[int]
 
 
 class Account(Base):

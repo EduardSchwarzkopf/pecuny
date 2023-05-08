@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, text, Boolean
+from sqlalchemy import Column, Integer, String, Numeric, text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import TIMESTAMP
@@ -46,20 +46,6 @@ class UserId(Base):
         return relationship("User")
 
 
-class Account(BaseModel, UserId):
-    __tablename__ = "accounts"
-
-    label = Column(String(36))
-    description = Column(String(128))
-    balance = Column(
-        Numeric(10, 2, asdecimal=False, decimal_return_scale=None), default=0
-    )
-    transactions = relationship("Transaction", cascade="all,delete", lazy=True)
-    transactions_scheduled = relationship(
-        "TransactionScheduled", cascade="all,delete", lazy=True
-    )
-
-
 class Transaction(BaseModel):
     __tablename__ = "transactions"
 
@@ -105,12 +91,29 @@ class TransactionScheduled(BaseModel):
         lazy="selectin",
     )
     information_id = Column(Integer, ForeignKey("transactions_information.id"))
+    offset_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
 
     frequency = relationship("Frequency", cascade="all,delete", lazy="selectin")
     frequency_id = Column(Integer, ForeignKey("frequencies.id", ondelete="CASCADE"))
-    interval = Column(Integer, default=1)
     date_start = Column(type_=TIMESTAMP(timezone=True))
     date_end = Column(type_=TIMESTAMP(timezone=True))
+
+
+class Account(BaseModel, UserId):
+    __tablename__ = "accounts"
+
+    label = Column(String(36))
+    description = Column(String(128))
+    balance = Column(
+        Numeric(10, 2, asdecimal=False, decimal_return_scale=None), default=0
+    )
+    transactions = relationship("Transaction", cascade="all,delete", lazy=True)
+    scheduled_transactions = relationship(
+        "TransactionScheduled",
+        cascade="all,delete",
+        foreign_keys=[TransactionScheduled.account_id],
+        lazy=True,
+    )
 
 
 class TransactionInformation(BaseModel):
@@ -128,7 +131,6 @@ class TransactionInformation(BaseModel):
 class Frequency(BaseModel):
     __tablename__ = "frequencies"
 
-    name = Column(String(36))
     label = Column(String(36))
 
 
