@@ -46,7 +46,7 @@ async def test_user(session):
 async def token(test_user):
     yield create_access_token(
         {
-            "user_id": str(test_user.id),
+            "sub": str(test_user.id),
             "aud": ["fastapi-users:auth"],
         }
     )
@@ -192,7 +192,6 @@ async def test_transactions(test_accounts, session):
     transaction_list = []
 
     for transaction_info in transaction_data:
-
         account_id = transaction_info["account_id"]
         account_index = next(
             (i for i, item in enumerate(test_accounts) if item.id == account_id), -1
