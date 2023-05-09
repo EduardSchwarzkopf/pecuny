@@ -18,6 +18,7 @@ exceptiongroup==1.1.1
 fastapi==0.95.1
 fastapi-async-sqlalchemy==0.3.14
 fastapi-cli==0.0.1
+FastAPI-SQLAlchemy==0.2.1
 fastapi-users==11.0.0
 fastapi-users-db-sqlalchemy==4.0.5
 greenlet==2.0.2
