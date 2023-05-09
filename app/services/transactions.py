@@ -6,10 +6,8 @@ from .. import models, schemas, repository as repo
 async def get_transaction_list(
     user: models.User, account_id: int, date_start: datetime, date_end: datetime
 ):
-
     account = await repo.get(models.Account, account_id)
     if account.user_id == user.id:
-
         return await repo.get_transactions_from_period(account_id, date_start, date_end)
 
 
@@ -28,7 +26,6 @@ async def get_transaction(user: models.User, transaction_id: int) -> models.Tran
 async def create_transaction(
     user: models.User, transaction_information: schemas.TransactionInformationCreate
 ) -> models.Transaction:
-
     account = await repo.get(models.Account, transaction_information.account_id)
 
     if user.id.bytes != account.user_id.bytes:
@@ -100,13 +97,17 @@ async def update_transaction(
     if current_user.id != account.user_id:
         return
 
-    amount_updated = transaction_information.amount - transaction.information.amount
+    amount_updated = (
+        round(transaction_information.amount, 2) - transaction.information.amount
+    )
     await repo.update(
         models.Account, account.id, **{"balance": account.balance + amount_updated}
     )
 
     if transaction.offset_transactions_id:
-        offset_transaction = transaction.offset_transaction
+        offset_transaction = await repo.get(
+            models.Transaction, transaction.offset_transactions_id
+        )
         offset_account = await repo.get(models.Account, offset_transaction.account_id)
 
         if offset_account.user_id != current_user.id:
@@ -114,8 +115,8 @@ async def update_transaction(
 
         offset_account.balance -= amount_updated
 
-        offset_info = deepcopy(transaction_information)
-        offset_info.amount = offset_info.amount * -1
+        ## TODO: no getting updated
+        offset_transaction.information.amount = transaction_information.amount * -1
 
     await repo.update(
         models.TransactionInformation,
@@ -131,7 +132,6 @@ async def update_transaction(
 
 
 async def delete_transaction(current_user: models.User, transaction_id: int) -> bool:
-
     transaction = await repo.get(models.Transaction, transaction_id)
 
     if transaction is None:

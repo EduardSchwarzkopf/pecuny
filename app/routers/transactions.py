@@ -28,8 +28,9 @@ async def get_transaction(
     transaction_id: int,
     current_user: User = Depends(current_active_user),
 ):
-
-    transaction = await service.get_transaction(current_user, transaction_id)
+    transaction = await tm.transaction(
+        service.get_transaction, current_user, transaction_id
+    )
 
     if transaction:
         return transaction

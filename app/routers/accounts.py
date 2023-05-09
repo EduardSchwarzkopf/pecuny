@@ -53,10 +53,7 @@ async def delete_account(
 ):
     result = await tm.transaction(service.delete_account, current_user, account_id)
     if result:
-        return Response(
-            status_code=status.HTTP_204_NO_CONTENT,
-            content="Account deleted successfully",
-        )
+        return None
 
     if result is None:
         raise HTTPException(

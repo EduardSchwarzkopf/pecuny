@@ -1,17 +1,20 @@
 """init
 
-Revision ID: dc4328c6f608
+Revision ID: 4885a032ce2e
 Revises: 
-Create Date: 2022-12-24 07:37:28.323337
+Create Date: 2023-05-09 12:49:37.994900
 
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 import fastapi_users_db_sqlalchemy
+from app.data import categories
+from app.data.frequencies import get_frequency_list
+from app import models
 
 # revision identifiers, used by Alembic.
-revision = "dc4328c6f608"
+revision = "4885a032ce2e"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -220,13 +223,11 @@ def upgrade():
         ),
         sa.Column("account_id", sa.Integer(), nullable=True),
         sa.Column("information_id", sa.Integer(), nullable=True),
+        sa.Column("offset_account_id", sa.Integer(), nullable=True),
         sa.Column("frequency_id", sa.Integer(), nullable=True),
         sa.Column("date_start", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("date_end", sa.TIMESTAMP(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["account_id"],
-            ["accounts.id"],
-        ),
+        sa.ForeignKeyConstraint(["account_id"], ["accounts.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
             ["frequency_id"], ["frequencies.id"], ondelete="CASCADE"
         ),
@@ -234,9 +235,37 @@ def upgrade():
             ["information_id"],
             ["transactions_information.id"],
         ),
+        sa.ForeignKeyConstraint(
+            ["offset_account_id"],
+            ["accounts.id"],
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
     # ### end Alembic commands ###
+
+    bind = op.get_bind()
+    session = sa.orm.Session(bind=bind)
+    section_list = categories.get_section_list()
+    category_list = categories.get_category_list()
+
+    def create_section_model(section):
+        return models.TransactionSection(**section)
+
+    def create_category_model(category):
+        return models.TransactionCategory(**category)
+
+    section = list(map(create_section_model, section_list))
+    category = list(map(create_category_model, category_list))
+
+    session.add_all(section + category)
+
+    def create_category_model(frequency: dict):
+        return models.Frequency(**frequency)
+
+    frequency_list = list(map(create_category_model, get_frequency_list()))
+
+    session.add_all(frequency_list)
+    session.commit()
 
 
 def downgrade():
