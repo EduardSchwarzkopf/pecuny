@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-gray-100">
     <head>
         <meta charset="UTF-8" />
         <title>{{ title }}</title>
@@ -16,10 +16,41 @@
 
         {% block style %} {% endblock %}
     </head>
-    <body>
-        {% block header %} {% include 'fragments/header.html' %} {% endblock %}
-        <div>{% block content %} {% endblock %}</div>
+    <body class="h-full">
+        <div class="min-h-full">
+            {% block header %} {% include 'fragments/header.html' %} {% endblock
+            %}
 
+            <main>
+                <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+                    <div>{% block content %} {% endblock %}</div>
+                </div>
+            </main>
+        </div>
         {% block javascript %} {% endblock %}
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                // Dropdown menu
+                const userMenuButton =
+                    document.getElementById("user-menu-button");
+                const userMenuDropdown = document.querySelector(
+                    '[aria-labelledby="user-menu-button"]'
+                );
+
+                userMenuButton.addEventListener("click", function () {
+                    userMenuDropdown.classList.toggle("hidden");
+                });
+
+                // Mobile menu
+                const mobileMenuButton = document.querySelector(
+                    '[aria-controls="mobile-menu"]'
+                );
+                const mobileMenu = document.getElementById("mobile-menu");
+
+                mobileMenuButton.addEventListener("click", function () {
+                    mobileMenu.classList.toggle("hidden");
+                });
+            });
+        </script>
     </body>
 </html>
