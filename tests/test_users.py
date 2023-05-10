@@ -10,6 +10,7 @@ from httpx import AsyncClient
 #
 
 pytestmark = pytest.mark.anyio
+success_login_status_code = 204
 
 
 @pytest.mark.anyio
@@ -66,10 +67,10 @@ async def test_login(session, client: AsyncClient, test_user, username, password
         algorithms=settings.algorithm,
         audience="fastapi-users:auth",
     )
-    user_id = payload["user_id"]
+    user_id = payload["sub"]
 
     assert user_id == str(test_user.id)
-    assert res.status_code == 200
+    assert res.status_code == success_login_status_code
 
 
 @pytest.mark.parametrize(
@@ -114,7 +115,7 @@ async def test_updated_user(session, authorized_client: AsyncClient, test_user, 
                 login_res = await authorized_client.post(
                     "/auth/login", data={"username": user.email, "password": value}
                 )
-                assert login_res.status_code == 200
+                assert login_res.status_code == success_login_status_code
                 continue
 
             assert getattr(user, key) == value

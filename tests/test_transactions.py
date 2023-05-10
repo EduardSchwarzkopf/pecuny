@@ -320,7 +320,7 @@ async def test_updated_offset_transaction(
             "/transactions/",
             json={
                 "account_id": account_id,
-                "amount": 10,
+                "amount": amount,
                 "reference": "creation",
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
                 "category_id": category_id,

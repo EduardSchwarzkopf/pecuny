@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 # Allowed Domains to talk to this api
-origins = ["http://localhost:5173", "http://localhost"]
+origins = ["http://127.0.0.1:5173", "http://127.0.0.1"]
 
 # CORS
 app.add_middleware(

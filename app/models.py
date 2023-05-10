@@ -25,7 +25,6 @@ class BaseModel(Base):
         model_attribute_list = self.__mapper__.attrs.keys()
 
         for key, value in attribute_list.items():
-
             if key in model_attribute_list:
                 setattr(self, key, value)
 
@@ -75,6 +74,7 @@ class Transaction(BaseModel):
         remote_side="Transaction.id",
         foreign_keys=[offset_transactions_id],
         post_update=True,
+        cascade="all,delete",
         lazy="selectin",
     )
 
@@ -82,7 +82,7 @@ class Transaction(BaseModel):
 class TransactionScheduled(BaseModel):
     __tablename__ = "transactions_scheduled"
 
-    account_id = Column(Integer, ForeignKey("accounts.id"))
+    account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"))
     information = relationship(
         "TransactionInformation",
         backref="transactions_scheduled",

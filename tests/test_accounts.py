@@ -4,23 +4,21 @@ from jose import jwt
 from app import schemas
 from app.config import settings
 
-#
-# use with: pytest --disable-warnings -v -x
-#
-
 pytestmark = pytest.mark.anyio
+endpoint = "/accounts/"
 
 
 async def test_create_account(session, authorized_client):
     async with session:
         res = await authorized_client.post(
-            "/accounts/",
+            endpoint,
             json={"label": "test_account", "description": "test", "balance": 500},
         )
 
+    assert res.status_code == 201
+
     new_account = schemas.Account(**res.json())
 
-    assert res.status_code == 201
     assert new_account.label == "test_account"
     assert new_account.balance == 500
     assert new_account.description == "test"
@@ -39,7 +37,7 @@ async def test_invalid_create_account(
 ):
     async with session:
         res = await authorized_client.post(
-            "/accounts/",
+            endpoint,
             json={"label": label, "description": description, "balance": balance},
         )
 
@@ -47,7 +45,7 @@ async def test_invalid_create_account(
 
 
 async def test_delete_account(authorized_client, test_account):
-    res = await authorized_client.delete("/accounts/1")
+    res = await authorized_client.delete(f"{endpoint}1")
 
     assert res.status_code == 204
 
@@ -59,7 +57,7 @@ async def test_delete_account(authorized_client, test_account):
 async def test_invalid_delete_account(
     authorized_client, test_accounts, account_id, status_code
 ):
-    res = await authorized_client.delete(f"/accounts/{account_id}")
+    res = await authorized_client.delete(f"{endpoint}{account_id}")
 
     assert res.status_code == status_code
 
@@ -99,7 +97,7 @@ async def test_invalid_delete_account(
 )
 async def test_update_account(session, authorized_client, test_account, values):
     async with session:
-        res = await authorized_client.put("/accounts/1", json=values)
+        res = await authorized_client.put(f"{endpoint}1", json=values)
 
     assert res.status_code == 200
     d = res.json()
