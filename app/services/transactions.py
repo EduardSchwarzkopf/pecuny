@@ -114,8 +114,6 @@ async def update_transaction(
             return
 
         offset_account.balance -= amount_updated
-
-        ## TODO: no getting updated
         offset_transaction.information.amount = transaction_information.amount * -1
 
     await repo.update(
