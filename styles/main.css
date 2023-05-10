@@ -1,0 +1,10 @@
+/*
+
+add your styles here and run:
+    tailwindcss -i styles/main.css -o static/css/main.css --watch
+
+*/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
