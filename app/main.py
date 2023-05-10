@@ -7,14 +7,20 @@ from app.routers.api import (
     categories,
     scheduled_transactions,
 )
+
+from app.routers import home
 from app.database import db
 from app.schemas import UserCreate, UserRead, UserUpdate
 from app.routers.api.users import auth_backend, fastapi_users
 
+
 # from .routers import users, posts, auth, vote
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Allowed Domains to talk to this api
 origins = ["http://127.0.0.1:5173", "http://127.0.0.1"]
@@ -40,7 +46,8 @@ async def shutdown_event():
     await db.session.close()
 
 
-# Routes
+# Page Routes
+app.include_router(home.router)
 
 # API Routes
 api_prefix = "/api"
