@@ -2,9 +2,9 @@ from typing import List
 from datetime import datetime
 from fastapi import Depends, APIRouter, status
 from fastapi.exceptions import HTTPException
-from .. import schemas, transaction_manager as tm
-from ..services import scheduled_transactions as service
-from app.routers.users import current_active_user
+from app import schemas, transaction_manager as tm
+from app.services import scheduled_transactions as service
+from app.routers.api.users import current_active_user
 from app.database import User
 
 router = APIRouter()
@@ -28,7 +28,6 @@ async def get_transaction(
     transaction_id: int,
     current_user: User = Depends(current_active_user),
 ):
-
     transaction = await service.get_transaction(current_user, transaction_id)
 
     if transaction:

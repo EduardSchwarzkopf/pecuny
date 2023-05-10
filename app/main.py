@@ -1,14 +1,26 @@
 from fastapi import FastAPI
 import fastapi_users
-from .routers import accounts, transactions, users, categories, scheduled_transactions
+from app.routers.api import (
+    accounts,
+    transactions,
+    users,
+    categories,
+    scheduled_transactions,
+)
+
+from app.routers import home
 from app.database import db
 from app.schemas import UserCreate, UserRead, UserUpdate
-from app.routers.users import auth_backend, fastapi_users
+from app.routers.api.users import auth_backend, fastapi_users
+
 
 # from .routers import users, posts, auth, vote
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Allowed Domains to talk to this api
 origins = ["http://127.0.0.1:5173", "http://127.0.0.1"]
@@ -34,56 +46,62 @@ async def shutdown_event():
     await db.session.close()
 
 
-# Routes
+# Page Routes
+app.include_router(home.router)
+
+# API Routes
+api_prefix = "/api"
 app.include_router(
     accounts.router,
-    prefix="/accounts",
+    prefix=f"{api_prefix}/accounts",
     tags=["Accounts"],
 )
 app.include_router(
     transactions.router,
-    prefix="/transactions",
+    prefix=f"{api_prefix}/transactions",
     tags=["Transactions"],
 )
 app.include_router(
     scheduled_transactions.router,
-    prefix="/scheduled-transactions",
+    prefix=f"{api_prefix}/scheduled-transactions",
     tags=["Scheduled transactions"],
 )
 app.include_router(
     categories.router,
-    prefix="/categories",
+    prefix=f"{api_prefix}/categories",
     tags=["Categories"],
 )
 
 
 app.include_router(
-    fastapi_users.get_auth_router(auth_backend), prefix="/auth", tags=["Auth"]
+    fastapi_users.get_auth_router(auth_backend),
+    prefix=f"{api_prefix}/auth",
+    tags=["Auth"],
 )
 app.include_router(
     fastapi_users.get_register_router(UserRead, UserCreate),
-    prefix="/auth",
+    prefix=f"{api_prefix}/auth",
     tags=["Auth"],
 )
 app.include_router(
     fastapi_users.get_reset_password_router(),
-    prefix="/auth",
+    prefix=f"{api_prefix}/auth",
     tags=["Auth"],
 )
 app.include_router(
     fastapi_users.get_verify_router(UserRead),
-    prefix="/auth",
+    prefix=f"{api_prefix}/auth",
     tags=["Auth"],
 )
 
 app.include_router(
     users.router,
-    prefix="/users",
+    prefix=f"{api_prefix}/users",
     tags=["Users"],
 )
 
 app.include_router(
     fastapi_users.get_users_router(UserRead, UserUpdate),
-    prefix="/users",
+    prefix=f"{api_prefix}/users",
     tags=["Users"],
 )
