@@ -1,5 +1,5 @@
 from typing import List
-from .. import models, schemas, repository as repo
+from app import models, schemas, repository as repo
 
 
 async def get_categories(
@@ -11,7 +11,6 @@ async def get_categories(
 async def get_category(
     current_user: models.User, category_id: int
 ) -> models.TransactionCategory:
-
     category = await repo.get(models.TransactionCategory, category_id)
 
     if category and (category.user_id is None or category.user_id == current_user.id):

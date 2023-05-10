@@ -2,7 +2,7 @@ import pytest
 import datetime
 from app.oauth2 import create_access_token
 from app import models, repository as repo
-from app.routers.users import get_user_manager
+from app.routers.api.users import get_user_manager
 
 import contextlib
 

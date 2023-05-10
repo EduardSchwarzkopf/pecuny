@@ -2,9 +2,9 @@ from typing import List
 from fastapi import Depends, APIRouter, status, Response
 from fastapi.exceptions import HTTPException
 
-from .. import schemas, transaction_manager as tm
-from ..services import accounts as service
-from app.routers.users import current_active_user
+from app import schemas, transaction_manager as tm
+from app.services import accounts as service
+from app.routers.api.users import current_active_user
 from app.database import User
 
 router = APIRouter()

@@ -1,6 +1,6 @@
 from copy import deepcopy
 from datetime import datetime
-from .. import models, schemas, repository as repo
+from app import models, schemas, repository as repo
 
 
 async def get_transaction_list(
