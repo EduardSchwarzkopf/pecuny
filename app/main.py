@@ -8,8 +8,9 @@ from app.routers.api import (
     scheduled_transactions,
 )
 
-from app.routers import home, login
+from app.routers import home
 from app.database import db
+from app.routers import auth
 from app.schemas import UserCreate, UserRead, UserUpdate
 from app.routers.api.users import auth_backend, fastapi_users
 
@@ -48,7 +49,7 @@ async def shutdown_event():
 
 # Page Routes
 app.include_router(home.router)
-app.include_router(login.router)
+app.include_router(auth.router)
 
 # API Routes
 api_prefix = "/api"
