@@ -1,58 +1,61 @@
 {% extends "base.html" %} {% block content %}
-<div class="container mx-auto my-5 p-5">
-    <h1 class="text-center text-3xl mb-5">Login</h1>
-    <form
-        action="/api/auth/login"
-        method="POST"
-        enctype="application/x-www-form-urlencoded"
-    >
-        <div class="mb-4">
-            <label for="username" class="block text-sm font-bold mb-2"
-                >Email:</label
-            >
-            <input
-                type="text"
-                id="username"
-                name="username"
-                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                required
-            />
+<div class="container">
+    <h1 class="text-center mt-5">Register</h1>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <form action="/register" method="POST">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email address</label>
+                    <input
+                        type="email"
+                        class="form-control"
+                        id="email"
+                        name="email"
+                        placeholder="Email"
+                        required
+                    />
+                </div>
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="username"
+                        name="username"
+                        placeholder="Username"
+                        required
+                    />
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input
+                        type="password"
+                        class="form-control"
+                        id="password"
+                        name="password"
+                        placeholder="Password"
+                        required
+                    />
+                </div>
+                <div class="mb-3">
+                    <label for="password_confirm" class="form-label"
+                        >Confirm Password</label
+                    >
+                    <input
+                        type="password"
+                        class="form-control"
+                        id="password_confirm"
+                        name="password_confirm"
+                        placeholder="Confirm Password"
+                        required
+                    />
+                </div>
+                <button type="submit" class="btn btn-primary">Register</button>
+            </form>
+            <p class="text-center mt-3">
+                Already have an account? <a href="/login">Login</a>
+            </p>
         </div>
-        <div class="mb-4">
-            <label for="password" class="block text-sm font-bold mb-2"
-                >Password:</label
-            >
-            <input
-                type="password"
-                id="password"
-                name="password"
-                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                required
-            />
-        </div>
-        <div class="flex items-center justify-between">
-            <button
-                type="submit"
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-            >
-                Login
-            </button>
-            <a
-                href="/forgot-password"
-                class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
-                >Forgot Password?</a
-            >
-        </div>
-    </form>
-    <div class="mt-6 text-center">
-        <p>
-            Don't have an account?
-            <a
-                href="/register"
-                class="font-bold text-blue-500 hover:text-blue-800"
-                >Register</a
-            >
-        </p>
     </div>
 </div>
 {% endblock %}
