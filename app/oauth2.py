@@ -29,7 +29,7 @@ def verify_access_token(token: str, credentials_exception):
     try:
         payload = jwt.decode(token, SECRET_KEY, ALGORITHM)
 
-        string_id = payload.get("user_id")
+        string_id = payload.get("sub")
         if string_id is None:
             raise credentials_exception
 
