@@ -11,13 +11,14 @@ from httpx import AsyncClient
 
 pytestmark = pytest.mark.anyio
 success_login_status_code = 204
+endpoint = "/api/auth"
 
 
 @pytest.mark.anyio
 async def test_create_user(session, client):
     async with session:
         res = await client.post(
-            "/auth/register",
+            f"{endpoint}/register",
             json={
                 "email": "hello123@pytest.de",
                 "password": "password123",
@@ -36,7 +37,7 @@ async def test_create_user(session, client):
 async def test_invalid_create_user(session, client: AsyncClient, test_user):
     async with session:
         res = await client.post(
-            "/auth/register",
+            f"{endpoint}/register",
             json={"email": "hello123@pytest.de", "password": "testpassword"},
         )
 
@@ -56,7 +57,7 @@ async def test_invalid_create_user(session, client: AsyncClient, test_user):
 async def test_login(session, client: AsyncClient, test_user, username, password):
     async with session:
         res = await client.post(
-            "/auth/login",
+            f"{endpoint}/login",
             data={"username": username, "password": password},
         )
 
@@ -89,7 +90,7 @@ async def test_invalid_login(
 ):
     async with session:
         res = await client.post(
-            "/auth/login", data={"username": username, "password": password}
+            f"{endpoint}/login", data={"username": username, "password": password}
         )
 
     assert res.status_code == status_code
@@ -113,7 +114,8 @@ async def test_updated_user(session, authorized_client: AsyncClient, test_user, 
         for key, value in values.items():
             if key == "password":
                 login_res = await authorized_client.post(
-                    "/auth/login", data={"username": user.email, "password": value}
+                    f"{endpoint}/login",
+                    data={"username": user.email, "password": value},
                 )
                 assert login_res.status_code == success_login_status_code
                 continue
