@@ -1,6 +1,6 @@
 from app import templates
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from app.models import User
 from fastapi.security import OAuth2PasswordRequestForm
