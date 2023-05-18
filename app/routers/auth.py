@@ -19,7 +19,7 @@ template_prefix = "pages/auth"
 
 
 @router.get(
-    path="/login", tags=["Pages", "Authentication"], response_class=HTMLResponse
+    path="/login/", tags=["Pages", "Authentication"], response_class=HTMLResponse
 )
 async def get_login(request: Request, user: User = Depends(current_active_user)):
     print(user)
@@ -31,7 +31,7 @@ async def get_login(request: Request, user: User = Depends(current_active_user))
 
 
 @router.post(
-    "/login",
+    "/login/",
     response_class=RedirectResponse,
 )
 async def login(
@@ -54,7 +54,7 @@ async def login(
 
 
 @router.get(
-    path="/register", tags=["Pages", "Authentication"], response_class=HTMLResponse
+    path="/register/", tags=["Pages", "Authentication"], response_class=HTMLResponse
 )
 async def get_regsiter(
     request: Request,
@@ -66,7 +66,7 @@ async def get_regsiter(
 
 
 @router.get(
-    path="/forgot-password",
+    path="/forgot-password/",
     tags=["Pages", "Authentication"],
     response_class=HTMLResponse,
 )
@@ -82,7 +82,7 @@ async def get_forgot_password(
 
 
 @router.get(
-    path="/reset-password",
+    path="/reset-password/",
     tags=["Pages", "Authentication"],
     response_class=HTMLResponse,
 )
