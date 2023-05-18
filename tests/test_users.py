@@ -22,6 +22,7 @@ async def test_create_user(session, client):
             json={
                 "email": "hello123@pytest.de",
                 "password": "password123",
+                "displayname": "John",
             },
         )
     assert res.status_code == 201
@@ -38,27 +39,37 @@ async def test_invalid_create_user(session, client: AsyncClient, test_user):
     async with session:
         res = await client.post(
             f"{endpoint}/register",
-            json={"email": "hello123@pytest.de", "password": "testpassword"},
+            json={
+                "email": "hello123@pytest.de",
+                "password": "testpassword",
+                "displayname": "John",
+            },
         )
 
     assert res.status_code == 400
 
 
 @pytest.mark.parametrize(
-    "username, password",
+    "username, displayname, password",
     [
-        ("hello123@pytest.de", "password123"),
-        ("hellO123@pytest.de", "password123"),
-        ("HELLO123@pytest.de", "password123"),
-        ("hello123@PyTeSt.De", "password123"),
-        ("hELLO123@pytest.de", "password123"),
+        ("hello123@pytest.de", "John", "password123"),
+        ("hellO123@pytest.de", "John", "password123"),
+        ("HELLO123@pytest.de", "John", "password123"),
+        ("hello123@PyTeSt.De", "John", "password123"),
+        ("hELLO123@pytest.de", "John", "password123"),
     ],
 )
-async def test_login(session, client: AsyncClient, test_user, username, password):
+async def test_login(
+    session, client: AsyncClient, test_user, username, displayname, password
+):
     async with session:
         res = await client.post(
             f"{endpoint}/login",
-            data={"username": username, "password": password},
+            data={
+                "username": username,
+                "displayname": displayname,
+                "password": password,
+            },
         )
 
     cookie = res.cookies.get("fastapiusersauth")
@@ -101,12 +112,13 @@ async def test_invalid_login(
     [
         ({"email": "mew@mew.de"}),
         ({"email": "another@mail.com"}),
+        ({"displayname": "Agent Smith"}),
         ({"password": "lancelot"}),
     ],
 )
 async def test_updated_user(session, authorized_client: AsyncClient, test_user, values):
     async with session:
-        res = await authorized_client.patch("/users/me", json=values)
+        res = await authorized_client.patch("/api/users/me", json=values)
 
         assert res.status_code == 200
         user = schemas.UserRead(**res.json())
@@ -137,14 +149,14 @@ async def test_invalid_updated_user(
 ):
     id = str(test_user.id)
     async with session:
-        res = await authorized_client.patch(f"/users/{id}", json=values)
+        res = await authorized_client.patch(f"/api/users/{id}", json=values)
 
     assert res.status_code == 403
 
 
 async def test_delete_user(session, client, test_user, authorized_client):
     async with session:
-        res = await authorized_client.delete("/users/me")
+        res = await authorized_client.delete("/api/users/me")
 
         assert res.status_code == 204
 
@@ -155,6 +167,6 @@ async def test_delete_user(session, client, test_user, authorized_client):
 
 async def test_invalid_delete_user(authorized_client: AsyncClient, session):
     async with session:
-        res = await authorized_client.delete("/users/2")
+        res = await authorized_client.delete("/api/users/2")
 
     assert res.status_code == 403
