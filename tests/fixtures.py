@@ -2,37 +2,8 @@ import pytest
 import datetime
 from app.oauth2 import create_access_token
 from app import models, repository as repo
-from app.routers.api.users import get_user_manager
-
-import contextlib
-
-from app.database import get_user_db
-from app.schemas import UserCreate
-from fastapi_users.exceptions import UserAlreadyExists
 from httpx import AsyncClient
-
-get_user_db_context = contextlib.asynccontextmanager(get_user_db)
-get_user_manager_context = contextlib.asynccontextmanager(get_user_manager)
-
-
-async def create_user(
-    email: str, displayname: str, password: str, is_superuser: bool = False
-):
-    try:
-        async with get_user_db_context() as user_db:
-            async with get_user_manager_context(user_db) as user_manager:
-                user = await user_manager.create(
-                    UserCreate(
-                        displayname=displayname,
-                        email=email,
-                        password=password,
-                        is_superuser=is_superuser,
-                    )
-                )
-                print(f"User created {user}")
-                return user
-    except UserAlreadyExists:
-        print(f"User {email} already exists")
+from app.services.users import create_user
 
 
 pytestmark = pytest.mark.anyio
