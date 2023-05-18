@@ -4,6 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Dict, Any
 from fastapi_users import schemas
+from fastapi import Form
 
 from pydantic.types import constr
 
@@ -19,6 +20,13 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
 
 class UserCreate(schemas.BaseUserCreate):
     displayname: str
+
+
+class UserCreateForm(BaseModel):
+    email: str = Form(...)
+    displayname: str = Form(...)
+    password: str = Form(...)
+    password_confirm: str = Form(...)
 
 
 class UserUpdate(schemas.BaseUserUpdate):
