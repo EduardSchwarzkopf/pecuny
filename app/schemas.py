@@ -14,15 +14,15 @@ class EmailSchema(BaseModel):
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
-    pass
+    displayname: str
 
 
 class UserCreate(schemas.BaseUserCreate):
-    pass
+    displayname: str
 
 
 class UserUpdate(schemas.BaseUserUpdate):
-    pass
+    displayname: str
 
 
 class Base(BaseModel):
