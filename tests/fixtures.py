@@ -15,13 +15,18 @@ get_user_db_context = contextlib.asynccontextmanager(get_user_db)
 get_user_manager_context = contextlib.asynccontextmanager(get_user_manager)
 
 
-async def create_user(email: str, password: str, is_superuser: bool = False):
+async def create_user(
+    email: str, displayname: str, password: str, is_superuser: bool = False
+):
     try:
         async with get_user_db_context() as user_db:
             async with get_user_manager_context(user_db) as user_manager:
                 user = await user_manager.create(
                     UserCreate(
-                        email=email, password=password, is_superuser=is_superuser
+                        displayname=displayname,
+                        email=email,
+                        password=password,
+                        is_superuser=is_superuser,
                     )
                 )
                 print(f"User created {user}")
@@ -38,7 +43,7 @@ async def test_user(session):
     user_list = await repo.get_all(models.User)
 
     yield user_list[0] if len(user_list) > 0 else await create_user(
-        "hello123@pytest.de", "password123"
+        "hello123@pytest.de", "John", "password123"
     )
 
 
@@ -62,13 +67,13 @@ async def authorized_client(client: AsyncClient, token):
 @pytest.fixture
 async def test_users(session):
     users_data = [
-        ["user01@pytest.de", "password123"],
-        ["user02@pytest.de", "password123"],
-        ["user03@pytest.de", "password123"],
+        ["user01@pytest.de", "Smith01", "password123"],
+        ["user02@pytest.de", "Smith02", "password123"],
+        ["user03@pytest.de", "Smith03", "password123"],
     ]
 
     for data in users_data:
-        await create_user(data[0], data[1])
+        await create_user(data[0], data[1], data[2])
 
     yield await repo.get_all(models.User)
 
