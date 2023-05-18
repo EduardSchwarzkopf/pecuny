@@ -1,5 +1,6 @@
 from pydantic import BaseSettings
 
+
 # Set all required env variables here
 class Settings(BaseSettings):
     enviroment: str = "dev"
@@ -12,8 +13,15 @@ class Settings(BaseSettings):
     secret_key: str
     algorithm: str
     access_token_expire_minutes: int = 30
+
     test_db_port: str
     test_db_url: str = ""
+
+    mail_username: str
+    mail_password: str
+    mail_from: str
+    mail_port: int = 465
+    mail_server: str
 
 
 settings = Settings(".env")
