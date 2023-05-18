@@ -1,11 +1,16 @@
 import uuid
 
 from datetime import datetime
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, EmailStr
+from typing import Optional, List, Dict, Any
 from fastapi_users import schemas
 
 from pydantic.types import constr
+
+
+class EmailSchema(BaseModel):
+    email: List[EmailStr]
+    body: Dict[str, Any]
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
