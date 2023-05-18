@@ -1,0 +1,32 @@
+{% extends "layouts/base.html" %} {% block header %} {% include
+'fragments/header.html' %} {% endblock %} {% block javascript %}
+
+<script
+    src="https://unpkg.com/htmx.org@1.9.2"
+    integrity="sha384-L6OqL9pRWyyFU3+/bjdSri+iIphTN/bvYyM37tICVyOJkWZLpP2vGn6VUEXgzg6h"
+    crossorigin="anonymous"
+></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Dropdown menu
+        const userMenuButton = document.getElementById("user-menu-button");
+        const userMenuDropdown = document.querySelector(
+            '[aria-labelledby="user-menu-button"]'
+        );
+
+        userMenuButton.addEventListener("click", function () {
+            userMenuDropdown.classList.toggle("hidden");
+        });
+
+        // Mobile menu
+        const mobileMenuButton = document.querySelector(
+            '[aria-controls="mobile-menu"]'
+        );
+        const mobileMenu = document.getElementById("mobile-menu");
+
+        mobileMenuButton.addEventListener("click", function () {
+            mobileMenu.classList.toggle("hidden");
+        });
+    });
+</script>
+{% endblock %}
