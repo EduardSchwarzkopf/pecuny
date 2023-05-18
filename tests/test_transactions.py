@@ -8,6 +8,7 @@ from app import schemas, repository as repo, models
 #
 
 pytestmark = pytest.mark.anyio
+endpoint = "/api/transactions/"
 
 
 @pytest.mark.parametrize(
@@ -36,7 +37,7 @@ async def test_create_transaction(
         account_balance = account.balance
 
         res = await authorized_client.post(
-            "/transactions/",
+            endpoint,
             json={
                 "account_id": account_id,
                 "amount": amount,
@@ -100,7 +101,7 @@ async def test_updated_transaction(
         transaction_before = await repo.get(models.Transaction, transaction_id)
         transaction_amount_before = transaction_before.information.amount
 
-        res = await authorized_client.post(f"/transactions/{transaction_id}", json=json)
+        res = await authorized_client.post(f"{endpoint}{transaction_id}", json=json)
 
         assert res.status_code == status_code
         t = res.json()
@@ -141,7 +142,7 @@ async def test_delete_transaction(
         transaction = await repo.get(models.Transaction, transaction_id)
         amount = transaction.information.amount
 
-        res = await authorized_client.delete(f"/transactions/{transaction_id}")
+        res = await authorized_client.delete(f"{endpoint}{transaction_id}")
         assert res.status_code == status_code
 
         await repo.refresh(account)
@@ -170,7 +171,7 @@ async def test_delete_transaction_fail(
         await repo.refresh(account)  # session not updated, so we need to refresh first
         account_balance = account.balance
 
-        res = await authorized_client.delete(f"/transactions/{transaction_id}")
+        res = await authorized_client.delete(f"{endpoint}{transaction_id}")
         assert res.status_code == status_code
 
         await repo.refresh(account)
@@ -204,7 +205,7 @@ async def test_create_offset_transaction(
 ):
     async with session:
         res = await authorized_client.post(
-            "/transactions/",
+            endpoint,
             json={
                 "account_id": account_id,
                 "amount": amount,
@@ -265,7 +266,7 @@ async def test_create_offset_transaction_other_account_fail(
         offset_account_balance = offset_account.balance
 
         res = await authorized_client.post(
-            "/transactions/",
+            endpoint,
             json={
                 "account_id": account_id,
                 "amount": amount,
@@ -317,7 +318,7 @@ async def test_updated_offset_transaction(
         offset_account_balance = offset_account.balance
 
         transaction_res = await authorized_client.post(
-            "/transactions/",
+            endpoint,
             json={
                 "account_id": account_id,
                 "amount": amount,
@@ -332,7 +333,7 @@ async def test_updated_offset_transaction(
 
         reference = f"Offset_transaction with {amount}"
         res = await authorized_client.post(
-            f"/transactions/{transaction_before.id}",
+            f"{endpoint}{transaction_before.id}",
             json={
                 "account_id": account_id,
                 "amount": amount,
@@ -390,7 +391,7 @@ async def test_delete_offset_transaction(
         offset_account_balance = offset_account.balance
 
         transaction_res = await authorized_client.post(
-            "/transactions/",
+            endpoint,
             json={
                 "account_id": account_id,
                 "amount": amount,
@@ -403,9 +404,9 @@ async def test_delete_offset_transaction(
 
         transaction = schemas.Transaction(**transaction_res.json())
 
-        res = await authorized_client.delete(f"/transactions/{transaction.id}")
+        res = await authorized_client.delete(f"{endpoint}{transaction.id}")
         offset_transaction_res = await authorized_client.get(
-            f"/transactions/{transaction.offset_transactions_id}"
+            f"{endpoint}{transaction.offset_transactions_id}"
         )
 
         assert res.status_code == 204

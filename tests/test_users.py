@@ -11,16 +11,18 @@ from httpx import AsyncClient
 
 pytestmark = pytest.mark.anyio
 success_login_status_code = 204
+endpoint = "/api/auth"
 
 
 @pytest.mark.anyio
 async def test_create_user(session, client):
     async with session:
         res = await client.post(
-            "/auth/register",
+            f"{endpoint}/register",
             json={
                 "email": "hello123@pytest.de",
                 "password": "password123",
+                "displayname": "John",
             },
         )
     assert res.status_code == 201
@@ -36,28 +38,38 @@ async def test_create_user(session, client):
 async def test_invalid_create_user(session, client: AsyncClient, test_user):
     async with session:
         res = await client.post(
-            "/auth/register",
-            json={"email": "hello123@pytest.de", "password": "testpassword"},
+            f"{endpoint}/register",
+            json={
+                "email": "hello123@pytest.de",
+                "password": "testpassword",
+                "displayname": "John",
+            },
         )
 
     assert res.status_code == 400
 
 
 @pytest.mark.parametrize(
-    "username, password",
+    "username, displayname, password",
     [
-        ("hello123@pytest.de", "password123"),
-        ("hellO123@pytest.de", "password123"),
-        ("HELLO123@pytest.de", "password123"),
-        ("hello123@PyTeSt.De", "password123"),
-        ("hELLO123@pytest.de", "password123"),
+        ("hello123@pytest.de", "John", "password123"),
+        ("hellO123@pytest.de", "John", "password123"),
+        ("HELLO123@pytest.de", "John", "password123"),
+        ("hello123@PyTeSt.De", "John", "password123"),
+        ("hELLO123@pytest.de", "John", "password123"),
     ],
 )
-async def test_login(session, client: AsyncClient, test_user, username, password):
+async def test_login(
+    session, client: AsyncClient, test_user, username, displayname, password
+):
     async with session:
         res = await client.post(
-            "/auth/login",
-            data={"username": username, "password": password},
+            f"{endpoint}/login",
+            data={
+                "username": username,
+                "displayname": displayname,
+                "password": password,
+            },
         )
 
     cookie = res.cookies.get("fastapiusersauth")
@@ -89,7 +101,7 @@ async def test_invalid_login(
 ):
     async with session:
         res = await client.post(
-            "/auth/login", data={"username": username, "password": password}
+            f"{endpoint}/login", data={"username": username, "password": password}
         )
 
     assert res.status_code == status_code
@@ -100,12 +112,13 @@ async def test_invalid_login(
     [
         ({"email": "mew@mew.de"}),
         ({"email": "another@mail.com"}),
+        ({"displayname": "Agent Smith"}),
         ({"password": "lancelot"}),
     ],
 )
 async def test_updated_user(session, authorized_client: AsyncClient, test_user, values):
     async with session:
-        res = await authorized_client.patch("/users/me", json=values)
+        res = await authorized_client.patch("/api/users/me", json=values)
 
         assert res.status_code == 200
         user = schemas.UserRead(**res.json())
@@ -113,7 +126,8 @@ async def test_updated_user(session, authorized_client: AsyncClient, test_user, 
         for key, value in values.items():
             if key == "password":
                 login_res = await authorized_client.post(
-                    "/auth/login", data={"username": user.email, "password": value}
+                    f"{endpoint}/login",
+                    data={"username": user.email, "password": value},
                 )
                 assert login_res.status_code == success_login_status_code
                 continue
@@ -135,14 +149,14 @@ async def test_invalid_updated_user(
 ):
     id = str(test_user.id)
     async with session:
-        res = await authorized_client.patch(f"/users/{id}", json=values)
+        res = await authorized_client.patch(f"/api/users/{id}", json=values)
 
     assert res.status_code == 403
 
 
 async def test_delete_user(session, client, test_user, authorized_client):
     async with session:
-        res = await authorized_client.delete("/users/me")
+        res = await authorized_client.delete("/api/users/me")
 
         assert res.status_code == 204
 
@@ -153,6 +167,6 @@ async def test_delete_user(session, client, test_user, authorized_client):
 
 async def test_invalid_delete_user(authorized_client: AsyncClient, session):
     async with session:
-        res = await authorized_client.delete("/users/2")
+        res = await authorized_client.delete("/api/users/2")
 
     assert res.status_code == 403

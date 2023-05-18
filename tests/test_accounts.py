@@ -5,7 +5,7 @@ from app import schemas
 from app.config import settings
 
 pytestmark = pytest.mark.anyio
-endpoint = "/accounts/"
+endpoint = "/api/accounts/"
 
 
 async def test_create_account(session, authorized_client):

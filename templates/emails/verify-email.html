@@ -1,0 +1,8 @@
+{% extends 'layouts/email.html' %} {% block content %}
+<h1>Welcome</h1>
+
+<p>please verify your email:</p>
+{{ token }}
+
+<a href="#">Verify Link</a>
+{% endblock %}
