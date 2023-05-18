@@ -1,13 +1,17 @@
 from sqlalchemy import Column, Integer, String, Numeric, text
+from typing import List
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.ext.declarative import declared_attr
 from .database import (
     Base,
-    User,  # import User here, to be consistent with model imports
 )
 from sqlalchemy.dialects.postgresql import UUID
+from fastapi_users.db import (
+    SQLAlchemyBaseUserTableUUID,
+    SQLAlchemyBaseOAuthAccountTableUUID,
+)
 
 
 class BaseModel(Base):
@@ -27,6 +31,15 @@ class BaseModel(Base):
         for key, value in attribute_list.items():
             if key in model_attribute_list:
                 setattr(self, key, value)
+
+
+class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
+    pass
+
+
+class User(SQLAlchemyBaseUserTableUUID, Base):
+    displayname = Column(String(50))
+    oauth_accounts: List[OAuthAccount] = relationship("OAuthAccount", lazy="joined")
 
 
 class UserId(Base):
