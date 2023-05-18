@@ -12,7 +12,7 @@ from app.routers import home
 from app.database import db
 from app.routers import auth
 from app.schemas import UserCreate, UserRead, UserUpdate
-from app.routers.api.users import auth_backend, fastapi_users
+from app.auth_manager import auth_backend, fastapi_users
 
 
 # from .routers import users, posts, auth, vote
