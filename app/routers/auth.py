@@ -1,16 +1,20 @@
 from app import templates
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from app.models import User
 from fastapi.security import OAuth2PasswordRequestForm
-from app.routers.api.users import (
+from app.services import users as service
+from app import transaction_manager as tm
+
+from app.auth_manager import (
     fastapi_users,
     get_user_manager,
     auth_backend,
     UserManager,
     JWTStrategy,
 )
+from fastapi_users.exceptions import UserNotExists
 
 current_active_user = fastapi_users.current_user(optional=True)
 
@@ -63,6 +67,33 @@ async def get_regsiter(
         "request": request,
     }
     return templates.TemplateResponse(f"{template_prefix}/register.html", context)
+
+
+@router.post("/register/", response_class=HTMLResponse)
+async def register(
+    request: Request,
+    email: str = Form(...),
+    displayname: str = Form(...),
+    password: str = Form(...),
+    password_confirm: str = Form(...),
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    try:
+        existing_user = await user_manager.get_by_email(email)
+    except UserNotExists:
+        existing_user = None
+
+    context = {"request": request}
+    if existing_user is not None:
+        context["error"] = "Email already in use"
+        return templates.TemplateResponse(f"{template_prefix}/register.html", context)
+
+    if password != password_confirm:
+        context["error"] = "Passwords do not match"
+        return templates.TemplateResponse(f"{template_prefix}/register.html", context)
+
+    result = await service.create_user(user_manager, email, displayname, password)
+    return templates.TemplateResponse(f"{template_prefix}/login.html", context)
 
 
 @router.get(
