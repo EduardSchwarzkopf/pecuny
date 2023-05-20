@@ -1,9 +1,9 @@
-{% extends "layouts/base.html" %} {% block content %}
-<div class="container">
+{% extends "layouts/auth.html" %} {% block content %}
+<div id="register" class="container">
     <h1 class="text-center mt-5">Register</h1>
     <div class="row justify-content-center">
         <div class="col-md-6">
-            <form action="/register" method="POST">
+            <form hx-post="/register/" hx-target="#register" method="post">
                 <div class="mb-3">
                     <label for="email" class="form-label">Email address</label>
                     <input
@@ -16,13 +16,13 @@
                     />
                 </div>
                 <div class="mb-3">
-                    <label for="username" class="form-label">Username</label>
+                    <label for="displayname" class="form-label">Name</label>
                     <input
                         type="text"
                         class="form-control"
-                        id="username"
-                        name="username"
-                        placeholder="Username"
+                        id="displayname"
+                        name="displayname"
+                        placeholder="Name"
                         required
                     />
                 </div>

@@ -5,7 +5,7 @@ from fastapi.exceptions import HTTPException
 from app import schemas, transaction_manager as tm
 from app.services import categories as service
 from app.routers.api.users import current_active_user
-from app.database import User
+from app.models import User
 
 router = APIRouter()
 response_model = schemas.CategoryData

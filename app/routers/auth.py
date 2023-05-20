@@ -1,16 +1,11 @@
-from app import templates
+from fastapi import APIRouter, Depends, Form, Request
+from fastapi.responses import HTMLResponse
+from fastapi.exceptions import HTTPException
+from fastapi_users import exceptions
 
-from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
-from app.models import User
-from fastapi.security import OAuth2PasswordRequestForm
-from app.routers.api.users import (
-    fastapi_users,
-    get_user_manager,
-    auth_backend,
-    UserManager,
-    JWTStrategy,
-)
+from app import templates
+from app.auth_manager import UserManager, fastapi_users, get_user_manager
+from app.services.users import UserService
 
 current_active_user = fastapi_users.current_user(optional=True)
 
@@ -18,55 +13,58 @@ router = APIRouter()
 template_prefix = "pages/auth"
 
 
-@router.get(
-    path="/login", tags=["Pages", "Authentication"], response_class=HTMLResponse
-)
-async def get_login(request: Request, user: User = Depends(current_active_user)):
-    print(user)
-    if user:
-        return RedirectResponse("/")
+async def get_user_service(
+    user_manager: UserManager = Depends(get_user_manager),
+) -> UserService:
+    return UserService(user_manager)
+
+
+@router.post("/register/", response_class=HTMLResponse)
+async def register(
+    request: Request,
+    email: str = Form(...),
+    displayname: str = Form(...),
+    password: str = Form(...),
+    password_confirm: str = Form(...),
+    user_service: UserService = Depends(get_user_service),
+):
+    try:
+        existing_user = await user_service.user_manager.get_by_email(email)
+    except exceptions.UserNotExists:
+        existing_user = None
 
     context = {"request": request}
+    if existing_user is not None:
+        context["error"] = "Email already in use"
+        return templates.TemplateResponse(f"{template_prefix}/register.html", context)
+
+    if password != password_confirm:
+        context["error"] = "Passwords do not match"
+        return templates.TemplateResponse(f"{template_prefix}/register.html", context)
+
+    result = await user_service.create_user(email, displayname, password)
     return templates.TemplateResponse(f"{template_prefix}/login.html", context)
 
 
-@router.post(
-    "/login",
-    response_class=RedirectResponse,
+@router.get(
+    path="/verify",
+    tags=["Pages", "Authentication"],
+    response_class=HTMLResponse,
 )
-async def login(
+async def verify_email(
     request: Request,
-    credentials: OAuth2PasswordRequestForm = Depends(),
-    user_manager: UserManager = Depends(get_user_manager),
-    strategy: JWTStrategy = Depends(auth_backend.get_strategy),
+    token: str,
+    user_service: UserService = Depends(get_user_service),
 ):
-    user = await user_manager.authenticate(credentials)
-
-    if user is None or not user.is_active:
-        return RedirectResponse("/login?credentials=False", status_code=302)
-
-    if not user.is_verified:
-        return RedirectResponse("/login?verified=False", status_code=302)
-
-    response = await auth_backend.login(strategy, user)
-    await user_manager.on_after_login(user, request, response)
-    return response
+    status = await user_service.verify_email(token)
+    return templates.TemplateResponse(
+        f"{template_prefix}/email-verify.html",
+        {"request": request, "verification_status": status},
+    )
 
 
 @router.get(
-    path="/register", tags=["Pages", "Authentication"], response_class=HTMLResponse
-)
-async def get_regsiter(
-    request: Request,
-):
-    context = {
-        "request": request,
-    }
-    return templates.TemplateResponse(f"{template_prefix}/register.html", context)
-
-
-@router.get(
-    path="/forgot-password",
+    path="/forgot-password/",
     tags=["Pages", "Authentication"],
     response_class=HTMLResponse,
 )
@@ -81,6 +79,18 @@ async def get_forgot_password(
     )
 
 
+@router.post("/forgot-password/", response_class=HTMLResponse)
+async def forgot_password(
+    request: Request,
+    email: str = Form(...),
+    user_service: UserService = Depends(get_user_service),
+):
+    context = {"request": request}
+
+    result = await user_service.forgot_password(email)
+    return templates.TemplateResponse(f"{template_prefix}/request-reset.html", context)
+
+
 @router.get(
     path="/reset-password",
     tags=["Pages", "Authentication"],
@@ -88,8 +98,42 @@ async def get_forgot_password(
 )
 async def get_reset_password(
     request: Request,
+    token: str,
 ):
-    context = {
-        "request": request,
-    }
+    context = {"request": request, "token": token}
     return templates.TemplateResponse(f"{template_prefix}/reset-password.html", context)
+
+
+@router.post("/reset-password/", response_class=HTMLResponse)
+async def reset_password(
+    request: Request,
+    token: str = Form(...),
+    password: str = Form(...),
+    user_service: UserService = Depends(get_user_service),
+):
+    context = {"request": request}
+
+    try:
+        await user_service.reset_password(password, token)
+    except exceptions.InvalidResetPasswordToken as e:
+        raise HTTPException(
+            status_code=400, detail="Invalid reset password token."
+        ) from e
+    except exceptions.UserInactive as e:
+        raise HTTPException(status_code=400, detail="User is inactive.") from e
+    except exceptions.InvalidPasswordException as e:
+        raise HTTPException(status_code=400, detail="Invalid password.") from e
+
+    return templates.TemplateResponse(f"{template_prefix}/login.html", context)
+
+
+@router.post("/forgot-password/", response_class=HTMLResponse)
+async def forgot_password(
+    request: Request,
+    email: str = Form(...),
+    user_service: UserService = Depends(get_user_service),
+):
+    context = {"request": request}
+
+    result = await user_service.forgot_password(email)
+    return templates.TemplateResponse(f"{template_prefix}/request-reset.html", context)

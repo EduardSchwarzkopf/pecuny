@@ -1,50 +1,28 @@
 import pytest
-import datetime
 from app.oauth2 import create_access_token
-from app import models, repository as repo
-from app.routers.api.users import get_user_manager
-
-import contextlib
-
-from app.database import get_user_db
-from app.schemas import UserCreate
-from fastapi_users.exceptions import UserAlreadyExists
+from app import models, repository as repo, database
 from httpx import AsyncClient
-
-get_user_db_context = contextlib.asynccontextmanager(get_user_db)
-get_user_manager_context = contextlib.asynccontextmanager(get_user_manager)
-
-
-async def create_user(
-    email: str, displayname: str, password: str, is_superuser: bool = False
-):
-    try:
-        async with get_user_db_context() as user_db:
-            async with get_user_manager_context(user_db) as user_manager:
-                user = await user_manager.create(
-                    UserCreate(
-                        displayname=displayname,
-                        email=email,
-                        password=password,
-                        is_superuser=is_superuser,
-                    )
-                )
-                print(f"User created {user}")
-                return user
-    except UserAlreadyExists:
-        print(f"User {email} already exists")
-
+from app.services.users import UserService
+from app.auth_manager import UserManager
 
 pytestmark = pytest.mark.anyio
 
 
 @pytest.fixture
-async def test_user(session):
+async def user_service():
+    yield UserService()
+
+
+@pytest.fixture
+async def test_user(session, user_service: UserService):
     user_list = await repo.get_all(models.User)
 
-    yield user_list[0] if len(user_list) > 0 else await create_user(
-        "hello123@pytest.de", "John", "password123"
-    )
+    if len(user_list) > 0:
+        return user_list[0]
+    else:
+        return await user_service.create_user(
+            "hello123@pytest.de", "John", "password123"
+        )
 
 
 @pytest.fixture
@@ -60,12 +38,11 @@ async def token(test_user):
 @pytest.fixture
 async def authorized_client(client: AsyncClient, token):
     client.cookies = {**client.cookies, "fastapiusersauth": token}
-
     yield client
 
 
 @pytest.fixture
-async def test_users(session):
+async def test_users(session, user_service: UserService):
     users_data = [
         ["user01@pytest.de", "Smith01", "password123"],
         ["user02@pytest.de", "Smith02", "password123"],
@@ -73,7 +50,7 @@ async def test_users(session):
     ]
 
     for data in users_data:
-        await create_user(data[0], data[1], data[2])
+        await user_service.create_user(data[0], data[1], data[2])
 
     yield await repo.get_all(models.User)
 

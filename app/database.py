@@ -1,15 +1,10 @@
 import sys
-from typing import List
-from sqlalchemy import Column, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import relationship
 from .config import settings
 from fastapi_users.db import (
-    SQLAlchemyBaseUserTableUUID,
     SQLAlchemyUserDatabase,
-    SQLAlchemyBaseOAuthAccountTableUUID,
 )
 
 Base = declarative_base()
@@ -38,16 +33,9 @@ class Database:
         return sessionmaker(self.engine, expire_on_commit=False, class_=AsyncSession)()
 
 
-class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
-    pass
-
-
-class User(SQLAlchemyBaseUserTableUUID, Base):
-    displayname = Column(String(50))
-    oauth_accounts: List[OAuthAccount] = relationship("OAuthAccount", lazy="joined")
-
-
 async def get_user_db():
+    from app.models import User, OAuthAccount
+
     yield SQLAlchemyUserDatabase(db.session, User, OAuthAccount)
 
 
