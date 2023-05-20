@@ -40,6 +40,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_request_verify(
         self, user: User, token: str, request: Optional[Request] = None
     ):
+        await email.send_verification(user, token)
         print(f"Verification requested for user {user.id}. Verification token: {token}")
 
 
