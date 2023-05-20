@@ -62,6 +62,49 @@ async def verify_email(
     )
 
 
+@router.get(
+    path="/forgot-password/",
+    tags=["Pages", "Authentication"],
+    response_class=HTMLResponse,
+)
+async def get_forgot_password(
+    request: Request,
+):
+    context = {
+        "request": request,
+    }
+    return templates.TemplateResponse(
+        f"{template_prefix}/forgot-password.html", context
+    )
+
+
+@router.post("/forgot-password/", response_class=HTMLResponse)
+async def forgot_password(
+    request: Request,
+    email: str = Form(...),
+    user_service: UserService = Depends(get_user_service),
+):
+    context = {"request": request}
+
+    result = await user_service.forgot_password(email)
+    return templates.TemplateResponse(f"{template_prefix}/request-reset.html", context)
+
+
+@router.get(
+    path="/reset-password",
+    tags=["Pages", "Authentication"],
+    response_class=HTMLResponse,
+)
+async def get_reset_password(
+    request: Request,
+    token: str,
+):
+    context = {
+        "request": request,
+    }
+    return templates.TemplateResponse(f"{template_prefix}/reset-password.html", context)
+
+
 @router.post("/forgot-password/", response_class=HTMLResponse)
 async def forgot_password(
     request: Request,
