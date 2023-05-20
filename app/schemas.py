@@ -30,7 +30,7 @@ class UserCreateForm(BaseModel):
 
 
 class UserUpdate(schemas.BaseUserUpdate):
-    displayname: str
+    displayname: Optional[str]
 
 
 class Base(BaseModel):
