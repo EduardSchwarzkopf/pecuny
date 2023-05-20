@@ -43,3 +43,14 @@ class UserService:
             existing_user = await self.user_manager.get_by_email(email)
             await self.user_manager.forgot_password(existing_user)
         return None
+
+    async def reset_password(self, password: str, token: str) -> bool:
+        try:
+            await self.user_manager.reset_password(token, password)
+            return True
+        except exceptions.InvalidResetPasswordToken as e:
+            raise exceptions.InvalidResetPasswordToken from e
+        except exceptions.UserInactive as e:
+            raise exceptions.UserInactive from e
+        except exceptions.InvalidPasswordException as e:
+            raise exceptions.InvalidPasswordException from e
