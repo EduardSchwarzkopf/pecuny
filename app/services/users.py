@@ -1,3 +1,4 @@
+import contextlib
 from app import models, repository as repo
 from app.schemas import UserCreate, EmailStr
 from fastapi_users import exceptions
@@ -38,4 +39,7 @@ class UserService:
             return EmailVerificationStatus.ALREADY_VERIFIED
 
     async def forgot_password(self, email: EmailStr) -> None:
-        return await self.user_manager.forgot_password(email)
+        with contextlib.suppress(exceptions.UserNotExists):
+            existing_user = await self.user_manager.get_by_email(email)
+            await self.user_manager.forgot_password(existing_user)
+        return None
