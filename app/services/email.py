@@ -52,4 +52,6 @@ async def send_forgot_password(user: User, token: str) -> JSONResponse:
         body={"user": user, "url": "http://127.0.0.1:8000", "token": token},
     )
 
-    return await _send(email, "Welcome", template_name="emails/forgot-password.html")
+    return await _send(
+        email, "Reset Password Request", template_name="emails/forgot-password.html"
+    )
