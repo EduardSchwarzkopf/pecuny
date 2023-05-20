@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse
-from fastapi_users.exceptions import UserNotExists
+from fastapi.exceptions import HTTPException
+from fastapi_users import exceptions
 
 from app import templates
 from app.auth_manager import UserManager, fastapi_users, get_user_manager
@@ -29,7 +30,7 @@ async def register(
 ):
     try:
         existing_user = await user_service.user_manager.get_by_email(email)
-    except UserNotExists:
+    except exceptions.UserNotExists:
         existing_user = None
 
     context = {"request": request}
@@ -99,10 +100,31 @@ async def get_reset_password(
     request: Request,
     token: str,
 ):
-    context = {
-        "request": request,
-    }
+    context = {"request": request, "token": token}
     return templates.TemplateResponse(f"{template_prefix}/reset-password.html", context)
+
+
+@router.post("/reset-password/", response_class=HTMLResponse)
+async def reset_password(
+    request: Request,
+    token: str = Form(...),
+    password: str = Form(...),
+    user_service: UserService = Depends(get_user_service),
+):
+    context = {"request": request}
+
+    try:
+        await user_service.reset_password(password, token)
+    except exceptions.InvalidResetPasswordToken as e:
+        raise HTTPException(
+            status_code=400, detail="Invalid reset password token."
+        ) from e
+    except exceptions.UserInactive as e:
+        raise HTTPException(status_code=400, detail="User is inactive.") from e
+    except exceptions.InvalidPasswordException as e:
+        raise HTTPException(status_code=400, detail="Invalid password.") from e
+
+    return templates.TemplateResponse(f"{template_prefix}/login.html", context)
 
 
 @router.post("/forgot-password/", response_class=HTMLResponse)
