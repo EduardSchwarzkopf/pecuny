@@ -1,0 +1,8 @@
+{% extends "layouts/base.html" %} {% block content %} {% if status == 3 %}
+<p>token invalid.</p>
+<p>get a new one here</p>
+{% elif statis == 2 %}
+<p>Email already verified</p>
+{% else %}
+<p>Token verified, thank you</p>
+{% endif %} {% endblock %}
