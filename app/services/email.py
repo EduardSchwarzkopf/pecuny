@@ -44,3 +44,12 @@ async def send_verification(user: User, token: str) -> JSONResponse:
     return await _send(
         email, "Please verify your email", template_name="emails/verify-email.html"
     )
+
+
+async def send_forgot_password(user: User, token: str) -> JSONResponse:
+    email = EmailSchema(
+        email=[user.email],
+        body={"user": user, "url": "http://127.0.0.1:8000", "token": token},
+    )
+
+    return await _send(email, "Welcome", template_name="emails/forgot-password.html")
