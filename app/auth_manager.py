@@ -15,6 +15,7 @@ from app.config import settings
 
 from app.database import get_user_db
 from app.models import User
+from app.services import email
 
 SECRET = settings.secret_key
 TOKEN_EXPIRE = settings.access_token_expire_minutes * 60
@@ -26,6 +27,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     verification_token_secret = SECRET
 
     async def on_after_register(self, user: User, request: Optional[Request] = None):
+        await self.request_verify(user, request)
+        await email.send_register(user)
+
         print(f"User {user.id} has registered.")
 
     async def on_after_forgot_password(
