@@ -4,11 +4,18 @@ from app.schemas import UserCreate, EmailStr
 from fastapi_users import exceptions
 from app.auth_manager import UserManager
 from app.utils.enums import EmailVerificationStatus
+from app import database
 
 
 class UserService:
-    def __init__(self, user_manager: UserManager):
-        self.user_manager = user_manager
+    def __init__(self):
+        self.user_manager = self._get_user_manager()
+
+    def _get_user_manager(self):
+        user_db = database.SQLAlchemyUserDatabase(
+            database.db.session, models.User, models.OAuthAccount
+        )
+        return UserManager(user_db)
 
     async def delete_self(self, current_user: models.User) -> bool:
         await repo.delete(current_user)
