@@ -97,6 +97,23 @@ async def register(
 
 
 @router.get(
+    path="/verify",
+    tags=["Pages", "Authentication"],
+    response_class=HTMLResponse,
+)
+async def verify_email(
+    request: Request,
+    token: str,
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    status = await service.verify_email(user_manager, token)
+    return templates.TemplateResponse(
+        f"{template_prefix}/email-verify.html",
+        {"request": request, "verification_status": status},
+    )
+
+
+@router.get(
     path="/forgot-password/",
     tags=["Pages", "Authentication"],
     response_class=HTMLResponse,
