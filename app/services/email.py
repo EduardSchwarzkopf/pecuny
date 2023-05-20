@@ -2,6 +2,7 @@ from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from app.schemas import EmailSchema
 from starlette.responses import JSONResponse
 from app.config import settings
+from app.models import User
 
 conf = ConnectionConfig(
     MAIL_USERNAME=settings.mail_username,
@@ -17,14 +18,21 @@ conf = ConnectionConfig(
 )
 
 
-async def send_default(email: EmailSchema) -> JSONResponse:
+async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONResponse:
     message = MessageSchema(
-        subject="Fastapi-Mail module",
+        subject=subject,
         recipients=email.dict().get("email"),
         template_body=email.dict().get("body"),
         subtype=MessageType.html,
     )
 
     fm = FastMail(conf)
-    await fm.send_message(message, template_name="emails/default.html")
+    await fm.send_message(message, template_name=template_name)
     return JSONResponse(status_code=200, content={"message": "email has been sent"})
+
+
+async def send_register(user: User) -> JSONResponse:
+    email = EmailSchema(email=[user.email], body={"user": user})
+    return await _send(email, "Welcome", template_name="emails/register.html")
+
+
