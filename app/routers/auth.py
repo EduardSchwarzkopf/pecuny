@@ -1,20 +1,19 @@
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.exceptions import HTTPException
-from fastapi_users import exceptions
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi_users import exceptions
 
 from app import templates
-from app.auth_manager import UserManager, current_active_user, get_user_manager
-from app.services.users import UserService
-from app.models import User
-
 from app.auth_manager import (
-    get_user_manager,
-    auth_backend,
-    UserManager,
     JWTStrategy,
+    UserManager,
+    auth_backend,
+    get_user_manager,
+    optional_current_active_verified_user,
 )
+from app.models import User
+from app.services.users import UserService
 
 router = APIRouter()
 template_prefix = "pages/auth"
@@ -25,13 +24,15 @@ async def get_user_service() -> UserService:
 
 
 @router.get(
-    path="/login", tags=["Pages", "Authentication"], response_class=HTMLResponse
+    path="/login/", tags=["Pages", "Authentication"], response_class=HTMLResponse
 )
 async def get_login(
-    request: Request, user: User = Depends(current_active_user), error: str = ""
+    request: Request,
+    user: User = Depends(optional_current_active_verified_user),
+    error: str = "",
 ):
     if user:
-        return RedirectResponse("/")
+        return RedirectResponse("/", 302)
 
     context = {"request": request, "error": error}
     return templates.TemplateResponse(f"{template_prefix}/login.html", context)
@@ -55,8 +56,8 @@ async def login(
     if not user.is_verified:
         return RedirectResponse("/login?error=verification", status_code=302)
 
-    await auth_backend.login(strategy, user)
-    return RedirectResponse("/")
+    result = await auth_backend.login(strategy, user)
+    return RedirectResponse("/", 302, result.headers)
 
 
 @router.get(
