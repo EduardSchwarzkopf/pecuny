@@ -141,7 +141,7 @@ async def forgot_password(
 ):
     context = {"request": request}
 
-    result = await user_service.forgot_password(email)
+    await user_service.forgot_password(email)
     return templates.TemplateResponse(f"{template_prefix}/request-reset.html", context)
 
 
