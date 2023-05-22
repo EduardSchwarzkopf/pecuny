@@ -45,6 +45,14 @@ class UserService:
         except exceptions.UserAlreadyVerified:
             return EmailVerificationStatus.ALREADY_VERIFIED
 
+    async def request_verification(self, user: models.User) -> None:
+        try:
+            await self.user_manager.request_verify(user)
+        except exceptions.UserInactive:
+            print("User inactive")
+        except exceptions.UserAlreadyVerified:
+            print("User already verified")
+
     async def forgot_password(self, email: EmailStr) -> None:
         with contextlib.suppress(exceptions.UserNotExists):
             existing_user = await self.user_manager.get_by_email(email)
