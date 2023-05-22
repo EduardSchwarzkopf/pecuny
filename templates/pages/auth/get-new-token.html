@@ -1,0 +1,30 @@
+{% extends "layouts/base.html" %} {% block content %}
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="text-center">
+        <h2 class="text-2xl font-bold mb-4">Request New Verification Token</h2>
+        <p class="mb-4">
+            Please enter your email address and we'll send you a new
+            verification token.
+        </p>
+        <form method="post" action="/send-new-token">
+            <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                required
+                class="mb-4"
+            />
+            <input
+                type="submit"
+                value="Request New Token"
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            />
+        </form>
+        <div class="mt-8">
+            <a href="/login" class="text-blue-500 hover:underline"
+                >Back to Login</a
+            >
+        </div>
+    </div>
+</div>
+{% endblock %}
