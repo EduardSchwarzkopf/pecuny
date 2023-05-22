@@ -1,8 +1,37 @@
-{% extends "layouts/base.html" %} {% block content %} {% if status == 3 %}
-<p>token invalid.</p>
-<p>get a new one here</p>
-{% elif statis == 2 %}
-<p>Email already verified</p>
-{% else %}
-<p>Token verified, thank you</p>
-{% endif %} {% endblock %}
+{% extends "layouts/base.html" %} {% block content %}
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    {{verification_status}}
+    <div class="text-center">
+        {% if verification_status == 0 %}
+        <h2 class="text-2xl font-bold text-red-500 mb-4">Invalid Token</h2>
+        <p class="mb-4">
+            It seems like your token is invalid or has expired. Don't worry, you
+            can request a new one.
+        </p>
+        <a
+            href="/get-new-token"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >Get New Token</a
+        >
+        {% elif verification_status == -1 %}
+        <h2 class="text-2xl font-bold text-green-500 mb-4">Already Verified</h2>
+        <p class="mb-4">
+            Good news! Your email is already verified. You can go ahead and
+            login.
+        </p>
+        {% else %}
+        <h2 class="text-2xl font-bold text-green-500 mb-4">
+            Verified Successfully
+        </h2>
+        <p class="mb-4">
+            Congratulations! Your email has been successfully verified.
+        </p>
+        {% endif %}
+        <div class="mt-8">
+            <a href="/login" class="text-blue-500 hover:underline"
+                >Back to Login</a
+            >
+        </div>
+    </div>
+</div>
+{% endblock %}
