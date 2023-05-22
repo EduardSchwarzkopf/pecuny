@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, Request, BackgroundTasks
 from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
@@ -114,8 +114,36 @@ async def verify_email(
     status = await user_service.verify_email(token)
     return templates.TemplateResponse(
         f"{template_prefix}/email-verify.html",
-        {"request": request, "verification_status": status},
+        {"request": request, "verification_status": status.value},
     )
+
+
+@router.get("/get-new-token", response_class=HTMLResponse)
+async def get_new_token(
+    request: Request,
+):
+    context = {"request": request}
+    return templates.TemplateResponse(f"{template_prefix}/get-new-token.html", context)
+
+
+@router.post("/send-new-token", response_class=HTMLResponse)
+async def send_new_token(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    email: str = Form(...),
+    user_service: UserService = Depends(get_user_service),
+):
+    try:
+        user = await user_service.user_manager.get_by_email(email)
+    except exceptions.UserNotExists as e:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        ) from e
+
+    background_tasks.add_task(user_service.request_verification, user)
+
+    return RedirectResponse("/login?message=new_token_sent", 302)
 
 
 @router.get(
