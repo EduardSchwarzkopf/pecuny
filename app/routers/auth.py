@@ -1,3 +1,4 @@
+import contextlib
 from fastapi import APIRouter, Depends, Form, Request, BackgroundTasks
 from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -29,12 +30,11 @@ async def get_user_service() -> UserService:
 async def get_login(
     request: Request,
     user: User = Depends(optional_current_active_verified_user),
-    error: str = "",
 ):
     if user:
         return RedirectResponse("/", 302)
 
-    context = {"request": request, "error": error}
+    context = {"request": request}
     return templates.TemplateResponse(f"{template_prefix}/login.html", context)
 
 
@@ -49,12 +49,22 @@ async def login(
     strategy: JWTStrategy = Depends(auth_backend.get_strategy),
 ):
     user = await user_manager.authenticate(credentials)
+    context = {"request": request}
 
-    if user is None or not user.is_active:
-        return RedirectResponse("/login?error=credentials", status_code=302)
+    if user is None:
+        context["feedback_type"] = "error"
+        context["feedback_message"] = "Wrong credentials provided"
+        return templates.TemplateResponse("fragments/feedback.html", context)
+
+    if not user.is_active:
+        context["feedback_type"] = "error"
+        context["feedback_message"] = "This account is not active"
+        return templates.TemplateResponse("fragments/feedback.html", context)
 
     if not user.is_verified:
-        return RedirectResponse("/login?error=verification", status_code=302)
+        context["feedback_type"] = "error"
+        context["feedback_message"] = "You need to verify your email first"
+        return templates.TemplateResponse("fragments/feedback.html", context)
 
     result = await auth_backend.login(strategy, user)
     return RedirectResponse("/", 302, result.headers)
@@ -133,16 +143,9 @@ async def send_new_token(
     email: str = Form(...),
     user_service: UserService = Depends(get_user_service),
 ):
-    try:
+    with contextlib.suppress(exceptions.UserNotExists):
         user = await user_service.user_manager.get_by_email(email)
-    except exceptions.UserNotExists as e:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found",
-        ) from e
-
-    background_tasks.add_task(user_service.request_verification, user)
-
+        background_tasks.add_task(user_service.request_verification, user)
     return RedirectResponse("/login?message=new_token_sent", 302)
 
 
