@@ -20,7 +20,7 @@ from app import templates
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse
 from app.utils.exceptions import UnauthorizedPageException
 
 app = FastAPI()
@@ -41,11 +41,18 @@ app.add_middleware(
 
 
 # Exception Handlers
-@app.exception_handler(UnauthorizedPageException)
+@app.exception_handler(401)
 async def unauthorized_exception_handler(
     request: Request, exc: UnauthorizedPageException
 ):
-    return RedirectResponse("/login?unauthorized=True", status_code=302)
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+
+    return templates.TemplateResponse(
+        "pages/auth/login.html",
+        {"request": request, "redirect": request.url.path},
+        status_code=exc.status_code,
+    )
 
 
 @app.exception_handler(404)
