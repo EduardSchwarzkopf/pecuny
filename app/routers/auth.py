@@ -30,11 +30,21 @@ async def get_user_service() -> UserService:
 async def get_login(
     request: Request,
     user: User = Depends(optional_current_active_verified_user),
+    msg: str = "",
 ):
     if user:
         return RedirectResponse("/", 302)
 
-    context = {"request": request, "username": ""}
+    context = {"request": request}
+
+    if msg == "new_token_sent":
+        context["feedback_type"] = "success"
+        context["feedback_message"] = "New token was send, please check your email"
+
+    elif msg == "registered":
+        context["feedback_type"] = "success"
+        context["feedback_message"] = "Welcome, please validate your email first!"
+
     return templates.TemplateResponse(f"{template_prefix}/login.html", context)
 
 
@@ -96,19 +106,19 @@ async def register(
     except exceptions.UserNotExists:
         existing_user = None
 
-    context = {"request": request}
+    context = {"request": request, "email": email, "displayname": displayname}
     if existing_user is not None:
         context["feedback_type"] = "error"
         context["feedback_message"] = "Email already in use"
-        return templates.TemplateResponse("fragments/feedback.html", context)
+        return templates.TemplateResponse(f"{template_prefix}/register.html", context)
 
     if password != password_confirm:
         context["feedback_type"] = "error"
         context["feedback_message"] = "Passwords do not match"
-        return templates.TemplateResponse("fragments/feedback.html", context)
+        return templates.TemplateResponse(f"{template_prefix}/register.html", context)
 
     await user_service.create_user(email, displayname, password)
-    return RedirectResponse("/login?success=register")
+    return RedirectResponse("/login?msg=registered")
 
 
 @router.get(
@@ -146,7 +156,7 @@ async def send_new_token(
     with contextlib.suppress(exceptions.UserNotExists):
         user = await user_service.user_manager.get_by_email(email)
         background_tasks.add_task(user_service.request_verification, user)
-    return RedirectResponse("/login?message=new_token_sent", 302)
+    return RedirectResponse("/login?msg=new_token_sent", 302)
 
 
 @router.get(
