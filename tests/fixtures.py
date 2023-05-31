@@ -1,9 +1,8 @@
 import pytest
 from app.oauth2 import create_access_token
-from app import models, repository as repo, database
+from app import models, repository as repo
 from httpx import AsyncClient
 from app.services.users import UserService
-from app.auth_manager import UserManager
 
 pytestmark = pytest.mark.anyio
 
