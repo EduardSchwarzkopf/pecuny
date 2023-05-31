@@ -21,7 +21,7 @@ async def test_user(session, user_service: UserService):
         return user_list[0]
     else:
         return await user_service.create_user(
-            "hello123@pytest.de", "John", "password123"
+            "hello123@pytest.de", "John", "password123", True
         )
 
 
@@ -50,7 +50,7 @@ async def test_users(session, user_service: UserService):
     ]
 
     for data in users_data:
-        await user_service.create_user(data[0], data[1], data[2])
+        await user_service.create_user(data[0], data[1], data[2], True)
 
     yield await repo.get_all(models.User)
 

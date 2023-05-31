@@ -22,7 +22,12 @@ class UserService:
         return True
 
     async def create_user(
-        self, email: str, displayname: str, password: str, is_superuser: bool = False
+        self,
+        email: str,
+        displayname: str,
+        password: str,
+        is_verified: bool = False,
+        is_superuser: bool = False,
     ) -> bool:
         try:
             return await self.user_manager.create(
@@ -31,6 +36,7 @@ class UserService:
                     displayname=displayname,
                     password=password,
                     is_superuser=is_superuser,
+                    is_verified=is_verified,
                 )
             )
         except exceptions.UserAlreadyExists:
