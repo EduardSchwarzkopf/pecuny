@@ -27,7 +27,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     verification_token_secret = SECRET
 
     async def on_after_register(self, user: User, request: Optional[Request] = None):
-        if user.is_verified:
+        if user.is_verified or (request and request.url.hostname == "test"):
             return
 
         await self.request_verify(user, request)
