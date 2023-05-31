@@ -18,7 +18,8 @@
                 <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
                     <div>{% block content %} {% endblock %}</div>
                 </div>
-                <div id="feedback" class="row justify-content-center"></div>
+
+                {% include 'fragments/feedback.html' %}
             </main>
         </div>
         <script

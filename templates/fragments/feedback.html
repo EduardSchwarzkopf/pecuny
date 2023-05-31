@@ -1,16 +1,18 @@
-{% if feedback_type and feedback_message %}
-<div class="my-4">
-    <div
-        class="alert alert-{{ feedback_type }} alert-dismissible fade show"
-        role="alert"
-    >
-        {{ feedback_message }}
-        <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="alert"
-            aria-label="Close"
-        ></button>
+<div id="feedback" class="row justify-content-center">
+    {% if feedback_type and feedback_message %}
+    <div class="my-4">
+        <div
+            class="alert alert-{{ feedback_type }} alert-dismissible fade show"
+            role="alert"
+        >
+            {{ feedback_message }}
+            <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close"
+            ></button>
+        </div>
     </div>
+    {% endif %}
 </div>
-{% endif %}
