@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 import fastapi_users
 from app.routers.api import (
     accounts,
@@ -13,11 +13,15 @@ from app.database import db
 from app.routers import auth
 from app.schemas import UserCreate, UserRead, UserUpdate
 from app.auth_manager import auth_backend, fastapi_users
+from app import templates
 
 
 # from .routers import users, posts, auth, vote
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException
+from fastapi.responses import JSONResponse, RedirectResponse
+from app.utils.exceptions import UnauthorizedPageException
 
 app = FastAPI()
 
@@ -34,6 +38,26 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["*"],
 )
+
+
+# Exception Handlers
+@app.exception_handler(UnauthorizedPageException)
+async def unauthorized_exception_handler(
+    request: Request, exc: UnauthorizedPageException
+):
+    return RedirectResponse("/login?unauthorized=True", status_code=302)
+
+
+@app.exception_handler(404)
+async def page_not_found_exception_handler(request: Request, exc: HTTPException):
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+
+    return templates.TemplateResponse(
+        "exceptions/404.html",
+        {"request": request},
+        status_code=exc.status_code,
+    )
 
 
 @app.on_event("startup")
