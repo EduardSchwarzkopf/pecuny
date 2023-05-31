@@ -34,7 +34,7 @@ async def get_login(
     if user:
         return RedirectResponse("/", 302)
 
-    context = {"request": request}
+    context = {"request": request, "username": ""}
     return templates.TemplateResponse(f"{template_prefix}/login.html", context)
 
 
@@ -49,22 +49,22 @@ async def login(
     strategy: JWTStrategy = Depends(auth_backend.get_strategy),
 ):
     user = await user_manager.authenticate(credentials)
-    context = {"request": request}
+    context = {"request": request, "username": credentials.username}
 
     if user is None:
         context["feedback_type"] = "error"
         context["feedback_message"] = "Wrong credentials provided"
-        return templates.TemplateResponse("fragments/feedback.html", context)
+        return templates.TemplateResponse(f"{template_prefix}/login.html", context)
 
     if not user.is_active:
         context["feedback_type"] = "error"
         context["feedback_message"] = "This account is not active"
-        return templates.TemplateResponse("fragments/feedback.html", context)
+        return templates.TemplateResponse(f"{template_prefix}/login.html", context)
 
     if not user.is_verified:
         context["feedback_type"] = "error"
         context["feedback_message"] = "You need to verify your email first"
-        return templates.TemplateResponse("fragments/feedback.html", context)
+        return templates.TemplateResponse(f"{template_prefix}/login.html", context)
 
     result = await auth_backend.login(strategy, user)
     return RedirectResponse("/", 302, result.headers)
