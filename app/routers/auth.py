@@ -96,6 +96,15 @@ async def login(
     return RedirectResponse("/", 302, result.headers)
 
 
+@router.get(path="/logout", tags=["Pages", "Authentication"])
+async def logout(
+    request: Request,
+):
+    response = RedirectResponse(LOGIN, status_code=302)
+    response.delete_cookie(auth_backend.transport.cookie_name)
+    return response
+
+
 @router.get(
     path=REGISTER, tags=["Pages", "Authentication"], response_class=HTMLResponse
 )
