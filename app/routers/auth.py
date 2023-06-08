@@ -156,7 +156,7 @@ async def verify_email(
 ):
     status = await user_service.verify_email(token)
     return templates.TemplateResponse(
-        f"{template_prefix}/email-verify.html",
+        f"{TEMPLATE_PREFIX}/email-verify.html",
         {"request": request, "verification_status": status.value},
     )
 
@@ -166,7 +166,7 @@ async def get_new_token(
     request: Request,
 ):
     context = {"request": request}
-    return templates.TemplateResponse(f"{template_prefix}/get-new-token.html", context)
+    return templates.TemplateResponse(f"{TEMPLATE_PREFIX}/get-new-token.html", context)
 
 
 @router.post("/send-new-token", response_class=HTMLResponse)
@@ -194,7 +194,7 @@ async def get_forgot_password(
         "request": request,
     }
     return templates.TemplateResponse(
-        f"{template_prefix}/forgot-password.html", context
+        f"{TEMPLATE_PREFIX}/forgot-password.html", context
     )
 
 
@@ -207,7 +207,7 @@ async def forgot_password(
     context = {"request": request}
 
     await user_service.forgot_password(email)
-    return templates.TemplateResponse(f"{template_prefix}/request-reset.html", context)
+    return templates.TemplateResponse(f"{TEMPLATE_PREFIX}/request-reset.html", context)
 
 
 @router.get(
@@ -220,7 +220,7 @@ async def get_reset_password(
     token: str,
 ):
     context = {"request": request, "token": token}
-    return templates.TemplateResponse(f"{template_prefix}/reset-password.html", context)
+    return templates.TemplateResponse(f"{TEMPLATE_PREFIX}/reset-password.html", context)
 
 
 @router.post(RESET_PASSWORD, response_class=HTMLResponse)
