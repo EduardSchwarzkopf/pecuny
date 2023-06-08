@@ -4,6 +4,7 @@ from app.models import User
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
 from app.auth_manager import current_active_user
+from app.utils.template_utils import render_template
 
 
 router = APIRouter()
@@ -14,5 +15,4 @@ async def index(
     request: Request,
     user: User = Depends(current_active_user),
 ):
-    context = {"request": request}
-    return templates.TemplateResponse("pages/home.html", context)
+    return render_template(templates.TemplateResponse("pages/home.html"), request)
