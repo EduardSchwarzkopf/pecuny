@@ -22,6 +22,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException
 from fastapi.responses import JSONResponse
 from app.utils.exceptions import UnauthorizedPageException
+from app.middleware import HeaderLinkMiddleware
 
 app = FastAPI()
 
@@ -38,6 +39,8 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["*"],
 )
+
+app.add_middleware(HeaderLinkMiddleware)
 
 
 # Exception Handlers
