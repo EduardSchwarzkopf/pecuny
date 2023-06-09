@@ -1,11 +1,11 @@
 <div id="feedback" class="row justify-content-center">
-    {% if feedback_type and feedback_message %}
+    {% if request.state.feedback_type and request.state.feedback_message %}
     <div class="my-4">
         <div
-            class="alert alert-{{ feedback_type }} alert-dismissible fade show"
+            class="alert alert-{{ request.state.feedback_type }} alert-dismissible fade show"
             role="alert"
         >
-            {{ feedback_message }}
+            {{ request.state.feedback_message }}
             <button
                 type="button"
                 class="btn-close"
