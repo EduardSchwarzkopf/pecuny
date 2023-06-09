@@ -40,6 +40,7 @@ async def page_create_account(
     account = schemas.Account(**account_data)
 
     response = await tm.transaction(service.create_account, user, account)
+    # TODO: Error handling
 
     return RedirectResponse(
         router.url_path_for("page_create_account_form"), status_code=302
