@@ -9,6 +9,17 @@ from app.auth_manager import current_active_user
 router = PageRouter(prefix="/accounts", tags=["Accounts"])
 
 
+@router.get("/", response_class=HTMLResponse)
+async def page_create_account_form(
+    request: Request,
+    user: models.User = Depends(current_active_user),
+):
+    account_data = await service.get_accounts(user)
+    return render_template(
+        "pages/dashboard/accounts.html", request, {"accounts": account_data}
+    )
+
+
 @router.get("/create-account", response_class=HTMLResponse)
 async def page_create_account_form(
     request: Request,
