@@ -3,9 +3,10 @@ from fastapi import APIRouter, Request, Depends
 
 
 from app.auth_manager import current_active_user
+from app.utils import PageRouter
 from app.utils.template_utils import render_template
 
-router = APIRouter()
+router = PageRouter(tags=["Dashboard"])
 
 
 @router.get(path="/")

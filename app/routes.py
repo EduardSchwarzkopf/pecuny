@@ -1,4 +1,3 @@
-from app.routers import dashboard, accounts, auth
 from app.routers.api import (
     accounts as api_accounts,
     transactions as api_transactions,
@@ -6,49 +5,78 @@ from app.routers.api import (
     categories as api_categories,
     scheduled_transactions as api_scheduled_transactions,
 )
+
+from app.routers import dashboard, accounts, auth
 import fastapi_users
 from app.schemas import UserCreate, UserRead, UserUpdate
 from app.auth_manager import auth_backend, fastapi_users
 
+from fastapi import APIRouter
+
+
+class APIRouterExtended(APIRouter):
+    def __init__(self, *args, **kwargs):
+        # Ensure that a prefix always starts with "/api"
+        if "prefix" in kwargs:
+            kwargs["prefix"] = "/api" + kwargs["prefix"]
+
+        # Ensure that "Api" and "Page" are always included in tags
+        if "tags" in kwargs:
+            if "Api" not in kwargs["tags"]:
+                kwargs["tags"].append("Api")
+            if "Page" not in kwargs["tags"]:
+                kwargs["tags"].append("Page")
+
+        super().__init__(*args, **kwargs)
+
+
 api_prefix = "/api"
+auth_tag_list = ["Api", "Auth"]
+user_tag_list = ["Api", "Users"]
 
-fastapi_user_routers = [
-    fastapi_users.get_users_router(UserRead, UserUpdate),
-    fastapi_users.get_auth_router(auth_backend),
-    fastapi_users.get_register_router(UserRead, UserCreate),
-    fastapi_users.get_reset_password_router(),
-    fastapi_users.get_verify_router(UserRead),
-]
-
-route_list = [
-    {"router": router, "prefix": f"{api_prefix}/auth", "tags": ["Api", "Auth"]}
-    for router in fastapi_user_routers
-]
-
-api_routers = [
-    (api_users.router, "users", ["Api", "Users"]),
-    (api_categories.router, "categories", ["Api", "Categories"]),
-    (api_accounts.router, "accounts", ["Api", "Accounts"]),
-    (api_transactions.router, "transactions", ["Api", "Transactions"]),
-    (
-        api_scheduled_transactions.router,
-        "scheduled-transactions",
-        ["Api", "Scheduled Transactions"],
-    ),
-]
-
-route_list += [
-    {"router": router, "prefix": f"{api_prefix}/{name}", "tags": tags}
-    for router, name, tags in api_routers
-]
-
-page_routers = [
-    (dashboard.router, "", ["Page", "Dashboard"]),
-    (accounts.router, "/accounts", ["Page", "Accounts"]),
-    (auth.router, "", ["Page", "Auth"]),
-]
-
-route_list += [
-    {"router": router, "prefix": prefix, "tags": tags}
-    for router, prefix, tags in page_routers
+router_list = [
+    ## Pages
+    {"router": dashboard.router},
+    {"router": accounts.router},
+    {"router": auth.router},
+    ## Api
+    {
+        "router": api_users.router,
+    },
+    {"router": api_categories.router},
+    {
+        "router": api_accounts.router,
+    },
+    {
+        "router": api_transactions.router,
+    },
+    {
+        "router": api_scheduled_transactions.router,
+    },
+    ## Fastapi Users
+    {
+        "router": fastapi_users.get_users_router(UserRead, UserUpdate),
+        "prefix": f"{api_prefix}/users",
+        "tags": user_tag_list,
+    },
+    {
+        "router": fastapi_users.get_auth_router(auth_backend),
+        "prefix": f"{api_prefix}/auth",
+        "tags": auth_tag_list,
+    },
+    {
+        "router": fastapi_users.get_register_router(UserRead, UserCreate),
+        "prefix": f"{api_prefix}/auth",
+        "tags": auth_tag_list,
+    },
+    {
+        "router": fastapi_users.get_reset_password_router(),
+        "prefix": f"{api_prefix}/auth",
+        "tags": auth_tag_list,
+    },
+    {
+        "router": fastapi_users.get_verify_router(UserRead),
+        "prefix": f"{api_prefix}/auth",
+        "tags": auth_tag_list,
+    },
 ]

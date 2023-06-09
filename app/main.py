@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from app.routes import route_list
+from app.routes import router_list
 
 from app.database import db
 
@@ -71,5 +71,7 @@ async def shutdown_event():
     await db.session.close()
 
 
-for route in route_list:
-    app.include_router(route["router"], prefix=route["prefix"], tags=route["tags"])
+for route in router_list:
+    app.include_router(
+        route["router"], prefix=route.get("prefix", ""), tags=route.get("tags", [])
+    )

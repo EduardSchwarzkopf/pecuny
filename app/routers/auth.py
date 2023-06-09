@@ -1,8 +1,9 @@
 import contextlib
-from fastapi import Depends, Form, Request, BackgroundTasks, APIRouter
+from fastapi import Depends, Form, Request, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_users import exceptions
+from app.utils import PageRouter
 from app.utils.template_utils import set_feedback, render_template
 from app.utils.enums import FeedbackType
 from .dashboard import router as dashboard_router
@@ -19,7 +20,7 @@ from app.auth_manager import (
 from app.models import User
 from app.services.users import UserService
 
-router = APIRouter()
+router = PageRouter()
 
 LOGIN = "/login"
 REGISTER = "/register"
