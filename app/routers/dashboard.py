@@ -1,14 +1,11 @@
 from app.models import User
 from fastapi import APIRouter, Request, Depends
-from fastapi.responses import HTMLResponse
+
+
 from app.auth_manager import current_active_user
 from app.utils.template_utils import render_template
 
-router = APIRouter(
-    prefix="/dashboard",
-    tags=["Pages", "Dashboard"],
-    default_response_class=HTMLResponse,
-)
+router = APIRouter()
 
 
 @router.get(path="/")

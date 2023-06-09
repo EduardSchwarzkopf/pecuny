@@ -1,18 +1,8 @@
 from fastapi import FastAPI, Request
-import fastapi_users
-from app.routers.api import (
-    accounts,
-    transactions,
-    users,
-    categories,
-    scheduled_transactions,
-)
+from app.routes import route_list
 
-from app.routers import dashboard
 from app.database import db
-from app.routers import auth
-from app.schemas import UserCreate, UserRead, UserUpdate
-from app.auth_manager import auth_backend, fastapi_users
+
 from app import templates
 
 
@@ -81,63 +71,5 @@ async def shutdown_event():
     await db.session.close()
 
 
-# Page Routes
-app.include_router(dashboard.router)
-app.include_router(auth.router)
-
-# API Routes
-api_prefix = "/api"
-app.include_router(
-    accounts.router,
-    prefix=f"{api_prefix}/accounts",
-    tags=["Accounts"],
-)
-app.include_router(
-    transactions.router,
-    prefix=f"{api_prefix}/transactions",
-    tags=["Transactions"],
-)
-app.include_router(
-    scheduled_transactions.router,
-    prefix=f"{api_prefix}/scheduled-transactions",
-    tags=["Scheduled transactions"],
-)
-app.include_router(
-    categories.router,
-    prefix=f"{api_prefix}/categories",
-    tags=["Categories"],
-)
-
-
-app.include_router(
-    fastapi_users.get_auth_router(auth_backend),
-    prefix=f"{api_prefix}/auth",
-    tags=["Auth"],
-)
-app.include_router(
-    fastapi_users.get_register_router(UserRead, UserCreate),
-    prefix=f"{api_prefix}/auth",
-    tags=["Auth"],
-)
-app.include_router(
-    fastapi_users.get_reset_password_router(),
-    prefix=f"{api_prefix}/auth",
-    tags=["Auth"],
-)
-app.include_router(
-    fastapi_users.get_verify_router(UserRead),
-    prefix=f"{api_prefix}/auth",
-    tags=["Auth"],
-)
-
-app.include_router(
-    users.router,
-    prefix=f"{api_prefix}/users",
-    tags=["Users"],
-)
-
-app.include_router(
-    fastapi_users.get_users_router(UserRead, UserUpdate),
-    prefix=f"{api_prefix}/users",
-    tags=["Users"],
-)
+for route in route_list:
+    app.include_router(route["router"], prefix=route["prefix"], tags=route["tags"])
