@@ -1,0 +1,12 @@
+{% extends "layouts/dashboard.html" %} {% block content %}
+<h1>Create Budgeting Account</h1>
+<form action="{{ url_for('page_create_account') }}" method="post">
+    <label for="label">Label:</label><br />
+    <input type="text" id="label" name="label" required /><br />
+    <label for="description">Description:</label><br />
+    <input type="text" id="description" name="description" required /><br />
+    <label for="balance">Balance:</label><br />
+    <input type="number" id="balance" name="balance" required /><br />
+    <input type="submit" value="Create Account" />
+</form>
+{% endblock %}
