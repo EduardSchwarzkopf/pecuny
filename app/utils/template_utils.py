@@ -1,22 +1,33 @@
-from typing import Optional, Dict
 from fastapi import Request
 from app import templates
+from app.utils.enums import FeedbackType
+from typing import Optional
 
 
-def get_default_context(request: Request, feedback: Optional[Dict[str, str]] = None):
-    context = {
+def set_feedback(
+    request: Request,
+    feedback_type: FeedbackType,
+    feedback_message: str,
+):
+    request.state.feedback_type = feedback_type.value
+    request.state.feedback_message = feedback_message
+
+
+def get_default_context(request: Request):
+    return {
         "request": request,
-        "header_links": request.state.header_links,
+        "header_links": getattr(request.state, "header_links", None),
+        "feedback_type": getattr(request.state, "feedback_type", None),
+        "feedback_message": getattr(request.state, "feedback_message", None),
     }
-
-    if feedback:
-        context["feedback_type"] = feedback["type"]
-        context["feedback_message"] = feedback["message"]
-
-    return context
 
 
 def render_template(
-    template: str, request: Request, feedback: Optional[Dict[str, str]] = None
+    template: str, request: Request, context_extra: Optional[dict] = None
 ):
-    return templates.TemplateResponse(template, get_default_context(request, feedback))
+    context = get_default_context(request)
+
+    if context_extra:
+        context.update(context_extra)
+
+    return templates.TemplateResponse(template, context)
