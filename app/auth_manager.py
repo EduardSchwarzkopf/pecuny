@@ -1,9 +1,7 @@
 import uuid
 from typing import Optional
 
-from fastapi import Depends, Request
-
-
+from fastapi import Depends, Form, HTTPException, Request
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
 from fastapi_users.authentication import (
     AuthenticationBackend,
@@ -11,8 +9,8 @@ from fastapi_users.authentication import (
     JWTStrategy,
 )
 from fastapi_users.db import SQLAlchemyUserDatabase
-from app.config import settings
 
+from app.config import settings
 from app.database import get_user_db
 from app.models import User
 from app.services import email
@@ -73,3 +71,23 @@ current_active_user = fastapi_users.current_user(active=True, verified=True)
 optional_current_active_verified_user = fastapi_users.current_user(
     active=True, verified=True, optional=True
 )
+
+
+def check_password_policy(password: str):
+    # Check the password length
+    if len(password) < 8:
+        return "Password should be at least 8 characters long."
+    # Check for uppercase
+    if not any(c.isupper() for c in password):
+        return "Password should contain at least one uppercase character."
+    # Check for lowercase
+    if not any(c.islower() for c in password):
+        return "Password should contain at least one lowercase character."
+    # Check for digit
+    if not any(c.isdigit() for c in password):
+        return "Password should contain at least one digit."
+    # Check for special character
+    if all(c not in "!@#$%^&*()" for c in password):
+        return "Password should contain at least one special character."
+    # If all checks pass, return None
+    return None
