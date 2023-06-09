@@ -8,7 +8,7 @@ from app.routers.api import (
     scheduled_transactions,
 )
 
-from app.routers import home
+from app.routers import dashboard
 from app.database import db
 from app.routers import auth
 from app.schemas import UserCreate, UserRead, UserUpdate
@@ -82,7 +82,7 @@ async def shutdown_event():
 
 
 # Page Routes
-app.include_router(home.router)
+app.include_router(dashboard.router)
 app.include_router(auth.router)
 
 # API Routes
