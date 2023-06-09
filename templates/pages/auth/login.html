@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %} {% block content %}
 <div class="container mx-auto my-5 p-5">
     <h1 class="text-center text-3xl mb-5">Login</h1>
-    <form method="POST" action="/login/">
+    <form method="POST" action="{{ url_for('login') }}">
         <div class="mb-4">
             <label for="username" class="block text-sm font-bold mb-2"
                 >Email:</label
