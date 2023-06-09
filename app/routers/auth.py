@@ -84,7 +84,7 @@ async def login(
         return render_template(TEMPLATE_LOGIN, request)
 
     result = await auth_backend.login(strategy, user)
-    return RedirectResponse(dashboard_router.prefix, 302, result.headers)
+    return RedirectResponse("/", 302, result.headers)
 
 
 @router.get(path="/logout", tags=["Pages", "Authentication"])
