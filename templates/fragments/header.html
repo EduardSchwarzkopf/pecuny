@@ -14,7 +14,7 @@
                         {% for link in request.state.header_links %}
                         <a
                             href="{{ link.url }}"
-                            class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+                            class="{{ 'active' if link.active else '' }}  text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
                         >
                             {{ link.text }}
                         </a>
@@ -150,7 +150,7 @@
             {% for link in request.state.header_links %}
             <a
                 href="{{ link.url }}"
-                class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+                class="{{ 'active' if link.active else '' }} text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
             >
                 {{ link.text }}
             </a>
