@@ -45,7 +45,7 @@ route_list += [
 page_routers = [
     (dashboard.router, "", ["Page", "Dashboard"]),
     (accounts.router, "/accounts", ["Page", "Accounts"]),
-    (auth.router, "/auth", ["Page", "Auth"]),
+    (auth.router, "", ["Page", "Auth"]),
 ]
 
 route_list += [
