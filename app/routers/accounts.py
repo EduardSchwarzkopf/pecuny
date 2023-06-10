@@ -1,5 +1,7 @@
 from fastapi import Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.exceptions import HTTPException
+from starlette import status
 from app.utils import PageRouter
 from app.utils.template_utils import render_template
 from app import schemas, transaction_manager as tm, models
@@ -44,4 +46,20 @@ async def page_create_account(
 
     return RedirectResponse(
         router.url_path_for("page_create_account_form"), status_code=302
+    )
+
+
+@router.get("/{account_id}")
+async def page_get_account(
+    request: Request,
+    account_id: int,
+    current_user: models.User = Depends(current_active_user),
+):
+    account = await service.get_account(current_user, account_id)
+
+    if account is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
+
+    return render_template(
+        "pages/dashboard/account_single.html", request, {"account": account}
     )
