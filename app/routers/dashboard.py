@@ -14,4 +14,4 @@ async def index(
     request: Request,
     user: User = Depends(current_active_user),
 ):
-    return render_template("pages/dashboard/view_dashboard.html", request)
+    return render_template("pages/dashboard/page_dashboard.html", request)
