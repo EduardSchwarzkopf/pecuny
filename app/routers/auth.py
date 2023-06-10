@@ -30,8 +30,8 @@ FORGOT_PASSWORD = "/forgot-password"
 RESET_PASSWORD = "/reset-password"
 
 TEMPLATE_PREFIX = "pages/auth"
-TEMPLATE_REGISTER = f"{TEMPLATE_PREFIX}/register.html"
-TEMPLATE_LOGIN = f"{TEMPLATE_PREFIX}/login.html"
+TEMPLATE_REGISTER = f"{TEMPLATE_PREFIX}/page_register.html"
+TEMPLATE_LOGIN = f"{TEMPLATE_PREFIX}/page_login.html"
 
 
 async def get_user_service() -> UserService:
@@ -157,7 +157,7 @@ async def verify_email(
 ):
     status = await user_service.verify_email(token)
     return templates.TemplateResponse(
-        f"{TEMPLATE_PREFIX}/email-verify.html",
+        f"{TEMPLATE_PREFIX}/page_email_verify.html",
         {"request": request, "verification_status": status.value},
     )
 
@@ -168,7 +168,7 @@ async def verify_email(
 async def get_new_token(
     request: Request,
 ):
-    return render_template(f"{TEMPLATE_PREFIX}/get-new-token.html", request)
+    return render_template(f"{TEMPLATE_PREFIX}/page_get_new_token.html", request)
 
 
 @router.post(
@@ -193,7 +193,7 @@ async def send_new_token(
 async def get_forgot_password(
     request: Request,
 ):
-    return render_template(f"{TEMPLATE_PREFIX}/forgot-password.html", request)
+    return render_template(f"{TEMPLATE_PREFIX}/page_forgot_password.html", request)
 
 
 @router.post(
@@ -205,7 +205,7 @@ async def forgot_password(
     user_service: UserService = Depends(get_user_service),
 ):
     await user_service.forgot_password(email)
-    return render_template(f"{TEMPLATE_PREFIX}/request-reset.html", request)
+    return render_template(f"{TEMPLATE_PREFIX}/page_request_reset.html", request)
 
 
 @router.get(
@@ -217,7 +217,7 @@ async def get_reset_password(
     token: str,
 ):
     return render_template(
-        f"{TEMPLATE_PREFIX}/reset-password.html",
+        f"{TEMPLATE_PREFIX}/page_reset_password.html",
         request,
         {"token": token},
     )
@@ -232,7 +232,7 @@ async def reset_password(
     password: str = Form(...),
     user_service: UserService = Depends(get_user_service),
 ):
-    reset_password_template = f"{TEMPLATE_PREFIX}/reset-password.html"
+    reset_password_template = f"{TEMPLATE_PREFIX}/page_reset_password.html"
 
     password_policy_error = check_password_policy(password)
     if password_policy_error is not None:
@@ -255,4 +255,4 @@ async def reset_password(
     if error:
         return render_template(reset_password_template, request, {"token": token})
 
-    return render_template(f"{TEMPLATE_PREFIX}/login.html", request)
+    return render_template(TEMPLATE_LOGIN, request)

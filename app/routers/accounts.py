@@ -18,7 +18,9 @@ async def page_create_account_form(
 ):
     account_data = await service.get_accounts(user)
     return render_template(
-        "pages/dashboard/accounts.html", request, {"accounts": account_data}
+        "pages/dashboard/page_multiple_accounts.html",
+        request,
+        {"accounts": account_data},
     )
 
 
@@ -27,7 +29,7 @@ async def page_create_account_form(
     request: Request,
     user: models.User = Depends(current_active_user),
 ):
-    return render_template("pages/dashboard/create_account.html", request)
+    return render_template("pages/dashboard/page_create_account.html", request)
 
 
 @router.post("/create-account")
@@ -61,5 +63,5 @@ async def page_get_account(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
 
     return render_template(
-        "pages/dashboard/account_single.html", request, {"account": account}
+        "pages/dashboard/page_single_account.html", request, {"account": account}
     )
