@@ -1,3 +1,5 @@
+{% import 'macros/buttons.html' as btn %}
+
 {% macro input_field(name, label='', value='', type='text', required=False, autocomplete='') -%}
 <div class="mb-3">
     <label for="{{ name }}" class="block text-sm font-medium leading-6 text-gray-900">{{ label }}</label>
@@ -29,7 +31,5 @@
 {% endmacro %}
 
 {% macro submit_button(label='Submit') %}
-<button type="submit"
-    class="flex w-full justify-center rounded-md bg-primary p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-primary-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{{
-    label }}</button>
+{{ btn.primary_button('Submit', 'submit') }}
 {% endmacro %}

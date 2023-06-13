@@ -902,6 +902,21 @@ a:hover {
   background-color: rgb(255 255 255 / var(--tw-bg-opacity));
 }
 
+.bg-danger {
+  --tw-bg-opacity: 1;
+  background-color: rgb(241 70 104 / var(--tw-bg-opacity));
+}
+
+.bg-info {
+  --tw-bg-opacity: 1;
+  background-color: rgb(92 162 212 / var(--tw-bg-opacity));
+}
+
+.bg-success {
+  --tw-bg-opacity: 1;
+  background-color: rgb(133 240 170 / var(--tw-bg-opacity));
+}
+
 .p-1 {
   padding: 0.25rem;
 }
@@ -1188,6 +1203,21 @@ a:hover {
   background-color: rgb(185 28 28 / var(--tw-bg-opacity));
 }
 
+.hover\:bg-danger-light:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(253 206 213 / var(--tw-bg-opacity));
+}
+
+.hover\:bg-info-light:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(199 222 240 / var(--tw-bg-opacity));
+}
+
+.hover\:bg-success-light:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(220 252 230 / var(--tw-bg-opacity));
+}
+
 .hover\:text-white:hover {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
@@ -1244,6 +1274,18 @@ a:hover {
 
 .focus-visible\:outline-primary:focus-visible {
   outline-color: #ff9c5f;
+}
+
+.focus-visible\:outline-danger:focus-visible {
+  outline-color: #f14668;
+}
+
+.focus-visible\:outline-info:focus-visible {
+  outline-color: #5ca2d4;
+}
+
+.focus-visible\:outline-success:focus-visible {
+  outline-color: #85f0aa;
 }
 
 @media (min-width: 640px) {
