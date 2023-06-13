@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Request
+import stat
+from fastapi import FastAPI, Request, status
 from app.routes import router_list
 
 from app.database import db
@@ -12,6 +13,8 @@ import os
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException
+from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from app.utils.exceptions import UnauthorizedPageException
 from app.middleware import HeaderLinkMiddleware
@@ -56,6 +59,22 @@ async def unauthorized_exception_handler(
         "pages/auth/page_login.html",
         {"request": request, "redirect": request.url.path},
         status_code=exc.status_code,
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=status_code,
+            content=jsonable_encoder({"detail": exc.errors(), "body": exc.body}),
+        )
+
+    return templates.TemplateResponse(
+        "exceptions/422.html",
+        {"request": request},
+        status_code=status_code,
     )
 
 
