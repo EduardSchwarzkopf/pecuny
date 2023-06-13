@@ -1,38 +1,29 @@
 {% import 'macros/form.html' as form %}
-{% extends "layouts/auth.html" %}
 
-{% block content %}
+{% set title = 'Sign in to your account' %}
+{% set action_url = url_for('login') %}
+{% set fields %}
+<div>
+    {{ form.input_field('username', 'Email Address', type='email', value=username|default('')) }}
+</div>
 
-<div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
-    <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-        <img class="mx-auto h-10 w-auto" src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-            alt="Your Company" />
-        <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-            Sign in to your account
-        </h2>
+<div>
+    <div>
+        {{ form.input_field('password', 'Password', type='password', value=username|default('')) }}
     </div>
-
-    <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <form class="space-y-6" action="{{ url_for('login') }}" method="POST">
-            <div>
-                {{ form.input_field('username','Email Address', type='email', value=username|default('')) }}
-            </div>
-
-            <div>
-                <div>
-                    {{ form.input_field('password', 'Password', type='password', value=username|default('')) }}
-                </div>
-                <div class="text-sm">
-                    <a href="{{ url_for('forgot_password') }}"
-                        class="font-semibold text-indigo-600 hover:text-indigo-500">Forgot password?</a>
-                </div>
-            </div>
-
-            <div>
-                {{ form.submit_button() }}
-            </div>
-        </form>
+    <div class="text-sm">
+        <a href="{{ url_for('forgot_password') }}" class="font-semibold text-indigo-600 hover:text-indigo-500">Forgot
+            password?</a>
     </div>
 </div>
 
+<div>
+    {{ form.submit_button() }}
+</div>
+{% endset %}
+
+{% extends "layouts/auth.html" %}
+
+{% block content %}
+{{ form.auth_form(title, fields, action_url) }}
 {% endblock %}
