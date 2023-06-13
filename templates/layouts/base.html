@@ -11,6 +11,8 @@
         {% block style %} {% endblock %}
     </head>
     <body class="h-full">
+        {% if DEBUG %} {{ hot_reload.script(url_for('hot-reload')) | safe }} {%
+        endif %}
         <div class="min-h-full">
             {% block header %} {% endblock %}
 

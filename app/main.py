@@ -4,6 +4,8 @@ from app.routes import router_list
 from app.database import db
 
 from app import templates
+import arel
+import os
 
 
 # from .routers import users, posts, auth, vote
@@ -31,6 +33,15 @@ app.add_middleware(
 )
 
 app.add_middleware(HeaderLinkMiddleware)
+
+
+if _debug := os.getenv("DEBUG"):
+    hot_reload = arel.HotReload(paths=[arel.Path(".")])
+    app.add_websocket_route("/hot-reload", route=hot_reload, name="hot-reload")
+    app.add_event_handler("startup", hot_reload.startup)
+    app.add_event_handler("shutdown", hot_reload.shutdown)
+    templates.env.globals["DEBUG"] = _debug
+    templates.env.globals["hot_reload"] = hot_reload
 
 
 # Exception Handlers
