@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
-const primary = "#a7cecb";
-const primaryLight = "#dcebea";
+const primary = "#649d9d";
+const primaryLight = "#8cbcba";
+const primaryDark = "#4a8182";
 
 module.exports = {
     content: ["templates/**/*.html"],
@@ -9,10 +10,11 @@ module.exports = {
             colors: {
                 primary: {
                     DEFAULT: primary,
-                    50: "#f4f9f9",
-                    100: primaryLight,
                     light: primaryLight,
-                    200: primary,
+                    dark: primaryDark,
+                    50: "#f4f9f9",
+                    100: "#dcebea",
+                    200: "#a7cecb",
                     300: "#8cbcba",
                     400: "#649d9d",
                     500: "#4a8182",
