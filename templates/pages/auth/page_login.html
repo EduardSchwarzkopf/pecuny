@@ -4,12 +4,12 @@
 {% set action_url = url_for('login') %}
 {% set fields %}
 <div>
-    {{ form.input_field('username', 'Email Address', type='email', value=username|default('')) }}
+    {{ form.input_field('username', 'Email Address', type='email', value=username|default(''), required=True) }}
 </div>
 
 <div>
     <div>
-        {{ form.input_field('password', 'Password', type='password', value=username|default('')) }}
+        {{ form.input_field('password', 'Password', type='password', required=True) }}
     </div>
     <div class="text-sm">
         <a href="{{ url_for('forgot_password') }}">Forgot
