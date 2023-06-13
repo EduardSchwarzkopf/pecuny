@@ -42,7 +42,7 @@ async def unauthorized_exception_handler(
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
     return templates.TemplateResponse(
-        "pages/auth/login.html",
+        "pages/auth/page_login.html",
         {"request": request, "redirect": request.url.path},
         status_code=exc.status_code,
     )
