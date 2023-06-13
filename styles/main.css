@@ -11,10 +11,34 @@ add your styles here and run:
 
 
 @layer base {
-  a {
-    @apply text-primary font-semibold transition;
-  }
-  a:hover {
-    @apply text-primary-300;
-  }
+    html {
+        @apply bg-gray-50
+    }
+    a {
+        @apply text-primary font-semibold transition;
+    }
+    a:hover {
+        @apply text-primary-300;
+    }
+
+    h1,h2,h3,h4,h5,h6 {
+        @apply text-black
+    }
+
+    h1 {
+        @apply text-4xl
+    }
+    h2 {
+        @apply text-3xl
+    }
+    h3 {
+        @apply text-2xl
+    }
+    h4 {
+        @apply text-xl
+    }
+    h5 {
+        @apply text-lg
+    }
+
 }
