@@ -41,4 +41,8 @@ add your styles here and run:
         @apply text-lg py-1
     }
 
+    h6 {
+        @apply text-gray-500
+    }
+
 }

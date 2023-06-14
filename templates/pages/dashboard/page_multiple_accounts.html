@@ -16,8 +16,9 @@
     <div class="grid gap-12">
         {% for account in account_list %}
         <a href="{{ url_for('page_get_account', account_id=account.id)}}">
-            {% include 'fragments/accounts/accountCard.html' %} {% endfor %}
+            {% include 'fragments/accounts/accountCard.html' %}
         </a>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

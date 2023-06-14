@@ -1,17 +1,33 @@
-{% extends "layouts/dashboard.html" %} {% block content %}
-<div class="container mx-auto px-4 md:px-0">
-    <h1 class="text-3xl text-center py-4">{{account.label}}</h1>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="bg-white shadow-md rounded-md overflow-hidden">
-            <div class="px-4 py-2">
-                <p class="text-gray-600 text-sm">{{ account.description }}</p>
-            </div>
-            <div class="px-4 py-2 bg-gray-100">
-                <span class="text-gray-700 font-semibold"
-                    >Balance: {{ account.balance }}</span
-                >
-            </div>
-        </div>
+{% import 'macros/buttons.html' as btn %}
+{% extends "layouts/dashboard.html" %}
+
+{% block content %}
+<div class="flex items-center w-full">
+    <div class="grow">
+        <h2 class="">{{account.label}}</h2>
+        <h6>{{ account.description }}</h6>
+    </div>
+    <div class="basis-auto">
+        <h1>{{account.balance}}</h1>
+    </div>
+</div>
+<div class="my-6 w-1/5">
+    <a href="{{ url_for('page_create_account_form')}}">
+        {{ btn.primary_button("Create Transaction")}}
+    </a>
+</div>
+<div id="transactions">
+    <div>serach...</div>
+    <div>
+
+        {% for group in transaction_list_grouped %}
+        <h2>{{ group.date.strftime('%d %B') }}</h2>
+        {% for transaction in group.transactions %}
+        {% include 'fragments/accounts/transaction.html' %}
+        {% endfor %}
+        {% endfor %}
+
+
     </div>
 </div>
 {% endblock %}

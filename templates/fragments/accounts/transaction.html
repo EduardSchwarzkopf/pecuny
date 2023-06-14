@@ -1,0 +1,14 @@
+<div
+    class="grid grid grid-cols-3 gap-2 px-6 py-4 items-center border border-gray-200 transition hover:border-gray-700 rounded overflow-hidden">
+    <div class="col-span-2">
+        <h6>
+            {{ transaction.information.category.label }}
+        </h6>
+        <h4>
+            {{ transaction.information.reference }}
+        </h4>
+    </div>
+    <div class="text-right">
+        <h4 class="text-gray-700">{{ transaction.information.amount }}</h4>
+    </div>
+</div>
