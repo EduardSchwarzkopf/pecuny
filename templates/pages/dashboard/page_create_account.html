@@ -1,12 +1,15 @@
-{% extends "layouts/dashboard.html" %} {% block content %}
+{% extends "layouts/dashboard.html" %}
+
+{% import 'macros/form.html' as form %}
+
+{% block content %}
 <h1>Create Budgeting Account</h1>
-<form action="{{ url_for('page_create_account') }}" method="post">
-    <label for="label">Label:</label><br />
-    <input type="text" id="label" name="label" required /><br />
-    <label for="description">Description:</label><br />
-    <input type="text" id="description" name="description" required /><br />
-    <label for="balance">Balance:</label><br />
-    <input type="number" id="balance" name="balance" required /><br />
-    <input type="submit" value="Create Account" />
+
+<form action="{{ url_for('page_create_account') }}" method="post" class="space-y-6">
+    {{ form.input_field('label', 'Label', required=True) }}
+    {{ form.input_field('description', 'Description', required=True) }}
+    {{ form.input_field('balance', 'Balance', type='number', required=True) }}
+    {{ form.submit_button('Create Account') }}
 </form>
+
 {% endblock %}

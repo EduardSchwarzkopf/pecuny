@@ -1,8 +1,20 @@
 {% extends "layouts/dashboard.html" %} {% block content %}
+{% import 'macros/buttons.html' as btn %}
 <div class="container mx-auto px-4 md:px-0">
-    <h1 class="text-3xl text-center py-4">Accounts</h1>
+    <div class="flex items-center flex-row">
+        <div class="grow">
+            <h1>Accounts</h1>
+        </div>
+        {% if accounts|length > max_allowed_accounts %}
+        <div>
+            <a href="{{ url_for('page_create_account_form')}}">
+                {{ btn.primary_button("Create Account")}}
+            </a>
+        </div>
+        {% endif %}
+    </div>
     <div class="grid gap-12">
-        {% for account in accounts %}
+        {% for account in account_list %}
         <a href="{{ url_for('page_get_account', account_id=account.id)}}">
             {% include 'fragments/accounts/accountCard.html' %} {% endfor %}
         </a>

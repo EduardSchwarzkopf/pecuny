@@ -26,19 +26,19 @@ add your styles here and run:
     }
 
     h1 {
-        @apply text-4xl
+        @apply text-4xl py-4;
     }
     h2 {
-        @apply text-3xl
+        @apply text-3xl py-3;
     }
     h3 {
-        @apply text-2xl
+        @apply text-2xl py-2
     }
     h4 {
-        @apply text-xl
+        @apply text-xl py-1
     }
     h5 {
-        @apply text-lg
+        @apply text-lg py-1
     }
 
 }
