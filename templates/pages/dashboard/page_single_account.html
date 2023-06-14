@@ -21,7 +21,7 @@
     <div>
 
         {% for group in transaction_list_grouped %}
-        <h2>{{ group.date.strftime('%d %B') }}</h2>
+        <h4>{{ group.date.strftime('%A, %d %B') }}</h4>
         {% for transaction in group.transactions %}
         {% include 'fragments/accounts/transaction.html' %}
         {% endfor %}
