@@ -8,6 +8,10 @@ from fastapi import Form
 
 from pydantic.types import constr
 
+from starlette_wtf import StarletteForm
+from wtforms import StringField, FloatField, PasswordField
+from wtforms.validators import DataRequired, InputRequired, Email, EqualTo
+
 
 class EmailSchema(BaseModel):
     email: List[EmailStr]
@@ -125,3 +129,39 @@ class Account(Base):
 
 class AccountData(Account):
     id: int
+
+
+class LoginForm(StarletteForm):
+    username = StringField("Username", validators=[InputRequired()])
+    password = PasswordField("Password", validators=[InputRequired()])
+
+
+class CreateAccountForm(StarletteForm):
+    label = StringField(
+        "label",
+        validators=[
+            DataRequired("Please enter your email address"),
+        ],
+    )
+
+    description = StringField(
+        "description",
+        validators=[
+            DataRequired("Please enter a description"),
+        ],
+    )
+
+    balance = FloatField("balance", validators=[DataRequired()])
+
+
+class RegisterForm(StarletteForm):
+    email = StringField("Email", validators=[InputRequired(), Email()])
+    displayname = StringField("Display Name", validators=[InputRequired()])
+    password = PasswordField("Password", validators=[InputRequired()])
+    password_confirm = PasswordField(
+        "Confirm Password",
+        validators=[
+            InputRequired(),
+            EqualTo("password", message="Passwords must match"),
+        ],
+    )
