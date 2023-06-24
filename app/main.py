@@ -4,7 +4,7 @@ from app.routes import router_list
 
 from app.database import db
 
-from app import templates
+from app import schemas, templates
 import arel
 import os
 
@@ -18,6 +18,9 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from app.utils.exceptions import UnauthorizedPageException
 from app.middleware import HeaderLinkMiddleware
+
+from starlette_wtf import CSRFProtectMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 app = FastAPI()
 
@@ -36,6 +39,9 @@ app.add_middleware(
 )
 
 app.add_middleware(HeaderLinkMiddleware)
+
+app.add_middleware(SessionMiddleware, secret_key="***REPLACEME1***")
+app.add_middleware(CSRFProtectMiddleware, csrf_secret="***REPLACEME2***")
 
 
 if _debug := os.getenv("DEBUG"):
@@ -57,7 +63,11 @@ async def unauthorized_exception_handler(
 
     return templates.TemplateResponse(
         "pages/auth/page_login.html",
-        {"request": request, "redirect": request.url.path},
+        {
+            "request": request,
+            "redirect": request.url.path,
+            "form": schemas.LoginForm(request),
+        },
         status_code=exc.status_code,
     )
 
