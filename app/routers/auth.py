@@ -3,12 +3,12 @@ from fastapi import Depends, Form, Request, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_users import exceptions
+from starlette_wtf import csrf_protect
 from app.utils import PageRouter
 from app.utils.template_utils import set_feedback, render_template
 from app.utils.enums import FeedbackType
 from .dashboard import router as dashboard_router
-
-from app import templates
+from app import schemas, templates
 from app.auth_manager import (
     JWTStrategy,
     UserManager,
@@ -38,6 +38,7 @@ async def get_user_service() -> UserService:
     return UserService()
 
 
+@csrf_protect
 @router.get(path=LOGIN, tags=["Pages", "Authentication"])
 async def get_login(
     request: Request,
@@ -57,7 +58,9 @@ async def get_login(
             request, FeedbackType.SUCCESS, "Welcome, please validate your email first!"
         )
 
-    return render_template(TEMPLATE_LOGIN, request)
+    return render_template(
+        TEMPLATE_LOGIN, request, {"form": schemas.LoginForm(request)}
+    )
 
 
 @router.post(
@@ -74,15 +77,21 @@ async def login(
 
     if user is None:
         set_feedback(request, FeedbackType.ERROR, "Wrong credentials provided")
-        return render_template(TEMPLATE_LOGIN, request)
+        return render_template(
+            TEMPLATE_LOGIN, request, {"form": schemas.LoginForm(request)}
+        )
 
     if not user.is_active:
         set_feedback(request, FeedbackType.ERROR, "This account is not active")
-        return render_template(TEMPLATE_LOGIN, request)
+        return render_template(
+            TEMPLATE_LOGIN, request, {"form": schemas.LoginForm(request)}
+        )
 
     if not user.is_verified:
         set_feedback(request, FeedbackType.ERROR, "You need to verify your email first")
-        return render_template(TEMPLATE_LOGIN, request)
+        return render_template(
+            TEMPLATE_LOGIN, request, {"form": schemas.LoginForm(request)}
+        )
 
     result = await auth_backend.login(strategy, user)
     return RedirectResponse("/", 302, result.headers)
@@ -97,6 +106,7 @@ async def logout(
     return response
 
 
+@csrf_protect
 @router.get(
     path=REGISTER,
     tags=["Pages", "Authentication"],
@@ -104,24 +114,34 @@ async def logout(
 async def get_regsiter(
     request: Request,
 ):
-    return render_template(TEMPLATE_REGISTER, request)
+    return render_template(
+        TEMPLATE_REGISTER, request, {"form": schemas.RegisterForm(request)}
+    )
 
 
-@router.post(
-    REGISTER,
-)
+@csrf_protect
+@router.post(REGISTER)
 async def register(
     request: Request,
-    email: str = Form(...),
-    displayname: str = Form(...),
-    password: str = Form(...),
-    password_confirm: str = Form(...),
     user_service: UserService = Depends(get_user_service),
 ):
+    form: schemas.RegisterForm = schemas.RegisterForm(request)
+
+    if not form.validate_on_submit():
+        for field, errors in form.errors.items():
+            for error in errors:
+                set_feedback(request, FeedbackType.ERROR, f"{field}: {error}")
+        return render_template(TEMPLATE_REGISTER, request, {"form", form})
+
+    email = form.email.data
+    displayname = form.displayname.data
+    password = form.password.data
+    password_confirm = form.password_confirm.data
+
     password_policy_error = check_password_policy(password)
     if password_policy_error is not None:
         set_feedback(request, FeedbackType.ERROR, password_policy_error)
-        return render_template(TEMPLATE_REGISTER, request)
+        return render_template(TEMPLATE_REGISTER, request, {"form", form})
 
     try:
         existing_user = await user_service.user_manager.get_by_email(email)
@@ -130,17 +150,11 @@ async def register(
 
     if existing_user is not None:
         set_feedback(request, FeedbackType.ERROR, "Email already exists")
-        return render_template(
-            TEMPLATE_REGISTER,
-            request,
-        )
+        return render_template(TEMPLATE_REGISTER, request, {"form", form})
 
     if password != password_confirm:
         set_feedback(request, FeedbackType.ERROR, "Passwords do not match")
-        return render_template(
-            TEMPLATE_REGISTER,
-            request,
-        )
+        return render_template(TEMPLATE_REGISTER, request, {"form", form})
 
     await user_service.create_user(email, displayname, password)
     return RedirectResponse("/login?msg=registered")
@@ -171,6 +185,7 @@ async def get_new_token(
     return render_template(f"{TEMPLATE_PREFIX}/page_get_new_token.html", request)
 
 
+@csrf_protect
 @router.post(
     "/send-new-token",
 )
@@ -186,6 +201,7 @@ async def send_new_token(
     return RedirectResponse("/login?msg=new_token_sent", 302)
 
 
+@csrf_protect
 @router.get(
     path=FORGOT_PASSWORD,
     tags=["Pages", "Authentication"],
@@ -196,6 +212,7 @@ async def get_forgot_password(
     return render_template(f"{TEMPLATE_PREFIX}/page_forgot_password.html", request)
 
 
+@csrf_protect
 @router.post(
     FORGOT_PASSWORD,
 )
@@ -223,6 +240,7 @@ async def get_reset_password(
     )
 
 
+@csrf_protect
 @router.post(
     RESET_PASSWORD,
 )

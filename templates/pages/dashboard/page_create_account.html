@@ -1,15 +1,18 @@
 {% extends "layouts/dashboard.html" %}
 
-{% import 'macros/form.html' as form %}
+{% import 'macros/form_elements.html' as form_elements %}
 
 {% block content %}
 <h1>Create Budgeting Account</h1>
 
 <form action="{{ url_for('page_create_account') }}" method="post" class="space-y-6">
-    {{ form.input_field('label', 'Label', required=True) }}
-    {{ form.input_field('description', 'Description', required=True) }}
-    {{ form.input_field('balance', 'Balance', type='number', required=True) }}
-    {{ form.submit_button('Create Account') }}
+    {{ form.csrf_token }}
+    {% for field in form %}
+    {% if field.type not in ("HiddenField", "CSRFTokenField") %}
+    {{ form_elements.input_field(field) }}
+    {% endif %}
+    {% endfor %}
+    {{ form_elements.submit_button('Create Account') }}
 </form>
 
 {% endblock %}

@@ -1,33 +1,16 @@
-{% import 'macros/form.html' as form %}
+{% extends "layouts/auth.html" %}
+{% import 'macros/form_elements.html' as form_elements %}
 
 {% set title = 'Register' %}
 {% set action_url = url_for('register') %}
-{% set fields %}
-<div>
-    {{ form.input_field('email', 'Email address', type='email', value=email|default(''), required=True) }}
-</div>
-<div>
-    {{ form.input_field('displayname', 'Name', type='text', value=displayname|default(''), required=True) }}
-</div>
-<div>
-    {{ form.input_field('password', 'Password', type='password', required=True) }}
-</div>
-<div>
-    {{ form.input_field('password_confirm', 'Confirm Password', type='password', required=True) }}
-</div>
+{% set button_text = 'Register' %}
 
-<div>
-    {{ form.submit_button("Register") }}
-</div>
 
-<div class="text-sm">
+{% block content %}
+{{ form_elements.auth_form(title, form, action_url, button_text) }}
+
+<div class="text-sm text-center">
     Already have an account?
     <a href="{{ url_for('login') }}">Login</a>
 </div>
-{% endset %}
-
-{% extends "layouts/auth.html" %}
-
-{% block content %}
-{{ form.auth_form(title, fields, action_url) }}
 {% endblock %}
