@@ -1,9 +1,9 @@
-from babel.dates import format_date
 from datetime import datetime
 import calendar
 from itertools import groupby
-from fastapi import Request, Form, Depends
+from fastapi import Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
+from starlette_wtf import csrf_protect
 from app.config import settings
 from fastapi.exceptions import HTTPException
 from starlette import status
@@ -32,34 +32,49 @@ async def page_accounts_list(
     )
 
 
+def redirect_if_max_accounts(user):
+    if service.check_max_accounts(user):
+        raise HTTPException(
+            status_code=status.HTTP_302_FOUND,
+            detail="Maximum number of accounts reached",
+        )
+
+
+@csrf_protect
 @router.get("/create-account", response_class=HTMLResponse)
 async def page_create_account_form(
     request: Request,
     user: models.User = Depends(current_active_user),
 ):
-    if service.check_max_accounts(user):
-        return RedirectResponse(request.url_for("dashboard"), status_code=302)
+    redirect_if_max_accounts(user)
 
-    return render_template("pages/dashboard/page_create_account.html", request)
+    form = await schemas.CreateAccountForm.from_formdata(request)
+
+    return render_template(
+        "pages/dashboard/page_create_account.html", request, {"form": form}
+    )
 
 
+@csrf_protect
 @router.post("/create-account")
 async def page_create_account(
-    request: Request,
-    user: models.User = Depends(current_active_user),
-    label: str = Form(...),
-    description: str = Form(...),
-    balance: float = Form(...),
+    request: Request, user: models.User = Depends(current_active_user)
 ):
-    if service.check_max_accounts(user):
-        return RedirectResponse(request.url_for("dashboard"), status_code=302)
+    redirect_if_max_accounts(user)
 
-    account_data = {"label": label, "description": description, "balance": balance}
+    form = await schemas.CreateAccountForm.from_formdata(request)
 
-    account = schemas.Account(**account_data)
+    if not await form.validate_on_submit():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Validation error"
+        )
+
+    account = schemas.Account(**form.data)
 
     response = await tm.transaction(service.create_account, user, account)
-    # TODO: Error handling
+
+    if not response:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
         router.url_path_for("page_create_account_form"), status_code=302
