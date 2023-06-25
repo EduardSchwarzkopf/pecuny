@@ -1,33 +1,33 @@
-{% macro primary_button(text, type='button') -%}
-<button type="{{ type }}"
+{% macro primary_button(text, type='button', id='') -%}
+<button id="{{ id }}" type="{{ type }}"
     class="flex w-full justify-center transition rounded-md bg-primary p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-primary hover:border-primary border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
     {{ text }}
 </button>
 {% endmacro %}
 
-{% macro success_button(text, type='button') -%}
-<button type="{{ type }}"
+{% macro success_button(text, type='button', id='') -%}
+<button id="{{ id }}" type="{{ type }}"
     class="flex w-full justify-center transition rounded-md bg-success p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-success hover:border-success border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success">
     {{ text }}
 </button>
 {% endmacro %}
 
-{% macro danger_button(text, type='button') -%}
-<button type="{{ type }}"
+{% macro danger_button(text, type='button', id='') -%}
+<button id="{{ id }}" type="{{ type }}"
     class="flex w-full justify-center transition rounded-md bg-danger p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-danger hover:border-danger border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger">
     {{ text }}
 </button>
 {% endmacro %}
 
-{% macro info_button(text, type='button') -%}
-<button type="{{ type }}"
+{% macro info_button(text, type='button', id='') -%}
+<button id="{{ id }}" type="{{ type }}"
     class="flex w-full justify-center transition rounded-md bg-info p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-info hover:border-info border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info">
     {{ text }}
 </button>
 {% endmacro %}
 
-{% macro secondary_button(text, type='button') -%}
-<button type="{{ type }}"
+{% macro secondary_button(text, type='button', id='') -%}
+<button id="{{ id }}" type="{{ type }}"
     class="flex w-full justify-center transition rounded-md bg-secondary p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-secondary hover:border-secondary border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary">
     {{ text }}
 </button>
