@@ -15,7 +15,6 @@ from app.auth_manager import (
     auth_backend,
     get_user_manager,
     optional_current_active_verified_user,
-    check_password_policy,
 )
 from app.models import User
 from app.services.users import UserService
@@ -125,23 +124,15 @@ async def register(
     request: Request,
     user_service: UserService = Depends(get_user_service),
 ):
-    form: schemas.RegisterForm = schemas.RegisterForm(request)
+    form: schemas.RegisterForm = await schemas.RegisterForm.from_formdata(request)
 
-    if not form.validate_on_submit():
-        for field, errors in form.errors.items():
-            for error in errors:
-                set_feedback(request, FeedbackType.ERROR, f"{field}: {error}")
-        return render_template(TEMPLATE_REGISTER, request, {"form", form})
+    if not await form.validate_on_submit():
+        return render_template(TEMPLATE_REGISTER, request, {"form": form})
 
     email = form.email.data
     displayname = form.displayname.data
     password = form.password.data
     password_confirm = form.password_confirm.data
-
-    password_policy_error = check_password_policy(password)
-    if password_policy_error is not None:
-        set_feedback(request, FeedbackType.ERROR, password_policy_error)
-        return render_template(TEMPLATE_REGISTER, request, {"form", form})
 
     try:
         existing_user = await user_service.user_manager.get_by_email(email)
@@ -150,11 +141,11 @@ async def register(
 
     if existing_user is not None:
         set_feedback(request, FeedbackType.ERROR, "Email already exists")
-        return render_template(TEMPLATE_REGISTER, request, {"form", form})
+        return render_template(TEMPLATE_REGISTER, request, {"form": form})
 
     if password != password_confirm:
         set_feedback(request, FeedbackType.ERROR, "Passwords do not match")
-        return render_template(TEMPLATE_REGISTER, request, {"form", form})
+        return render_template(TEMPLATE_REGISTER, request, {"form": form})
 
     await user_service.create_user(email, displayname, password)
     return RedirectResponse("/login?msg=registered")
@@ -209,7 +200,10 @@ async def send_new_token(
 async def get_forgot_password(
     request: Request,
 ):
-    return render_template(f"{TEMPLATE_PREFIX}/page_forgot_password.html", request)
+    form: schemas.ForgotPasswordForm = schemas.ForgotPasswordForm(request)
+    return render_template(
+        f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, {"form": form}
+    )
 
 
 @csrf_protect
@@ -218,11 +212,19 @@ async def get_forgot_password(
 )
 async def forgot_password(
     request: Request,
-    email: str = Form(...),
     user_service: UserService = Depends(get_user_service),
 ):
-    await user_service.forgot_password(email)
-    return render_template(f"{TEMPLATE_PREFIX}/page_request_reset.html", request)
+    form = await schemas.ForgotPasswordForm.from_formdata(request)
+
+    if not await form.validate_on_submit():
+        return render_template(
+            f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, {"form": form}
+        )
+
+    await user_service.forgot_password(form.email.data)
+    return render_template(
+        f"{TEMPLATE_PREFIX}/page_request_reset.html", request, {"form": form}
+    )
 
 
 @router.get(
@@ -233,10 +235,11 @@ async def get_reset_password(
     request: Request,
     token: str,
 ):
+    form = schemas.ResetPasswordForm(request, token=token)
     return render_template(
         f"{TEMPLATE_PREFIX}/page_reset_password.html",
         request,
-        {"token": token},
+        {"form": form},
     )
 
 
@@ -246,17 +249,20 @@ async def get_reset_password(
 )
 async def reset_password(
     request: Request,
-    token: str = Form(...),
-    password: str = Form(...),
     user_service: UserService = Depends(get_user_service),
 ):
+    form: schemas.ResetPasswordForm = await schemas.ResetPasswordForm.from_formdata(
+        request
+    )
+    token = form.token.data
     reset_password_template = f"{TEMPLATE_PREFIX}/page_reset_password.html"
 
-    password_policy_error = check_password_policy(password)
-    if password_policy_error is not None:
-        set_feedback(request, FeedbackType.ERROR, password_policy_error)
-        return render_template(reset_password_template, request)
+    if not await form.validate_on_submit():
+        return render_template(
+            f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, {"form": form}
+        )
 
+    password = form.password.data
     error = False
     try:
         await user_service.reset_password(password, token)
@@ -271,6 +277,6 @@ async def reset_password(
         error = True
 
     if error:
-        return render_template(reset_password_template, request, {"token": token})
+        return render_template(reset_password_template, request, {"form": form})
 
-    return render_template(TEMPLATE_LOGIN, request)
+    return RedirectResponse("/login?msg=password-reset")
