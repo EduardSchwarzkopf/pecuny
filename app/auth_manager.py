@@ -71,23 +71,3 @@ current_active_user = fastapi_users.current_user(active=True, verified=True)
 optional_current_active_verified_user = fastapi_users.current_user(
     active=True, verified=True, optional=True
 )
-
-
-def check_password_policy(password: str):
-    # Check the password length
-    if len(password) < 8:
-        return "Password should be at least 8 characters long."
-    # Check for uppercase
-    if not any(c.isupper() for c in password):
-        return "Password should contain at least one uppercase character."
-    # Check for lowercase
-    if not any(c.islower() for c in password):
-        return "Password should contain at least one lowercase character."
-    # Check for digit
-    if not any(c.isdigit() for c in password):
-        return "Password should contain at least one digit."
-    # Check for special character
-    if all(c not in "!@#$%^&*()" for c in password):
-        return "Password should contain at least one special character."
-    # If all checks pass, return None
-    return None
