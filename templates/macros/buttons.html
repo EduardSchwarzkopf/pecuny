@@ -1,34 +1,34 @@
 {% macro primary_button(text, type='button', id='') -%}
 <button id="{{ id }}" type="{{ type }}"
-    class="flex w-full justify-center transition rounded-md bg-primary p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-primary hover:border-primary border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+    class="flex w-full justify-center transition rounded-md bg-primary p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-primary hover:border-primary border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50">
     {{ text }}
 </button>
 {% endmacro %}
 
 {% macro success_button(text, type='button', id='') -%}
 <button id="{{ id }}" type="{{ type }}"
-    class="flex w-full justify-center transition rounded-md bg-success p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-success hover:border-success border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success">
+    class="flex w-full justify-center transition rounded-md bg-success p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-success hover:border-success border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success disabled:opacity-50">
     {{ text }}
 </button>
 {% endmacro %}
 
 {% macro danger_button(text, type='button', id='') -%}
 <button id="{{ id }}" type="{{ type }}"
-    class="flex w-full justify-center transition rounded-md bg-danger p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-danger hover:border-danger border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger">
+    class="flex w-full justify-center transition rounded-md bg-danger p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-danger hover:border-danger border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger disabled:opacity-50">
     {{ text }}
 </button>
 {% endmacro %}
 
 {% macro info_button(text, type='button', id='') -%}
 <button id="{{ id }}" type="{{ type }}"
-    class="flex w-full justify-center transition rounded-md bg-info p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-info hover:border-info border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info">
+    class="flex w-full justify-center transition rounded-md bg-info p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-info hover:border-info border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info disabled:opacity-50">
     {{ text }}
 </button>
 {% endmacro %}
 
 {% macro secondary_button(text, type='button', id='') -%}
 <button id="{{ id }}" type="{{ type }}"
-    class="flex w-full justify-center transition rounded-md bg-secondary p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-secondary hover:border-secondary border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary">
+    class="flex w-full justify-center transition rounded-md bg-secondary p-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-secondary hover:border-secondary border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:opacity-50">
     {{ text }}
 </button>
 {% endmacro %}

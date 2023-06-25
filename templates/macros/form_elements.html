@@ -4,9 +4,9 @@
 <div class="mb-3" {% if field.type=="HiddenField" %} style="display: none;" {% endif %}>
     {{ field.label(class="block text-sm font-medium leading-6 text-gray-900") }}
     {{ field(class="block w-full rounded-md border-0 p-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300
-    placeholder:text-gray-400 focus:ring-primary sm:text-sm sm:leading-6") }}
+    placeholder:text-gray-400 focus:ring-primary sm:text-sm sm:leading-6", onkeyup="hideError(this)") }}
     {% if field.errors %}
-    <div class="text-red-500 text-xs italic">
+    <div class="text-red-500 text-xs italic field-error">
         {% for error in field.errors %}
         <p>{{ error }}</p>
         {% endfor %}
@@ -19,7 +19,7 @@
 {{ btn.primary_button(label, 'submit', id='submit') }}
 {% endmacro %}
 
-{% macro auth_form(title, form, action_url, button_text="Submit") %}
+{% macro auth_form(title, form, action_url, button_text="Submit", show_password_policy=false) %}
 <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-sm">
         <img class="mx-auto h-10 w-auto" src="https://tailwindui.com/img/logos/mark.svg?color=primary&shade=600"
@@ -37,12 +37,27 @@
             {{ input_field(field) }}
             {% endif %}
             {% endfor %}
-            {%- for field in form if field.type == "PasswordField" %}
-            <div id="password_error" style="color:red; display:none;"></div>
-            <div id="password_confirm_error" style="color:red; display:none;"></div>
+            {% if show_password_policy %}
+            <div id="password_policy">
+                <p id="password_length" class="text-danger">At least 8 characters long</p>
+                <p id="password_uppercase" class="text-danger">At least one uppercase character</p>
+                <p id="password_lowercase" class="text-danger">At least one lowercase character</p>
+                <p id="password_digit" class="text-danger">At least one digit</p>
+                <p id="password_special" class="text-danger">At least one special character</p>
+                <p id="password_confirm_error" style="display: none;" class="text-danger"></p>
+            </div>
+
             {% include 'fragments/password_policy.html' %}
-            {% endfor %}
+            {% endif %}
             {{ submit_button(button_text) }}
+            <script>
+                function hideError(input) {
+                    var errorDiv = input.parentElement.querySelector('.field-error');
+                    if (errorDiv) {
+                        errorDiv.style.display = 'none';
+                    }
+                }
+            </script>
         </form>
     </div>
 </div>
