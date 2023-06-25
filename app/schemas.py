@@ -9,8 +9,8 @@ from fastapi import Form
 from pydantic.types import constr
 
 from starlette_wtf import StarletteForm
-from wtforms import StringField, FloatField, PasswordField
-from wtforms.validators import DataRequired, InputRequired, Email, EqualTo
+from wtforms import StringField, FloatField, PasswordField, HiddenField
+from wtforms.validators import DataRequired, InputRequired, Email, EqualTo, Regexp
 
 
 class EmailSchema(BaseModel):
@@ -154,10 +154,32 @@ class CreateAccountForm(StarletteForm):
     balance = FloatField("balance", validators=[DataRequired()])
 
 
+password_policy = Regexp(
+    r"^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{8,}$",
+    message="Password should have at least 8 characters, 1 uppercase, 1 digit and 1 special character",
+)
+
+
 class RegisterForm(StarletteForm):
     email = StringField("Email", validators=[InputRequired(), Email()])
     displayname = StringField("Display Name", validators=[InputRequired()])
-    password = PasswordField("Password", validators=[InputRequired()])
+    password = PasswordField("Password", validators=[InputRequired(), password_policy])
+    password_confirm = PasswordField(
+        "Confirm Password",
+        validators=[
+            InputRequired(),
+            EqualTo("password", message="Passwords must match"),
+        ],
+    )
+
+
+class ForgotPasswordForm(StarletteForm):
+    email = StringField("Email", validators=[InputRequired(), Email()])
+
+
+class ResetPasswordForm(StarletteForm):
+    token = HiddenField("Token", validators=[InputRequired()])
+    password = PasswordField("Password", validators=[InputRequired(), password_policy])
     password_confirm = PasswordField(
         "Confirm Password",
         validators=[
