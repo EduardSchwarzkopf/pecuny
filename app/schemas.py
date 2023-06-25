@@ -1,3 +1,4 @@
+import email
 import uuid
 
 from datetime import datetime
@@ -174,6 +175,10 @@ class RegisterForm(StarletteForm):
 
 
 class ForgotPasswordForm(StarletteForm):
+    email = StringField("Email", validators=[InputRequired(), Email()])
+
+
+class GetNewTokenForm(StarletteForm):
     email = StringField("Email", validators=[InputRequired(), Email()])
 
 

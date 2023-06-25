@@ -173,7 +173,11 @@ async def verify_email(
 async def get_new_token(
     request: Request,
 ):
-    return render_template(f"{TEMPLATE_PREFIX}/page_get_new_token.html", request)
+    return render_template(
+        f"{TEMPLATE_PREFIX}/page_get_new_token.html",
+        request,
+        {"form": schemas.GetNewTokenForm(request)},
+    )
 
 
 @csrf_protect
@@ -183,9 +187,17 @@ async def get_new_token(
 async def send_new_token(
     request: Request,
     background_tasks: BackgroundTasks,
-    email: str = Form(...),
     user_service: UserService = Depends(get_user_service),
 ):
+    form: schemas.GetNewTokenForm = await schemas.GetNewTokenForm.from_formdata(request)
+
+    if not await form.validate_on_submit():
+        return render_template(
+            f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, {"form": form}
+        )
+
+    email = form.email.data
+
     with contextlib.suppress(exceptions.UserNotExists):
         user = await user_service.user_manager.get_by_email(email)
         background_tasks.add_task(user_service.request_verification, user)
