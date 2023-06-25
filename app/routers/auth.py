@@ -270,9 +270,7 @@ async def reset_password(
     reset_password_template = f"{TEMPLATE_PREFIX}/page_reset_password.html"
 
     if not await form.validate_on_submit():
-        return render_template(
-            f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, {"form": form}
-        )
+        return render_template(reset_password_template, request, {"form": form})
 
     password = form.password.data
     error = False
@@ -291,4 +289,4 @@ async def reset_password(
     if error:
         return render_template(reset_password_template, request, {"form": form})
 
-    return RedirectResponse("/login?msg=password-reset")
+    return RedirectResponse(LOGIN, status_code=302)
