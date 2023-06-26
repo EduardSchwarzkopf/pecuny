@@ -1,6 +1,20 @@
 from fastapi import HTTPException, status
 
 
+class UserAlreadyExistsException(Exception):
+    def __init__(self):
+        super().__init__("User with given email already exists.")
+
+
+class PasswordsDontMatchException(Exception):
+    def __init__(self):
+        super().__init__("Provided passwords do not match.")
+
+
+class UserNotFoundException(Exception):
+    pass
+
+
 class UnauthorizedException(HTTPException):
     def __init__(self):
         super().__init__(status.HTTP_401_UNAUTHORIZED, "Unauthorized")

@@ -5,6 +5,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_users import exceptions
 from starlette_wtf import csrf_protect
 from app.utils import PageRouter
+from app.utils.exceptions import (
+    PasswordsDontMatchException,
+    UserAlreadyExistsException,
+    UserNotFoundException,
+)
 from app.utils.template_utils import set_feedback, render_template, render_form_template
 from app.utils.enums import FeedbackType
 from .dashboard import router as dashboard_router
@@ -135,15 +140,11 @@ async def register(
     password_confirm = form.password_confirm.data
 
     try:
-        existing_user = await user_service.user_manager.get_by_email(email)
-    except exceptions.UserNotExists:
-        existing_user = None
-
-    if existing_user is not None:
+        await user_service.validate_new_user(email, password, password_confirm)
+    except UserAlreadyExistsException:
         set_feedback(request, FeedbackType.ERROR, "Email already exists")
         return render_form_template(TEMPLATE_REGISTER, request, form)
-
-    if password != password_confirm:
+    except PasswordsDontMatchException:
         set_feedback(request, FeedbackType.ERROR, "Passwords do not match")
         return render_form_template(TEMPLATE_REGISTER, request, form)
 
@@ -181,9 +182,7 @@ async def get_new_token(
 
 
 @csrf_protect
-@router.post(
-    "/send-new-token",
-)
+@router.post("/send-new-token")
 async def send_new_token(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -198,10 +197,45 @@ async def send_new_token(
 
     email = form.email.data
 
-    with contextlib.suppress(exceptions.UserNotExists):
+    try:
         user = await user_service.user_manager.get_by_email(email)
         background_tasks.add_task(user_service.request_verification, user)
+
+    except exceptions.UserNotExists:
+        # TODO: Security update: Log exception, but give no feedback to the user
+        set_feedback(request, FeedbackType.ERROR, "User does not exist.")
+        return render_form_template(
+            f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, form
+        )
+
     return RedirectResponse(f"{LOGIN}?msg=new_token_sent", 302)
+
+
+@csrf_protect
+@router.post(FORGOT_PASSWORD)
+async def forgot_password(
+    request: Request,
+    user_service: UserService = Depends(get_user_service),
+):
+    form = await schemas.ForgotPasswordForm.from_formdata(request)
+
+    if not await form.validate_on_submit():
+        return render_form_template(
+            f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, form
+        )
+
+    try:
+        await user_service.forgot_password(form.email.data)
+    except UserNotFoundException:
+        # TODO: Security update: Log exception, but give no feedback to the user
+        set_feedback(request, FeedbackType.ERROR, "User does not exist.")
+        return render_form_template(
+            f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, form
+        )
+
+    return render_form_template(
+        f"{TEMPLATE_PREFIX}/page_request_reset.html", request, form
+    )
 
 
 @csrf_protect
