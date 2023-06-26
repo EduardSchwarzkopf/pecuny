@@ -6,7 +6,6 @@ from app.routers.dashboard import router as dashboard_router
 class HeaderLinkMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         current_path = request.url.path
-        check = current_path.startswith(dashboard_router.prefix)
         request.state.header_links = [
             {
                 "url": dashboard_router.prefix,
