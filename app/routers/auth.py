@@ -148,7 +148,7 @@ async def register(
         return render_form_template(TEMPLATE_REGISTER, request, form)
 
     await user_service.create_user(email, displayname, password)
-    return RedirectResponse("/login?msg=registered")
+    return RedirectResponse(f"{LOGIN}?msg=registered")
 
 
 @router.get(
@@ -201,7 +201,7 @@ async def send_new_token(
     with contextlib.suppress(exceptions.UserNotExists):
         user = await user_service.user_manager.get_by_email(email)
         background_tasks.add_task(user_service.request_verification, user)
-    return RedirectResponse("/login?msg=new_token_sent", 302)
+    return RedirectResponse(f"{LOGIN}?msg=new_token_sent", 302)
 
 
 @csrf_protect
