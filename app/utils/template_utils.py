@@ -1,4 +1,5 @@
 from fastapi import Request
+from starlette_wtf import StarletteForm
 from app import templates
 from app.utils.enums import FeedbackType
 from typing import Optional
@@ -31,3 +32,7 @@ def render_template(
         context.update(context_extra)
 
     return templates.TemplateResponse(template, context)
+
+
+def render_form_template(template: str, request: Request, form: StarletteForm):
+    return render_template(template, request, {"form": form})
