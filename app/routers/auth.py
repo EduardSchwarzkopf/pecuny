@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_users import exceptions
 from starlette_wtf import csrf_protect
 from app.utils import PageRouter
-from app.utils.template_utils import set_feedback, render_template
+from app.utils.template_utils import set_feedback, render_template, render_form_template
 from app.utils.enums import FeedbackType
 from .dashboard import router as dashboard_router
 from app import schemas, templates
@@ -127,7 +127,7 @@ async def register(
     form: schemas.RegisterForm = await schemas.RegisterForm.from_formdata(request)
 
     if not await form.validate_on_submit():
-        return render_template(TEMPLATE_REGISTER, request, {"form": form})
+        return render_form_template(TEMPLATE_REGISTER, request, form)
 
     email = form.email.data
     displayname = form.displayname.data
@@ -141,11 +141,11 @@ async def register(
 
     if existing_user is not None:
         set_feedback(request, FeedbackType.ERROR, "Email already exists")
-        return render_template(TEMPLATE_REGISTER, request, {"form": form})
+        return render_form_template(TEMPLATE_REGISTER, request, form)
 
     if password != password_confirm:
         set_feedback(request, FeedbackType.ERROR, "Passwords do not match")
-        return render_template(TEMPLATE_REGISTER, request, {"form": form})
+        return render_form_template(TEMPLATE_REGISTER, request, form)
 
     await user_service.create_user(email, displayname, password)
     return RedirectResponse("/login?msg=registered")
@@ -173,10 +173,10 @@ async def verify_email(
 async def get_new_token(
     request: Request,
 ):
-    return render_template(
+    return render_form_template(
         f"{TEMPLATE_PREFIX}/page_get_new_token.html",
         request,
-        {"form": schemas.GetNewTokenForm(request)},
+        schemas.GetNewTokenForm(request),
     )
 
 
@@ -192,8 +192,8 @@ async def send_new_token(
     form: schemas.GetNewTokenForm = await schemas.GetNewTokenForm.from_formdata(request)
 
     if not await form.validate_on_submit():
-        return render_template(
-            f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, {"form": form}
+        return render_form_template(
+            f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, form
         )
 
     email = form.email.data
@@ -213,8 +213,8 @@ async def get_forgot_password(
     request: Request,
 ):
     form: schemas.ForgotPasswordForm = schemas.ForgotPasswordForm(request)
-    return render_template(
-        f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, {"form": form}
+    return render_form_template(
+        f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, form
     )
 
 
@@ -229,13 +229,13 @@ async def forgot_password(
     form = await schemas.ForgotPasswordForm.from_formdata(request)
 
     if not await form.validate_on_submit():
-        return render_template(
-            f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, {"form": form}
+        return render_form_template(
+            f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, form
         )
 
     await user_service.forgot_password(form.email.data)
-    return render_template(
-        f"{TEMPLATE_PREFIX}/page_request_reset.html", request, {"form": form}
+    return render_form_template(
+        f"{TEMPLATE_PREFIX}/page_request_reset.html", request, form
     )
 
 
@@ -248,10 +248,8 @@ async def get_reset_password(
     token: str,
 ):
     form = schemas.ResetPasswordForm(request, token=token)
-    return render_template(
-        f"{TEMPLATE_PREFIX}/page_reset_password.html",
-        request,
-        {"form": form},
+    return render_form_template(
+        f"{TEMPLATE_PREFIX}/page_reset_password.html", request, form
     )
 
 
@@ -270,7 +268,7 @@ async def reset_password(
     reset_password_template = f"{TEMPLATE_PREFIX}/page_reset_password.html"
 
     if not await form.validate_on_submit():
-        return render_template(reset_password_template, request, {"form": form})
+        return render_form_template(reset_password_template, request, form)
 
     password = form.password.data
     error = False
@@ -287,6 +285,6 @@ async def reset_password(
         error = True
 
     if error:
-        return render_template(reset_password_template, request, {"form": form})
+        return render_form_template(reset_password_template, request, form)
 
     return RedirectResponse(LOGIN, status_code=302)
