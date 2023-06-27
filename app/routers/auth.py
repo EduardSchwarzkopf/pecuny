@@ -62,9 +62,7 @@ async def get_login(
             request, FeedbackType.SUCCESS, "Welcome, please validate your email first!"
         )
 
-    return render_template(
-        TEMPLATE_LOGIN, request, {"form": schemas.LoginForm(request)}
-    )
+    return render_form_template(TEMPLATE_LOGIN, request, schemas.LoginForm(request))
 
 
 @router.post(
@@ -81,21 +79,15 @@ async def login(
 
     if user is None:
         set_feedback(request, FeedbackType.ERROR, "Wrong credentials provided")
-        return render_template(
-            TEMPLATE_LOGIN, request, {"form": schemas.LoginForm(request)}
-        )
+        return render_form_template(TEMPLATE_LOGIN, request, schemas.LoginForm(request))
 
     if not user.is_active:
         set_feedback(request, FeedbackType.ERROR, "This account is not active")
-        return render_template(
-            TEMPLATE_LOGIN, request, {"form": schemas.LoginForm(request)}
-        )
+        return render_form_template(TEMPLATE_LOGIN, request, schemas.LoginForm(request))
 
     if not user.is_verified:
         set_feedback(request, FeedbackType.ERROR, "You need to verify your email first")
-        return render_template(
-            TEMPLATE_LOGIN, request, {"form": schemas.LoginForm(request)}
-        )
+        return render_form_template(TEMPLATE_LOGIN, request, schemas.LoginForm(request))
 
     result = await auth_backend.login(strategy, user)
     return RedirectResponse("/", 302, result.headers)
@@ -118,8 +110,8 @@ async def logout(
 async def get_regsiter(
     request: Request,
 ):
-    return render_template(
-        TEMPLATE_REGISTER, request, {"form": schemas.RegisterForm(request)}
+    return render_form_template(
+        TEMPLATE_REGISTER, request, schemas.RegisterForm(request)
     )
 
 
