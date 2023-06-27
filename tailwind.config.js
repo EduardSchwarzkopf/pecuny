@@ -7,8 +7,23 @@ module.exports = {
     theme: {
         extend: {
             colors: {
-                accent: "#ff7000",
+                //TODO: Rename to gray when primary color is picked
                 primary: {
+                    DEFAULT: "#515864",
+                    50: "#f4f5f7",
+                    100: "#e4e7e9",
+                    200: "#ccd0d5",
+                    300: "#a8afb8",
+                    400: "#7c8794",
+                    500: "#616b79",
+                    600: "#515864",
+                    700: "#484d56",
+                    800: "#3f434b",
+                    900: "#383b41",
+                    950: "#232429",
+                },
+                accent: "#ff7000",
+                placeholder: {
                     DEFAULT: primary,
                     light: primaryLight,
                     50: "#fef7ee",
