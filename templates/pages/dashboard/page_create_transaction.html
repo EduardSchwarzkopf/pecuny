@@ -1,0 +1,10 @@
+{% extends "layouts/dashboard.html" %}
+{% import 'macros/form_elements.html' as form_elements %}
+
+{% set title = 'Create Transaction' %}
+{% set action_url = url_for('create_transaction', account_id=account_id) %}
+{% set button_text = "buchen" %}
+
+{% block content %}
+{{ form_elements.auth_form(title, form, action_url, button_text) }}
+{% endblock %}
