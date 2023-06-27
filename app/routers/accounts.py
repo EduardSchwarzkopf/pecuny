@@ -8,7 +8,8 @@ from app.config import settings
 from fastapi.exceptions import HTTPException
 from starlette import status
 from app.utils import PageRouter
-from app.utils.template_utils import render_template
+from app.utils.enums import FeedbackType
+from app.utils.template_utils import render_template, set_feedback
 from app import schemas, transaction_manager as tm, models
 from app.services import accounts as service, transactions as transaction_service
 from app.auth_manager import current_active_user
@@ -32,11 +33,12 @@ async def page_accounts_list(
     )
 
 
-def redirect_if_max_accounts(user):
+def max_accounts_reached(user, request: Request) -> RedirectResponse:
     if service.check_max_accounts(user):
-        raise HTTPException(
-            status_code=status.HTTP_302_FOUND,
-            detail="Maximum number of accounts reached",
+        set_feedback(request, FeedbackType.ERROR, "Maximum number of accounts reached")
+        return RedirectResponse(
+            router.url_path_for("page_accounts_list"),
+            status_code=status.HTTP_303_SEE_OTHER,
         )
 
 
@@ -46,7 +48,8 @@ async def page_create_account_form(
     request: Request,
     user: models.User = Depends(current_active_user),
 ):
-    redirect_if_max_accounts(user)
+    if response := max_accounts_reached(user, request):
+        return response
 
     form = await schemas.CreateAccountForm.from_formdata(request)
 
@@ -60,7 +63,8 @@ async def page_create_account_form(
 async def page_create_account(
     request: Request, user: models.User = Depends(current_active_user)
 ):
-    redirect_if_max_accounts(user)
+    if response := max_accounts_reached(user, request):
+        return response
 
     form = await schemas.CreateAccountForm.from_formdata(request)
 
