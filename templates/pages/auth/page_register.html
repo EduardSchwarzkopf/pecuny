@@ -1,5 +1,5 @@
 {% extends "layouts/auth.html" %}
-{% import 'macros/form_elements.html' as form_elements %}
+{% import 'macros/form_controls.html' as form_ctrl %}
 
 {% set title = 'Register' %}
 {% set action_url = url_for('register') %}
@@ -7,7 +7,7 @@
 
 
 {% block content %}
-{{ form_elements.auth_form(title, form, action_url, "Register", true) }}
+{{ form_ctrl.auth_form(title, form, action_url, "Register", true) }}
 
 <div class="text-sm text-center">
     Already have an account?

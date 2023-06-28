@@ -1,6 +1,6 @@
 {% extends "layouts/dashboard.html" %}
 
-{% import 'macros/form_elements.html' as form_elements %}
+{% import 'macros/form_controls.html' as form_ctrl %}
 
 {% block content %}
 <h1>Create Budgeting Account</h1>
@@ -9,10 +9,10 @@
     {{ form.csrf_token }}
     {% for field in form %}
     {% if field.type not in ("HiddenField", "CSRFTokenField") %}
-    {{ form_elements.input_field(field) }}
+    {{ form_ctrl.input_field(field) }}
     {% endif %}
     {% endfor %}
-    {{ form_elements.submit_button('Create Account') }}
+    {{ form_ctrl.submit_button('Create Account') }}
 </form>
 
 {% endblock %}

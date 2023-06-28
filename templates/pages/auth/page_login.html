@@ -1,12 +1,12 @@
 {% extends "layouts/auth.html" %}
-{% import 'macros/form_elements.html' as form_elements %}
+{% import 'macros/form_controls.html' as form_ctrl %}
 
 {% set title = 'Sign in to your account' %}
 {% set action_url = url_for('login') %}
 {% set button_text = "Login" %}
 
 {% block content %}
-{{ form_elements.auth_form(title, form, action_url, button_text) }}
+{{ form_ctrl.auth_form(title, form, action_url, button_text) }}
 <div class="text-sm text-center">
     Forgot your password?
     <a href="{{ url_for('forgot_password') }}">Reset</a>
