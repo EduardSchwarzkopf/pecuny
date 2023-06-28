@@ -20,7 +20,7 @@
 {% endmacro %}
 
 {% macro form(title, form, action_url, button_text="Submit", show_password_policy=false) %}
-<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+<div>
     <form class="space-y-6" action="{{ action_url }}" method="POST">
         {{ form.csrf_token }}
         {% for field in form %}
@@ -30,7 +30,7 @@
         {% endfor %}
 
         {{ submit_button(button_text) }}
-        <script src="{{ url_for('static', filename='js/errorHandling.js') }}"></script>
+        <script src="/static/js/errorHandling.js"></script>
     </form>
 </div>
 </div>
@@ -64,10 +64,10 @@
                 <p id="password_confirm_error" style="display: none;" class="text-danger"></p>
             </div>
 
-            <script src="{{ url_for('static', filename='js/passwordPolicy.js') }}"></script>
+            <script src="/static/js/passwordPolicy.js"></script>
             {% endif %}
             {{ submit_button(button_text) }}
-            <script src="{{ url_for('static', filename='js/errorHandling.js') }}"></script>
+            <script src="/static/js/errorHandling.js"></script>
         </form>
     </div>
 </div>
