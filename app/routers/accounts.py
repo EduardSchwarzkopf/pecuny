@@ -165,4 +165,28 @@ async def create_transaction(
     account_id: int,
     user: models.User = Depends(current_active_user),
 ):
-    pass
+    category_list = await category_service.get_categories(user)
+    form = await schemas.CreateTransactionForm.from_formdata(request)
+    form.category_id.choices = group_categories_by_section(category_list)
+
+    if not await form.validate_on_submit():
+        return render_template(
+            "pages/dashboard/page_create_transaction.html",
+            request,
+            {"form": form, "account_id": account_id},
+        )
+
+    transaction = schemas.TransactionInformationCreate(
+        account_id=account_id, **form.data
+    )
+
+    response = await tm.transaction(
+        transaction_service.create_transaction, user, transaction
+    )
+
+    if not response:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
+
+    return RedirectResponse(
+        router.url_path_for("page_get_account", account_id=account_id), status_code=302
+    )
