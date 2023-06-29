@@ -10,7 +10,14 @@ from fastapi import Form
 from pydantic.types import constr
 
 from starlette_wtf import StarletteForm
-from wtforms import StringField, FloatField, PasswordField, HiddenField, DateField
+from wtforms import (
+    StringField,
+    FloatField,
+    PasswordField,
+    HiddenField,
+    DateField,
+    SelectField,
+)
 from wtforms.validators import DataRequired, InputRequired, Email, EqualTo, Regexp
 
 
@@ -197,5 +204,5 @@ class ResetPasswordForm(StarletteForm):
 class CreateTransactionForm(StarletteForm):
     amount = FloatField("amount", validators=[InputRequired()])
     reference = StringField("reference", validators=[InputRequired()])
-    category_id = StringField("category_id", validators=[InputRequired()])
+    category_id = SelectField("category_id", validators=[InputRequired()])
     date = DateField("date", validators=[InputRequired()])
