@@ -9,9 +9,17 @@ from fastapi.exceptions import HTTPException
 from starlette import status
 from app.utils import PageRouter
 from app.utils.enums import FeedbackType
-from app.utils.template_utils import render_form_template, render_template, set_feedback
+from app.utils.template_utils import (
+    group_categories_by_section,
+    render_template,
+    set_feedback,
+)
 from app import schemas, transaction_manager as tm, models
-from app.services import accounts as service, transactions as transaction_service
+from app.services import (
+    accounts as service,
+    transactions as transaction_service,
+    categories as category_service,
+)
 from app.auth_manager import current_active_user
 
 router = PageRouter(prefix="/accounts", tags=["Accounts"])
@@ -140,10 +148,14 @@ async def page_create_transaction_form(
     if account is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
 
+    category_list = await category_service.get_categories(user)
+    form = schemas.CreateTransactionForm(request)
+    form.category_id.choices = group_categories_by_section(category_list)
+
     return render_template(
         "pages/dashboard/page_create_transaction.html",
         request,
-        {"form": schemas.CreateTransactionForm(request), "account_id": account_id},
+        {"form": form, "account_id": account_id},
     )
 
 
