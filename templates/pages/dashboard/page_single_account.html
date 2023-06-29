@@ -17,7 +17,6 @@
     </a>
 </div>
 <div id="transactions">
-    <div>serach...</div>
     <div>
 
         {% for group in transaction_list_grouped %}
@@ -26,8 +25,6 @@
         {% include 'fragments/accounts/transaction.html' %}
         {% endfor %}
         {% endfor %}
-
-
     </div>
 </div>
 {% endblock %}
