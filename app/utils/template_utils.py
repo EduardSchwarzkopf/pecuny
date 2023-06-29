@@ -1,8 +1,9 @@
 from fastapi import Request
 from starlette_wtf import StarletteForm
-from app import templates
+from app import templates, schemas
 from app.utils.enums import FeedbackType
-from typing import Optional
+from typing import Optional, List
+from collections import defaultdict
 
 
 def set_feedback(
@@ -36,3 +37,10 @@ def render_template(
 
 def render_form_template(template: str, request: Request, form: StarletteForm):
     return render_template(template, request, {"form": form})
+
+
+def group_categories_by_section(categorie_list: List[schemas.CategoryData]):
+    grouped_data = defaultdict(list)
+    for item in categorie_list:
+        grouped_data[item.section.label].append((item.id, item.label))
+    return grouped_data
