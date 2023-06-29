@@ -130,7 +130,9 @@ async def update_transaction(
 
 
 async def delete_transaction(current_user: models.User, transaction_id: int) -> bool:
-    transaction = await repo.get(models.Transaction, transaction_id)
+    transaction = await repo.get(
+        models.Transaction, transaction_id, load_relationships=["offset_transaction"]
+    )
 
     if transaction is None:
         return

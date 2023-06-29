@@ -3,6 +3,7 @@ from sqlalchemy.future import select
 from . import models
 from datetime import datetime
 from app.database import db
+from sqlalchemy.orm import selectinload
 
 
 async def get_all(cls: models):
@@ -18,8 +19,13 @@ async def filter_by(cls: models, attribute: str, value: str):
     return result.scalars().all()
 
 
-async def get(cls: models, id: int) -> models:
-    return await db.session.get(cls, id)
+async def get(cls, id: int, load_relationships=None):
+    stmt = select(cls).where(cls.id == id)
+    if load_relationships:
+        options = [selectinload(rel) for rel in load_relationships]
+        stmt = stmt.options(*options)
+    result = await db.session.execute(stmt)
+    return result.scalars().first()
 
 
 async def get_scheduled_transactions_from_period(
@@ -27,7 +33,6 @@ async def get_scheduled_transactions_from_period(
     start_date: datetime,
     end_date: datetime,
 ):
-
     transaction = models.TransactionScheduled
 
     query = (

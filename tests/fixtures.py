@@ -3,6 +3,7 @@ from app.oauth2 import create_access_token
 from app import models, repository as repo
 from httpx import AsyncClient
 from app.services.users import UserService
+import datetime
 
 pytestmark = pytest.mark.anyio
 
