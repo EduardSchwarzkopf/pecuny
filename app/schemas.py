@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Dict, Any
 from fastapi_users import schemas
 from fastapi import Form
+from wtforms.widgets import Input
 
 from pydantic.types import constr
 
@@ -15,7 +16,6 @@ from wtforms import (
     FloatField,
     PasswordField,
     HiddenField,
-    DateField,
     SelectField,
 )
 from wtforms.validators import DataRequired, InputRequired, Email, EqualTo, Regexp
@@ -201,8 +201,24 @@ class ResetPasswordForm(StarletteForm):
     )
 
 
+class DateTimeLocalFieldWithoutTime(StringField):
+    widget = Input(input_type="date")
+
+    def process_formdata(self, valuelist):
+        if valuelist:
+            date_str = " ".join(valuelist)
+            try:
+                date_object = datetime.strptime(date_str, "%Y-%m-%d")
+                self.data = datetime.combine(date_object, datetime.min.time())
+            except ValueError as e:
+                self.data = None
+                raise ValueError(
+                    self.gettext("Not a valid date value: {0}".format(valuelist))
+                ) from e
+
+
 class CreateTransactionForm(StarletteForm):
     amount = FloatField("amount", validators=[InputRequired()])
     reference = StringField("reference", validators=[InputRequired()])
-    category_id = SelectField("category_id", validators=[InputRequired()])
-    date = DateField("date", validators=[InputRequired()])
+    category_id = SelectField("category_id", validators=[InputRequired()], coerce=int)
+    date = DateTimeLocalFieldWithoutTime("date", validators=[InputRequired()])
