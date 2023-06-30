@@ -3,8 +3,12 @@
 {% macro input_field(field) -%}
 <div class="mb-3" {% if field.type=="HiddenField" %} style="display: none;" {% endif %}>
     {{ field.label(class="block text-sm font-medium leading-6 text-gray-900") }}
-    {{ field(class="block w-full rounded-md border-0 p-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300
-    placeholder:text-gray-400 focus:ring-primary sm:text-sm sm:leading-6", onkeyup="hideError(this)") }}
+    {{
+    field(class="block w-full rounded-md border-0 p-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300
+    placeholder:text-gray-400 focus:ring-primary sm:text-sm sm:leading-6",
+    onkeyup="hideError(this)"
+    )
+    }}
     {% if field.errors %}
     <div class="text-red-500 text-xs italic field-error">
         {% for error in field.errors %}
@@ -19,7 +23,7 @@
 {{ btn.primary_button(label, 'submit', id='submit') }}
 {% endmacro %}
 
-{% macro form(title, form, action_url, button_text="Submit", show_password_policy=false) %}
+{% macro form(title, form, action_url, button_text="Submit") %}
 <div>
     <form class="space-y-6" action="{{ action_url }}" method="POST">
         {{ form.csrf_token }}
