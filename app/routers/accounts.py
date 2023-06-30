@@ -136,25 +136,6 @@ async def page_get_account(
     )
 
 
-@router.get("/{account_id}/transactions/{transaction_id}")
-async def page_get_transaction(
-    request: Request,
-    account_id: int,
-    transaction_id: int,
-    user: models.User = Depends(current_active_user),
-):
-    transaction = await transaction_service.get_transaction(user, transaction_id)
-
-    if transaction is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
-
-    return render_template(
-        "pages/dashboard/page_single_transaction.html",
-        request,
-        {"transaction": transaction, "account_id": account_id},
-    )
-
-
 @csrf_protect
 @router.get("/{account_id}/create-transaction")
 async def page_create_transaction_form(
@@ -175,6 +156,70 @@ async def page_create_transaction_form(
         "pages/dashboard/page_create_transaction.html",
         request,
         {"form": form, "account_id": account_id},
+    )
+
+
+@router.get("/{account_id}/transactions/{transaction_id}")
+async def page_update_transaction(
+    request: Request,
+    account_id: int,
+    transaction_id: int,
+    user: models.User = Depends(current_active_user),
+):
+    transaction = await transaction_service.get_transaction(user, transaction_id)
+
+    if transaction is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
+
+    form = schemas.CreateTransactionForm(request, data=transaction.information.__dict__)
+    category_list = await category_service.get_categories(user)
+    form.category_id.choices = group_categories_by_section(category_list)
+    form.date.data = transaction.information.date.strftime("%Y-%m-%d")
+
+    return render_template(
+        "pages/dashboard/page_update_transaction.html",
+        request,
+        {"transaction": transaction, "account_id": account_id, "form": form},
+    )
+
+
+@router.post("/{account_id}/transactions/{transaction_id}")
+async def update_transaction(
+    request: Request,
+    account_id: int,
+    transaction_id: int,
+    user: models.User = Depends(current_active_user),
+):
+    transaction = await transaction_service.get_transaction(user, transaction_id)
+
+    if transaction is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
+
+    form = await schemas.CreateTransactionForm.from_formdata(request)
+
+    if not await form.validate_on_submit():
+        return render_template(
+            "pages/dashboard/page_update_transaction.html",
+            request,
+            {"form": form, "account_id": account_id, "transaction": transaction},
+        )
+
+    transaction_information = schemas.TransactionInformtionUpdate(
+        account_id=account_id, **form.data
+    )
+
+    response = await tm.transaction(
+        transaction_service.update_transaction,
+        user,
+        transaction_id,
+        transaction_information,
+    )
+
+    if not response:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
+
+    return RedirectResponse(
+        router.url_path_for("page_get_account", account_id=account_id), status_code=302
     )
 
 
