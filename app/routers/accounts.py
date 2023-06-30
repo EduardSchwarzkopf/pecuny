@@ -136,6 +136,25 @@ async def page_get_account(
     )
 
 
+@router.get("/{account_id}/transactions/{transaction_id}")
+async def page_get_transaction(
+    request: Request,
+    account_id: int,
+    transaction_id: int,
+    user: models.User = Depends(current_active_user),
+):
+    transaction = await transaction_service.get_transaction(user, transaction_id)
+
+    if transaction is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
+
+    return render_template(
+        "pages/dashboard/page_single_transaction.html",
+        request,
+        {"transaction": transaction, "account_id": account_id},
+    )
+
+
 @csrf_protect
 @router.get("/{account_id}/create-transaction")
 async def page_create_transaction_form(
