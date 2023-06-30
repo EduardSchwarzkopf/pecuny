@@ -196,6 +196,8 @@ async def update_transaction(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
     form = await schemas.CreateTransactionForm.from_formdata(request)
+    category_list = await category_service.get_categories(user)
+    form.category_id.choices = group_categories_by_section(category_list)
 
     if not await form.validate_on_submit():
         return render_template(
