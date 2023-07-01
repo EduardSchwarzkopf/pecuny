@@ -184,7 +184,7 @@ async def page_update_transaction(
 
 
 @router.post("/{account_id}/transactions/{transaction_id}")
-async def update_transaction(
+async def page_update_transaction(
     request: Request,
     account_id: int,
     transaction_id: int,
@@ -226,7 +226,7 @@ async def update_transaction(
 
 
 @router.post("/{account_id}/create-transaction")
-async def create_transaction(
+async def page_create_transaction(
     request: Request,
     account_id: int,
     user: models.User = Depends(current_active_user),

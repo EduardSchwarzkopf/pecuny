@@ -2,7 +2,7 @@
 {% import 'macros/form_controls.html' as form_ctrl %}
 
 {% set title = 'Create Transaction' %}
-{% set action_url = url_for('create_transaction', account_id=account_id) %}
+{% set action_url = url_for('page_create_transaction', account_id=account_id) %}
 {% set button_text = "buchen" %}
 
 {% block content %}

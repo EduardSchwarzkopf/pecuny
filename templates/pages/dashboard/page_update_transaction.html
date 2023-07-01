@@ -3,7 +3,7 @@
 {% import 'macros/form_controls.html' as form_ctrl %}
 
 {% set title = 'Update Transaction' %}
-{% set action_url = url_for('update_transaction', account_id=account_id, transaction_id=transaction.id) %}
+{% set action_url = url_for('page_update_transaction', account_id=account_id, transaction_id=transaction.id) %}
 {% set button_text = "Aktualisieren" %}
 
 {% block content %}
