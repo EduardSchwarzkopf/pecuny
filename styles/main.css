@@ -45,4 +45,7 @@ add your styles here and run:
         @apply text-gray-500
     }
 
+    input {
+        @apply border
+    }
 }
