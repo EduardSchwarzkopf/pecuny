@@ -1,10 +1,5 @@
 from datetime import datetime
 from app import models, schemas, repository as repo
-from pytz import timezone
-
-
-def localize_datetime(date: datetime) -> datetime:
-    return timezone("UTC").localize(date)
 
 
 async def get_transaction_list(
@@ -35,7 +30,6 @@ async def create_transaction(
     if user.id.bytes != account.user_id.bytes:
         return None
 
-    transaction_information.date = localize_datetime(transaction_information.date)
     db_transaction_information = models.TransactionInformation()
     db_transaction_information.add_attributes_from_dict(transaction_information.dict())
 
@@ -66,8 +60,6 @@ async def create_transaction(
 async def _handle_offset_transaction(
     user: models.User, transaction_information: schemas.TransactionInformationCreate
 ) -> models.Transaction:
-    transaction_information.date = localize_datetime(transaction_information.date)
-
     offset_account_id = transaction_information.offset_account_id
     offset_account = await repo.get(models.Account, offset_account_id)
 
@@ -104,14 +96,13 @@ async def update_transaction(
     if current_user.id != account.user_id:
         return
 
-    transaction_information.date = localize_datetime(transaction_information.date)
-
     amount_updated = (
         round(transaction_information.amount, 2) - transaction.information.amount
     )
-    await repo.update(
-        models.Account, account.id, **{"balance": account.balance + amount_updated}
-    )
+
+    update_info = {"balance": account.balance + amount_updated}
+
+    await repo.update(models.Account, account.id, **update_info)
 
     if transaction.offset_transactions_id:
         offset_transaction = await repo.get(
@@ -125,15 +116,17 @@ async def update_transaction(
         offset_account.balance -= amount_updated
         offset_transaction.information.amount = transaction_information.amount * -1
 
+    update_info = {
+        "amount": transaction_information.amount,
+        "reference": transaction_information.reference,
+        "date": transaction_information.date,
+        "category_id": transaction_information.category_id,
+    }
+
     await repo.update(
         models.TransactionInformation,
         transaction.information.id,
-        **{
-            "amount": transaction_information.amount,
-            "reference": transaction_information.reference,
-            "date": transaction_information.date,
-            "category_id": transaction_information.category_id,
-        },
+        **update_info,
     )
     return transaction
 
