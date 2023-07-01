@@ -188,7 +188,8 @@ async def test_transactions(test_accounts, session):
             test_accounts[account_index].balance + db_transaction_information.amount
         )
 
-        await repo.update(models.Account, account_id, **{"balance": new_balance})
+        update_info = {"balance": new_balance}
+        await repo.update(models.Account, account_id, **update_info)
 
         transaction_list.append(
             models.Transaction(
