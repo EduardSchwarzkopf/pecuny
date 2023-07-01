@@ -15,7 +15,7 @@ def set_feedback(
     request.state.feedback_message = feedback_message
 
 
-def get_default_context(request: Request):
+def get_default_context(request: Request) -> dict:
     return {
         "request": request,
         "header_links": getattr(request.state, "header_links", None),
@@ -25,14 +25,20 @@ def get_default_context(request: Request):
 
 
 def render_template(
-    template: str, request: Request, context_extra: Optional[dict] = None
-):
+    template: str, request: Request, context_extra: Optional[dict] = {}
+):  # sourcery skip: default-mutable-arg
     context = get_default_context(request)
+    return templates.TemplateResponse(template, {**context, **context_extra})
 
-    if context_extra:
-        context.update(context_extra)
 
-    return templates.TemplateResponse(template, context)
+def render_dashboard_template(
+    template: str, request: Request, context: Optional[dict] = {}
+):  # sourcery skip: default-mutable-arg
+    return render_template(
+        template,
+        request,
+        {**context, "date_picker_form": schemas.DatePickerForm(request)},
+    )
 
 
 def render_form_template(template: str, request: Request, form: StarletteForm):
