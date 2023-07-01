@@ -4,7 +4,7 @@ from fastapi import Request, Depends
 
 from app.auth_manager import current_active_user
 from app.utils import PageRouter
-from app.utils.template_utils import render_template
+from app.utils.template_utils import render_dashboard_template
 from app.services import accounts as service
 from app.config import settings
 
@@ -18,7 +18,7 @@ async def dashboard(
     user: User = Depends(current_active_user),
 ):
     account_list = await service.get_accounts(user)
-    return render_template(
+    return render_dashboard_template(
         "pages/dashboard/page_multiple_accounts.html",
         request,
         {
