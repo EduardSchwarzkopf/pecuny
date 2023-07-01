@@ -1,7 +1,7 @@
 from datetime import datetime
 import calendar
 from itertools import groupby
-from fastapi import Request, Depends
+from fastapi import Request, Depends, Cookie
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette_wtf import csrf_protect
 from app.config import settings
@@ -11,7 +11,7 @@ from app.utils import PageRouter
 from app.utils.enums import FeedbackType
 from app.utils.template_utils import (
     group_categories_by_section,
-    render_template,
+    render_dashboard_template,
     set_feedback,
 )
 from app import schemas, transaction_manager as tm, models
@@ -31,7 +31,7 @@ async def page_accounts_list(
     user: models.User = Depends(current_active_user),
 ):
     account_list = await service.get_accounts(user)
-    return render_template(
+    return render_dashboard_template(
         "pages/dashboard/page_multiple_accounts.html",
         request,
         {
@@ -61,7 +61,7 @@ async def page_create_account_form(
 
     form = await schemas.CreateAccountForm.from_formdata(request)
 
-    return render_template(
+    return render_dashboard_template(
         "pages/dashboard/page_create_account.html", request, {"form": form}
     )
 
@@ -98,8 +98,8 @@ async def page_get_account(
     request: Request,
     account_id: int,
     user: models.User = Depends(current_active_user),
-    date_start: datetime = None,
-    date_end: datetime = None,
+    date_start: datetime = Cookie(None),
+    date_end: datetime = Cookie(None),
 ):
     account = await service.get_account(user, account_id)
 
@@ -110,6 +110,7 @@ async def page_get_account(
         date_start = datetime.now().replace(
             day=1, hour=0, minute=0, second=0, microsecond=0
         )
+
     if date_end is None:
         last_day = calendar.monthrange(date_start.year, date_start.month)[1]
         date_end = datetime.now().replace(
@@ -129,7 +130,7 @@ async def page_get_account(
             transaction_list, key=lambda x: x.information.date
         )
     ]
-    return render_template(
+    return render_dashboard_template(
         "pages/dashboard/page_single_account.html",
         request,
         {"account": account, "transaction_list_grouped": transaction_list_grouped},
@@ -147,7 +148,7 @@ async def page_update_account_form(
 
     form = schemas.CreateAccountForm(request, data=account.__dict__)
 
-    return render_template(
+    return render_dashboard_template(
         "pages/dashboard/page_update_account.html",
         request,
         {"account_id": account_id, "form": form},
@@ -201,7 +202,7 @@ async def page_create_transaction_form(
     form = schemas.CreateTransactionForm(request)
     form.category_id.choices = group_categories_by_section(category_list)
 
-    return render_template(
+    return render_dashboard_template(
         "pages/dashboard/page_create_transaction.html",
         request,
         {"form": form, "account_id": account_id},
@@ -225,7 +226,7 @@ async def page_update_transaction(
     form.category_id.choices = group_categories_by_section(category_list)
     form.date.data = transaction.information.date.strftime("%Y-%m-%d")
 
-    return render_template(
+    return render_dashboard_template(
         "pages/dashboard/page_update_transaction.html",
         request,
         {"transaction": transaction, "account_id": account_id, "form": form},
@@ -249,7 +250,7 @@ async def page_update_transaction(
     form.category_id.choices = group_categories_by_section(category_list)
 
     if not await form.validate_on_submit():
-        return render_template(
+        return render_dashboard_template(
             "pages/dashboard/page_update_transaction.html",
             request,
             {"form": form, "account_id": account_id, "transaction": transaction},
@@ -285,7 +286,7 @@ async def page_create_transaction(
     form.category_id.choices = group_categories_by_section(category_list)
 
     if not await form.validate_on_submit():
-        return render_template(
+        return render_dashboard_template(
             "pages/dashboard/page_create_transaction.html",
             request,
             {"form": form, "account_id": account_id},
