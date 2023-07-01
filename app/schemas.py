@@ -17,6 +17,7 @@ from wtforms import (
     PasswordField,
     HiddenField,
     SelectField,
+    DateTimeLocalField,
 )
 from wtforms.validators import DataRequired, InputRequired, Email, EqualTo, Regexp
 
@@ -201,7 +202,7 @@ class ResetPasswordForm(StarletteForm):
     )
 
 
-class dtLocalFieldWithoutTime(StringField):
+class DatetimeLocalFieldWithoutTime(StringField):
     widget = Input(input_type="date")
 
     def process_formdata(self, valuelist):
@@ -224,9 +225,11 @@ class CreateTransactionForm(StarletteForm):
     amount = DecimalField("amount", validators=[InputRequired()])
     reference = StringField("reference", validators=[InputRequired()])
     category_id = SelectField("category_id", validators=[InputRequired()], coerce=int)
-    date = dtLocalFieldWithoutTime("date", validators=[InputRequired()])
+    date = DatetimeLocalFieldWithoutTime("date", validators=[InputRequired()])
 
 
 class DatePickerForm(StarletteForm):
-    date_start = dtLocalFieldWithoutTime("date_start", validators=[InputRequired()])
-    date_end = dtLocalFieldWithoutTime("date_end", validators=[InputRequired()])
+    date_start = DatetimeLocalFieldWithoutTime(
+        "date_start", validators=[InputRequired()]
+    )
+    date_end = DatetimeLocalFieldWithoutTime("date_end", validators=[InputRequired()])
