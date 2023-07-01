@@ -1,8 +1,27 @@
 {% import 'macros/form_controls.html' as form_ctrl %}
+{% import 'macros/buttons.html' as btn %}
 
-{% set button_text = "Datum setzen" %}
 
-{{ form_ctrl.form("", date_picker_form, "", button_text) }}
+<form class="w-full max-w-sm" id="dateForm">
+    {{ csrf_token }}
+    <div class="flex items-center items-stretch space-x-3">
+
+        {% for field in date_picker_form %}
+        {% if field.type not in ("CSRFTokenField") %}
+        <div>
+            <input class="rounded-md p-2 text-gray-900 sm:text-sm sm:leading-6" type="date" aria-label="Date Start"
+                id="{{field.id}}">
+        </div>
+        {% endif %}
+        {% endfor %}
+
+        <div>
+            {{ btn.primary_button("Update", 'button', id='submit') }}
+        </div>
+
+
+    </div>
+</form>
 
 <div>
     <script>
