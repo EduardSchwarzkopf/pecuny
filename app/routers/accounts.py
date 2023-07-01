@@ -11,7 +11,7 @@ from app.utils import PageRouter
 from app.utils.enums import FeedbackType
 from app.utils.template_utils import (
     group_categories_by_section,
-    render_dashboard_template,
+    render_template,
     set_feedback,
 )
 from app import schemas, transaction_manager as tm, models
@@ -31,7 +31,7 @@ async def page_accounts_list(
     user: models.User = Depends(current_active_user),
 ):
     account_list = await service.get_accounts(user)
-    return render_dashboard_template(
+    return render_template(
         "pages/dashboard/page_multiple_accounts.html",
         request,
         {
@@ -61,7 +61,7 @@ async def page_create_account_form(
 
     form = await schemas.CreateAccountForm.from_formdata(request)
 
-    return render_dashboard_template(
+    return render_template(
         "pages/dashboard/page_create_account.html", request, {"form": form}
     )
 
@@ -130,10 +130,14 @@ async def page_get_account(
             transaction_list, key=lambda x: x.information.date
         )
     ]
-    return render_dashboard_template(
+    return render_template(
         "pages/dashboard/page_single_account.html",
         request,
-        {"account": account, "transaction_list_grouped": transaction_list_grouped},
+        {
+            "account": account,
+            "transaction_list_grouped": transaction_list_grouped,
+            "date_picker_form": schemas.DatePickerForm(request),
+        },
     )
 
 
@@ -148,7 +152,7 @@ async def page_update_account_form(
 
     form = schemas.CreateAccountForm(request, data=account.__dict__)
 
-    return render_dashboard_template(
+    return render_template(
         "pages/dashboard/page_update_account.html",
         request,
         {"account_id": account_id, "form": form},
@@ -202,7 +206,7 @@ async def page_create_transaction_form(
     form = schemas.CreateTransactionForm(request)
     form.category_id.choices = group_categories_by_section(category_list)
 
-    return render_dashboard_template(
+    return render_template(
         "pages/dashboard/page_create_transaction.html",
         request,
         {"form": form, "account_id": account_id},
@@ -226,7 +230,7 @@ async def page_update_transaction(
     form.category_id.choices = group_categories_by_section(category_list)
     form.date.data = transaction.information.date.strftime("%Y-%m-%d")
 
-    return render_dashboard_template(
+    return render_template(
         "pages/dashboard/page_update_transaction.html",
         request,
         {"transaction": transaction, "account_id": account_id, "form": form},
@@ -250,7 +254,7 @@ async def page_update_transaction(
     form.category_id.choices = group_categories_by_section(category_list)
 
     if not await form.validate_on_submit():
-        return render_dashboard_template(
+        return render_template(
             "pages/dashboard/page_update_transaction.html",
             request,
             {"form": form, "account_id": account_id, "transaction": transaction},
@@ -286,7 +290,7 @@ async def page_create_transaction(
     form.category_id.choices = group_categories_by_section(category_list)
 
     if not await form.validate_on_submit():
-        return render_dashboard_template(
+        return render_template(
             "pages/dashboard/page_create_transaction.html",
             request,
             {"form": form, "account_id": account_id},
