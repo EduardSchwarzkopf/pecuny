@@ -22,6 +22,7 @@ from app.services import (
 )
 from app.auth_manager import current_active_user
 
+
 router = PageRouter(prefix="/accounts", tags=["Accounts"])
 
 
