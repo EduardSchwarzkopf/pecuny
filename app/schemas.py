@@ -1,6 +1,7 @@
 import uuid
+import datetime
 
-from datetime import datetime
+from datetime import datetime as dt
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Dict, Any
 from fastapi_users import schemas
@@ -12,7 +13,7 @@ from pydantic.types import constr
 from starlette_wtf import StarletteForm
 from wtforms import (
     StringField,
-    FloatField,
+    DecimalField,
     PasswordField,
     HiddenField,
     SelectField,
@@ -67,7 +68,7 @@ class TransactionInformationBase(Base):
 
 
 class TransactionInformation(TransactionInformationBase):
-    date: datetime
+    date: dt
 
 
 class MinimalResponse(Base):
@@ -99,9 +100,9 @@ class TransactionInformtionUpdate(TransactionInformationCreate):
 
 
 class ScheduledTransactionInformationCreate(TransactionInformationBase):
-    date_start: datetime
+    date_start: dt
     frequency_id: int
-    date_end: datetime
+    date_end: dt
     account_id: int
     offset_account_id: Optional[int]
 
@@ -121,9 +122,9 @@ class Transaction(TransactionBase):
 
 
 class ScheduledTransactionData(TransactionBase):
-    date_start: datetime
+    date_start: dt
     frequency: FrequencyData
-    date_end: datetime
+    date_end: dt
     account_id: int
     offset_account_id: Optional[int]
 
@@ -158,7 +159,7 @@ class CreateAccountForm(StarletteForm):
         ],
     )
 
-    balance = FloatField("balance", validators=[DataRequired()])
+    balance = DecimalField("balance", validators=[DataRequired()])
 
 
 password_policy = Regexp(
@@ -200,15 +201,18 @@ class ResetPasswordForm(StarletteForm):
     )
 
 
-class DateTimeLocalFieldWithoutTime(StringField):
+class dtLocalFieldWithoutTime(StringField):
     widget = Input(input_type="date")
 
     def process_formdata(self, valuelist):
         if valuelist:
             date_str = " ".join(valuelist)
             try:
-                date_object = datetime.strptime(date_str, "%Y-%m-%d")
-                self.data = datetime.combine(date_object, datetime.min.time())
+                naive_date_object = dt.strptime(date_str, "%Y-%m-%d")
+                utc_date_object = naive_date_object.replace(
+                    tzinfo=datetime.timezone.utc
+                )
+                self.data = utc_date_object
             except ValueError as e:
                 self.data = None
                 raise ValueError(
@@ -217,14 +221,12 @@ class DateTimeLocalFieldWithoutTime(StringField):
 
 
 class CreateTransactionForm(StarletteForm):
-    amount = FloatField("amount", validators=[InputRequired()])
+    amount = DecimalField("amount", validators=[InputRequired()])
     reference = StringField("reference", validators=[InputRequired()])
     category_id = SelectField("category_id", validators=[InputRequired()], coerce=int)
-    date = DateTimeLocalFieldWithoutTime("date", validators=[InputRequired()])
+    date = dtLocalFieldWithoutTime("date", validators=[InputRequired()])
 
 
 class DatePickerForm(StarletteForm):
-    date_start = DateTimeLocalFieldWithoutTime(
-        "date_start", validators=[InputRequired()]
-    )
-    date_end = DateTimeLocalFieldWithoutTime("date_end", validators=[InputRequired()])
+    date_start = dtLocalFieldWithoutTime("date_start", validators=[InputRequired()])
+    date_end = dtLocalFieldWithoutTime("date_end", validators=[InputRequired()])
