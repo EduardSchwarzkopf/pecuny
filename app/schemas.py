@@ -1,4 +1,3 @@
-import email
 import uuid
 
 from datetime import datetime
@@ -222,3 +221,10 @@ class CreateTransactionForm(StarletteForm):
     reference = StringField("reference", validators=[InputRequired()])
     category_id = SelectField("category_id", validators=[InputRequired()], coerce=int)
     date = DateTimeLocalFieldWithoutTime("date", validators=[InputRequired()])
+
+
+class DatePickerForm(StarletteForm):
+    date_start = DateTimeLocalFieldWithoutTime(
+        "date_start", validators=[InputRequired()]
+    )
+    date_end = DateTimeLocalFieldWithoutTime("date_end", validators=[InputRequired()])
