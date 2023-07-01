@@ -1,0 +1,72 @@
+{% import 'macros/form_controls.html' as form_ctrl %}
+
+{% set button_text = "Datum setzen" %}
+
+{{ form_ctrl.form("", date_picker_form, "", button_text) }}
+
+<div>
+    <script>
+        window.onload = function () {
+            var date_start = getCookie("date_start");
+            var date_end = getCookie("date_end");
+
+            if (!date_start) {
+                var now = new Date();
+                now.setDate(1);  // Set day to the first of the month
+                now.setHours(0, 0, 0, 0);  // Clear the time
+                date_start = now.toISOString().substring(0, 10);  // Extract the date part
+            } else {
+                date_start = new Date(date_start).toISOString().substring(0, 10);
+            }
+
+            if (!date_end) {
+                var now = new Date();
+                now.setMonth(now.getMonth() + 1);  // Next month
+                now.setDate(0);  // Last day of the current month
+                now.setHours(23, 59, 59, 999);  // End of the day
+                date_end = now.toISOString().substring(0, 10);  // Extract the date part
+            } else {
+                date_end = new Date(date_end).toISOString().substring(0, 10);
+            }
+
+            document.getElementById('date_start').value = date_start;
+            document.getElementById('date_end').value = date_end;
+        }
+
+        function getCookie(cname) {
+            var name = cname + "=";
+            var decodedCookie = decodeURIComponent(document.cookie);
+            var ca = decodedCookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        document.getElementById('dateForm').onsubmit = function (e) {
+            // e.preventDefault();  // Prevent form from submitting normally
+
+            var date_start = document.getElementById('date_start').value;
+            var date_end = document.getElementById('date_end').value;
+
+            // Convert date to datetime format
+            date_start = new Date(date_start).toISOString();
+            date_end = new Date(date_end).toISOString();
+
+            // Calculate expiry date 30 days from now
+            var expires = new Date();
+            expires.setTime(expires.getTime() + (30 * 24 * 60 * 60 * 1000));  // 30 days in milliseconds
+            expires = expires.toUTCString();
+
+            // Set the cookies with expiry date
+            document.cookie = "date_start=" + date_start + "; expires=" + expires + "; path=/";
+            document.cookie = "date_end=" + date_end + "; expires=" + expires + "; path=/";
+        }
+    </script>
+</div>
