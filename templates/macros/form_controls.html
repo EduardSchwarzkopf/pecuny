@@ -1,11 +1,11 @@
 {% import 'macros/buttons.html' as btn %}
 
-{% macro input_field(field) -%}
-<div class="mb-3" {% if field.type=="HiddenField" %} style="display: none;" {% endif %}>
-    {{ field.label(class="block text-sm font-medium leading-6 text-gray-900") }}
+{% macro input_field(field, field_classname='', label_classname='') %}
+<div {% if field.type=="HiddenField" %} style="display: none;" {% endif %}>
+    {{ field.label(class="block text-sm font-medium leading-6 text-gray-900 " ~ label_classname) }}
     {{
-    field(class="block w-full rounded-md border-0 p-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300
-    placeholder:text-gray-400 focus:ring-primary sm:text-sm sm:leading-6",
+    field(class="block w-full rounded-md p-2 text-gray-900 placeholder:text-gray-400 sm:text-sm sm:leading-6 " ~
+    field_classname,
     onkeyup="hideError(this)"
     )
     }}
