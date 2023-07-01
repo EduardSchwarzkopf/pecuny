@@ -31,16 +31,6 @@ def render_template(
     return templates.TemplateResponse(template, {**context, **context_extra})
 
 
-def render_dashboard_template(
-    template: str, request: Request, context: Optional[dict] = {}
-):  # sourcery skip: default-mutable-arg
-    return render_template(
-        template,
-        request,
-        {**context, "date_picker_form": schemas.DatePickerForm(request)},
-    )
-
-
 def render_form_template(template: str, request: Request, form: StarletteForm):
     return render_template(template, request, {"form": form})
 
