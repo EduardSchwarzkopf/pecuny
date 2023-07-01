@@ -51,7 +51,7 @@ def max_accounts_reached(user, request: Request) -> RedirectResponse:
 
 
 @csrf_protect
-@router.get("/create-account", response_class=HTMLResponse)
+@router.get("/add", response_class=HTMLResponse)
 async def page_create_account_form(
     request: Request,
     user: models.User = Depends(current_active_user),
@@ -186,7 +186,7 @@ async def page_update_account(
 
 
 @csrf_protect
-@router.get("/{account_id}/create-transaction")
+@router.get("/{account_id}/add-transaction")
 async def page_create_transaction_form(
     request: Request,
     account_id: int,
@@ -274,7 +274,7 @@ async def page_update_transaction(
     )
 
 
-@router.post("/{account_id}/create-transaction")
+@router.post("/{account_id}/add-transaction")
 async def page_create_transaction(
     request: Request,
     account_id: int,
