@@ -136,6 +136,55 @@ async def page_get_account(
     )
 
 
+@router.get("/{account_id}/edit")
+async def page_update_account_form(
+    request: Request, account_id: int, user: models.User = Depends(current_active_user)
+):
+    account = await service.get_account(user, account_id)
+
+    if account is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
+
+    form = schemas.CreateAccountForm(request, data=account.__dict__)
+
+    return render_template(
+        "pages/dashboard/page_update_account.html",
+        request,
+        {"account_id": account_id, "form": form},
+    )
+
+
+@csrf_protect
+@router.post("/{account_id}/edit")
+async def page_update_account(
+    request: Request,
+    account_id: int,
+    user: models.User = Depends(current_active_user),
+):
+    account = await service.get_account(user, account_id)
+
+    if account is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
+
+    form = await schemas.CreateAccountForm.from_formdata(request)
+
+    if not await form.validate_on_submit():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Validation error"
+        )
+
+    account = schemas.Account(**form.data)
+
+    response = await tm.transaction(service.update_account, user, account_id, account)
+
+    if not response:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
+
+    return RedirectResponse(
+        router.url_path_for("page_get_account", account_id=account_id), status_code=302
+    )
+
+
 @csrf_protect
 @router.get("/{account_id}/create-transaction")
 async def page_create_transaction_form(
