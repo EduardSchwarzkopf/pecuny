@@ -770,6 +770,10 @@ input {
   height: 2.5rem;
 }
 
+.h-12 {
+  height: 3rem;
+}
+
 .h-16 {
   height: 4rem;
 }
@@ -786,24 +790,12 @@ input {
   height: 2rem;
 }
 
-.h-full {
-  height: 100%;
-}
-
-.h-24 {
-  height: 6rem;
-}
-
 .h-auto {
   height: auto;
 }
 
-.h-12 {
-  height: 3rem;
-}
-
-.h-14 {
-  height: 3.5rem;
+.h-full {
+  height: 100%;
 }
 
 .min-h-full {
@@ -836,10 +828,6 @@ input {
 
 .w-full {
   width: 100%;
-}
-
-.w-12 {
-  width: 3rem;
 }
 
 .max-w-7xl {
@@ -1053,16 +1041,8 @@ input {
   background-color: rgb(255 255 255 / var(--tw-bg-opacity));
 }
 
-.fill-black {
-  fill: #000;
-}
-
 .fill-primary {
   fill: #515864;
-}
-
-.fill-danger {
-  fill: #f14668;
 }
 
 .p-2 {
