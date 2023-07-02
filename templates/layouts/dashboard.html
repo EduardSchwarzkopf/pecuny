@@ -6,19 +6,7 @@
 {% block content_header %}
 
 {% if breadcrumbs %}
-<ul class="breadcrumb">
-    {% for crumb in breadcrumbs %}
-
-    <li>
-        {% if crumb.url %}
-        <a href="{{ crumb.url }}">{{ crumb.title }}</a>
-        {% else %}
-        {{ crumb.title }}
-        {% endif %}
-
-    </li>
-    {% endfor %}
-</ul>
+{% include'fragments/breadcrumbs.html' %}
 {% endif %}
 
 {% endblock %}
