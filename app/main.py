@@ -1,4 +1,3 @@
-import stat
 from fastapi import FastAPI, Request, status
 from app.routes import router_list
 
@@ -18,6 +17,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from app.utils.exceptions import UnauthorizedPageException
 from app.middleware import HeaderLinkMiddleware
+from app.utils import BreadcrumbBuilder
+
 
 from starlette_wtf import CSRFProtectMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -42,6 +43,17 @@ app.add_middleware(HeaderLinkMiddleware)
 
 app.add_middleware(SessionMiddleware, secret_key="***REPLACEME1***")
 app.add_middleware(CSRFProtectMiddleware, csrf_secret="***REPLACEME2***")
+
+
+@app.middleware("http")
+async def add_breadcrumbs(request: Request, call_next):
+    breadcrumb_builder = BreadcrumbBuilder(request)
+    breadcrumb_builder.add("Home", "/")
+
+    # store the breadcrumb builder in the request state so it can be accessed in the route handlers
+    request.state.breadcrumb_builder = breadcrumb_builder
+
+    return await call_next(request)
 
 
 if _debug := os.getenv("DEBUG"):
