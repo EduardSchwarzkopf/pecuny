@@ -1,34 +1,16 @@
-{% macro primary_button(text, type='button', id='') -%}
-<button id="{{ id }}" type="{{ type }}"
-    class="flex justify-center transition rounded-md bg-primary py-2 px-4 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-primary hover:border-primary border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50">
-    {{ text }}
-</button>
-{% endmacro %}
+{% set btnStyle = 'flex justify-center transition rounded-md py-2 px-4 text-sm font-semibold leading-6 text-white
+shadow-sm hover:bg-transparent border-transparent border focus-visible:outline focus-visible:outline-2
+focus-visible:outline-offset-2 disabled:opacity-50' %}
 
-{% macro success_button(text, type='button', id='') -%}
-<button id="{{ id }}" type="{{ type }}"
-    class="flex justify-center transition rounded-md bg-success py-2 px-4 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-success hover:border-success border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success disabled:opacity-50">
-    {{ text }}
-</button>
-{% endmacro %}
-
-{% macro danger_button(text, type='button', id='') -%}
-<button id="{{ id }}" type="{{ type }}"
-    class="flex justify-center transition rounded-md bg-danger py-2 px-4 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-danger hover:border-danger border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger disabled:opacity-50">
-    {{ text }}
-</button>
-{% endmacro %}
-
-{% macro info_button(text, type='button', id='') -%}
-<button id="{{ id }}" type="{{ type }}"
-    class="flex justify-center transition rounded-md bg-info py-2 px-4 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-info hover:border-info border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info disabled:opacity-50">
-    {{ text }}
-</button>
-{% endmacro %}
-
-{% macro secondary_button(text, type='button', id='') -%}
-<button id="{{ id }}" type="{{ type }}"
-    class="flex justify-center transition rounded-md bg-secondary py-2 px-4 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-transparent hover:text-secondary hover:border-secondary border-transparent border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:opacity-50">
+{% macro button(text, type='button', id='', classname='', variant='primary') -%}
+{% set styles = {
+'primary': 'bg-primary hover:text-primary hover:border-primary focus-visible:outline-primary',
+'success': 'bg-success hover:text-success hover:border-success focus-visible:outline-success',
+'danger': 'bg-danger hover:text-danger hover:border-danger focus-visible:outline-danger',
+'info': 'bg-info hover:text-info hover:border-info focus-visible:outline-info',
+'secondary': 'bg-secondary hover:text-secondary hover:border-secondary focus-visible:outline-secondary',
+} %}
+<button id="{{ id }}" type="{{ type }}" class="{{ btnStyle ~ ' ' ~ styles[variant] ~ ' ' ~ classname }}">
     {{ text }}
 </button>
 {% endmacro %}

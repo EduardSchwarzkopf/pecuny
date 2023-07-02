@@ -19,8 +19,8 @@
 </div>
 {% endmacro %}
 
-{% macro submit_button(label='Submit') %}
-{{ btn.primary_button(label, 'submit', id='submit') }}
+{% macro submit_button(label='Submit', classname='') %}
+{{ btn.button(label, 'submit', id='submit', classname=classname) }}
 {% endmacro %}
 
 {% macro form(title, form, action_url, button_text="Submit") %}
@@ -51,7 +51,7 @@
     </div>
 
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <form class="space-y-6" action="{{ action_url }}" method="POST">
+        <form class="space-y-6 w-full" action="{{ action_url }}" method="POST">
             {{ form.csrf_token }}
             {% for field in form %}
             {% if field.type not in ("CSRFTokenField") %}
@@ -70,7 +70,7 @@
 
             <script src="/static/js/passwordPolicy.js"></script>
             {% endif %}
-            {{ submit_button(button_text) }}
+            {{ submit_button(button_text, 'w-full') }}
             <script src="/static/js/errorHandling.js"></script>
         </form>
     </div>

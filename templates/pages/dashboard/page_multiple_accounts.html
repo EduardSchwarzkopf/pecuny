@@ -8,7 +8,7 @@
         {% if accounts|length > max_allowed_accounts %}
         <div>
             <a href="{{ url_for('page_create_account_form')}}">
-                {{ btn.primary_button("Create Account")}}
+                {{ btn.button("Create Account")}}
             </a>
         </div>
         {% endif %}
