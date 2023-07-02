@@ -6,7 +6,7 @@ from app.routers.api import (
     scheduled_transactions as api_scheduled_transactions,
 )
 
-from app.routers import dashboard, accounts, auth
+from app.routers import dashboard, accounts, auth, index
 import fastapi_users
 from app.schemas import UserCreate, UserRead, UserUpdate
 from app.auth_manager import auth_backend, fastapi_users
@@ -36,6 +36,7 @@ user_tag_list = ["Api", "Users"]
 
 router_list = [
     ## Pages
+    {"router": index.router},
     {"router": dashboard.router},
     {"router": accounts.router},
     {"router": auth.router},

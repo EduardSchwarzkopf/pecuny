@@ -48,7 +48,7 @@ app.add_middleware(CSRFProtectMiddleware, csrf_secret="***REPLACEME2***")
 @app.middleware("http")
 async def add_breadcrumbs(request: Request, call_next):
     breadcrumb_builder = BreadcrumbBuilder(request)
-    breadcrumb_builder.add("Home", "/")
+    breadcrumb_builder.add("Dashboard", "/dashboard")
 
     # store the breadcrumb builder in the request state so it can be accessed in the route handlers
     request.state.breadcrumb_builder = breadcrumb_builder

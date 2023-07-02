@@ -22,9 +22,10 @@ from app.services import (
     categories as category_service,
 )
 from app.auth_manager import current_active_user
+from app.routers.dashboard import router as dashboard_router
 
-PREFIX = "/accounts"
-router = PageRouter(prefix="/accounts", tags=["Accounts"])
+PREFIX = f"{dashboard_router.prefix}/accounts"
+router = PageRouter(prefix=PREFIX, tags=["Accounts"])
 
 
 async def handle_account_route(

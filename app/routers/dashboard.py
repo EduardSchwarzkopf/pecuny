@@ -9,11 +9,11 @@ from app.services import accounts as service
 from app.config import settings
 
 
-router = PageRouter(tags=["Dashboard"])
+router = PageRouter(tags=["Dashboard"], prefix="/dashboard")
 
 
 @router.get("/")
-async def dashboard(
+async def page_dashboard(
     request: Request,
     user: User = Depends(current_active_user),
 ):
