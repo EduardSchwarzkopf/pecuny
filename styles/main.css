@@ -11,9 +11,6 @@ add your styles here and run:
 
 
 @layer base {
-    html {
-        @apply bg-gray-50
-    }
     a {
         @apply text-primary font-semibold transition;
     }

@@ -62,11 +62,6 @@ module.exports = {
                     dark: "#ffc94a",
                     hover: "#fff0c6",
                 },
-                dark: {
-                    light: "gray-50",
-                    DEFAULT: "gray-800",
-                    hover: "gray-200",
-                },
             },
         },
     },
