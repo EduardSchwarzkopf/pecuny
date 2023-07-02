@@ -13,7 +13,7 @@
         <h1>{{account.balance}}</h1>
     </div>
 </div>
-<div class="my-6 w-1/5">
+<div class="my-6">
     <a href="{{ url_for('page_create_transaction_form', account_id=account.id)}}">
         {{ btn.button("Create Transaction")}}
     </a>
