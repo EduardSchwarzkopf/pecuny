@@ -18,6 +18,7 @@ def set_feedback(
 def get_default_context(request: Request) -> dict:
     return {
         "request": request,
+        "breadcrumbs": request.state.breadcrumb_builder.build(),
         "header_links": getattr(request.state, "header_links", None),
         "feedback_type": getattr(request.state, "feedback_type", None),
         "feedback_message": getattr(request.state, "feedback_message", None),
@@ -40,3 +41,7 @@ def group_categories_by_section(categorie_list: List[schemas.CategoryData]):
     for item in categorie_list:
         grouped_data[item.section.label].append((item.id, item.label))
     return grouped_data
+
+
+def add_breadcrumb(request: Request, label: str, url: str):
+    request.state.breadcrumb_builder.add(label, url)

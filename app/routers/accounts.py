@@ -10,6 +10,7 @@ from starlette import status
 from app.utils import PageRouter
 from app.utils.enums import FeedbackType
 from app.utils.template_utils import (
+    add_breadcrumb,
     group_categories_by_section,
     render_template,
     set_feedback,
@@ -22,8 +23,23 @@ from app.services import (
 )
 from app.auth_manager import current_active_user
 
-
+PREFIX = "/accounts"
 router = PageRouter(prefix="/accounts", tags=["Accounts"])
+
+
+async def handle_account_route(
+    request, user: models.User, account_id: int, create_link=True
+) -> models.Account:
+    account = await service.get_account(user, account_id)
+
+    if account is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
+
+    add_breadcrumb(request, "Accounts", PREFIX)
+    account_url = f"{PREFIX}/{account_id}" if create_link else ""
+    add_breadcrumb(request, account.label, account_url)
+
+    return account
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -102,14 +118,7 @@ async def page_get_account(
     date_start: datetime = Cookie(None),
     date_end: datetime = Cookie(None),
 ):
-    account = await service.get_account(user, account_id)
-
-    if account is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
-
-    request.state.breadcrumb_builder.add("Accounts", "/accounts")
-    request.state.breadcrumb_builder.add(account.label)
-    breadcrumbs = request.state.breadcrumb_builder.build()
+    account = await handle_account_route(request, user, account_id, False)
 
     if date_start is None:
         date_start = datetime.now().replace(
@@ -140,7 +149,6 @@ async def page_get_account(
         request,
         {
             "account": account,
-            "breadcrumbs": breadcrumbs,
             "transaction_list_grouped": transaction_list_grouped,
             "date_picker_form": schemas.DatePickerForm(request),
         },
@@ -151,21 +159,17 @@ async def page_get_account(
 async def page_update_account_form(
     request: Request, account_id: int, user: models.User = Depends(current_active_user)
 ):
-    account = await service.get_account(user, account_id)
-
-    if account is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
-
-    request.state.breadcrumb_builder.add("Accounts", "/accounts")
-    request.state.breadcrumb_builder.add(account.label, f"/accounts/{account.id}")
-    breadcrumbs = request.state.breadcrumb_builder.build()
+    account = await handle_account_route(request, user, account_id)
 
     form = schemas.CreateAccountForm(request, data=account.__dict__)
 
     return render_template(
         "pages/dashboard/page_update_account.html",
         request,
-        {"account_id": account_id, "form": form, "breadcrumbs": breadcrumbs},
+        {
+            "account_id": account_id,
+            "form": form,
+        },
     )
 
 
@@ -176,10 +180,7 @@ async def page_update_account(
     account_id: int,
     user: models.User = Depends(current_active_user),
 ):
-    account = await service.get_account(user, account_id)
-
-    if account is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
+    await handle_account_route(request, user, account_id)
 
     form = await schemas.CreateAccountForm.from_formdata(request)
 
@@ -207,14 +208,7 @@ async def page_create_transaction_form(
     account_id: int,
     user: models.User = Depends(current_active_user),
 ):
-    account = await service.get_account(user, account_id)
-
-    if account is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
-
-    request.state.breadcrumb_builder.add("Accounts", "/accounts")
-    request.state.breadcrumb_builder.add(account.label, f"/accounts/{account.id}")
-    breadcrumbs = request.state.breadcrumb_builder.build()
+    await handle_account_route(request, user, account_id)
 
     category_list = await category_service.get_categories(user)
     form = schemas.CreateTransactionForm(request)
@@ -223,7 +217,10 @@ async def page_create_transaction_form(
     return render_template(
         "pages/dashboard/page_create_transaction.html",
         request,
-        {"form": form, "account_id": account_id, "breadcrumbs": breadcrumbs},
+        {
+            "form": form,
+            "account_id": account_id,
+        },
     )
 
 
@@ -234,14 +231,7 @@ async def page_update_transaction(
     transaction_id: int,
     user: models.User = Depends(current_active_user),
 ):
-    account = await service.get_account(user, account_id)
-
-    if account is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
-
-    request.state.breadcrumb_builder.add("Accounts", "/accounts")
-    request.state.breadcrumb_builder.add(account.label, f"/accounts/{account.id}")
-    breadcrumbs = request.state.breadcrumb_builder.build()
+    await handle_account_route(request, user, account_id)
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
 
@@ -260,7 +250,6 @@ async def page_update_transaction(
             "transaction": transaction,
             "account_id": account_id,
             "form": form,
-            "breadcrumbs": breadcrumbs,
         },
     )
 
@@ -272,10 +261,7 @@ async def page_update_transaction(
     transaction_id: int,
     user: models.User = Depends(current_active_user),
 ):
-    account = await service.get_account(user, account_id)
-
-    if account is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
+    await handle_account_route(request, user, account_id)
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
 
@@ -318,10 +304,7 @@ async def page_create_transaction(
     account_id: int,
     user: models.User = Depends(current_active_user),
 ):
-    account = await service.get_account(user, account_id)
-
-    if account is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
+    await handle_account_route(request, user, account_id)
 
     category_list = await category_service.get_categories(user)
     form = await schemas.CreateTransactionForm.from_formdata(request)
