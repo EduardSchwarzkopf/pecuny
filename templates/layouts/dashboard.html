@@ -3,6 +3,25 @@
 {% include'fragments/header.html' %}
 {% endblock %}
 
+{% block content_header %}
+
+{% if breadcrumbs %}
+<ul class="breadcrumb">
+    {% for crumb in breadcrumbs %}
+
+    <li>
+        {% if crumb.url %}
+        <a href="{{ crumb.url }}">{{ crumb.title }}</a>
+        {% else %}
+        {{ crumb.title }}
+        {% endif %}
+
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% endblock %}
 {% block javascript %}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
