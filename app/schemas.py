@@ -222,14 +222,14 @@ class DatetimeLocalFieldWithoutTime(StringField):
 
 
 class CreateTransactionForm(StarletteForm):
-    amount = DecimalField("amount", validators=[InputRequired()])
-    reference = StringField("reference", validators=[InputRequired()])
-    category_id = SelectField("category_id", validators=[InputRequired()], coerce=int)
-    date = DatetimeLocalFieldWithoutTime("date", validators=[InputRequired()])
+    amount = DecimalField("Amount", validators=[InputRequired()])
+    reference = StringField("Reference", validators=[InputRequired()])
+    category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
+    date = DatetimeLocalFieldWithoutTime("Date", validators=[InputRequired()])
 
 
 class DatePickerForm(StarletteForm):
     date_start = DatetimeLocalFieldWithoutTime(
-        "date_start", validators=[InputRequired()]
+        "Start Date", validators=[InputRequired()]
     )
-    date_end = DatetimeLocalFieldWithoutTime("date_end", validators=[InputRequired()])
+    date_end = DatetimeLocalFieldWithoutTime("End Date", validators=[InputRequired()])
