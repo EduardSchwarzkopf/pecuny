@@ -1,4 +1,5 @@
 {% import 'macros/buttons.html' as btn %}
+{% import 'macros/images.html' as img %}
 
 {% macro input_field(field, field_classname='', label_classname='') %}
 <div {% if field.type=="HiddenField" %} style="display: none;" {% endif %}>
@@ -43,8 +44,7 @@
 {% macro auth_form(title, form, action_url, button_text="Submit", show_password_policy=false) %}
 <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-        <img class="mx-auto h-10 w-auto" src="https://tailwindui.com/img/logos/mark.svg?color=primary&shade=600"
-            alt="Your Company" />
+        {{ img.logo("mx-auto h-16 w-auto") }}
         <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
             {{ title }}
         </h2>
