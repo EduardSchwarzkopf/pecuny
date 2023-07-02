@@ -1,4 +1,28 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+from typing import Optional
+
+
+class Breadcrumb:
+    def __init__(self, request: Request, title: str, url: Optional[str] = None):
+        self.request = request
+        self.title = title
+        self.url = url
+
+    def get(self):
+        return {"title": self.title, "url": self.url}
+
+
+class BreadcrumbBuilder:
+    def __init__(self, request: Request):
+        self.request = request
+        self.breadcrumbs = []
+
+    def add(self, title: str, url: Optional[str] = None):
+        breadcrumb = Breadcrumb(self.request, title, url)
+        self.breadcrumbs.append(breadcrumb.get())
+
+    def build(self):
+        return self.breadcrumbs
 
 
 class APIRouterExtended(APIRouter):
