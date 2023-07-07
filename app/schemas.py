@@ -163,6 +163,22 @@ class CreateAccountForm(StarletteForm):
     balance = DecimalField("balance", validators=[DataRequired()])
 
 
+class UpdateAccountForm(StarletteForm):
+    label = StringField(
+        "label",
+        validators=[
+            DataRequired("Please enter your email address"),
+        ],
+    )
+
+    description = StringField(
+        "description",
+        validators=[
+            DataRequired("Please enter a description"),
+        ],
+    )
+
+
 password_policy = Regexp(
     r"^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{8,}$",
     message="Password should have at least 8 characters, 1 uppercase, 1 digit and 1 special character",

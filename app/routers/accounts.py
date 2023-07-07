@@ -162,7 +162,7 @@ async def page_update_account_form(
 ):
     account = await handle_account_route(request, user, account_id)
 
-    form = schemas.CreateAccountForm(request, data=account.__dict__)
+    form = schemas.UpdateAccountForm(request, data=account.__dict__)
 
     return render_template(
         "pages/dashboard/page_update_account.html",
@@ -200,7 +200,7 @@ async def page_update_account(
 ):
     await handle_account_route(request, user, account_id)
 
-    form = await schemas.CreateAccountForm.from_formdata(request)
+    form = await schemas.UpdateAccountForm.from_formdata(request)
 
     if not await form.validate_on_submit():
         raise HTTPException(
