@@ -7,17 +7,15 @@
 
 
 {% macro delete_object(action_url, title='Are you sure?', body='') %}
-<div id="myModal" class="relative z-10 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity hidden"></div>
+<div id="myModal" class="relative z-10 hidden " aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="fixed inset-0 z-10 overflow-y-auto">
-        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div id="modalOverlay"
+            class="flex min-h-full bg-gray-500 bg-opacity-75 transition-opacity items-end justify-center p-4 text-center sm:items-center sm:p-0">
 
             <div
                 class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
                 <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
-                        {% import 'macros/buttons.html' as btn %}
-
                         <div
                             class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                             <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -46,16 +44,14 @@
 </div>
 <script>
     // get modal element
-    var modal = document.getElementById('myModal');
+    const modal = document.getElementById('myModal');
+    const modalOverlay = document.getElementById('modalOverlay')
 
     // get open modal button element
-    var openModalBtn = document.getElementById('openModalButton');
+    const openModalBtn = document.getElementById('openModalButton');
 
     // get deactivate button element
-    var deactivateBtn = document.getElementsByClassName('bg-red-600')[0];
-
-    // get cancel button element
-    var cancelBtn = document.getElementsByClassName('bg-white')[1];
+    const actionBtn = document.getElementById('delete_submit');
 
     // function to open the modal
     function openModal() {
@@ -71,13 +67,10 @@
 
     // listen for open click
     openModalBtn.addEventListener('click', openModal);
-    deactivateBtn.addEventListener('click', openModal);
-
-    // listen for close click
-    cancelBtn.addEventListener('click', closeModal);
+    actionBtn.addEventListener('click', openModal);
 
     // close modal when clicking outside
-    modal.addEventListener('click', function (event) {
+    modalOverlay.addEventListener('click', function (event) {
         closeModal();
     });
 
