@@ -4,7 +4,7 @@
 {% import 'macros/modal.html' as modal %}
 
 {% set title = 'Update Account' %}
-{% set delete_title = 'Delete ' ~ form.data['label'] %}
+{% set delete_title = 'Delete ' ~ form.data['label'] ~ '?' %}
 {% set action_url = url_for('page_update_account', account_id=account_id) %}
 {% set button_text = "Update" %}
 {% block content %}
