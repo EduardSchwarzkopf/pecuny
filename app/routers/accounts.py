@@ -175,6 +175,23 @@ async def page_update_account_form(
 
 
 @csrf_protect
+@router.post("/{account_id}/delete")
+async def page_delete_account(
+    request: Request,
+    account_id: int,
+    user: models.User = Depends(current_active_user),
+):
+    await handle_account_route(request, user, account_id)
+
+    response = await tm.transaction(service.delete_account, user, account_id)
+
+    if not response:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
+
+    return RedirectResponse(router.url_path_for("page_accounts_list"), status_code=302)
+
+
+@csrf_protect
 @router.post("/{account_id}/edit")
 async def page_update_account(
     request: Request,
