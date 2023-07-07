@@ -4,7 +4,7 @@
 
 {% set title = 'Update Account' %}
 {% set action_url = url_for('page_update_account', account_id=account_id) %}
-{% set button_text = "Aktualisieren" %}
+{% set button_text = "Update" %}
 
 {% block content %}
 {{ form_ctrl.form(title, form, action_url, button_text) }}
