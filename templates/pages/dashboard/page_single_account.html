@@ -6,7 +6,12 @@
 
 <div class="flex items-center w-full">
     <div class="grow">
-        <h2 class="">{{account.label}}</h2>
+        <div class="flex flex-row space-x-4 items-center">
+            <h2 class="">{{account.label}}</h2>
+            <a href="{{ url_for('page_update_account_form', account_id=account.id)}}">
+                {{ btn.button("update")}}
+            </a>
+        </div>
         <h6>{{ account.description }}</h6>
     </div>
     <div class="basis-auto">
