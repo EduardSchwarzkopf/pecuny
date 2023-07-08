@@ -1,7 +1,7 @@
 {% import 'macros/buttons.html' as btn %}
 
-{% macro button(label, classname='') %}
-{{ btn.button(label, 'button', id='openModalButton', classname=classname) }}
+{% macro button(label, classname='ml-6') %}
+{{ btn.button(label, 'button', id='openModalButton', classname=classname, variant="danger") }}
 {% endmacro %}
 
 
@@ -46,7 +46,7 @@
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                     <form action="{{ action_url }}" method="POST">
-                        {{ btn.button("Delete", 'submit', id='actionBtn', variant="danger") }}
+                        {{ btn.button("Yes, delete!", 'submit', id='actionBtn', variant="danger") }}
                     </form>
                 </div>
             </div>

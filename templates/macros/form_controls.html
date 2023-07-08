@@ -89,11 +89,18 @@
         {% endif %}
         {% endfor %}
 
-        {{ submit_button('Update' if transaction_id else 'Create') }}
+        <div class="p-2 flex">
+            <div class="flex justify-end">
+                {{ submit_button('Update' if transaction_id else 'Create') }}
 
-        {% if transaction_id %}
-        {{ modal.button("Delete") }}
-        {% endif %}
+                {% if transaction_id %}
+                {{ modal.button("Delete") }}
+                {% endif %}
+            </div>
+        </div>
+
+
+
         <script src="/static/js/errorHandling.js"></script>
     </form>
 
