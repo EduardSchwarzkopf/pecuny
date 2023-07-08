@@ -3,8 +3,6 @@
 {% import 'macros/form_controls.html' as form_ctrl %}
 {% import 'macros/modal.html' as modal %}
 
-{% set action_url = url_for('page_update_transaction', account_id=account_id, transaction_id=transaction.id) %}
-
 {% block content %}
-{{ form_ctrl.transaction_form(request, form, action_url, account_id, transaction.id) }}
+{{ form_ctrl.transaction_form(request, form, action_url, account_id, transaction_id) }}
 {% endblock %}

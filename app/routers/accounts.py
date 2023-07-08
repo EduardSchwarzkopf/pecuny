@@ -233,11 +233,14 @@ async def page_create_transaction_form(
     form.category_id.choices = group_categories_by_section(category_list)
 
     return render_template(
-        "pages/dashboard/page_create_transaction.html",
+        "pages/dashboard/page_form_transaction.html",
         request,
         {
             "form": form,
             "account_id": account_id,
+            "action_url": router.url_path_for(
+                "page_create_transaction", account_id=account_id
+            ),
         },
     )
 
@@ -262,12 +265,17 @@ async def page_update_transaction(
     form.date.data = transaction.information.date.strftime("%Y-%m-%d")
 
     return render_template(
-        "pages/dashboard/page_update_transaction.html",
+        "pages/dashboard/page_form_transaction.html",
         request,
         {
-            "transaction": transaction,
-            "account_id": account_id,
             "form": form,
+            "account_id": account_id,
+            "transaction_id": transaction.id,
+            "action_url": router.url_path_for(
+                "page_update_transaction",
+                account_id=account_id,
+                transaction_id=transaction.id,
+            ),
         },
     )
 
