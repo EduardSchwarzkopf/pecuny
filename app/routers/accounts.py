@@ -80,12 +80,14 @@ async def page_create_account_form(
     form = await schemas.CreateAccountForm.from_formdata(request)
 
     return render_template(
-        "pages/dashboard/page_create_account.html", request, {"form": form}
+        "pages/dashboard/page_form_account.html",
+        request,
+        {"form": form, "action_url": router.url_path_for("page_create_account")},
     )
 
 
 @csrf_protect
-@router.post("/create-account")
+@router.post("/add")
 async def page_create_account(
     request: Request, user: models.User = Depends(current_active_user)
 ):
@@ -106,9 +108,7 @@ async def page_create_account(
     if not response:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
-    return RedirectResponse(
-        router.url_path_for("page_create_account_form"), status_code=302
-    )
+    return RedirectResponse(router.url_path_for("page_account_list"), status_code=302)
 
 
 @router.get("/{account_id}")
@@ -165,11 +165,14 @@ async def page_update_account_form(
     form = schemas.UpdateAccountForm(request, data=account.__dict__)
 
     return render_template(
-        "pages/dashboard/page_update_account.html",
+        "pages/dashboard/page_form_account.html",
         request,
         {
             "account_id": account_id,
             "form": form,
+            "action_url": router.url_path_for(
+                "page_update_account", account_id=account_id
+            ),
         },
     )
 
@@ -198,7 +201,7 @@ async def page_update_account(
     account_id: int,
     user: models.User = Depends(current_active_user),
 ):
-    await handle_account_route(request, user, account_id)
+    account = await handle_account_route(request, user, account_id)
 
     form = await schemas.UpdateAccountForm.from_formdata(request)
 
@@ -207,7 +210,7 @@ async def page_update_account(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Validation error"
         )
 
-    account = schemas.Account(**form.data)
+    account = schemas.Account(**form.data, balance=account.balance)
 
     response = await tm.transaction(service.update_account, user, account_id, account)
 
