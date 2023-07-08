@@ -1,8 +1,0 @@
-{% extends "layouts/dashboard.html" %}
-{% import 'macros/form_controls.html' as form_ctrl %}
-
-{% set action_url = url_for('page_create_transaction', account_id=account_id) %}
-
-{% block content %}
-{{ form_ctrl.transaction_form(request, form, action_url, account_id) }}
-{% endblock %}
