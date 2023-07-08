@@ -1,5 +1,6 @@
 {% import 'macros/buttons.html' as btn %}
 {% import 'macros/images.html' as img %}
+{% import 'macros/modal.html' as modal %}
 
 {% macro input_field(field, field_classname='', label_classname='') %}
 <div {% if field.type=="HiddenField" %} style="display: none;" {% endif %}>
@@ -74,5 +75,33 @@
             <script src="/static/js/errorHandling.js"></script>
         </form>
     </div>
+</div>
+{% endmacro %}
+
+{% macro transaction_form(request, form, action_url, account_id, transaction_id=false) %}
+<div>
+    <form class="space-y-6" action="{{ action_url }}" method="POST">
+        {{ form.csrf_token }}
+        {# TODO: DRY #}
+        {% for field in form %}
+        {% if field.type not in ("CSRFTokenField") %}
+        {{ input_field(field) }}
+        {% endif %}
+        {% endfor %}
+
+        {{ submit_button('Update' if transaction_id else 'Create') }}
+
+        {% if transaction_id %}
+        {{ modal.button("Delete") }}
+        {% endif %}
+        <script src="/static/js/errorHandling.js"></script>
+    </form>
+
+    {% if transaction_id %}
+    {{ modal.delete_object(request.url_for('page_delete_transaction', account_id=account_id,
+    transaction_id=transaction_id),
+    title="Delete Transaction") }}
+    {% endif %}
+
 </div>
 {% endmacro %}
