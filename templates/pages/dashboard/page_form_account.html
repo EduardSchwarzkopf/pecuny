@@ -1,7 +1,6 @@
 {% import 'macros/buttons.html' as btn %}
 {% extends "layouts/dashboard.html" %}
 {% import 'macros/form_controls.html' as form_ctrl %}
-{% import 'macros/modal.html' as modal %}
 
 {% block content %}
 {{ form_ctrl.account_form(request, form, action_url, account_id) }}
