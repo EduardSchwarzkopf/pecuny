@@ -349,3 +349,28 @@ async def page_create_transaction(
     return RedirectResponse(
         router.url_path_for("page_get_account", account_id=account_id), status_code=302
     )
+
+
+@csrf_protect
+@router.post("/{account_id}/transactions/{transaction_id}/delete")
+async def page_delete_transaction(
+    request: Request,
+    account_id: int,
+    transaction_id: int,
+    user: models.User = Depends(current_active_user),
+):
+    transaction = await transaction_service.get_transaction(user, transaction_id)
+
+    if transaction is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
+
+    response = await tm.transaction(
+        transaction_service.delete_transaction, user, transaction_id
+    )
+
+    if not response:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
+
+    return RedirectResponse(
+        router.url_path_for("page_get_account", account_id=account_id), status_code=302
+    )

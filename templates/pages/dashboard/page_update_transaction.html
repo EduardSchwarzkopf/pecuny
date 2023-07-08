@@ -1,11 +1,33 @@
 {% import 'macros/buttons.html' as btn %}
 {% extends "layouts/dashboard.html" %}
 {% import 'macros/form_controls.html' as form_ctrl %}
+{% import 'macros/modal.html' as modal %}
 
 {% set title = 'Update Transaction' %}
+{% set delete_title = 'Delete ' ~ form.data['label'] ~ '?' %}
 {% set action_url = url_for('page_update_transaction', account_id=account_id, transaction_id=transaction.id) %}
 {% set button_text = "Update" %}
 
 {% block content %}
 {{ form_ctrl.form(title, form, action_url, button_text) }}
+
+<div class="mt-6">
+    <h3>Danger Zone</h3>
+    <div class="border border-danger p-6 color-danger flex flex-row place-items-center rounded">
+        <div class="grow">
+            <p class="font-bold">
+                Delete this transaction?
+            </p>
+            <span class="font-grey">
+                Once you delete this transaction, there is no going back. Please be certain.
+            </span>
+        </div>
+        <div class="">
+            {{ modal.button("Delete this transaction") }}
+        </div>
+        {{ modal.delete_object(url_for('page_delete_transaction', account_id=account_id, transaction_id=transaction.id),
+        title=delete_title) }}
+    </div>
+</div>
+
 {% endblock %}
