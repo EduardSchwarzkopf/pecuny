@@ -17,7 +17,6 @@ from wtforms import (
     PasswordField,
     HiddenField,
     SelectField,
-    DateTimeLocalField,
 )
 from wtforms.validators import DataRequired, InputRequired, Email, EqualTo, Regexp
 
@@ -147,32 +146,32 @@ class LoginForm(StarletteForm):
 
 class CreateAccountForm(StarletteForm):
     label = StringField(
-        "label",
+        "Label",
         validators=[
             DataRequired("Please enter your email address"),
         ],
     )
 
     description = StringField(
-        "description",
+        "Description",
         validators=[
             DataRequired("Please enter a description"),
         ],
     )
 
-    balance = DecimalField("balance", validators=[DataRequired()])
+    balance = DecimalField("Balance", validators=[DataRequired()])
 
 
 class UpdateAccountForm(StarletteForm):
     label = StringField(
-        "label",
+        "Label",
         validators=[
             DataRequired("Please enter your email address"),
         ],
     )
 
     description = StringField(
-        "description",
+        "Description",
         validators=[
             DataRequired("Please enter a description"),
         ],

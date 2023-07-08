@@ -59,8 +59,8 @@ async def page_accounts_list(
     )
 
 
-def max_accounts_reached(user, request: Request) -> RedirectResponse:
-    if service.check_max_accounts(user):
+async def max_accounts_reached(user: models.User, request: Request) -> RedirectResponse:
+    if await service.check_max_accounts(user):
         set_feedback(request, FeedbackType.ERROR, "Maximum number of accounts reached")
         return RedirectResponse(
             router.url_path_for("page_accounts_list"),
@@ -74,7 +74,7 @@ async def page_create_account_form(
     request: Request,
     user: models.User = Depends(current_active_user),
 ):
-    if response := max_accounts_reached(user, request):
+    if response := await max_accounts_reached(user, request):
         return response
 
     form = await schemas.CreateAccountForm.from_formdata(request)
