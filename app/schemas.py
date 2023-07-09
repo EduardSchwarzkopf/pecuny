@@ -1,3 +1,4 @@
+from email.policy import default
 import uuid
 import datetime
 
@@ -159,7 +160,7 @@ class CreateAccountForm(StarletteForm):
         ],
     )
 
-    balance = DecimalField("Balance", validators=[DataRequired()])
+    balance = DecimalField("Balance", validators=[DataRequired()], default=0)
 
 
 class UpdateAccountForm(StarletteForm):
