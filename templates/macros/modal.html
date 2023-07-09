@@ -1,13 +1,13 @@
 {% import 'macros/buttons.html' as btn %}
 
-{% macro button(label, classname='ml-6') %}
+{% macro button(label, classname='') %}
 {{ btn.button(label, 'button', id='openModalButton', classname=classname, variant="danger") }}
 {% endmacro %}
 
 
 {% macro delete_object(action_url, title='Are you sure?', body='') %}
 <div id="deleteAccountModal" class="relative z-10 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div id="modalBackdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+    <div id="modalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
     <div class="fixed inset-0 z-10 overflow-y-auto">
         <div class=" flex  min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <div
