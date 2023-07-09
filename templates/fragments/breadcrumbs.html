@@ -19,13 +19,16 @@
             </svg>
             {% endif %}
 
-            {% if crumb.url %}
-            <a href="{{ crumb.url }}" class="inline-flex items-center text-sm font-medium text-gray-700">
+            <div class="inline-flex items-center text-sm font-medium text-gray-700">
+                {% if crumb.url %}
+                <a href="{{ crumb.url }}">
+                    {{ crumb.title }}
+                </a>
+                {% else %}
                 {{ crumb.title }}
-            </a>
-            {% else %}
-            {{ crumb.title }}
-            {% endif %}
+                {% endif %}
+
+            </div>
         </li>
         {% endfor %}
     </ol>
