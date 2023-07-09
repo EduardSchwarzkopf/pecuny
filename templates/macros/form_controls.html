@@ -3,10 +3,11 @@
 {% import 'macros/modal.html' as modal %}
 
 {% macro input_field(field, field_classname='', label_classname='') %}
-<div {% if field.type=="HiddenField" %} style="display: none;" {% endif %}>
-    {{ field.label(class="block text-sm font-medium leading-6 text-gray-900 " ~ label_classname) }}
+<div {% if field.type=="HiddenField" %} class="hidden" {% endif %}>
+    {{ field.label(class="block font-bold leading-6 text-gray " ~ label_classname) }}
     {{
-    field(class="block w-full rounded-md p-2 text-gray-900 placeholder:text-gray-400 sm:text-sm sm:leading-6 " ~
+    field(class="appearance-none border-2 border-gray-200 rounded-md w-full py-2 px-4 text-gray-700
+    leading-tight focus:outline-none focus:bg-white focus:border-primary " ~
     field_classname,
     onkeyup="hideError(this)"
     )
@@ -89,13 +90,13 @@
         {% endif %}
         {% endfor %}
 
-        <div class="p-2 flex">
-            <div class="flex justify-end">
-                {{ submit_button('Update' if transaction_id else 'Create') }}
-
+        <div class="p-2 flex flex-col items-end ">
+            <div class="flex justify-end space-x-6">
                 {% if transaction_id %}
                 {{ modal.button("Delete") }}
                 {% endif %}
+
+                {{ submit_button('Update' if transaction_id else 'Create') }}
             </div>
         </div>
 
@@ -122,7 +123,9 @@
         {% endif %}
         {% endfor %}
 
-        {{ submit_button('Update' if account_id else 'Create') }}
+        <div class="flex flex-col items-end">
+            {{ submit_button('Update' if account_id else 'Create') }}
+        </div>
 </div>
 
 <script src="/static/js/errorHandling.js"></script>
