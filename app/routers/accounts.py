@@ -44,17 +44,20 @@ async def handle_account_route(
 
 
 @router.get("/", response_class=HTMLResponse)
-async def page_accounts_list(
+async def page_list_accounts(
     request: Request,
     user: models.User = Depends(current_active_user),
 ):
     account_list = await service.get_accounts(user)
+    total_balance = sum(account.balance for account in account_list)
+
     return render_template(
-        "pages/dashboard/page_multiple_accounts.html",
+        "pages/dashboard/page_list_accounts.html",
         request,
         {
             "account_list": account_list,
             "max_allowed_accounts": settings.max_allowed_accounts,
+            "total_balance": total_balance,
         },
     )
 
@@ -63,7 +66,7 @@ async def max_accounts_reached(user: models.User, request: Request) -> RedirectR
     if await service.check_max_accounts(user):
         set_feedback(request, FeedbackType.ERROR, "Maximum number of accounts reached")
         return RedirectResponse(
-            router.url_path_for("page_accounts_list"),
+            router.url_path_for("page_list_accounts"),
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
@@ -91,7 +94,7 @@ async def page_create_account_form(
 async def page_create_account(
     request: Request, user: models.User = Depends(current_active_user)
 ):
-    if response := max_accounts_reached(user, request):
+    if response := await max_accounts_reached(user, request):
         return response
 
     form = await schemas.CreateAccountForm.from_formdata(request)
@@ -108,7 +111,7 @@ async def page_create_account(
     if not response:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
-    return RedirectResponse(router.url_path_for("page_account_list"), status_code=302)
+    return RedirectResponse(router.url_path_for("page_list_accounts"), status_code=302)
 
 
 @router.get("/{account_id}")
@@ -191,7 +194,7 @@ async def page_delete_account(
     if not response:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
-    return RedirectResponse(router.url_path_for("page_accounts_list"), status_code=302)
+    return RedirectResponse(router.url_path_for("page_list_accounts"), status_code=302)
 
 
 @csrf_protect
