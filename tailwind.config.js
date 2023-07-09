@@ -1,43 +1,42 @@
 /** @type {import('tailwindcss').Config} */
-const primary = "#f29545";
-const primaryLight = "#fdedd7";
+const primary = "#4f46f8";
+const primaryLight = "#5357ff";
 
 module.exports = {
     content: ["templates/**/*.html"],
     theme: {
         extend: {
             colors: {
-                //TODO: Rename to gray when primary color is picked
                 primary: {
-                    DEFAULT: "#515864",
-                    50: "#f4f5f7",
-                    100: "#e4e7e9",
-                    200: "#ccd0d5",
-                    300: "#a8afb8",
-                    400: "#7c8794",
-                    500: "#616b79",
-                    600: "#515864",
-                    700: "#484d56",
-                    800: "#3f434b",
-                    900: "#383b41",
-                    950: "#232429",
-                },
-                accent: "#ff7000",
-                placeholder: {
                     DEFAULT: primary,
                     light: primaryLight,
-                    50: "#fef7ee",
-                    100: "#fdedd7",
-                    200: "#fad8ae",
-                    300: "#f7bc7a",
-                    400: "#f29545",
-                    500: "#ee7721",
-                    600: "#e05d16",
-                    700: "#b94715",
-                    800: "#943918",
-                    900: "#773017",
-                    950: "#40170a",
+                    50: "#ecf1ff",
+                    100: "#dce5ff",
+                    200: "#c1ceff",
+                    300: "#9baeff",
+                    400: "#7382ff",
+                    500: "#5357ff",
+                    600: "#4f46f8",
+                    700: "#3427db",
+                    800: "#2a23b0",
+                    900: "#27248b",
+                    950: "#191551",
                 },
+                gray: {
+                    DEFAULT: "#668091",
+                    50: "#f9fafb",
+                    100: "#eceff2",
+                    200: "#d5dde2",
+                    300: "#b0bfc9",
+                    400: "#859bab",
+                    500: "#668091",
+                    600: "#516778",
+                    700: "#425462",
+                    800: "#394753",
+                    900: "#333e47",
+                    950: "#22292f",
+                },
+
                 info: {
                     light: "#c7def0",
                     DEFAULT: "#5ca2d4",
