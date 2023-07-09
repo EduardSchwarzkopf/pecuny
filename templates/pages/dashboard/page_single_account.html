@@ -26,13 +26,16 @@
     </a>
 </div>
 <div id="transactions">
-    <div>
-        {% for group in transaction_list_grouped %}
-        <h4>{{ group.date.strftime('%A, %d %B') }}</h4>
-        {% for transaction in group.transactions %}
-        <a href="{{ url_for('page_update_transaction', account_id=account.id, transaction_id=transaction.id)}}">
-            {% include 'fragments/accounts/transaction.html' %} {% endfor %} {% endfor %}
-        </a>
+    {% for group in transaction_list_grouped %}
+    <div class="mt-6">
+        <span class="pb-4 text-gray font-bold text-lg ">{{ group.date.strftime('%A - %d %B') }}</span>
+        <div class="grid gap-3">
+            {% for transaction in group.transactions %}
+            <a href="{{ url_for('page_update_transaction', account_id=account.id, transaction_id=transaction.id)}}">
+                {% include 'fragments/accounts/transaction.html' %} {% endfor %}
+            </a>
+        </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
