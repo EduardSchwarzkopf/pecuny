@@ -1,9 +1,7 @@
 import uuid
 from typing import Optional
 
-from fastapi import Depends, Request
-
-
+from fastapi import Depends, Form, HTTPException, Request
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
 from fastapi_users.authentication import (
     AuthenticationBackend,
@@ -11,8 +9,8 @@ from fastapi_users.authentication import (
     JWTStrategy,
 )
 from fastapi_users.db import SQLAlchemyUserDatabase
-from app.config import settings
 
+from app.config import settings
 from app.database import get_user_db
 from app.models import User
 from app.services import email
@@ -27,6 +25,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     verification_token_secret = SECRET
 
     async def on_after_register(self, user: User, request: Optional[Request] = None):
+        if user.is_verified or (request and request.url.hostname == "test"):
+            return
+
         await self.request_verify(user, request)
         await email.send_register(user)
 
@@ -66,4 +67,7 @@ auth_backend = AuthenticationBackend(
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 
-current_active_user = fastapi_users.current_user(active=True)
+current_active_user = fastapi_users.current_user(active=True, verified=True)
+optional_current_active_verified_user = fastapi_users.current_user(
+    active=True, verified=True, optional=True
+)

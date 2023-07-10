@@ -1,9 +1,9 @@
 import pytest
 from app.oauth2 import create_access_token
-from app import models, repository as repo, database
+from app import models, repository as repo
 from httpx import AsyncClient
 from app.services.users import UserService
-from app.auth_manager import UserManager
+import datetime
 
 pytestmark = pytest.mark.anyio
 
@@ -21,7 +21,7 @@ async def test_user(session, user_service: UserService):
         return user_list[0]
     else:
         return await user_service.create_user(
-            "hello123@pytest.de", "John", "password123"
+            "hello123@pytest.de", "John", "password123", True
         )
 
 
@@ -50,7 +50,7 @@ async def test_users(session, user_service: UserService):
     ]
 
     for data in users_data:
-        await user_service.create_user(data[0], data[1], data[2])
+        await user_service.create_user(data[0], data[1], data[2], True)
 
     yield await repo.get_all(models.User)
 
@@ -188,7 +188,8 @@ async def test_transactions(test_accounts, session):
             test_accounts[account_index].balance + db_transaction_information.amount
         )
 
-        await repo.update(models.Account, account_id, **{"balance": new_balance})
+        update_info = {"balance": new_balance}
+        await repo.update(models.Account, account_id, **update_info)
 
         transaction_list.append(
             models.Transaction(
