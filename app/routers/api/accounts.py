@@ -6,20 +6,18 @@ from app import schemas, transaction_manager as tm
 from app.services import accounts as service
 from app.routers.api.users import current_active_user
 from app.models import User
-from app.utils import APIRouterExtended
 
-
-router = APIRouterExtended(prefix="/accounts", tags=["Accounts"])
+router = APIRouter()
 response_model = schemas.AccountData
 
 
 @router.get("/", response_model=List[response_model])
-async def api_get_accounts(current_user: User = Depends(current_active_user)):
+async def get_accounts(current_user: User = Depends(current_active_user)):
     return await service.get_accounts(current_user)
 
 
 @router.get("/{account_id}", response_model=response_model)
-async def api_get_account(
+async def get_account(
     account_id: int, current_user: User = Depends(current_active_user)
 ):
     account = await service.get_account(current_user, account_id)
@@ -31,7 +29,7 @@ async def api_get_account(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
-async def api_create_account(
+async def create_account(
     account: schemas.Account, current_user: User = Depends(current_active_user)
 ):
     account = await tm.transaction(service.create_account, current_user, account)
@@ -39,7 +37,7 @@ async def api_create_account(
 
 
 @router.put("/{account_id}", response_model=response_model)
-async def api_update_account(
+async def update_account(
     account_id: int,
     account_data: schemas.AccountUpdate,
     current_user: User = Depends(current_active_user),
@@ -50,7 +48,7 @@ async def api_update_account(
 
 
 @router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def api_delete_account(
+async def delete_account(
     account_id: int, current_user: User = Depends(current_active_user)
 ):
     result = await tm.transaction(service.delete_account, current_user, account_id)

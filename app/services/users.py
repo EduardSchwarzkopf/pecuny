@@ -5,11 +5,6 @@ from fastapi_users import exceptions
 from app.auth_manager import UserManager
 from app.utils.enums import EmailVerificationStatus
 from app import database
-from app.utils.exceptions import (
-    PasswordsDontMatchException,
-    UserAlreadyExistsException,
-    UserNotFoundException,
-)
 
 
 class UserService:
@@ -27,12 +22,7 @@ class UserService:
         return True
 
     async def create_user(
-        self,
-        email: str,
-        displayname: str,
-        password: str,
-        is_verified: bool = False,
-        is_superuser: bool = False,
+        self, email: str, displayname: str, password: str, is_superuser: bool = False
     ) -> bool:
         try:
             return await self.user_manager.create(
@@ -41,18 +31,10 @@ class UserService:
                     displayname=displayname,
                     password=password,
                     is_superuser=is_superuser,
-                    is_verified=is_verified,
                 )
             )
         except exceptions.UserAlreadyExists:
             return None
-
-    async def validate_new_user(self, email, password, password_confirm):
-        existing_user = await self.user_manager.get_by_email(email)
-        if existing_user is not None:
-            raise UserAlreadyExistsException()
-        if password != password_confirm:
-            raise PasswordsDontMatchException()
 
     async def verify_email(self, token: str) -> EmailVerificationStatus:
         try:
@@ -63,22 +45,11 @@ class UserService:
         except exceptions.UserAlreadyVerified:
             return EmailVerificationStatus.ALREADY_VERIFIED
 
-    async def request_verification(self, user: models.User) -> None:
-        try:
-            await self.user_manager.request_verify(user)
-        except exceptions.UserInactive:
-            print("User inactive")
-        except exceptions.UserAlreadyVerified:
-            print("User already verified")
-
     async def forgot_password(self, email: EmailStr) -> None:
-        try:
+        with contextlib.suppress(exceptions.UserNotExists):
             existing_user = await self.user_manager.get_by_email(email)
-            if existing_user is None:
-                raise UserNotFoundException()
             await self.user_manager.forgot_password(existing_user)
-        except exceptions.UserNotExists as e:
-            raise UserNotFoundException from e
+        return None
 
     async def reset_password(self, password: str, token: str) -> bool:
         try:

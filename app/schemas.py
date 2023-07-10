@@ -1,25 +1,12 @@
-from email.policy import default
 import uuid
-import datetime
 
-from datetime import datetime as dt
+from datetime import datetime
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Dict, Any
 from fastapi_users import schemas
 from fastapi import Form
-from wtforms.widgets import Input
 
 from pydantic.types import constr
-
-from starlette_wtf import StarletteForm
-from wtforms import (
-    StringField,
-    DecimalField,
-    PasswordField,
-    HiddenField,
-    SelectField,
-)
-from wtforms.validators import DataRequired, InputRequired, Email, EqualTo, Regexp
 
 
 class EmailSchema(BaseModel):
@@ -69,7 +56,7 @@ class TransactionInformationBase(Base):
 
 
 class TransactionInformation(TransactionInformationBase):
-    date: dt
+    date: datetime
 
 
 class MinimalResponse(Base):
@@ -101,9 +88,9 @@ class TransactionInformtionUpdate(TransactionInformationCreate):
 
 
 class ScheduledTransactionInformationCreate(TransactionInformationBase):
-    date_start: dt
+    date_start: datetime
     frequency_id: int
-    date_end: dt
+    date_end: datetime
     account_id: int
     offset_account_id: Optional[int]
 
@@ -123,9 +110,9 @@ class Transaction(TransactionBase):
 
 
 class ScheduledTransactionData(TransactionBase):
-    date_start: dt
+    date_start: datetime
     frequency: FrequencyData
-    date_end: dt
+    date_end: datetime
     account_id: int
     offset_account_id: Optional[int]
 
@@ -138,114 +125,3 @@ class Account(Base):
 
 class AccountData(Account):
     id: int
-
-
-class LoginForm(StarletteForm):
-    username = StringField("Username", validators=[InputRequired()])
-    password = PasswordField("Password", validators=[InputRequired()])
-
-
-class CreateAccountForm(StarletteForm):
-    label = StringField(
-        "Label",
-        validators=[
-            DataRequired("Please enter your email address"),
-        ],
-    )
-
-    description = StringField(
-        "Description",
-        validators=[
-            DataRequired("Please enter a description"),
-        ],
-    )
-
-    balance = DecimalField("Balance", validators=[DataRequired()], default=0)
-
-
-class UpdateAccountForm(StarletteForm):
-    label = StringField(
-        "Label",
-        validators=[
-            DataRequired("Please enter your email address"),
-        ],
-    )
-
-    description = StringField(
-        "Description",
-        validators=[
-            DataRequired("Please enter a description"),
-        ],
-    )
-
-
-password_policy = Regexp(
-    r"^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{8,}$",
-    message="Password should have at least 8 characters, 1 uppercase, 1 digit and 1 special character",
-)
-
-
-class RegisterForm(StarletteForm):
-    email = StringField("Email", validators=[InputRequired(), Email()])
-    displayname = StringField("Display Name", validators=[InputRequired()])
-    password = PasswordField("Password", validators=[InputRequired(), password_policy])
-    password_confirm = PasswordField(
-        "Confirm Password",
-        validators=[
-            InputRequired(),
-            EqualTo("password", message="Passwords must match"),
-        ],
-    )
-
-
-class ForgotPasswordForm(StarletteForm):
-    email = StringField("Email", validators=[InputRequired(), Email()])
-
-
-class GetNewTokenForm(StarletteForm):
-    email = StringField("Email", validators=[InputRequired(), Email()])
-
-
-class ResetPasswordForm(StarletteForm):
-    token = HiddenField("Token", validators=[InputRequired()])
-    password = PasswordField("Password", validators=[InputRequired(), password_policy])
-    password_confirm = PasswordField(
-        "Confirm Password",
-        validators=[
-            InputRequired(),
-            EqualTo("password", message="Passwords must match"),
-        ],
-    )
-
-
-class DatetimeLocalFieldWithoutTime(StringField):
-    widget = Input(input_type="date")
-
-    def process_formdata(self, valuelist):
-        if valuelist:
-            date_str = " ".join(valuelist)
-            try:
-                naive_date_object = dt.strptime(date_str, "%Y-%m-%d")
-                utc_date_object = naive_date_object.replace(
-                    tzinfo=datetime.timezone.utc
-                )
-                self.data = utc_date_object
-            except ValueError as e:
-                self.data = None
-                raise ValueError(
-                    self.gettext("Not a valid date value: {0}".format(valuelist))
-                ) from e
-
-
-class CreateTransactionForm(StarletteForm):
-    amount = DecimalField("Amount", validators=[InputRequired()])
-    reference = StringField("Reference", validators=[InputRequired()])
-    category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
-    date = DatetimeLocalFieldWithoutTime("Date", validators=[InputRequired()])
-
-
-class DatePickerForm(StarletteForm):
-    date_start = DatetimeLocalFieldWithoutTime(
-        "Start Date", validators=[InputRequired()]
-    )
-    date_end = DatetimeLocalFieldWithoutTime("End Date", validators=[InputRequired()])
