@@ -1,30 +1,36 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-100">
-    <head>
-        <meta charset="UTF-8" />
-        <title>{{ title }}</title>
-        <link
-            href="{{ url_for('static', path='/css/main.css') }}"
-            rel="stylesheet"
-        />
+<html lang="en" class="h-full bg-gray-50">
 
-        {% block style %} {% endblock %}
-    </head>
-    <body class="h-full">
-        <div class="min-h-full">
-            {% block header %} {% endblock %}
+<head>
+    <meta charset="UTF-8" />
+    <title>{{ title }}</title>
+    <link href="{{ url_for('static', path='/css/main.css') }}" rel="stylesheet" />
+    <link rel="icon" href="/static/img/logo.svg" sizes="any" type="image/svg+xml">
 
-            <main>
-                <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-                    <div>{% block content %} {% endblock %}</div>
-                </div>
-            </main>
-        </div>
-        <script
-            src="https://unpkg.com/htmx.org@1.9.2"
-            integrity="sha384-L6OqL9pRWyyFU3+/bjdSri+iIphTN/bvYyM37tICVyOJkWZLpP2vGn6VUEXgzg6h"
-            crossorigin="anonymous"
-        ></script>
-        {% block javascript %} {% endblock %}
-    </body>
+    {% block style %} {% endblock %}
+</head>
+
+<body class="h-full">
+    {% if DEBUG %} {{ hot_reload.script(url_for('hot-reload')) | safe }} {%
+    endif %}
+    <div class="min-h-full">
+        {% block header %} {% endblock %}
+
+        <main>
+            <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+                {% block content_wrapper %}
+                {% block content_header %} {% endblock %}
+                {% block content %} {% endblock %}
+                {% endblock %}
+            </div>
+
+            {% include 'fragments/feedback.html' %}
+        </main>
+    </div>
+    <script src="https://unpkg.com/htmx.org@1.9.2"
+        integrity="sha384-L6OqL9pRWyyFU3+/bjdSri+iIphTN/bvYyM37tICVyOJkWZLpP2vGn6VUEXgzg6h"
+        crossorigin="anonymous"></script>
+    {% block javascript %} {% endblock %}
+</body>
+
 </html>
