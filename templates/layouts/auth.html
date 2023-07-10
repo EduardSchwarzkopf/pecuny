@@ -1,1 +1,10 @@
 {% extends "layouts/base.html" %}
+
+{% block content_wrapper %}
+<div class="flex h-screen max-w-lg mx-auto">
+    <div class="m-auto max-w-lg w-full">
+        {%block content %}
+    </div>
+    {%endblock%}
+</div>
+{% endblock %}
