@@ -18,8 +18,10 @@
 
         <main>
             <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+                {% block content_wrapper %}
                 {% block content_header %} {% endblock %}
-                <div>{% block content %} {% endblock %}</div>
+                {% block content %} {% endblock %}
+                {% endblock %}
             </div>
 
             {% include 'fragments/feedback.html' %}
