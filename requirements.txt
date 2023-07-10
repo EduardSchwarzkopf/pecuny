@@ -1,11 +1,9 @@
 aiosmtplib==2.0.1
 alembic==1.10.4
 anyio==3.6.2
-arel==0.2.0
 asgiref==3.6.0
 asyncpg==0.27.0
 attrs==23.1.0
-Babel==2.12.1
 bcrypt==4.0.1
 black==23.3.0
 blinker==1.6.2
@@ -76,6 +74,6 @@ ujson==5.7.0
 urllib3==2.0.2
 uvicorn==0.22.0
 uvloop==0.17.0
-watchgod==0.6
+watchgod==0.8.2
 websockets==11.0.3
 zipp==3.15.0

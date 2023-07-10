@@ -3,7 +3,6 @@ from pydantic import BaseSettings
 
 # Set all required env variables here
 class Settings(BaseSettings):
-    max_allowed_accounts: int = 5
     enviroment: str = "dev"
     db_host: str
     db_name: str
@@ -25,7 +24,6 @@ class Settings(BaseSettings):
     mail_server: str
 
 
-# TODO: add lru_cache: https://fastapi.tiangolo.com/advanced/settings/
 settings = Settings(".env")
 
 setattr(
