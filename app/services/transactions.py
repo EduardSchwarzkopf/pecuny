@@ -1,4 +1,3 @@
-from copy import deepcopy
 from datetime import datetime
 from app import models, schemas, repository as repo
 
@@ -100,9 +99,10 @@ async def update_transaction(
     amount_updated = (
         round(transaction_information.amount, 2) - transaction.information.amount
     )
-    await repo.update(
-        models.Account, account.id, **{"balance": account.balance + amount_updated}
-    )
+
+    update_info = {"balance": account.balance + amount_updated}
+
+    await repo.update(models.Account, account.id, **update_info)
 
     if transaction.offset_transactions_id:
         offset_transaction = await repo.get(
@@ -116,21 +116,25 @@ async def update_transaction(
         offset_account.balance -= amount_updated
         offset_transaction.information.amount = transaction_information.amount * -1
 
+    update_info = {
+        "amount": transaction_information.amount,
+        "reference": transaction_information.reference,
+        "date": transaction_information.date,
+        "category_id": transaction_information.category_id,
+    }
+
     await repo.update(
         models.TransactionInformation,
         transaction.information.id,
-        **{
-            "amount": transaction_information.amount,
-            "reference": transaction_information.reference,
-            "date": transaction_information.date,
-            "category_id": transaction_information.category_id,
-        },
+        **update_info,
     )
     return transaction
 
 
 async def delete_transaction(current_user: models.User, transaction_id: int) -> bool:
-    transaction = await repo.get(models.Transaction, transaction_id)
+    transaction = await repo.get(
+        models.Transaction, transaction_id, load_relationships=["offset_transaction"]
+    )
 
     if transaction is None:
         return

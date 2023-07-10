@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-50">
+<html lang="en" class="h-full bg-gray-100">
 
 <head>
     <meta charset="UTF-8" />
     <title>{{ title }}</title>
     <link href="{{ url_for('static', path='/css/main.css') }}" rel="stylesheet" />
-    <link rel="icon" href="/static/img/logo.svg" sizes="any" type="image/svg+xml">
 
     {% block style %} {% endblock %}
 </head>
@@ -18,13 +17,8 @@
 
         <main>
             <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-                {% block content_wrapper %}
-                {% block content_header %} {% endblock %}
-                {% block content %} {% endblock %}
-                {% endblock %}
+                <div>{% block content %} {% endblock %}</div>
             </div>
-
-            {% include 'fragments/feedback.html' %}
         </main>
     </div>
     <script src="https://unpkg.com/htmx.org@1.9.2"

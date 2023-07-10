@@ -1,23 +1,27 @@
-from fastapi import FastAPI
-import fastapi_users
-from app.routers.api import (
-    accounts,
-    transactions,
-    users,
-    categories,
-    scheduled_transactions,
-)
+from fastapi import FastAPI, Request, status
+from app.routes import router_list
 
-from app.routers import home
 from app.database import db
-from app.routers import auth
-from app.schemas import UserCreate, UserRead, UserUpdate
-from app.auth_manager import auth_backend, fastapi_users
+
+from app import schemas, templates
+import arel
+import os
 
 
 # from .routers import users, posts, auth, vote
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException
+from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
+from app.utils.exceptions import UnauthorizedPageException
+from app.middleware import HeaderLinkMiddleware
+from app.utils import BreadcrumbBuilder
+
+
+from starlette_wtf import CSRFProtectMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 app = FastAPI()
 
@@ -35,6 +39,78 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(HeaderLinkMiddleware)
+
+app.add_middleware(SessionMiddleware, secret_key="***REPLACEME1***")
+app.add_middleware(CSRFProtectMiddleware, csrf_secret="***REPLACEME2***")
+
+
+@app.middleware("http")
+async def add_breadcrumbs(request: Request, call_next):
+    breadcrumb_builder = BreadcrumbBuilder(request)
+    breadcrumb_builder.add("Dashboard", "/dashboard")
+
+    # store the breadcrumb builder in the request state so it can be accessed in the route handlers
+    request.state.breadcrumb_builder = breadcrumb_builder
+
+    return await call_next(request)
+
+
+if _debug := os.getenv("DEBUG"):
+    hot_reload = arel.HotReload(paths=[arel.Path(".")])
+    app.add_websocket_route("/hot-reload", route=hot_reload, name="hot-reload")
+    app.add_event_handler("startup", hot_reload.startup)
+    app.add_event_handler("shutdown", hot_reload.shutdown)
+    templates.env.globals["DEBUG"] = _debug
+    templates.env.globals["hot_reload"] = hot_reload
+
+
+# Exception Handlers
+@app.exception_handler(401)
+async def unauthorized_exception_handler(
+    request: Request, exc: UnauthorizedPageException
+):
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+
+    return templates.TemplateResponse(
+        "pages/auth/page_login.html",
+        {
+            "request": request,
+            "redirect": request.url.path,
+            "form": schemas.LoginForm(request),
+        },
+        status_code=exc.status_code,
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=status_code,
+            content=jsonable_encoder({"detail": exc.errors(), "body": exc.body}),
+        )
+
+    return templates.TemplateResponse(
+        "exceptions/422.html",
+        {"request": request},
+        status_code=status_code,
+    )
+
+
+@app.exception_handler(404)
+async def page_not_found_exception_handler(request: Request, exc: HTTPException):
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+
+    return templates.TemplateResponse(
+        "exceptions/404.html",
+        {"request": request},
+        status_code=exc.status_code,
+    )
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -47,63 +123,7 @@ async def shutdown_event():
     await db.session.close()
 
 
-# Page Routes
-app.include_router(home.router)
-app.include_router(auth.router)
-
-# API Routes
-api_prefix = "/api"
-app.include_router(
-    accounts.router,
-    prefix=f"{api_prefix}/accounts",
-    tags=["Accounts"],
-)
-app.include_router(
-    transactions.router,
-    prefix=f"{api_prefix}/transactions",
-    tags=["Transactions"],
-)
-app.include_router(
-    scheduled_transactions.router,
-    prefix=f"{api_prefix}/scheduled-transactions",
-    tags=["Scheduled transactions"],
-)
-app.include_router(
-    categories.router,
-    prefix=f"{api_prefix}/categories",
-    tags=["Categories"],
-)
-
-
-app.include_router(
-    fastapi_users.get_auth_router(auth_backend),
-    prefix=f"{api_prefix}/auth",
-    tags=["Auth"],
-)
-app.include_router(
-    fastapi_users.get_register_router(UserRead, UserCreate),
-    prefix=f"{api_prefix}/auth",
-    tags=["Auth"],
-)
-app.include_router(
-    fastapi_users.get_reset_password_router(),
-    prefix=f"{api_prefix}/auth",
-    tags=["Auth"],
-)
-app.include_router(
-    fastapi_users.get_verify_router(UserRead),
-    prefix=f"{api_prefix}/auth",
-    tags=["Auth"],
-)
-
-app.include_router(
-    users.router,
-    prefix=f"{api_prefix}/users",
-    tags=["Users"],
-)
-
-app.include_router(
-    fastapi_users.get_users_router(UserRead, UserUpdate),
-    prefix=f"{api_prefix}/users",
-    tags=["Users"],
-)
+for route in router_list:
+    app.include_router(
+        route["router"], prefix=route.get("prefix", ""), tags=route.get("tags", [])
+    )

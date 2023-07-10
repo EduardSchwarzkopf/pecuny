@@ -1,3 +1,4 @@
+from sys import prefix
 from typing import List
 from fastapi import Depends, APIRouter, status, Response
 from fastapi.exceptions import HTTPException
@@ -6,18 +7,19 @@ from app import schemas, transaction_manager as tm
 from app.services import categories as service
 from app.routers.api.users import current_active_user
 from app.models import User
+from app.utils import APIRouterExtended
 
-router = APIRouter()
+router = APIRouterExtended(prefix="/categories", tags=["Categories"])
 response_model = schemas.CategoryData
 
 
 @router.get("/", response_model=List[response_model])
-async def get_categories(current_user: User = Depends(current_active_user)):
+async def api_get_categories(current_user: User = Depends(current_active_user)):
     return await service.get_categories(current_user)
 
 
 @router.get("/{category_id}", response_model=response_model)
-async def get_category(
+async def api_get_category(
     category_id: int, current_user: User = Depends(current_active_user)
 ):
     category = await service.get_category(current_user, category_id)
@@ -29,7 +31,7 @@ async def get_category(
 
 
 # @router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
-# async def create_category(
+# async def api_create_category(
 #     category: schemas.category, current_user: User = Depends(current_active_user)
 # ):
 #     category = await tm.transaction(service.create_category, current_user, category)
@@ -37,7 +39,7 @@ async def get_category(
 
 
 # @router.put("/{category_id}", response_model=response_model)
-# async def update_category(
+# async def api_update_category(
 #     category_id: int,
 #     category_data: schemas.categoryUpdate,
 #     current_user: User = Depends(current_active_user),
@@ -48,7 +50,7 @@ async def get_category(
 
 
 # @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
-# async def delete_category(
+# async def api_delete_category(
 #     category_id: int, current_user: User = Depends(current_active_user)
 # ):
 #     result = await tm.transaction(service.delete_category, current_user, category_id)

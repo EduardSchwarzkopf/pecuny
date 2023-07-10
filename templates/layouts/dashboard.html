@@ -1,5 +1,16 @@
-{% extends "layouts/base.html" %} {% block header %} {% include
-'fragments/header.html' %} {% endblock %} {% block javascript %}
+{% extends "layouts/base.html" %}
+{% block header %}
+{% include'fragments/header.html' %}
+{% endblock %}
+
+{% block content_header %}
+
+{% if breadcrumbs %}
+{% include'fragments/breadcrumbs.html' %}
+{% endif %}
+
+{% endblock %}
+{% block javascript %}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // Dropdown menu

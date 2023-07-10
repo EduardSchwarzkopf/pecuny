@@ -6,13 +6,16 @@ from app import schemas, transaction_manager as tm
 from app.services import scheduled_transactions as service
 from app.routers.api.users import current_active_user
 from app.models import User
+from app.utils import APIRouterExtended
 
-router = APIRouter()
+router = APIRouterExtended(
+    prefix="/scheduled_transactions", tags=["Scheduled Transactions"]
+)
 response_model = schemas.ScheduledTransactionData
 
 
 @router.get("/", response_model=List[response_model])
-async def get_transactions(
+async def api_get_transactions(
     account_id: int,
     date_start: datetime,
     date_end: datetime,
@@ -24,7 +27,7 @@ async def get_transactions(
 
 
 @router.get("/{transaction_id}", response_model=response_model)
-async def get_transaction(
+async def api_get_transaction(
     transaction_id: int,
     current_user: User = Depends(current_active_user),
 ):
@@ -39,7 +42,7 @@ async def get_transaction(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
-async def create_transaction(
+async def api_create_transaction(
     transaction_information: schemas.ScheduledTransactionInformationCreate,
     current_user: User = Depends(current_active_user),
 ):

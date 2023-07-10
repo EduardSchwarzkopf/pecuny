@@ -1,5 +1,6 @@
 from typing import List
 from app import models, schemas, repository as repo
+from app.config import settings
 
 
 async def get_accounts(current_user: models.User) -> List[models.Account]:
@@ -35,3 +36,8 @@ async def delete_account(current_user: models.User, account_id: int) -> bool:
         return True
 
     return None
+
+
+async def check_max_accounts(user: models.User):
+    account_list = await get_accounts(user)
+    return len(account_list) >= settings.max_allowed_accounts
