@@ -154,8 +154,6 @@ async def page_get_account(
     transaction_list = await transaction_service.get_transaction_list(
         user, account_id, date_start, date_end
     )
-    # Sort the transactions by date.
-    transaction_list.sort(key=lambda x: x.information.date, reverse=True)
 
     # Group the transactions by date.
     transaction_list_grouped = [
