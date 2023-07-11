@@ -27,9 +27,9 @@ document.addEventListener("DOMContentLoaded", (event) => {
         for (const policy in policies) {
             if (policies[policy]) {
                 passwordPolicy[policy].classList.remove("text-danger");
-                passwordPolicy[policy].classList.add("text-success");
+                passwordPolicy[policy].classList.add("text-success-dark");
             } else {
-                passwordPolicy[policy].classList.remove("text-success");
+                passwordPolicy[policy].classList.remove("text-success-dark");
                 passwordPolicy[policy].classList.add("text-danger");
             }
         }

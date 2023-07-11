@@ -3,7 +3,7 @@ import calendar
 from itertools import groupby
 from fastapi import Request, Depends, Cookie
 from fastapi.responses import HTMLResponse, RedirectResponse
-from starlette_wtf import csrf_protect
+from starlette_wtf import StarletteForm, csrf_protect
 from app.config import settings
 from fastapi.exceptions import HTTPException
 from starlette import status
@@ -41,6 +41,22 @@ async def handle_account_route(
     add_breadcrumb(request, account.label, account_url)
 
     return account
+
+
+async def populate_transaction_form_choices(
+    account_id: int, user: models.User, form: schemas.TransactionForm
+) -> None:
+    category_list = category_service.get_categories(user)
+    account_list = service.get_accounts(user)
+    form.category_id.choices = group_categories_by_section(await category_list)
+
+    account_choices = [
+        (account.id, account.label)
+        for account in await account_list
+        if account.id != account_id
+    ]
+    account_choices.insert(0, (0, "---"))
+    form.offset_account_id.choices = account_choices
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -234,9 +250,8 @@ async def page_create_transaction_form(
 ):
     await handle_account_route(request, user, account_id)
 
-    category_list = await category_service.get_categories(user)
-    form = schemas.CreateTransactionForm(request)
-    form.category_id.choices = group_categories_by_section(category_list)
+    form = schemas.TransactionForm(request)
+    await populate_transaction_form_choices(account_id, user, form)
 
     return render_template(
         "pages/dashboard/page_form_transaction.html",
@@ -265,10 +280,15 @@ async def page_update_transaction(
     if transaction is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
-    form = schemas.CreateTransactionForm(request, data=transaction.information.__dict__)
-    category_list = await category_service.get_categories(user)
-    form.category_id.choices = group_categories_by_section(category_list)
+    form = schemas.TransactionForm(request, data=transaction.information.__dict__)
+    await populate_transaction_form_choices(account_id, user, form)
     form.date.data = transaction.information.date.strftime("%Y-%m-%d")
+
+    if transaction.offset_transactions_id:
+        offset_transaction = await transaction_service.get_transaction(
+            user, transaction.offset_transactions_id
+        )
+        form.offset_account_id.data = offset_transaction.account_id
 
     return render_template(
         "pages/dashboard/page_form_transaction.html",
@@ -300,9 +320,8 @@ async def page_update_transaction(
     if transaction is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
-    form = await schemas.CreateTransactionForm.from_formdata(request)
-    category_list = await category_service.get_categories(user)
-    form.category_id.choices = group_categories_by_section(category_list)
+    form = await schemas.TransactionForm.from_formdata(request)
+    await populate_transaction_form_choices(account_id, user, form)
 
     if not await form.validate_on_submit():
         return render_template(
@@ -338,9 +357,8 @@ async def page_create_transaction(
 ):
     await handle_account_route(request, user, account_id)
 
-    category_list = await category_service.get_categories(user)
-    form = await schemas.CreateTransactionForm.from_formdata(request)
-    form.category_id.choices = group_categories_by_section(category_list)
+    form = await schemas.TransactionForm.from_formdata(request)
+    await populate_transaction_form_choices(account_id, user, form)
 
     if not await form.validate_on_submit():
         return render_template(
