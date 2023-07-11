@@ -1,6 +1,5 @@
-import contextlib
 from app import models, repository as repo
-from app.schemas import UserCreate, EmailStr
+from app.schemas import UserCreate, EmailStr, UserUpdate
 from fastapi_users import exceptions
 from app.auth_manager import UserManager
 from app.utils.enums import EmailVerificationStatus
@@ -25,6 +24,9 @@ class UserService:
     async def delete_self(self, current_user: models.User) -> bool:
         await repo.delete(current_user)
         return True
+
+    async def update_user(self, user: models.User) -> bool:
+        return await self.user_manager.update(UserUpdate(), user)
 
     async def create_user(
         self,

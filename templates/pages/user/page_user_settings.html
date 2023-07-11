@@ -1,0 +1,8 @@
+{% extends "layouts/dashboard.html" %}
+{% import 'macros/form_controls.html' as form_ctrl %}
+
+{% set title = 'Settings' %}
+
+{% block content %}
+{{ form_ctrl.form(title, form, action_url, "Update") }}
+{% endblock %}

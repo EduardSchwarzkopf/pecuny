@@ -187,7 +187,7 @@ password_policy = Regexp(
 
 class RegisterForm(StarletteForm):
     email = StringField("Email", validators=[InputRequired(), Email()])
-    displayname = StringField("Display Name", validators=[InputRequired()])
+    displayname = StringField("Displayname", validators=[InputRequired()])
     password = PasswordField("Password", validators=[InputRequired(), password_policy])
     password_confirm = PasswordField(
         "Confirm Password",
@@ -249,3 +249,8 @@ class DatePickerForm(StarletteForm):
         "Start Date", validators=[InputRequired()]
     )
     date_end = DatetimeLocalFieldWithoutTime("End Date", validators=[InputRequired()])
+
+
+class UpdateUserForm(StarletteForm):
+    email = StringField("Email", validators=[Email()])
+    displayname = StringField("Displayname")

@@ -80,7 +80,7 @@ async def page_create_account_form(
     if response := await max_accounts_reached(user, request):
         return response
 
-    form = await schemas.CreateAccountForm.from_formdata(request)
+    form = schemas.CreateAccountForm(request)
 
     return render_template(
         "pages/dashboard/page_form_account.html",

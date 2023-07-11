@@ -36,7 +36,10 @@
         {% endif %}
         {% endfor %}
 
-        {{ submit_button(button_text) }}
+        <div class="p-2 flex flex-col items-end ">
+            {{ submit_button(button_text) }}
+        </div>
+
         <script src="/static/js/errorHandling.js"></script>
     </form>
 </div>

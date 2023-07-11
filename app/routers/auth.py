@@ -1,5 +1,4 @@
-import contextlib
-from fastapi import Depends, Form, Request, BackgroundTasks
+from fastapi import Depends, Request, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_users import exceptions
@@ -10,7 +9,7 @@ from app.utils.exceptions import (
     UserAlreadyExistsException,
     UserNotFoundException,
 )
-from app.utils.template_utils import set_feedback, render_template, render_form_template
+from app.utils.template_utils import set_feedback, render_form_template
 from app.utils.enums import FeedbackType
 from .dashboard import router as dashboard_router
 from app import schemas, templates
