@@ -1,35 +1,68 @@
 {% extends "layouts/dashboard.html" %}
 {% import 'macros/buttons.html' as btn %}
+{% import 'macros/icons.html' as icon %}
 
 {% block content %}
 
-<div class="bg-white border shadow">
-    Income: {{ income }}
-</div>
-<div class="bg-white border shadow">
-    Expenses: {{ expenses }}
-</div>
-<div class="flex flex-col sm:flex-row sm:flex-wrap sm:space-x-6 mb-12">
+<div class="flex flex-col sm:flex-row sm:flex-wrap sm:space-x-6 mb-6">
     <div class="grow">
         <div class="flex flex-row space-x-4 items-center">
             <p class="text-xl text-gray">{{account.label}}</p>
             {{ btn.edit(url_for('page_update_account_form', account_id=account.id)) }}
         </div>
-
-        <p class="text-3xl">
-            {{ account.balance }}
-        </p>
     </div>
     <div class="flex-none">
         {% include'fragments/datePicker.html' %}
     </div>
 </div>
 
+
+<div class="flex flex-col items-center bg-white border py-8 rounded-md">
+
+    <div class="uppercase tracking-wide text-center mb-6 md:mb-8">
+        <span class="text-gray text-xs font-bold mb-2">Balance</span>
+        <p class="text-primary text-4xl">
+            {{ account.balance }}
+        </p>
+    </div>
+
+    <div class="uppercase tracking-wide text-center text-gray">
+
+        <span class="text-xs mb-2">Total</span>
+        <p class="text-xl font-medium">
+            {{ total }}
+        </p>
+    </div>
+
+    <div class="flex space-x-12 mt-2 text-gray">
+        <div class="flex flex-row items-center">
+            <div>
+                {{ icon.arrow_up('p-2 w-8 h-8 mr-3 fill-success-dark bg-success-100 rounded-full') }}
+            </div>
+            <div>
+                {{ income }}
+            </div>
+        </div>
+        <div class="flex flex-row items-center">
+            <div>
+                {{ icon.arrow_up("p-2 w-8 h-8 mr-3 rotate-180 fill-danger-dark bg-red-100 rounded-full") }}
+            </div>
+            <div>
+                {{ expenses }}
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <div class="my-6">
     <a href="{{ url_for('page_create_transaction_form', account_id=account.id)}}">
         {{ btn.button("Create Transaction")}}
     </a>
 </div>
+
+
+
 <div id="transactions">
     {% for group in transaction_list_grouped %}
     <div class="mt-6">
