@@ -71,6 +71,6 @@ jobs:
                   -e MAIL_FROM=${{ vars.MAIL_FROM }}
                   -e MAIL_SERVER=${{ vars.MAIL_SERVER }}
                   -e MAIL_PORT=${{ vars.MAIL_PORT }}
-                  -e MAIL_PASSWORD=${{ vars.MAIL_PASSWORD }}
+                  -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
                   --name=${{ env.CONTAINER }}
                   ${{ env.IMAGE }}
