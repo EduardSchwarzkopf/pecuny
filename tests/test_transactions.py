@@ -321,7 +321,7 @@ async def test_updated_offset_transaction(
             endpoint,
             json={
                 "account_id": account_id,
-                "amount": amount,
+                "amount": amount + 5,
                 "reference": "creation",
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
                 "category_id": category_id,
