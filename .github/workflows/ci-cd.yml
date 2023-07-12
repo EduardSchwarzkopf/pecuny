@@ -48,7 +48,7 @@ jobs:
               run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose up -d
             - name: monika start
               run: >
-                  ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d --publish=8000:8000
+                  ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d
                   -e SECRET_KEY=${{ secrets.SECRET_KEY }}
                   -e ALGORITHM=${{ vars.ALGORITHM }}
                   -e ACCESS_TOKEN_EXPIRE_MINUTES=${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }}
