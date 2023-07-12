@@ -44,7 +44,7 @@ async def handle_account_route(
 
 
 async def populate_transaction_form_choices(
-    account_id: int, user: models.User, form: schemas.CreateTransactionForm
+    account_id: int, user: models.User, form: schemas.TransactionForm
 ) -> None:
     category_list = category_service.get_categories(user)
     account_list = service.get_accounts(user)
@@ -155,6 +155,9 @@ async def page_get_account(
         user, account_id, date_start, date_end
     )
 
+    # Sort the transactions by date.
+    transaction_list.sort(key=lambda x: x.information.date, reverse=True)
+
     # Group the transactions by date.
     transaction_list_grouped = [
         {"date": date, "transactions": list(transactions)}
@@ -248,7 +251,7 @@ async def page_create_transaction_form(
 ):
     await handle_account_route(request, user, account_id)
 
-    form = schemas.CreateTransactionForm(request)
+    form = schemas.TransactionForm(request)
     await populate_transaction_form_choices(account_id, user, form)
 
     return render_template(
@@ -278,7 +281,7 @@ async def page_update_transaction(
     if transaction is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
-    form = schemas.UpdateTransactionForm(request, data=transaction.information.__dict__)
+    form = schemas.TransactionForm(request, data=transaction.information.__dict__)
     await populate_transaction_form_choices(account_id, user, form)
     form.date.data = transaction.information.date.strftime("%Y-%m-%d")
 

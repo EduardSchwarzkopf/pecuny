@@ -1,3 +1,4 @@
+from email.policy import default
 import uuid
 import datetime
 
@@ -236,22 +237,12 @@ class DatetimeLocalFieldWithoutTime(StringField):
                 ) from e
 
 
-class CreateTransactionForm(StarletteForm):
+class TransactionForm(StarletteForm):
     amount = DecimalField("Amount", validators=[InputRequired()])
     reference = StringField("Reference", validators=[InputRequired()])
     category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
     date = DatetimeLocalFieldWithoutTime("Date", validators=[InputRequired()])
     offset_account_id = SelectField("Offset Account", coerce=int)
-
-
-class UpdateTransactionForm(StarletteForm):
-    amount = DecimalField("Amount", validators=[InputRequired()])
-    reference = StringField("Reference", validators=[InputRequired()])
-    category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
-    date = DatetimeLocalFieldWithoutTime("Date", validators=[InputRequired()])
-    offset_account_id = SelectField(
-        "Offset Account", coerce=int, render_kw={"disabled": ""}
-    )
 
 
 class DatePickerForm(StarletteForm):
