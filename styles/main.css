@@ -15,7 +15,7 @@ add your styles here and run:
         @apply text-primary font-semibold transition;
     }
     a:hover {
-        @apply text-primary-300;
+        @apply text-secondary;
     }
 
     h1,h2,h3,h4,h5,h6 {
