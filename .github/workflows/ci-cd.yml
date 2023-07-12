@@ -54,4 +54,4 @@ jobs:
             - name: copy .env file
               run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
             - name: apply docker-compose
-              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker-compose pull && docker-compose up -d
+              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose pull && docker compose up -d
