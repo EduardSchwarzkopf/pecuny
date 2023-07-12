@@ -1,4 +1,4 @@
-FROM python:3.11-slim-buster
+FROM python:3.11-slim-bullseye
 
 # create and switch to user
 RUN useradd -m app
