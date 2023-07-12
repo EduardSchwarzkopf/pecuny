@@ -155,6 +155,15 @@ async def page_get_account(
         user, account_id, date_start, date_end
     )
 
+    expenses = 0
+    income = 0
+    for transaction in transaction_list:
+        if transaction.information.amount > 0:
+            income += transaction.information.amount
+            continue
+
+        expenses += transaction.information.amount
+
     # Sort the transactions by date.
     transaction_list.sort(key=lambda x: x.information.date, reverse=True)
 
@@ -172,6 +181,8 @@ async def page_get_account(
             "account": account,
             "transaction_list_grouped": transaction_list_grouped,
             "date_picker_form": schemas.DatePickerForm(request),
+            "expenses": expenses,
+            "income": income,
         },
     )
 
