@@ -46,7 +46,7 @@ jobs:
               run: scp -o "StrictHostKeyChecking=no" docker-compose.yml ${{ env.SSH_HOST }}:docker-compose.yml
             - name: create .env file
               run: |
-                  echo IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/monika-backend:latest
+                  echo IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/monika-backend:latest >> .env
                   echo DB_USER=${{ secrets.DB_USER }} >> .env
                   echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> .env
                   echo DB_NAME=${{ secrets.DB_NAME }} >> .env
