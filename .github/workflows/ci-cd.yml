@@ -46,14 +46,27 @@ jobs:
               run: scp -o "StrictHostKeyChecking=no" docker-compose.yml ${{ env.SSH_HOST }}:docker-compose.yml
             - name: create .env file
               run: |
+                  echo IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/monika-backend:latest
                   echo DB_USER=${{ secrets.DB_USER }} >> .env
                   echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> .env
                   echo DB_NAME=${{ secrets.DB_NAME }} >> .env
                   echo DB_PORT=${{ secrets.DB_PORT }} >> .env
                   echo TEST_DB_PORT=${{ secrets.TEST_DB_PORT }} >> .env
+                  echo DB_HOST=postgres >> .env
+                  echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
+                  echo ALGORITHM=${{ vars.ALGORITHM }} >> .env
+                  echo ACCESS_TOKEN_EXPIRE_MINUTES=${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }} >> .env
+                  echo DB_NAME=${{ secrets.DB_NAME }} >> .env
+                  echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> .env
+                  echo DB_PORT=${{ secrets.DB_PORT }} >> .env
+                  echo DB_USER=${{ secrets.DB_USER }} >> .env
+                  echo DB_USERNAME=${{ secrets.DB_USER }} >> .env
+                  echo MAIL_USERNAME=${{ vars.MAIL_USERNAME }} >> .env
+                  echo MAIL_FROM=${{ vars.MAIL_FROM }} >> .env
+                  echo MAIL_SERVER=${{ vars.MAIL_SERVER }} >> .env
+                  echo MAIL_PORT=${{ vars.MAIL_PORT }} >> .env
+                  echo MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }} >> .env
             - name: copy .env file
               run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
             - name: apply docker-compose
-              env:
-                  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/monika-backend:latest
-              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} "IMAGE_NAME=${IMAGE_NAME} docker compose pull && docker compose up -d"
+              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose pull && docker compose up -d
