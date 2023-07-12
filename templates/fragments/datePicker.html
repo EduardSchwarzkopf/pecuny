@@ -4,16 +4,19 @@
 
 <form class="max-w-sm" id="dateForm">
     {{ csrf_token }}
-    <div class="flex items-center items-stretch space-x-3">
+    <div class="flex flex-row items-end space-x-2">
 
-        {% for field in date_picker_form %}
-        {% if field.type not in ("CSRFTokenField") %}
-        <div>
-            <input class="rounded-md p-2 text-gray-900 sm:text-sm sm:leading-6" type="date" aria-label="Date Start"
-                id="{{field.id}}">
+        <div class="flex flex-row space-x-2 items-stretch">
+            {% for field in date_picker_form %}
+            {% if field.type not in ("CSRFTokenField") %}
+            <div>
+                {{ field.label(class="block uppercase tracking-wide text-gray text-xs") }}
+                <input class="rounded-md p-2 text-gray-900 sm:text-sm sm:leading-6" type="date" aria-label="Date Start"
+                    id="{{field.id}}">
+            </div>
+            {% endif %}
+            {% endfor %}
         </div>
-        {% endif %}
-        {% endfor %}
         <div>
             {{ btn.button('<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-auto fill-current"
                 viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->
