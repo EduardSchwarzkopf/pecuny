@@ -6,7 +6,9 @@
 <div {% if field.type=="HiddenField" %} class="hidden" {% endif %}>
     {{ field.label(class="block font-bold leading-6 text-gray " ~ label_classname) }}
     {{
-    field(class="appearance-none border-2 border-gray-200 rounded-md w-full py-2 px-4 text-gray-700
+    field(class="
+    disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none
+    appearance-none border-2 border-gray-200 rounded-md w-full py-2 px-4 text-gray-700
     leading-tight focus:outline-none focus:bg-white focus:border-primary " ~
     field_classname,
     onkeyup="hideError(this)"
