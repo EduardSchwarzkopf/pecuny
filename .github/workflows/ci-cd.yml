@@ -29,6 +29,10 @@ jobs:
             SSH_HOST: webserver
             CONTAINER: monika
             SSH_CMD: ssh -o "StrictHostKeyChecking=no"
+            DB_USER: ${{ secrets.DB_USER }}
+            DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+            DB_NAME: ${{ secrets.DB_NAME }}
+            DB_PORT: ${{ secrets.DB_PORT }}
         steps:
             - uses: actions/checkout@v3
             - name: create ssh dir
