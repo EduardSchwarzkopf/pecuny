@@ -1,28 +1,34 @@
-{% extends "layouts/dashboard.html" %} {% block content %}
+{% extends "layouts/dashboard.html" %}
 {% import 'macros/buttons.html' as btn %}
 
-<div>
-    <div class="flex flex-col sm:flex-row sm:flex-wrap sm:space-x-6 mb-12">
-        <div class="grow">
-            <p class="text-xl text-gray">Accounts</p>
-            <p class="text-3xl">
-                {{ total_balance }}
-            </p>
-        </div>
-        <div class="flex-none">
-            {% if account_list|length < max_allowed_accounts %} <a href="{{ url_for('page_create_account_form')}}">
-                {{ btn.button("Create Account")}}
-                </a>
-        </div>
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:flex-wrap sm:space-x-6 mb-6">
+    <div class="grow">
+        <p class="py-2 text-xl text-gray">Accounts</p>
     </div>
 
-    {% endif %}
-    <div class="grid gap-12">
-        {% for account in account_list %}
-        <a href="{{ url_for('page_get_account', account_id=account.id)}}">
-            {% include 'fragments/accounts/accountCard.html' %}
+    {% if account_list|length < max_allowed_accounts %} <div class="flex-none">
+        <a href="{{ url_for('page_create_account_form')}}">
+            {{ btn.button("Create Account")}}
         </a>
-        {% endfor %}
+</div>
+{% endif %}
+</div>
+
+<div class="flex flex-col items-center bg-white border py-6 mb-6 rounded-md">
+    <div class="uppercase tracking-wide text-center">
+        <span class="text-gray text-xs font-bold mb-2">Total Balance</span>
+        <p class="text-primary text-4xl">
+            {{ total_balance }}
+        </p>
     </div>
+</div>
+
+<div class="grid gap-6">
+    {% for account in account_list %}
+    <a href="{{ url_for('page_get_account', account_id=account.id)}}">
+        {% include 'fragments/accounts/accountCard.html' %}
+    </a>
+    {% endfor %}
 </div>
 {% endblock %}
