@@ -23,7 +23,7 @@ services:
       - dev
 
   app:
-    image: ${{ secrets.DOCKER_USERNAME }}/monika-backend:latest
+    image: ${IMAGE_NAME}
     environment:
       SECRET_KEY: ${SECRET_KEY}
       ALGORITHM: ${ALGORITHM}

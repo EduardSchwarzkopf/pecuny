@@ -54,4 +54,6 @@ jobs:
             - name: copy .env file
               run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
             - name: apply docker-compose
-              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose pull && docker compose up -d
+              env:
+                  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/monika-backend:latest
+              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} "IMAGE_NAME=${IMAGE_NAME} docker compose pull && docker compose up -d"
