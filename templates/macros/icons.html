@@ -1,4 +1,6 @@
-{% macro logo(classname='w-full h-auto') -%}
+{% set default_style = 'w-full h-auto'%}
+
+{% macro logo(classname=default_style) -%}
 
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
@@ -31,7 +33,7 @@
 {% endmacro %}
 
 
-{% macro custom_logo(classname='w-full h-auto') -%}
+{% macro custom_logo(classname=default_style) -%}
 
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
@@ -55,6 +57,17 @@
                 d="M271.686,449.435C271.05,450.587 270.551,452.261 270.551,454.05C270.551,455.838 271.05,457.512 271.686,458.665C272.541,460.213 272.514,462.099 271.615,463.622C270.715,465.146 269.078,466.081 267.309,466.081C260.669,466.081 255.278,460.69 255.278,454.05C255.278,447.409 260.669,442.019 267.309,442.019C269.078,442.019 270.715,442.953 271.615,444.477C272.514,446 272.541,447.886 271.686,449.435Z" />
         </g>
     </g>
+</svg>
+
+{% endmacro %}
+
+
+{% macro arrow_up(classname='h-6 w-6') %}
+
+<svg xmlns="http://www.w3.org/2000/svg" class="{{ classname }}"
+    viewBox="0 0 384 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->
+    <path
+        d="M214.6 41.4c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 141.2V448c0 17.7 14.3 32 32 32s32-14.3 32-32V141.2L329.4 246.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-160-160z" />
 </svg>
 
 {% endmacro %}
