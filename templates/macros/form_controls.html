@@ -4,16 +4,28 @@
 
 {% macro input_field(field, field_classname='', label_classname='') %}
 <div {% if field.type=="HiddenField" %} class="hidden" {% endif %}>
-    {{ field.label(class="block font-bold leading-6 text-gray " ~ label_classname) }}
-    {{
-    field(class="
-    disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none
-    appearance-none border-2 border-gray-200 rounded-md w-full py-2 px-4 text-gray-700
-    leading-tight focus:outline-none focus:bg-white focus:border-primary " ~
-    field_classname,
-    onkeyup="hideError(this)"
-    )
-    }}
+    <div class="inline-block relative w-full">
+
+        {{ field.label(class="block uppercase tracking-wide text-gray text-xs font-bold mb-2 " ~ label_classname) }}
+        {{
+        field(class="
+        disabled:bg-gray-200 disabled:text-gray
+        block appearance-none border-2 w-full bg-white border border-gray-200 px-4 py-2 rounded-md
+        leading-tight focus:outline-none focus:border-primary " ~
+        field_classname,
+        onkeyup="hideError(this)"
+        )
+        }}
+
+        {% if field.type=="SelectField" %}
+        <div class="pointer-events-none absolute opacity-50 inset-y-0 right-0 flex items-center px-5 pt-6">
+            <svg class="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+            </svg>
+        </div>
+        {% endif %}
+
+    </div>
     {% if field.errors %}
     <div class="text-red-500 text-xs italic field-error">
         {% for error in field.errors %}
