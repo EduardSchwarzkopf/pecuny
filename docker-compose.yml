@@ -22,6 +22,27 @@ services:
     profiles:
       - dev
 
+  app:
+    image: ${{ secrets.DOCKER_USERNAME }}/monika-backend:latest
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+      DB_NAME: ${DB_NAME}
+      DB_HOST: db
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_FROM: ${MAIL_FROM}
+      MAIL_SERVER: ${MAIL_SERVER}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+    ports:
+      - 8888:8000
+    depends_on:
+      - db
+
 volumes:
   db_volume:
     driver: local

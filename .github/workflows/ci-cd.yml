@@ -40,8 +40,8 @@ jobs:
                   chmod 600 ~/.ssh/id_rsa
             - name: config ssh
               run: echo -e 'Host ${{ env.SSH_HOST }}\n  HostName ${{ vars.HOSTNAME }}\n  Port 22\n  User root\n  IdentityFile ~/.ssh/id_rsa' > ~/.ssh/config
-            - name: stop monika
-              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }}  docker rm --force ${{ env.CONTAINER }} || :"
+            - name: stop old containers
+              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }}  docker-compose down || :"
             - name: copy docker-compose.yml
               run: scp -o "StrictHostKeyChecking=no" docker-compose.yml ${{ env.SSH_HOST }}:docker-compose.yml
             - name: create .env file
@@ -54,23 +54,4 @@ jobs:
             - name: copy .env file
               run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
             - name: apply docker-compose
-              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose up -d
-            - name: monika start
-              run: >
-                  ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d
-                  -e SECRET_KEY=${{ secrets.SECRET_KEY }}
-                  -e ALGORITHM=${{ vars.ALGORITHM }}
-                  -e ACCESS_TOKEN_EXPIRE_MINUTES=${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }}
-                  -e DB_NAME=${{ secrets.DB_NAME }}
-                  -e DB_HOST=postgres
-                  -e DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-                  -e DB_PORT=${{ secrets.DB_PORT }}
-                  -e DB_USER=${{ secrets.DB_USER }}
-                  -e DB_USERNAME=${{ secrets.DB_USER }}
-                  -e MAIL_USERNAME=${{ vars.MAIL_USERNAME }}
-                  -e MAIL_FROM=${{ vars.MAIL_FROM }}
-                  -e MAIL_SERVER=${{ vars.MAIL_SERVER }}
-                  -e MAIL_PORT=${{ vars.MAIL_PORT }}
-                  -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
-                  --name=${{ env.CONTAINER }}
-                  ${{ env.IMAGE }}
+              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker-compose pull && docker-compose up -d
