@@ -22,9 +22,6 @@ from app.utils import BreadcrumbBuilder
 
 from starlette_wtf import CSRFProtectMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from dotenv import load_dotenv
-
-load_dotenv()
 
 app = FastAPI()
 
