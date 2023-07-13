@@ -11,7 +11,6 @@ COPY requirements.txt ./
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
 COPY ./app ./app
-COPY ./env ./env
 COPY ./templates ./templates
 COPY ./static ./static
 
