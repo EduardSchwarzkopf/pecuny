@@ -1,8 +1,8 @@
 FROM python:3.11-buster
 
 # create and switch to user
-RUN useradd -m app
-USER app
+# RUN useradd -m app
+# USER app
 
 ENV PATH="/home/app/.local/bin:${PATH}"
 WORKDIR /home/app

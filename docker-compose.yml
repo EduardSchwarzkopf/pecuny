@@ -11,8 +11,6 @@ services:
       - ${DB_PORT}:5432
     volumes:
       - db_volume:/var/lib/postgresql/data
-    networks:
-      - mynet
 
   db_test:
     image: "postgres:14-alpine"
@@ -24,8 +22,6 @@ services:
       - ${TEST_DB_PORT}:5432
     profiles:
       - dev
-    networks:
-      - mynet
 
   app:
     image: ${IMAGE_NAME}
@@ -47,15 +43,9 @@ services:
       - 5050:8000
     depends_on:
       - db
-    networks:
-      - mynet
     profiles:
       - prod
 
 volumes:
   db_volume:
     driver: local
-
-networks:
-  mynet:
-    name: monika-shared-db-network
