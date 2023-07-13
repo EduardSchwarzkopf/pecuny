@@ -45,7 +45,7 @@ jobs:
             - name: copy docker-compose.yml
               run: scp -o "StrictHostKeyChecking=no" docker-compose.yml ${{ env.SSH_HOST }}:docker-compose.yml
             - name: stop old containers
-              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker-compose down"
+              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose down"
             - name: remove old images
               run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker rmi -f ${{ env.IMAGE }}"
             - name: create .env file
@@ -68,5 +68,5 @@ jobs:
                   echo MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }} >> .env
             - name: copy .env file
               run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
-            - name: apply docker-compose
+            - name: apply docker compose
               run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose --profile ${{ vars.ENVIRONMENT }} up -d --force-recreate
