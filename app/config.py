@@ -38,5 +38,5 @@ setattr(
 setattr(
     settings,
     "test_db_url",
-    f"postgresql+asyncpg://{settings.db_username}:{settings.db_password}@{settings.db_host}:{settings.test_db_port}/{settings.db_name}_test",
+    f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.test_db_port}/{settings.db_name}_test",
 )

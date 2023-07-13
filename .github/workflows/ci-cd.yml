@@ -58,7 +58,6 @@ jobs:
                   echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> .env
                   echo DB_PORT=${{ secrets.DB_PORT }} >> .env
                   echo DB_USER=${{ secrets.DB_USER }} >> .env
-                  echo DB_USERNAME=${{ secrets.DB_USER }} >> .env
                   echo MAIL_USERNAME=${{ vars.MAIL_USERNAME }} >> .env
                   echo MAIL_FROM=${{ vars.MAIL_FROM }} >> .env
                   echo MAIL_SERVER=${{ vars.MAIL_SERVER }} >> .env
