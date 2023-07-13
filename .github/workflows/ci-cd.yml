@@ -41,7 +41,7 @@ jobs:
             - name: config ssh
               run: echo -e 'Host ${{ env.SSH_HOST }}\n  HostName ${{ vars.HOSTNAME }}\n  Port 22\n  User root\n  IdentityFile ~/.ssh/id_rsa' > ~/.ssh/config
             - name: stop old containers
-              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }}  docker-compose down || :"
+              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }}  docker-compose down --rmi all || :"
             - name: copy docker-compose.yml
               run: scp -o "StrictHostKeyChecking=no" docker-compose.yml ${{ env.SSH_HOST }}:docker-compose.yml
             - name: create .env file
