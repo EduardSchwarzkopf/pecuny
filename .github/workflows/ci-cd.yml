@@ -48,10 +48,6 @@ jobs:
               run: |
                   echo IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/monika-backend:latest >> .env
                   echo ENVIRONMENT=${{ vars.ENVIRONMENT }} >> .env
-                  echo DB_USER=${{ secrets.DB_USER }} >> .env
-                  echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> .env
-                  echo DB_NAME=${{ secrets.DB_NAME }} >> .env
-                  echo DB_PORT=${{ secrets.DB_PORT }} >> .env
                   echo TEST_DB_PORT=${{ secrets.TEST_DB_PORT }} >> .env
                   echo DB_HOST=postgres >> .env
                   echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
@@ -70,4 +66,4 @@ jobs:
             - name: copy .env file
               run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
             - name: apply docker-compose
-              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose pull && docker compose --profile prod up -d
+              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose pull && docker compose --profile ${{ vars.ENVIRONMENT }} up -d
