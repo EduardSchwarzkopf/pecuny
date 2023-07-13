@@ -2,6 +2,7 @@ version: "3.9"
 services:
   db:
     image: "postgres:14-alpine"
+    restart: always
     environment: 
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -40,8 +41,10 @@ services:
       MAIL_PORT: ${MAIL_PORT}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
     ports:
-      - 8080:8000
+      - 5050:8000
     depends_on:
+      - db
+    links:
       - db
     profiles:
       - prod
