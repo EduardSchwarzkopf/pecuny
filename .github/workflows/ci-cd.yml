@@ -42,12 +42,15 @@ jobs:
               run: echo -e 'Host ${{ env.SSH_HOST }}\n  HostName ${{ vars.HOSTNAME }}\n  Port 22\n  User root\n  IdentityFile ~/.ssh/id_rsa' > ~/.ssh/config
             - name: sanitycheck
               run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }} hostname -I"
-            - name: stop old containers
-              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }}  docker-compose down --rmi all || :"
             - name: copy docker-compose.yml
               run: scp -o "StrictHostKeyChecking=no" docker-compose.yml ${{ env.SSH_HOST }}:docker-compose.yml
+            - name: stop old containers
+              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker-compose down"
+            - name: remove old images
+              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker rmi -f ${{ env.IMAGE }}"
             - name: create .env file
               run: |
+                  set -e
                   echo IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/monika-backend:latest >> .env
                   echo ENVIRONMENT=${{ vars.ENVIRONMENT }} >> .env
                   echo TEST_DB_PORT=${{ secrets.TEST_DB_PORT }} >> .env
@@ -66,4 +69,4 @@ jobs:
             - name: copy .env file
               run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
             - name: apply docker-compose
-              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose pull && docker compose --profile ${{ vars.ENVIRONMENT }} up -d --force-recreate
+              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose --profile ${{ vars.ENVIRONMENT }} up -d --force-recreate
