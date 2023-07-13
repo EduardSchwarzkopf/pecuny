@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
 
 # TODO: add lru_cache: https://fastapi.tiangolo.com/advanced/settings/
-settings = Settings(".env")
+settings = Settings()
 
 setattr(
     settings,

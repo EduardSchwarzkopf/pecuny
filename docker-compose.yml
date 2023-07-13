@@ -42,6 +42,8 @@ services:
       - 8080:8000
     depends_on:
       - db
+    profiles:
+      - prod
 
 volumes:
   db_volume:
