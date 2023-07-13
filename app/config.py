@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     db_url: str = ""
     db_port: str
     db_password: str
-    db_username: str
+    db_user: str
     secret_key: str
     algorithm: str
     access_token_expire_minutes: int = 30
@@ -31,7 +31,7 @@ settings = Settings()
 setattr(
     settings,
     "db_url",
-    f"postgresql+asyncpg://{settings.db_username}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}",
+    f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}",
 )
 
 

@@ -38,7 +38,6 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_PORT: ${DB_PORT}
       DB_USER: ${DB_USER}
-      DB_USERNAME: ${DB_USER}
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_FROM: ${MAIL_FROM}
       MAIL_SERVER: ${MAIL_SERVER}
