@@ -51,7 +51,6 @@ jobs:
                   echo IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/monika-backend:latest >> .env
                   echo ENVIRONMENT=${{ vars.ENVIRONMENT }} >> .env
                   echo TEST_DB_PORT=${{ secrets.TEST_DB_PORT }} >> .env
-                  echo DB_HOST=postgres >> .env
                   echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
                   echo ALGORITHM=${{ vars.ALGORITHM }} >> .env
                   echo ACCESS_TOKEN_EXPIRE_MINUTES=${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }} >> .env
