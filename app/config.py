@@ -27,7 +27,9 @@ class Settings(BaseSettings):
 
 # TODO: add lru_cache: https://fastapi.tiangolo.com/advanced/settings/
 settings = Settings()
-
+print(
+    f"postgresql+asyncpg://{settings.db_username}:*****@{settings.db_host}:{settings.db_port}/{settings.db_name}"
+)
 setattr(
     settings,
     "db_url",
