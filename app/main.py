@@ -116,7 +116,6 @@ async def page_not_found_exception_handler(request: Request, exc: HTTPException)
 @app.on_event("startup")
 async def startup_event():
     await db.init()
-    await db.create_all()
 
 
 @app.on_event("shutdown")
