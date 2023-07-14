@@ -14,4 +14,6 @@ COPY ./app ./app
 COPY ./templates ./templates
 COPY ./static ./static
 
+RUN alembic upgrade head
+
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

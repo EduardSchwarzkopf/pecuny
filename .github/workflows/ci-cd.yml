@@ -66,7 +66,5 @@ jobs:
                   echo 'MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}' >> .env
             - name: copy .env file
               run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
-            - name: upgrade database
-              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }} alembic upgrade head"
             - name: monika start
               run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d --name ${{ env.CONTAINER }} -p ${{ vars.PORT }}:8000 --env-file .env ${{ env.IMAGE }}
