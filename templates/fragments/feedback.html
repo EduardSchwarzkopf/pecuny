@@ -74,15 +74,8 @@
 
             setTimeout(() => {
                 toast.classList.add('hidden');
-            }, 5000);
+            }, 7000);
         }
-
-        const toastCloseButtons = document.querySelectorAll('.toast-notification button[aria-label="Close"]');
-        toastCloseButtons.forEach((button) => {
-            button.addEventListener('click', () => {
-                button.closest('.toast-notification').classList.add('hidden');
-            });
-        });
     });
 
 </script>
