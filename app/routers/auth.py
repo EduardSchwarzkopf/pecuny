@@ -144,7 +144,7 @@ async def register(
 
 
 @router.get(
-    path=VERIFY,
+    VERIFY,
     tags=["Pages", "Authentication"],
 )
 async def verify_email(
