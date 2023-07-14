@@ -70,11 +70,9 @@
 
         if (feedbackMessage) {
             toast.classList.remove('hidden');
-            toast.querySelector('.message-content').textContent = feedbackMessage;
-
             setTimeout(() => {
                 toast.classList.add('hidden');
-            }, 7000);
+            }, 10000);
         }
     });
 
