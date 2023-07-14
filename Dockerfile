@@ -16,6 +16,5 @@ COPY ./static ./static
 
 COPY ./alembic.ini ./
 COPY ./alembic ./alembic
-RUN alembic upgrade head
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
