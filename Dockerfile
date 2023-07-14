@@ -10,6 +10,7 @@ WORKDIR /home/app
 COPY requirements.txt ./ 
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
+COPY ./alembic ./alembic
 COPY ./app ./app
 COPY ./templates ./templates
 COPY ./static ./static
