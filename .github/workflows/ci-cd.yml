@@ -47,7 +47,7 @@ jobs:
             - name: monika start
               run: >
                   set -e
-                  echo "${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d
+                  ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} echo "docker run -d
                   --name=${{ env.CONTAINER }}
                   -e SECRET_KEY='${{ secrets.SECRET_KEY }}'
                   -e ENVIRONMENT=${{ vars.ENVIRONMENT }}
@@ -63,4 +63,4 @@ jobs:
                   -e MAIL_SERVER=${{ vars.MAIL_SERVER }}
                   -e MAIL_PORT=${{ vars.MAIL_PORT }}
                   -e MAIL_PASSWORD='${{ vars.MAIL_PASSWORD }}'
-                  ${{ env.IMAGE }}" > docker-run.cmd
+                  ${{ env.IMAGE }}" > docker-run.txt
