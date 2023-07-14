@@ -57,10 +57,10 @@ jobs:
                   echo "-e DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> docker.txt
                   echo "-e DB_PORT=${{ secrets.DB_PORT }}" >> docker.txt
                   echo "-e DB_USER=${{ secrets.DB_USER }}" >> docker.txt
-                  echo "-e MAIL_USERNAME=${{ vars.MAIL_USERNAME }}" >> docker.txt
-                  echo "-e MAIL_FROM=${{ vars.MAIL_FROM }}" >> docker.txt
-                  echo "-e MAIL_SERVER=${{ vars.MAIL_SERVER }}" >> docker.txt
-                  echo "-e MAIL_PORT=${{ vars.MAIL_PORT }}" >> docker.txt
+                  echo "-e MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}" >> docker.txt
+                  echo "-e MAIL_FROM=${{ secrets.MAIL_FROM }}" >> docker.txt
+                  echo "-e MAIL_SERVER=${{ secrets.MAIL_SERVER }}" >> docker.txt
+                  echo "-e MAIL_PORT=${{ secrets.MAIL_PORT }}" >> docker.txt
                   echo "-e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> docker.txt
             - name: copy run file
               run: scp -o "StrictHostKeyChecking=no" docker.txt ${{ env.SSH_HOST }}:docker.txt
