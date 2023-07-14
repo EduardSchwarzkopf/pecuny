@@ -44,23 +44,22 @@ jobs:
               run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }}  docker rm --force ${{ env.CONTAINER }} || :"
             - name: pull latest image
               run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker pull ${{ env.IMAGE }}
-            - name: create run file
-              run: |
-                  set -e
-                  echo "-e IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/monika-backend:latest" >> docker.txt
-                  echo "-e ENVIRONMENT=${{ vars.ENVIRONMENT }}" >> docker.txt
-                  echo "-e TEST_DB_PORT=${{ secrets.TEST_DB_PORT }}" >> docker.txt
-                  echo "-e SECRET_KEY=${{ secrets.SECRET_KEY }}" >> docker.txt
-                  echo "-e ALGORITHM=${{ vars.ALGORITHM }}" >> docker.txt
-                  echo "-e ACCESS_TOKEN_EXPIRE_MINUTES=${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }}" >> docker.txt
-                  echo "-e DB_NAME=${{ secrets.DB_NAME }}" >> docker.txt
-                  echo "-e DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> docker.txt
-                  echo "-e DB_PORT=${{ secrets.DB_PORT }}" >> docker.txt
-                  echo "-e DB_USER=${{ secrets.DB_USER }}" >> docker.txt
-                  echo "-e MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}" >> docker.txt
-                  echo "-e MAIL_FROM=${{ secrets.MAIL_FROM }}" >> docker.txt
-                  echo "-e MAIL_SERVER=${{ secrets.MAIL_SERVER }}" >> docker.txt
-                  echo "-e MAIL_PORT=${{ secrets.MAIL_PORT }}" >> docker.txt
-                  echo "-e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> docker.txt
-            - name: copy run file
-              run: scp -o "StrictHostKeyChecking=no" docker.txt ${{ env.SSH_HOST }}:docker.txt
+            - name: monika start
+              run: >
+                  ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d
+                  --name=${{ env.CONTAINER }}
+                  -e SECRET_KEY=${{ secrets.SECRET_KEY }}
+                  -e ENVIRONMENT=${{ vars.ENVIRONMENT }}
+                  -e ALGORITHM=${{ vars.ALGORITHM }}
+                  -e ACCESS_TOKEN_EXPIRE_MINUTES=${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }}
+                  -e DB_NAME=${{ secrets.DB_NAME }}
+                  -e DB_HOST=${{ secrets.DB_HOST }}
+                  -e DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+                  -e DB_PORT=${{ secrets.DB_PORT }}
+                  -e DB_USER=${{ secrets.DB_USER }}
+                  -e MAIL_USERNAME=${{ vars.MAIL_USERNAME }}
+                  -e MAIL_FROM=${{ vars.MAIL_FROM }}
+                  -e MAIL_SERVER=${{ vars.MAIL_SERVER }}
+                  -e MAIL_PORT=${{ vars.MAIL_PORT }}
+                  -e MAIL_PASSWORD=${{ vars.MAIL_PASSWORD }}
+                  ${{ env.IMAGE }}
