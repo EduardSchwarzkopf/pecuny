@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse
 from app.utils.exceptions import UnauthorizedPageException
 from app.middleware import HeaderLinkMiddleware
 from app.utils import BreadcrumbBuilder
+from app.config import settings
 
 
 from starlette_wtf import CSRFProtectMiddleware
@@ -41,8 +42,8 @@ app.add_middleware(
 
 app.add_middleware(HeaderLinkMiddleware)
 
-app.add_middleware(SessionMiddleware, secret_key="***REPLACEME1***")
-app.add_middleware(CSRFProtectMiddleware, csrf_secret="***REPLACEME2***")
+app.add_middleware(SessionMiddleware, secret_key=settings.session_secret_key)
+app.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.csrf_secret)
 
 
 @app.middleware("http")

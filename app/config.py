@@ -5,6 +5,7 @@ from pydantic import BaseSettings
 class Settings(BaseSettings):
     max_allowed_accounts: int = 5
     enviroment: str = "dev"
+    domain: str
     db_host: str
     db_name: str
     db_url: str = ""
@@ -12,6 +13,8 @@ class Settings(BaseSettings):
     db_password: str
     db_user: str
     secret_key: str
+    session_secret_key: str
+    csrf_secret: str
     algorithm: str
     access_token_expire_minutes: int = 30
 

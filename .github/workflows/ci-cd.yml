@@ -49,6 +49,8 @@ jobs:
                   set -e
                   echo "ENVIRONMENT=${{ vars.ENVIRONMENT }}" >> .env
                   echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+                  echo "CSRF_SECRET_KEY=${{ secrets.CSRF_SECRET_KEY }}" >> .env
+                  echo "SESSION_SECRET_KEY=${{ secrets.SESSION_SECRET_KEY }}" >> .env
                   echo "ALGORITHM=${{ vars.ALGORITHM }}" >> .env
                   echo "ACCESS_TOKEN_EXPIRE_MINUTES=${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }}" >> .env
                   echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
