@@ -58,9 +58,9 @@ jobs:
                   -e DB_PASSWORD=${{ secrets.DB_PASSWORD }}
                   -e DB_PORT=${{ secrets.DB_PORT }}
                   -e DB_USER=${{ secrets.DB_USER }}
-                  -e MAIL_USERNAME=${{ vars.MAIL_USERNAME }}
-                  -e MAIL_FROM=${{ vars.MAIL_FROM }}
-                  -e MAIL_SERVER=${{ vars.MAIL_SERVER }}
-                  -e MAIL_PORT=${{ vars.MAIL_PORT }}
+                  -e MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+                  -e MAIL_FROM=${{ secrets.MAIL_FROM }}
+                  -e MAIL_SERVER=${{ secrets.MAIL_SERVER }}
+                  -e MAIL_PORT=${{ secrets.MAIL_PORT }}
                   -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
                   ${{ env.IMAGE }}
