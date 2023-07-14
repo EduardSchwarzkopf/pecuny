@@ -41,9 +41,9 @@ jobs:
             - name: config ssh
               run: echo -e 'Host ${{ env.SSH_HOST }}\n  HostName ${{ vars.HOSTNAME }}\n  Port 22\n  User root\n  IdentityFile ~/.ssh/id_rsa' > ~/.ssh/config
             - name: stop monika
-              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }}  docker stop ${{ env.CONTAINER }} || :"
-            - name: remove monika
-              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }}  docker rm --force ${{ env.CONTAINER }} || :"
+              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker rm --force ${{ env.CONTAINER }} || :"
+            - name: upgrade database
+              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }} alembic upgrade head"
             - name: pull latest image
               run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker pull ${{ env.IMAGE }}
             - name: create .env file
