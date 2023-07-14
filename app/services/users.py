@@ -50,9 +50,14 @@ class UserService:
             return None
 
     async def validate_new_user(self, email, password, password_confirm):
-        existing_user = await self.user_manager.get_by_email(email)
+        try:
+            existing_user = await self.user_manager.get_by_email(email)
+        except exceptions.UserNotExists:
+            existing_user = None
+
         if existing_user is not None:
             raise UserAlreadyExistsException()
+
         if password != password_confirm:
             raise PasswordsDontMatchException()
 

@@ -140,7 +140,7 @@ async def register(
         return render_form_template(TEMPLATE_REGISTER, request, form)
 
     await user_service.create_user(email, displayname, password)
-    return RedirectResponse(f"{LOGIN}?msg=registered")
+    return RedirectResponse(f"{LOGIN}?msg=registered", 302)
 
 
 @router.get(
