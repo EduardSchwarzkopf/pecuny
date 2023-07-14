@@ -45,7 +45,7 @@ jobs:
             - name: pull latest image
               run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker pull ${{ env.IMAGE }}
             - name: monika start
-              run: |
+              run: >
                   set -e
                   ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d
                   --name=${{ env.CONTAINER }}
