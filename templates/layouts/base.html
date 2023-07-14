@@ -3,14 +3,16 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>{{ title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>{{ title |default("pecuny", true) }}</title>
     <link href="{{ url_for('static', path='/css/main.css') }}" rel="stylesheet" />
     <link rel="icon" href="/static/img/logo.svg" sizes="any" type="image/svg+xml">
 
     {% block style %} {% endblock %}
 </head>
 
-<body class="h-full">
+<body class="h-full px-2">
     {% if DEBUG %} {{ hot_reload.script(url_for('hot-reload')) | safe }} {%
     endif %}
     <div class="min-h-full">
