@@ -64,7 +64,7 @@ jobs:
             #       -e MAIL_PORT=${{ secrets.MAIL_PORT }}
             #       -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
             #       ${{ env.IMAGE }}
-              - name: create run file
+            - name: create run file
               run: |
                   set -e
                   echo "-e IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/monika-backend:latest" >> docker.txt
