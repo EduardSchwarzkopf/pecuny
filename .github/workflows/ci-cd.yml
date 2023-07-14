@@ -42,6 +42,8 @@ jobs:
               run: echo -e 'Host ${{ env.SSH_HOST }}\n  HostName ${{ vars.HOSTNAME }}\n  Port 22\n  User root\n  IdentityFile ~/.ssh/id_rsa' > ~/.ssh/config
             - name: stop monika
               run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }}  docker rm --force ${{ env.CONTAINER }} || :"
+            - name: pull latest image
+              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker pull ${{ env.IMAGE }}
             - name: monika start
               run: >
                   ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d
