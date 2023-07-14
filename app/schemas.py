@@ -237,16 +237,16 @@ class DatetimeLocalFieldWithoutTime(StringField):
 
 
 class CreateTransactionForm(StarletteForm):
-    amount = DecimalField("Amount", validators=[InputRequired()])
     reference = StringField("Reference", validators=[InputRequired()])
+    amount = DecimalField("Amount", validators=[InputRequired()])
     category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
     date = DatetimeLocalFieldWithoutTime("Date", validators=[InputRequired()])
     offset_account_id = SelectField("Offset Account", coerce=int)
 
 
 class UpdateTransactionForm(StarletteForm):
-    amount = DecimalField("Amount", validators=[InputRequired()])
     reference = StringField("Reference", validators=[InputRequired()])
+    amount = DecimalField("Amount", validators=[InputRequired()])
     category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
     date = DatetimeLocalFieldWithoutTime("Date", validators=[InputRequired()])
     offset_account_id = SelectField(
