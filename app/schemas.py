@@ -140,7 +140,7 @@ class AccountData(Account):
 
 
 class LoginForm(StarletteForm):
-    username = StringField("Username", validators=[InputRequired()])
+    username = StringField("E-Mail", validators=[InputRequired()])
     password = PasswordField("Password", validators=[InputRequired()])
 
 
