@@ -1862,6 +1862,10 @@ input {
     width: fit-content;
   }
 
+  .md\:w-full {
+    width: 100%;
+  }
+
   .md\:max-w-lg {
     max-width: 32rem;
   }
@@ -1874,6 +1878,10 @@ input {
 }
 
 @media (min-width: 1024px) {
+  .lg\:w-full {
+    width: 100%;
+  }
+
   .lg\:max-w-xl {
     max-width: 36rem;
   }
