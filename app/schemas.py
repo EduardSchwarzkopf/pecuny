@@ -159,7 +159,7 @@ class CreateAccountForm(StarletteForm):
         ],
     )
 
-    balance = DecimalField("Balance", validators=[DataRequired()], default=0)
+    balance = DecimalField("Balance", default=0)
 
 
 class UpdateAccountForm(StarletteForm):
