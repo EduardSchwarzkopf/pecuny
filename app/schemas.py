@@ -18,7 +18,14 @@ from wtforms import (
     HiddenField,
     SelectField,
 )
-from wtforms.validators import DataRequired, InputRequired, Email, EqualTo, Regexp
+from wtforms.validators import (
+    Length,
+    DataRequired,
+    InputRequired,
+    Email,
+    EqualTo,
+    Regexp,
+)
 
 
 class EmailSchema(BaseModel):
@@ -149,6 +156,7 @@ class CreateAccountForm(StarletteForm):
         "Label",
         validators=[
             DataRequired("Please enter your email address"),
+            Length(max=36),
         ],
     )
 
@@ -156,6 +164,7 @@ class CreateAccountForm(StarletteForm):
         "Description",
         validators=[
             DataRequired("Please enter a description"),
+            Length(max=128),
         ],
     )
 
@@ -167,14 +176,13 @@ class UpdateAccountForm(StarletteForm):
         "Label",
         validators=[
             DataRequired("Please enter your email address"),
+            Length(max=36),
         ],
     )
 
     description = StringField(
         "Description",
-        validators=[
-            DataRequired("Please enter a description"),
-        ],
+        validators=[DataRequired("Please enter a description"), Length(max=128)],
     )
 
 
@@ -185,8 +193,10 @@ password_policy = Regexp(
 
 
 class RegisterForm(StarletteForm):
-    email = StringField("Email", validators=[InputRequired(), Email()])
-    displayname = StringField("Displayname", validators=[InputRequired()])
+    email = StringField("Email", validators=[InputRequired(), Email(), Length(max=320)])
+    displayname = StringField(
+        "Displayname", validators=[InputRequired(), Length(max=50)]
+    )
     password = PasswordField("Password", validators=[InputRequired(), password_policy])
     password_confirm = PasswordField(
         "Confirm Password",
@@ -198,11 +208,11 @@ class RegisterForm(StarletteForm):
 
 
 class ForgotPasswordForm(StarletteForm):
-    email = StringField("Email", validators=[InputRequired(), Email()])
+    email = StringField("Email", validators=[InputRequired(), Email(), Length(max=320)])
 
 
 class GetNewTokenForm(StarletteForm):
-    email = StringField("Email", validators=[InputRequired(), Email()])
+    email = StringField("Email", validators=[InputRequired(), Email(), Length(max=320)])
 
 
 class ResetPasswordForm(StarletteForm):
@@ -237,7 +247,7 @@ class DatetimeLocalFieldWithoutTime(StringField):
 
 
 class CreateTransactionForm(StarletteForm):
-    reference = StringField("Reference", validators=[InputRequired()])
+    reference = StringField("Reference", validators=[InputRequired(), Length(max=128)])
     amount = DecimalField("Amount", validators=[InputRequired()])
     category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
     date = DatetimeLocalFieldWithoutTime("Date", validators=[InputRequired()])
@@ -245,7 +255,7 @@ class CreateTransactionForm(StarletteForm):
 
 
 class UpdateTransactionForm(StarletteForm):
-    reference = StringField("Reference", validators=[InputRequired()])
+    reference = StringField("Reference", validators=[InputRequired(), Length(max=128)])
     amount = DecimalField("Amount", validators=[InputRequired()])
     category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
     date = DatetimeLocalFieldWithoutTime("Date", validators=[InputRequired()])
@@ -262,5 +272,7 @@ class DatePickerForm(StarletteForm):
 
 
 class UpdateUserForm(StarletteForm):
-    email = StringField("Email", validators=[Email()])
-    displayname = StringField("Displayname")
+    email = StringField("Email", validators=[Email(), Length(max=320)])
+    displayname = StringField(
+        "Displayname", validators=[InputRequired(), Length(max=50)]
+    )
