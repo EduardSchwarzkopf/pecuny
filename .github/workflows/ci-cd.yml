@@ -48,18 +48,18 @@ jobs:
               run: >
                   ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d
                   --name=${{ env.CONTAINER }}
-                  -e SECRET_KEY=${{ secrets.SECRET_KEY }}
+                  -e SECRET_KEY='${{ secrets.SECRET_KEY }}'
                   -e ENVIRONMENT=${{ vars.ENVIRONMENT }}
                   -e ALGORITHM=${{ vars.ALGORITHM }}
                   -e ACCESS_TOKEN_EXPIRE_MINUTES=${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }}
                   -e DB_NAME=${{ secrets.DB_NAME }}
                   -e DB_HOST=${{ secrets.DB_HOST }}
-                  -e DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+                  -e DB_PASSWORD='${{ secrets.DB_PASSWORD }}'
                   -e DB_PORT=${{ secrets.DB_PORT }}
                   -e DB_USER=${{ secrets.DB_USER }}
                   -e MAIL_USERNAME=${{ vars.MAIL_USERNAME }}
                   -e MAIL_FROM=${{ vars.MAIL_FROM }}
                   -e MAIL_SERVER=${{ vars.MAIL_SERVER }}
                   -e MAIL_PORT=${{ vars.MAIL_PORT }}
-                  -e MAIL_PASSWORD=${{ vars.MAIL_PASSWORD }}
+                  -e MAIL_PASSWORD='${{ vars.MAIL_PASSWORD }}'
                   ${{ env.IMAGE }}
