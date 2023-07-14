@@ -176,7 +176,6 @@ async def get_new_token(
 @router.post("/send-new-token")
 async def send_new_token(
     request: Request,
-    background_tasks: BackgroundTasks,
     user_service: UserService = Depends(get_user_service),
 ):
     form: schemas.GetNewTokenForm = await schemas.GetNewTokenForm.from_formdata(request)
@@ -190,11 +189,21 @@ async def send_new_token(
 
     try:
         user = await user_service.user_manager.get_by_email(email)
-        background_tasks.add_task(user_service.request_verification, user)
+        await user_service.user_manager.request_verify(user)
 
+    # TODO: Add logging
+    except exceptions.UserInactive:
+        set_feedback(request, FeedbackType.ERROR, "Not possible for this user")
+        return render_form_template(
+            f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, form
+        )
+    except exceptions.UserAlreadyVerified:
+        set_feedback(request, FeedbackType.ERROR, "Not possible for this user")
+        return render_form_template(
+            f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, form
+        )
     except exceptions.UserNotExists:
-        # TODO: Security update: Log exception, but give no feedback to the user
-        set_feedback(request, FeedbackType.ERROR, "User does not exist.")
+        set_feedback(request, FeedbackType.ERROR, "Not possible for this user")
         return render_form_template(
             f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, form
         )
