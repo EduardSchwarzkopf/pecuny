@@ -64,4 +64,4 @@ jobs:
             - name: copy .env file
               run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
             - name: monika start
-              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d --name ${{ env.CONTAINER }} --env-file .env ${{ env.IMAGE }}
+              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d --name ${{ env.CONTAINER }} -p ${{ vars.PORT }}:8000 --env-file .env ${{ env.IMAGE }}
