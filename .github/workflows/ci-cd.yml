@@ -62,5 +62,5 @@ jobs:
                   echo "-e MAIL_SERVER=${{ vars.MAIL_SERVER }}" >> docker.txt
                   echo "-e MAIL_PORT=${{ vars.MAIL_PORT }}" >> docker.txt
                   echo "-e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> docker.txt
-              - name: copy run file
-                run: scp -o "StrictHostKeyChecking=no" docker.txt ${{ env.SSH_HOST }}:docker.txt
+            - name: copy run file
+              run: scp -o "StrictHostKeyChecking=no" docker.txt ${{ env.SSH_HOST }}:docker.txt
