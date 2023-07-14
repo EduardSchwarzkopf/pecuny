@@ -65,7 +65,7 @@ jobs:
                   echo 'MAIL_FROM=${{ secrets.MAIL_FROM }}' >> .env
                   echo 'MAIL_SERVER=${{ secrets.MAIL_SERVER }}' >> .env
                   echo 'MAIL_PORT=${{ secrets.MAIL_PORT }}' >> .env
-                  echo 'MAIL_PASSWORD="${{ secrets.MAIL_PASSWORD }}"' >> .env
+                  echo 'MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}' >> .env
             - name: copy .env file
               run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
             - name: monika start
