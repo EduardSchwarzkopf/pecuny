@@ -43,7 +43,7 @@ jobs:
             - name: stop monika
               run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }}  docker rm --force ${{ env.CONTAINER }} || :"
             - name: pull latest image
-              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker pull ${{ env.IMAGE }}"
+              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker pull ${{ env.IMAGE }}
             - name: create run file
               run: |
                   set -e
