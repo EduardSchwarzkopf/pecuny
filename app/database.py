@@ -16,10 +16,6 @@ class Database:
         self.engine = None
         self.url = url
 
-    async def create_all(self):
-        async with self.engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
     async def init(self):
         # closes connections if a session is created,
         # so as not to create repeated connections
