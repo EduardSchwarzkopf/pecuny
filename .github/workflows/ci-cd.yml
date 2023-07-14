@@ -43,11 +43,11 @@ jobs:
             - name: stop monika
               run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }}  docker rm --force ${{ env.CONTAINER }} || :"
             - name: pull latest image
-              run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker pull ${{ env.IMAGE }}
+              run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker pull ${{ env.IMAGE }}"
             - name: monika start
               run: >
                   set -e
-                  ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d
+                  ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} echo -e 'docker run -d
                   --name=${{ env.CONTAINER }}
                   -e SECRET_KEY=${{ secrets.SECRET_KEY }}
                   -e ENVIRONMENT=${{ vars.ENVIRONMENT }}
@@ -63,4 +63,4 @@ jobs:
                   -e MAIL_SERVER=${{ secrets.MAIL_SERVER }}
                   -e MAIL_PORT=${{ secrets.MAIL_PORT }}
                   -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
-                  ${{ env.IMAGE }}
+                  ${{ env.IMAGE }}' > docker.txt
