@@ -245,8 +245,10 @@ def upgrade():
 
     bind = op.get_bind()
     session = sa.orm.Session(bind=bind)
+
     section_list = categories.get_section_list()
     category_list = categories.get_category_list()
+    frequency_list = get_frequency_list()
 
     def create_section_model(section):
         return models.TransactionSection(**section)
@@ -254,18 +256,18 @@ def upgrade():
     def create_category_model(category):
         return models.TransactionCategory(**category)
 
-    section = list(map(create_section_model, section_list))
-    category = list(map(create_category_model, category_list))
-
-    session.add_all(section + category)
-
-    def create_category_model(frequency: dict):
+    def create_frequency_model(frequency):
         return models.Frequency(**frequency)
 
-    frequency_list = list(map(create_category_model, get_frequency_list()))
+    try:
+        section = list(map(create_section_model, section_list))
+        category = list(map(create_category_model, category_list))
+        frequency = list(map(create_frequency_model, frequency_list))
 
-    session.add_all(frequency_list)
-    session.commit()
+        session.add_all(section + category + frequency)
+        session.commit()
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 def downgrade():
