@@ -153,7 +153,7 @@ class LoginForm(StarletteForm):
 
 class CreateAccountForm(StarletteForm):
     label = StringField(
-        "Label",
+        "Name",
         validators=[
             DataRequired("Please enter your email address"),
             Length(max=36),
@@ -173,7 +173,7 @@ class CreateAccountForm(StarletteForm):
 
 class UpdateAccountForm(StarletteForm):
     label = StringField(
-        "Label",
+        "Name",
         validators=[
             DataRequired("Please enter your email address"),
             Length(max=36),
