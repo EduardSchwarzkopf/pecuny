@@ -51,7 +51,7 @@ leading-tight focus:outline-none focus:border-primary" %}
         {% endif %}
         {% endfor %}
 
-        <div class="p-2 flex flex-col items-end ">
+        <div class="p-2">
             {{ submit_button(button_text) }}
         </div>
 
@@ -87,7 +87,7 @@ leading-tight focus:outline-none focus:border-primary" %}
 
             <script src="/static/js/passwordPolicy.js"></script>
             {% endif %}
-            {{ submit_button(button_text, 'md:w-full') }}
+            {{ submit_button(button_text) }}
             <script src="/static/js/errorHandling.js"></script>
         </form>
     </div>
@@ -119,15 +119,19 @@ leading-tight focus:outline-none focus:border-primary" %}
         {% endif %}
         {% endfor %}
 
-        <div class="p-2 flex flex-col items-end ">
-            <div class="flex justify-end space-x-6">
-                {% if transaction_id %}
-                {{ modal.button("Delete") }}
-                {% endif %}
-
-                {{ submit_button('Update' if transaction_id else 'Add') }}
+        <div class="p-2">
+            <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full">
+                <div class="w-full md:w-auto">
+                    {{ submit_button('Update' if transaction_id else 'Add') }}
+                </div>
+                <div class="w-full md:w-auto">
+                    {% if transaction_id %}
+                    {{ modal.button("Delete") }}
+                    {% endif %}
+                </div>
             </div>
         </div>
+
 
         <script src="/static/js/errorHandling.js"></script>
     </form>
@@ -151,9 +155,7 @@ leading-tight focus:outline-none focus:border-primary" %}
         {% endif %}
         {% endfor %}
 
-        <div class="flex flex-col items-end">
-            {{ submit_button('Update' if account_id else 'Add') }}
-        </div>
+        {{ submit_button('Update' if account_id else 'Add') }}
 </div>
 
 <script src="/static/js/errorHandling.js"></script>
