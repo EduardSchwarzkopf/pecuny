@@ -55,7 +55,10 @@ async def populate_transaction_form_choices(
         for account in await account_list
         if account.id != account_id
     ]
-    account_choices.insert(0, (0, "---"))
+    account_choices.insert(
+        0,
+        (0, "Select if transferring between accounts"),
+    )
     form.offset_account_id.choices = account_choices
 
 
