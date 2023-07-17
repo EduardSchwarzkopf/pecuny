@@ -153,27 +153,31 @@ class LoginForm(StarletteForm):
 
 class CreateAccountForm(StarletteForm):
     label = StringField(
-        "Label",
+        "Name",
         validators=[
             DataRequired("Please enter your email address"),
             Length(max=36),
         ],
+        render_kw={"placeholder": "e.g. 'Personal Savings'"},
     )
 
     description = StringField(
         "Description",
         validators=[
-            DataRequired("Please enter a description"),
             Length(max=128),
         ],
+        render_kw={"placeholder": "e.g. 'My primary savings account'"},
     )
 
-    balance = DecimalField("Balance", default=0)
+    balance = DecimalField(
+        "Balance",
+        render_kw={"placeholder": "e.g. Current amount in savings"},
+    )
 
 
 class UpdateAccountForm(StarletteForm):
     label = StringField(
-        "Label",
+        "Name",
         validators=[
             DataRequired("Please enter your email address"),
             Length(max=36),
@@ -247,11 +251,33 @@ class DatetimeLocalFieldWithoutTime(StringField):
 
 
 class CreateTransactionForm(StarletteForm):
-    reference = StringField("Reference", validators=[InputRequired(), Length(max=128)])
-    amount = DecimalField("Amount", validators=[InputRequired()])
-    category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
-    date = DatetimeLocalFieldWithoutTime("Date", validators=[InputRequired()])
-    offset_account_id = SelectField("Offset Account", coerce=int)
+    reference = StringField(
+        "Reference",
+        validators=[InputRequired(), Length(max=128)],
+        render_kw={
+            "placeholder": "e.g. 'Rent payment for March', 'Salary for January'"
+        },
+    )
+    amount = DecimalField(
+        "Amount", validators=[InputRequired()], render_kw={"placeholder": "e.g. '500'"}
+    )
+    category_id = SelectField(
+        "Category",
+        validators=[InputRequired()],
+        coerce=int,
+        render_kw={"placeholder": "Select the appropriate category"},
+    )
+    date = DatetimeLocalFieldWithoutTime(
+        "Date",
+        validators=[InputRequired()],
+    )
+    offset_account_id = SelectField(
+        "Offset Account",
+        coerce=int,
+        render_kw={
+            "placeholder": "Select an account if this transaction is transferring funds between accounts",
+        },
+    )
 
 
 class UpdateTransactionForm(StarletteForm):

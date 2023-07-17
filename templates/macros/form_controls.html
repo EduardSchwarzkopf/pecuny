@@ -2,17 +2,18 @@
 {% import 'macros/icons.html' as icon %}
 {% import 'macros/modal.html' as modal %}
 
+{% set label_base_classname = "block uppercase tracking-wide text-gray text-xs font-bold mb-2 "%}
+{% set input_base_classname = "disabled:bg-gray-200 disabled:text-gray
+block appearance-none border-2 w-full shadow bg-white border border-gray-200 px-4 py-2 rounded-md
+leading-tight focus:outline-none focus:border-primary" %}
+
 {% macro input_field(field, field_classname='', label_classname='') %}
 <div {% if field.type=="HiddenField" %} class="hidden" {% endif %}>
     <div class="inline-block relative w-full">
 
-        {{ field.label(class="block uppercase tracking-wide text-gray text-xs font-bold mb-2 " ~ label_classname) }}
+        {{ field.label(class=label_base_classname ~ label_classname) }}
         {{
-        field(class="
-        disabled:bg-gray-200 disabled:text-gray
-        block appearance-none border-2 w-full shadow bg-white border border-gray-200 px-4 py-2 rounded-md
-        leading-tight focus:outline-none focus:border-primary " ~
-        field_classname,
+        field(class=input_base_classname ~ field_classname,
         onkeyup="hideError(this)"
         )
         }}
@@ -97,10 +98,24 @@
 <div>
     <form class="space-y-6" action="{{ action_url }}" method="POST">
         {{ form.csrf_token }}
-        {# TODO: DRY #}
         {% for field in form %}
         {% if field.type not in ("CSRFTokenField") %}
+        {% if field.type == "SelectField" and field.name == "offset_account_id" %}
+        <div class="form-group">
+            <label class="{{ label_base_classname }}" for="{{ field.id }}">{{ field.label }}</label>
+            <select class="{{ input_base_classname }}" name="{{ field.name }}" id="{{ field.id }}">
+                {% for choice in field.choices %}
+                {% if loop.first %}
+                <option value="{{ choice[0] }}" disabled selected>{{ choice[1] }}</option>
+                {% else %}
+                <option value="{{ choice[0] }}">{{ choice[1] }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        {% else %}
         {{ input_field(field) }}
+        {% endif %}
         {% endif %}
         {% endfor %}
 
@@ -110,7 +125,7 @@
                 {{ modal.button("Delete") }}
                 {% endif %}
 
-                {{ submit_button('Update' if transaction_id else 'Create') }}
+                {{ submit_button('Update' if transaction_id else 'Add') }}
             </div>
         </div>
 
@@ -122,7 +137,6 @@
     transaction_id=transaction_id),
     title="Delete Transaction") }}
     {% endif %}
-
 </div>
 {% endmacro %}
 
@@ -138,7 +152,7 @@
         {% endfor %}
 
         <div class="flex flex-col items-end">
-            {{ submit_button('Update' if account_id else 'Create') }}
+            {{ submit_button('Update' if account_id else 'Add') }}
         </div>
 </div>
 

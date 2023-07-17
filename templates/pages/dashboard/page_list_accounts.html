@@ -9,7 +9,7 @@
 
     {% if account_list|length < max_allowed_accounts %} <div class="flex-none">
         <a href="{{ url_for('page_create_account_form')}}">
-            {{ btn.button("Create Account")}}
+            {{ btn.button("Add Account")}}
         </a>
 </div>
 {% endif %}
