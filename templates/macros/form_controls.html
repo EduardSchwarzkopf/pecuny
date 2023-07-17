@@ -110,7 +110,7 @@
                 {{ modal.button("Delete") }}
                 {% endif %}
 
-                {{ submit_button('Update' if transaction_id else 'Create') }}
+                {{ submit_button('Update' if transaction_id else 'Add') }}
             </div>
         </div>
 
@@ -138,7 +138,7 @@
         {% endfor %}
 
         <div class="flex flex-col items-end">
-            {{ submit_button('Update' if account_id else 'Create') }}
+            {{ submit_button('Update' if account_id else 'Add') }}
         </div>
 </div>
 
