@@ -47,18 +47,21 @@ async def populate_transaction_form_choices(
     account_id: int, user: models.User, form: schemas.CreateTransactionForm
 ) -> None:
     category_list = category_service.get_categories(user)
-    account_list = service.get_accounts(user)
+    account_list = await service.get_accounts(user)
     form.category_id.choices = group_categories_by_section(await category_list)
 
-    account_choices = [
-        (account.id, account.label)
-        for account in await account_list
-        if account.id != account_id
-    ]
-    account_choices.insert(
-        0,
-        (0, "Select if transferring between accounts"),
-    )
+    account_choices = [(0, "No other accounts found")]
+    if len(account_list) > 1:
+        account_choices = [
+            (account.id, account.label)
+            for account in account_list
+            if account.id != account_id
+        ]
+        account_choices.insert(
+            0,
+            (0, "Select if transferring between accounts"),
+        )
+
     form.offset_account_id.choices = account_choices
 
 
@@ -119,8 +122,10 @@ async def page_create_account(
     form = await schemas.CreateAccountForm.from_formdata(request)
 
     if not await form.validate_on_submit():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Validation error"
+        return render_template(
+            "pages/dashboard/page_form_account.html",
+            request,
+            {"form": form, "action_url": router.url_path_for("page_create_account")},
         )
 
     account = schemas.Account(**form.data)
