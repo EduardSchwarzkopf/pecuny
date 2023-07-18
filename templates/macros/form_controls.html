@@ -119,16 +119,14 @@ leading-tight focus:outline-none focus:border-primary" %}
         {% endif %}
         {% endfor %}
 
-        <div class="p-2">
-            <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full">
-                <div class="w-full md:w-auto">
-                    {{ submit_button('Update' if transaction_id else 'Add') }}
-                </div>
-                <div class="w-full md:w-auto">
-                    {% if transaction_id %}
-                    {{ modal.button("Delete") }}
-                    {% endif %}
-                </div>
+        <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full">
+            <div class="w-full md:w-auto">
+                {{ submit_button('Update' if transaction_id else 'Add') }}
+            </div>
+            <div class="w-full md:w-auto">
+                {% if transaction_id %}
+                {{ modal.button("Delete") }}
+                {% endif %}
             </div>
         </div>
 
@@ -167,8 +165,9 @@ leading-tight focus:outline-none focus:border-primary" %}
 
 <div class="mt-6">
     <h3>Danger Zone</h3>
-    <div class="border border-danger p-6 color-danger flex flex-row place-items-center rounded">
-        <div class="grow">
+    <div
+        class="border border-danger p-6 color-danger flex flex-col items-center md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full rounded">
+        <div class="w-full md:w-auto grow">
             <p class="font-bold">
                 Delete this account?
             </p>
@@ -176,8 +175,10 @@ leading-tight focus:outline-none focus:border-primary" %}
                 Once you delete a account, there is no going back. Please be certain.
             </span>
         </div>
-        <div class="">
-            {{ modal.button("Delete this account") }}
+        <div class="w-full md:w-auto">
+            <div>
+                {{ modal.button("Delete this account") }}
+            </div>
         </div>
         {{ modal.delete_object(request.url_for('page_delete_account', account_id=account_id), title=delete_title) }}
     </div>
