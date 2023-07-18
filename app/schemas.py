@@ -297,7 +297,7 @@ class DatePickerForm(StarletteForm):
 
 
 class UpdateUserForm(StarletteForm):
-    email = StringField("Email", validators=[Email(), Length(max=320)])
+    email = StringField("Email", validators=[Email(), InputRequired(), Length(max=320)])
     displayname = StringField(
         "Displayname", validators=[InputRequired(), Length(max=50)]
     )
