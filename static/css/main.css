@@ -691,6 +691,18 @@ input {
   top: 0.75rem;
 }
 
+.top-0 {
+  top: 0px;
+}
+
+.-left-2 {
+  left: -0.5rem;
+}
+
+.-top-2 {
+  top: -0.5rem;
+}
+
 .z-10 {
   z-index: 10;
 }
@@ -770,6 +782,10 @@ input {
 
 .mt-8 {
   margin-top: 2rem;
+}
+
+.ml-2 {
+  margin-left: 0.5rem;
 }
 
 .block {
@@ -937,6 +953,10 @@ input {
 
 .place-items-center {
   place-items: center;
+}
+
+.items-start {
+  align-items: flex-start;
 }
 
 .items-end {
@@ -1329,6 +1349,10 @@ input {
   text-align: right;
 }
 
+.align-text-top {
+  vertical-align: text-top;
+}
+
 .text-2xl {
   font-size: 1.5rem;
   line-height: 2rem;
@@ -1499,6 +1523,11 @@ input {
 .text-white {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
+}
+
+.text-secondary {
+  --tw-text-opacity: 1;
+  color: rgb(255 67 140 / var(--tw-text-opacity));
 }
 
 .underline {
