@@ -270,7 +270,7 @@ class CreateTransactionForm(StarletteForm):
         validators=[InputRequired()],
     )
     offset_account_id = SelectField(
-        "Offset Account",
+        "Linked Account",
         coerce=int,
         render_kw={
             "placeholder": "Select an account if this transaction is transferring funds between accounts",
@@ -284,7 +284,8 @@ class UpdateTransactionForm(StarletteForm):
     category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
     date = DatetimeLocalFieldWithoutTime("Date", validators=[InputRequired()])
     offset_account_id = SelectField(
-        "Offset Account", coerce=int, render_kw={"disabled": "disabled"}
+        "Linked Account",
+        coerce=int,
     )
 
 
