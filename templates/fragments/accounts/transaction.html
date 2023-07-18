@@ -5,13 +5,12 @@
             <p class="text-gray-500 text-xs">{{ transaction.information.category.label }}</p>
             <h4>
                 {{ transaction.information.reference }}
-                </h3>
+            </h4>
         </div>
     </div>
     <div class="">
         <h4
             class="px-2 py-1 rounded-md {{ 'bg-success-light text-success-dark' if transaction.information.amount > 0 else '' }}">
-            {{
-            transaction.information.amount }}</h4>
+            {{ '%0.2f' % transaction.information.amount }}</h4>
     </div>
 </div>
