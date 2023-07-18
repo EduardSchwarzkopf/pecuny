@@ -249,8 +249,16 @@ async def page_update_account(
     form = await schemas.UpdateAccountForm.from_formdata(request)
 
     if not await form.validate_on_submit():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Validation error"
+        return render_template(
+            "pages/dashboard/page_form_account.html",
+            request,
+            {
+                "account_id": account_id,
+                "form": form,
+                "action_url": router.url_path_for(
+                    "page_update_account", account_id=account_id
+                ),
+            },
         )
 
     account = schemas.Account(**form.data, balance=account.balance)
