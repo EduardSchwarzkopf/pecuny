@@ -884,6 +884,10 @@ input {
   width: 100%;
 }
 
+.w-48 {
+  width: 12rem;
+}
+
 .min-w-0 {
   min-width: 0px;
 }
@@ -1883,12 +1887,24 @@ input {
     width: auto;
   }
 
+  .md\:w-48 {
+    width: 12rem;
+  }
+
   .md\:max-w-lg {
     max-width: 32rem;
   }
 
   .md\:flex-row {
     flex-direction: row;
+  }
+
+  .md\:items-end {
+    align-items: flex-end;
+  }
+
+  .md\:justify-end {
+    justify-content: flex-end;
   }
 
   .md\:space-x-3 > :not([hidden]) ~ :not([hidden]) {
@@ -1913,6 +1929,14 @@ input {
 @media (min-width: 1024px) {
   .lg\:max-w-xl {
     max-width: 36rem;
+  }
+
+  .lg\:items-end {
+    align-items: flex-end;
+  }
+
+  .lg\:justify-end {
+    justify-content: flex-end;
   }
 
   .lg\:p-12 {
