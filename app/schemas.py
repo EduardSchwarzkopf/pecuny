@@ -254,12 +254,10 @@ class CreateTransactionForm(StarletteForm):
     reference = StringField(
         "Reference",
         validators=[InputRequired(), Length(max=128)],
-        render_kw={
-            "placeholder": "e.g. 'Rent payment for March', 'Salary for January'"
-        },
+        render_kw={"placeholder": "e.g. 'Rent payment for March'"},
     )
     amount = DecimalField(
-        "Amount", validators=[InputRequired()], render_kw={"placeholder": "e.g. '500'"}
+        "Amount", validators=[InputRequired()], render_kw={"placeholder": "e.g. '-500'"}
     )
     category_id = SelectField(
         "Category",
