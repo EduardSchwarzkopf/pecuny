@@ -1125,6 +1125,11 @@ input {
   border-color: transparent;
 }
 
+.border-gray-300 {
+  --tw-border-opacity: 1;
+  border-color: rgb(176 191 201 / var(--tw-border-opacity));
+}
+
 .border-l-gray {
   --tw-border-opacity: 1;
   border-left-color: rgb(102 128 145 / var(--tw-border-opacity));
@@ -1889,6 +1894,10 @@ input {
 
   .md\:w-48 {
     width: 12rem;
+  }
+
+  .md\:w-full {
+    width: 100%;
   }
 
   .md\:max-w-lg {

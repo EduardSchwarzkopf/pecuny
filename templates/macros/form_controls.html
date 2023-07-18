@@ -4,7 +4,7 @@
 
 {% set label_base_classname = "block uppercase tracking-wide text-gray text-xs font-bold mb-2 "%}
 {% set input_base_classname = "disabled:bg-gray-200 disabled:text-gray
-block appearance-none border-2 w-full shadow bg-white border border-gray-200 px-4 py-2 rounded-md
+block appearance-none border-2 w-full shadow bg-white border border-gray-200 px-4 py-3 rounded-md
 leading-tight focus:outline-none focus:border-primary" %}
 
 {% macro input_field(field, field_classname='', label_classname='', extra_params={}) %}
@@ -97,7 +97,8 @@ leading-tight focus:outline-none focus:border-primary" %}
 
             <script src="/static/js/passwordPolicy.js"></script>
             {% endif %}
-            {{ submit_button(button_text) }}
+
+            {{ submit_button(button_text, classname='md:w-full') }}
             <script src="/static/js/errorHandling.js"></script>
         </form>
     </div>
