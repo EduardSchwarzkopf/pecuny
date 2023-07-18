@@ -2,12 +2,12 @@
 {% import 'macros/buttons.html' as btn %}
 
 {% block content %}
-<div class="flex flex-col sm:flex-row sm:flex-wrap sm:space-x-6 mb-6">
-    <div class="grow">
+<div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full mb-6">
+    <div class="grow w-full md:w-auto">
         <p class="py-2 text-xl text-gray">Accounts</p>
     </div>
 
-    {% if account_list|length < max_allowed_accounts %} <div class="flex-none">
+    {% if account_list|length < max_allowed_accounts %} <div class="w-full md:w-auto">
         <a href="{{ url_for('page_create_account_form')}}">
             {{ btn.button("Add Account")}}
         </a>
