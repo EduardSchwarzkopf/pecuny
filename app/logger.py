@@ -1,11 +1,11 @@
 import logging
-from app.config import settings
+from logging.config import dictConfig
 
 
 def get_logger(
-    name: str = settings.app_name,
+    name: str = "pecuny",
     log_level: str = "DEBUG",
-    log_format: str = "%(levelprefix)s %(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    log_format: str = "%(levelprefix)s %(asctime)s - %(name)s - %(message)s",
 ) -> logging.Logger:
     # Set up logging configuration
     log_config = {
@@ -33,6 +33,6 @@ def get_logger(
         },
     }
 
-    logging.config.dictConfig(log_config)
+    dictConfig(log_config)
 
     return logging.getLogger(name)

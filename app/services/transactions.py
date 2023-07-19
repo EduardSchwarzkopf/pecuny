@@ -1,33 +1,53 @@
 from datetime import datetime
 from app import models, schemas, repository as repo
+from app.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 async def get_transaction_list(
     user: models.User, account_id: int, date_start: datetime, date_end: datetime
 ):
+    logger.info(
+        "Starting transaction list retrieval for user %s and account %s",
+        user.id,
+        account_id,
+    )
     account = await repo.get(models.Account, account_id)
     if account.user_id == user.id:
+        logger.info("User ID verified. Retrieving transactions.")
         return await repo.get_transactions_from_period(account_id, date_start, date_end)
+    else:
+        logger.warning("User ID does not match the account's User ID.")
 
 
 async def get_transaction(user: models.User, transaction_id: int) -> models.Transaction:
+    logger.info(
+        "Retrieving transaction with ID %s for user %s", transaction_id, user.id
+    )
     transaction = await repo.get(models.Transaction, transaction_id)
 
     if transaction is None:
+        logger.warning("Transaction with ID %s not found.", transaction_id)
         return
 
     account = await repo.get(models.Account, transaction.account_id)
 
     if account.user_id == user.id:
+        logger.info("User ID verified. Returning transaction.")
         return transaction
+    else:
+        logger.warning("User ID does not match the account's User ID.")
 
 
 async def create_transaction(
     user: models.User, transaction_information: schemas.TransactionInformationCreate
 ) -> models.Transaction:
+    logger.info("Creating new transaction for user %s", user.id)
     account = await repo.get(models.Account, transaction_information.account_id)
 
     if user.id.bytes != account.user_id.bytes:
+        logger.warning("User ID does not match the account's User ID.")
         return None
 
     db_transaction_information = models.TransactionInformation()
@@ -39,11 +59,17 @@ async def create_transaction(
     )
 
     if transaction_information.offset_account_id:
+        logger.info("Handling offset account for transaction.")
         offset_transaction = await _handle_offset_transaction(
             user, transaction_information
         )
 
         if offset_transaction is None:
+            logger.warning(
+                "User[id: %s] not allowed to access offset_account[id: %s]",
+                user.id,
+                transaction_information.offset_account_id,
+            )
             raise Exception(
                 f"User[id: {user.id}] not allowed to access offset_account[id: {transaction_information.offset_account_id}]"
             )
@@ -60,10 +86,12 @@ async def create_transaction(
 async def _handle_offset_transaction(
     user: models.User, transaction_information: schemas.TransactionInformationCreate
 ) -> models.Transaction:
+    logger.info("Handling offset transaction for user %s", user.id)
     offset_account_id = transaction_information.offset_account_id
     offset_account = await repo.get(models.Account, offset_account_id)
 
     if user.id != offset_account.user_id:
+        logger.warning("User ID does not match the offset account's User ID.")
         return None
 
     transaction_information.amount = transaction_information.amount * -1
@@ -73,14 +101,14 @@ async def _handle_offset_transaction(
     db_offset_transaction_information.add_attributes_from_dict(
         transaction_information.dict()
     )
-    offset_transcation = models.Transaction(
+    offset_transaction = models.Transaction(
         information=db_offset_transaction_information,
         account_id=offset_account_id,
     )
 
-    await repo.save(offset_transcation)
+    await repo.save(offset_transaction)
 
-    return offset_transcation
+    return offset_transaction
 
 
 async def update_transaction(
@@ -88,12 +116,17 @@ async def update_transaction(
     transaction_id: int,
     transaction_information: schemas.TransactionInformtionUpdate,
 ):
+    logger.info(
+        "Updating transaction with ID %s for user %s", transaction_id, current_user.id
+    )
     transaction = await repo.get(models.Transaction, transaction_id)
     if transaction is None:
+        logger.warning("Transaction with ID %s not found.", transaction_id)
         return
 
     account = await repo.get(models.Account, transaction.account_id)
     if current_user.id != account.user_id:
+        logger.warning("User ID does not match the account's User ID.")
         return
 
     amount_updated = (
@@ -101,16 +134,17 @@ async def update_transaction(
     )
 
     update_info = {"balance": account.balance + amount_updated}
-
     await repo.update(models.Account, account.id, **update_info)
 
     if transaction.offset_transactions_id:
+        logger.info("Handling offset transaction for update.")
         offset_transaction = await repo.get(
             models.Transaction, transaction.offset_transactions_id
         )
         offset_account = await repo.get(models.Account, offset_transaction.account_id)
 
         if offset_account.user_id != current_user.id:
+            logger.warning("User ID does not match the offset account's User ID.")
             return
 
         offset_account.balance -= amount_updated
@@ -128,25 +162,32 @@ async def update_transaction(
         transaction.information.id,
         **update_info,
     )
+
     return transaction
 
 
 async def delete_transaction(current_user: models.User, transaction_id: int) -> bool:
+    logger.info(
+        "Deleting transaction with ID %s for user %s", transaction_id, current_user.id
+    )
     transaction = await repo.get(
         models.Transaction, transaction_id, load_relationships=["offset_transaction"]
     )
 
     if transaction is None:
+        logger.warning("Transaction with ID %s not found.", transaction_id)
         return
 
     account = await repo.get(models.Account, transaction.account_id)
     if current_user.id != account.user_id:
+        logger.warning("User ID does not match the account's User ID.")
         return
 
     amount = transaction.information.amount
     account.balance -= amount
 
     if transaction.offset_transaction:
+        logger.info("Handling offset transaction for delete.")
         offset_transaction = transaction.offset_transaction
         offset_account = await repo.get(models.Account, offset_transaction.account_id)
         offset_account.balance += amount
