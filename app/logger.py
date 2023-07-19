@@ -1,18 +1,39 @@
 import logging
-from fastapi.logger import logger as fastapi_logger
 
 
-def get_logger():
-    gunicorn_error_logger = logging.getLogger("gunicorn.error")
-    gunicorn_logger = logging.getLogger("gunicorn")
-    uvicorn_access_logger = logging.getLogger("uvicorn.access")
-    uvicorn_access_logger.handlers = gunicorn_error_logger.handlers
+def get_logger(
+    name: str = "my-api",
+    log_level: str = "DEBUG",
+    log_format: str = "%(levelprefix)s %(asctime)s - %(name)s - %(levelname)s - %(message)s",
+):
+    # Set up logging configuration
+    log_config = {
+        "version": 1,
+        "formatters": {
+            "basic": {
+                "()": "uvicorn.logging.DefaultFormatter",
+                "format": log_format,
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            }
+        },
+        "handlers": {
+            "console": {
+                "formatter": "basic",
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stderr",
+                "level": log_level,
+            }
+        },
+        "loggers": {
+            name: {
+                "handlers": ["console"],
+                "level": log_level,
+            }
+        },
+    }
 
-    fastapi_logger.handlers = gunicorn_error_logger.handlers
+    # Apply logging configuration
+    logging.config.dictConfig(log_config)
 
-    if __name__ != "__main__":
-        fastapi_logger.setLevel(gunicorn_logger.level)
-    else:
-        fastapi_logger.setLevel(logging.DEBUG)
-
-    return fastapi_logger
+    # Return configured logger
+    return logging.getLogger(name)
