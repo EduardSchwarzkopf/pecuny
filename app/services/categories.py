@@ -1,21 +1,32 @@
 from typing import List
 from app import models, schemas, repository as repo
+from app.logger import get_logger
+
+# Create a custom logger
+logger = get_logger(__name__)
 
 
 async def get_categories(
     current_user: models.User,
 ) -> List[models.TransactionCategory]:
+    logger.info("Getting categories for user %s", current_user.id)
     return await repo.get_all(models.TransactionCategory)
 
 
 async def get_category(
     current_user: models.User, category_id: int
 ) -> models.TransactionCategory:
+    logger.info("Getting category with id %s for user %s", category_id, current_user.id)
     category = await repo.get(models.TransactionCategory, category_id)
 
     if category and (category.user_id is None or category.user_id == current_user.id):
         return category
 
+    logger.info(
+        "Category with id %s does not belong to user %s or does not exist",
+        category_id,
+        current_user.id,
+    )
     return None
 
 

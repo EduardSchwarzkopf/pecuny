@@ -1,8 +1,12 @@
+from dotenv import load_dotenv
 from pydantic import BaseSettings
+
+load_dotenv()
 
 
 # Set all required env variables here
 class Settings(BaseSettings):
+    app_name: str = "pecuny"
     max_allowed_accounts: int = 5
     enviroment: str = "dev"
     domain: str

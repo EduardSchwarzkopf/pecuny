@@ -1,4 +1,4 @@
-from fastapi import Depends, Request, BackgroundTasks
+from fastapi import Depends, Request, logger
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_users import exceptions
@@ -191,7 +191,6 @@ async def send_new_token(
         user = await user_service.user_manager.get_by_email(email)
         await user_service.user_manager.request_verify(user)
 
-    # TODO: Add logging
     except exceptions.UserInactive:
         set_feedback(request, FeedbackType.ERROR, "Not possible for this user")
         return render_form_template(
