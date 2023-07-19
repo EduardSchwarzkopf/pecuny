@@ -1,11 +1,12 @@
 import logging
+from app.config import settings
 
 
 def get_logger(
-    name: str = "my-api",
+    name: str = settings.app_name,
     log_level: str = "DEBUG",
     log_format: str = "%(levelprefix)s %(asctime)s - %(name)s - %(levelname)s - %(message)s",
-):
+) -> logging.Logger:
     # Set up logging configuration
     log_config = {
         "version": 1,
