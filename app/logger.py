@@ -32,8 +32,6 @@ def get_logger(
         },
     }
 
-    # Apply logging configuration
     logging.config.dictConfig(log_config)
 
-    # Return configured logger
     return logging.getLogger(name)
