@@ -6,7 +6,7 @@ from app.config import settings
 from app.models import User
 from app.logger import get_logger
 
-log = get_logger()
+log = get_logger(__name__)
 
 conf = ConnectionConfig(
     MAIL_USERNAME=settings.mail_username,
