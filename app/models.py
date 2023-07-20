@@ -91,6 +91,8 @@ class Transaction(BaseModel):
         lazy="selectin",
     )
 
+    account = relationship("Account", lazy="selectin")
+
 
 class TransactionScheduled(BaseModel):
     __tablename__ = "transactions_scheduled"
