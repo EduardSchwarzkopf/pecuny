@@ -284,8 +284,7 @@ class UpdateTransactionForm(StarletteForm):
     category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
     date = DatetimeLocalFieldWithoutTime("Date", validators=[InputRequired()])
     offset_account_id = SelectField(
-        "Linked Account",
-        coerce=int,
+        "Linked Account", coerce=int, render_kw={"disabled": "disabled"}, default=0
     )
 
 
