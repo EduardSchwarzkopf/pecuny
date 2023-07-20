@@ -3,7 +3,7 @@ from sqlalchemy.future import select
 from . import models
 from datetime import datetime
 from app.database import db
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 
 
 async def get_all(cls: models):
@@ -55,6 +55,7 @@ async def get_transactions_from_period(
 
     query = (
         select(transaction)
+        .options(joinedload(transaction.offset_transaction))
         .join(transaction.information)
         .filter(class_date <= end_date)
         .filter(class_date >= start_date)
