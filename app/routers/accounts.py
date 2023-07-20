@@ -159,7 +159,9 @@ async def page_get_account(
             day=last_day, hour=23, minute=59, second=59, microsecond=999999
         )
 
-    transaction_list = await transaction_service.get_transaction_list(
+    transaction_list: list[
+        models.Transaction
+    ] = await transaction_service.get_transaction_list(
         user, account_id, date_start, date_end
     )
 
