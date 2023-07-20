@@ -44,11 +44,24 @@ async def handle_account_route(
 
 
 async def populate_transaction_form_choices(
-    account_id: int, user: models.User, form: schemas.CreateTransactionForm
+    account_id: int,
+    user: models.User,
+    form: schemas.CreateTransactionForm,
+    first_select_label: str = "Select target account for transfers",
 ) -> None:
-    category_list = category_service.get_categories(user)
+    await populate_transaction_form_category_choices(user, form)
+    await populate_transaction_form_account_choices(
+        account_id, user, form, first_select_label
+    )
+
+
+async def populate_transaction_form_account_choices(
+    account_id: int,
+    user: models.User,
+    form: schemas.CreateTransactionForm,
+    first_select_label,
+) -> None:
     account_list = await service.get_accounts(user)
-    form.category_id.choices = group_categories_by_section(await category_list)
 
     account_choices = [(0, "No other accounts found")]
     if len(account_list) > 1:
@@ -59,10 +72,17 @@ async def populate_transaction_form_choices(
         ]
         account_choices.insert(
             0,
-            (0, "Select target account for transfers"),
+            (0, first_select_label),
         )
 
     form.offset_account_id.choices = account_choices
+
+
+async def populate_transaction_form_category_choices(
+    user: models.User, form: schemas.CreateTransactionForm
+) -> None:
+    category_list = category_service.get_categories(user)
+    form.category_id.choices = group_categories_by_section(await category_list)
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -315,7 +335,9 @@ async def page_update_transaction(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
     form = schemas.UpdateTransactionForm(request, data=transaction.information.__dict__)
-    await populate_transaction_form_choices(account_id, user, form)
+    await populate_transaction_form_choices(
+        account_id, user, form, "Linked account (not editable)"
+    )
     form.date.data = transaction.information.date.strftime("%Y-%m-%d")
 
     if transaction.offset_transactions_id:
@@ -355,13 +377,25 @@ async def page_update_transaction(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
     form = await schemas.UpdateTransactionForm.from_formdata(request)
-    await populate_transaction_form_choices(account_id, user, form)
+    await populate_transaction_form_choices(
+        account_id, user, form, "Linked account (not editable)"
+    )
 
     if not await form.validate_on_submit():
+        form.date.data = transaction.information.date.strftime("%Y-%m-%d")
         return render_template(
-            "pages/dashboard/page_update_transaction.html",
+            "pages/dashboard/page_form_transaction.html",
             request,
-            {"form": form, "account_id": account_id, "transaction": transaction},
+            {
+                "form": form,
+                "account_id": account_id,
+                "transaction_id": transaction.id,
+                "action_url": router.url_path_for(
+                    "page_update_transaction",
+                    account_id=account_id,
+                    transaction_id=transaction.id,
+                ),
+            },
         )
 
     transaction_information = schemas.TransactionInformtionUpdate(
