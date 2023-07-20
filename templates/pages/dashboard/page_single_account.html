@@ -7,7 +7,7 @@
 <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full mb-6">
     <div class="grow w-full md:w-auto">
         <div class="flex flex-row space-x-4 items-center">
-            <p class="text-xl text-gray">{{account.label}}</p>
+            <p class="text-xl text-gray font-medium">{{account.label}}</p>
             {{ btn.edit(url_for('page_update_account_form', account_id=account.id)) }}
         </div>
     </div>
@@ -18,7 +18,7 @@
     </div>
 </div>
 
-<div class="flex flex-col items-center bg-white border py-6 rounded-md">
+<div class="flex flex-col items-center bg-white border py-6 rounded-lg">
 
     <div class="uppercase tracking-wide text-center mb-6 md:mb-8">
         <span class="text-gray text-xs font-bold mb-2">Balance</span>
@@ -63,7 +63,7 @@
 <div id="transactions" class="grid gap-4">
     {% for group in transaction_list_grouped %}
     <div class="w-full">
-        <span class="pb-4 text-gray font-bold text-lg ">{{ group.date.strftime('%A - %d %B') }}</span>
+        <span class="pb-4 text-gray font-medium text-lg ">{{ group.date.strftime('%A - %d %B') }}</span>
         <div class="grid gap-3">
             {% for transaction in group.transactions %}
             <a href="{{ url_for('page_update_transaction', account_id=account.id, transaction_id=transaction.id)}}">

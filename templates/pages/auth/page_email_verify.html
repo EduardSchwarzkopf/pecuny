@@ -2,7 +2,7 @@
 {% import 'macros/buttons.html' as btn %}
 {% set title = 'Token Verification Status' %}
 {% block content %}
-<div class="text-center bg-white rounded-md shadow py-8 px-12 flex flex-col items-center">
+<div class="text-center bg-white rounded-lg shadow py-8 px-12 flex flex-col items-center">
     {% if verification_status == 0 %}
     <h2 class="text-2xl font-bold text-danger mb-4">Invalid Token</h2>
     <p class="mb-4">

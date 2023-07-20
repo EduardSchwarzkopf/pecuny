@@ -10,7 +10,7 @@
         {% if field.type not in ("CSRFTokenField") %}
         <div>
             {{ field.label(class="block uppercase tracking-wide text-gray text-xs w-full md:w-auto") }}
-            <input class="w-full rounded-md p-2 text-gray-900 sm:text-sm sm:leading-6" type="date"
+            <input class="w-full rounded-lg p-2 text-gray-900 sm:text-sm sm:leading-6" type="date"
                 aria-label="Date Start" id="{{field.id}}">
         </div>
         {% endif %}

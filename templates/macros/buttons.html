@@ -1,4 +1,4 @@
-{% set btnStyle = 'w-full md:w-auto flex justify-center transition rounded-md py-2 px-4 text-sm font-semibold
+{% set btnStyle = 'w-full md:w-auto flex justify-center transition rounded-lg py-2 px-4 text-sm font-semibold
 leading-6 text-white shadow-sm hover:bg-transparent border focus-visible:outline
 focus-visible:outline-2
 focus-visible:outline-offset-2 disabled:opacity-50' %}
@@ -30,7 +30,7 @@ focus-visible:outline-gray',
 {% endmacro %}
 
 {% macro edit(url, id='') %}
-<a href="{{ url }}" id="{{ id }}" class="hover:bg-gray-100 p-3 rounded-md">
+<a href="{{ url }}" id="{{ id }}" class="hover:bg-gray-100 p-3 rounded-lg">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 fill-gray"
         viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->
         <path
