@@ -62,9 +62,13 @@ async def populate_transaction_form_account_choices(
     first_select_label,
 ) -> None:
     account_list = await service.get_accounts(user)
+    account_list_length = len(account_list)
 
     account_choices = [(0, "No other accounts found")]
-    if len(account_list) > 1:
+    if account_list_length == 1:
+        form.offset_account_id.data = 0
+
+    if account_list_length > 1:
         account_choices = [
             (account.id, account.label)
             for account in account_list
@@ -430,9 +434,15 @@ async def page_create_transaction(
 
     if not await form.validate_on_submit():
         return render_template(
-            "pages/dashboard/page_create_transaction.html",
+            "pages/dashboard/page_form_transaction.html",
             request,
-            {"form": form, "account_id": account_id},
+            {
+                "form": form,
+                "account_id": account_id,
+                "action_url": router.url_path_for(
+                    "page_create_transaction", account_id=account_id
+                ),
+            },
         )
 
     transaction = schemas.TransactionInformationCreate(

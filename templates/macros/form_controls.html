@@ -112,7 +112,8 @@ leading-tight focus:outline-none focus:border-primary" %}
         {% for field in form %}
         {% if field.type not in ("CSRFTokenField") %}
         {% if field.type == "SelectField" and field.name == "offset_account_id" %}
-        {{ input_field(field, extra_params={"disabled": "disabled"} if field.choices|length==1 else {}) }}
+        {{ input_field(field, extra_params={"disabled": "disabled"} if field.choices|length==1
+        else {}) }}
         {% else %}
         {{ input_field(field) }}
         {% endif %}
