@@ -1,12 +1,19 @@
-# monika-backend-v2
-Monika backend written with fastapi
+# Pecuny
+Budgeting app written in FastAPI with Jinja2. 
+This is my learning project for various subjects:
+
+- Domain Driven Design
+- Architecture
+- Async
+- API Development
+- what else there is in a project
 
 ## Dev notes
 
 ### Starting backend 
 
-Database and User-Manager
-`docker compose --profile up -d `
+Database
+`docker compose up --profile dev -d `
 
 FastAPI in docker
 `docker run --name=monika --rm -dp 8000:8000 --env-file .env monika`
