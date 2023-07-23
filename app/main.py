@@ -19,12 +19,14 @@ from app.utils.exceptions import UnauthorizedPageException
 from app.middleware import HeaderLinkMiddleware
 from app.utils import BreadcrumbBuilder
 from app.config import settings
+from app.logger import get_logger
 
 
 from starlette_wtf import CSRFProtectMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 app = FastAPI()
+logger = get_logger(__name__)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -71,6 +73,7 @@ if _debug := os.getenv("DEBUG"):
 async def unauthorized_exception_handler(
     request: Request, exc: UnauthorizedPageException
 ):
+    logger.info(f"[UnauthorizedAccess] on path: {request.url.path}")
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
@@ -88,6 +91,7 @@ async def unauthorized_exception_handler(
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    logger.exception(f"UNPROCESSABLE_ENTITY - {request.__dict__}")
     if request.url.path.startswith("/api/"):
         return JSONResponse(
             status_code=status_code,
@@ -100,9 +104,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status_code=status_code,
     )
 
-
 @app.exception_handler(404)
 async def page_not_found_exception_handler(request: Request, exc: HTTPException):
+    logger.warning(f"[PageNotFound] on path: {request.url.path}")
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
