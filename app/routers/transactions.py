@@ -6,7 +6,6 @@ from fastapi.exceptions import HTTPException
 from starlette import status
 from app.utils import PageRouter
 from app.utils.template_utils import (
-    add_breadcrumb,
     group_categories_by_section,
     render_template,
 )
