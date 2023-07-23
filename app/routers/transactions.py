@@ -117,6 +117,45 @@ async def page_create_transaction_form(
     )
 
 
+@router.post("/add-transaction")
+async def page_create_transaction(
+    request: Request,
+    account_id: int,
+    user: models.User = Depends(current_active_user),
+):
+    await handle_account_route(request, user, account_id)
+
+    form = await schemas.CreateTransactionForm.from_formdata(request)
+    await populate_transaction_form_choices(account_id, user, form)
+
+    if not await form.validate_on_submit():
+        return render_template(
+            "pages/dashboard/page_form_transaction.html",
+            request,
+            {
+                "form": form,
+                "account_id": account_id,
+                "action_url": router.url_path_for(
+                    "page_create_transaction", account_id=account_id
+                ),
+            },
+        )
+
+    transaction = schemas.TransactionInformationCreate(
+        account_id=account_id, **form.data
+    )
+
+    response = await tm.transaction(
+        transaction_service.create_transaction, user, transaction
+    )
+
+    if not response:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
+
+    return RedirectResponse(
+        account_router.url_path_for("page_get_account", account_id=account_id), status_code=302
+    )
+
 @router.get("/{transaction_id}")
 async def page_update_transaction(
     request: Request,
@@ -210,48 +249,10 @@ async def page_update_transaction(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
-        router.url_path_for("page_get_account", account_id=account_id), status_code=302
+        account_router.url_path_for("page_get_account", account_id=account_id), status_code=302
     )
 
 
-@router.post("/add-transaction")
-async def page_create_transaction(
-    request: Request,
-    account_id: int,
-    user: models.User = Depends(current_active_user),
-):
-    await handle_account_route(request, user, account_id)
-
-    form = await schemas.CreateTransactionForm.from_formdata(request)
-    await populate_transaction_form_choices(account_id, user, form)
-
-    if not await form.validate_on_submit():
-        return render_template(
-            "pages/dashboard/page_form_transaction.html",
-            request,
-            {
-                "form": form,
-                "account_id": account_id,
-                "action_url": router.url_path_for(
-                    "page_create_transaction", account_id=account_id
-                ),
-            },
-        )
-
-    transaction = schemas.TransactionInformationCreate(
-        account_id=account_id, **form.data
-    )
-
-    response = await tm.transaction(
-        transaction_service.create_transaction, user, transaction
-    )
-
-    if not response:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
-
-    return RedirectResponse(
-        router.url_path_for("page_get_account", account_id=account_id), status_code=302
-    )
 
 
 @csrf_protect
@@ -275,5 +276,5 @@ async def page_delete_transaction(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
-        router.url_path_for("page_get_account", account_id=account_id), status_code=302
+        account_router.url_path_for("page_get_account", account_id=account_id), status_code=302
     )
