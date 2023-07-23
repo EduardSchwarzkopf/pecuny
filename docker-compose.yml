@@ -1,9 +1,9 @@
-version: "3.9"
+version: '3.9'
 services:
   db:
-    image: "postgres:14-alpine"
+    image: 'postgres:14-alpine'
     restart: always
-    environment: 
+    environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
@@ -13,15 +13,23 @@ services:
       - db_volume:/var/lib/postgresql/data
 
   db_test:
-    image: "postgres:14-alpine"
-    environment: 
+    image: 'postgres:14-alpine'
+    environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}_test
     ports:
       - ${TEST_DB_PORT}:5432
-    profiles:
-      - dev
+
+  pgadmin-compose:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: 'admin@example.com'
+      PGADMIN_DEFAULT_PASSWORD: 'password'
+    ports:
+      - '16543:80'
+    depends_on:
+      - db
 
 volumes:
   db_volume:
