@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
             uppercase: /[A-Z]/.test(password),
             lowercase: /[a-z]/.test(password),
             digit: /[0-9]/.test(password),
-            special: /[!@#$%^&*()]/.test(password),
+            special: /[\@\#\$\%\^\&\*\(\)\-\_\=\+\{\}\[\]\|\:\;\,\.\<\>\?\/\!]/.test(password),
         };
 
         for (const policy in policies) {

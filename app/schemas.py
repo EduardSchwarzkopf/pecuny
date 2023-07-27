@@ -191,7 +191,7 @@ class UpdateAccountForm(StarletteForm):
 
 
 password_policy = Regexp(
-    r"^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{8,}$",
+    r"^(?=.*[A-Z])(?=.*\d)(?=.*[\@\#\$\%\^\&\*\(\)\-\_\=\+\{\}\[\]\|\:\;\,\.\<\>\?\/\!]).{8,}",
     message="Password should have at least 8 characters, 1 uppercase, 1 digit and 1 special character",
 )
 
