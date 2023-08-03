@@ -7,7 +7,7 @@
 block appearance-none border-2 w-full shadow bg-white border border-gray-200 px-4 py-3 rounded-lg
 leading-tight focus:outline-none focus:border-primary" %}
 
-{% macro input_field(field, field_classname='', label_classname='', extra_params={}) %}
+{% macro input_field(field, field_classname='', label_classname='', prefix_icon='', postfix_icon='', extra_params={}) %}
 <div {% if field.type=="HiddenField" %} class="hidden" {% endif %}>
     <div class="inline-block relative w-full">
 
@@ -105,20 +105,40 @@ leading-tight focus:outline-none focus:border-primary" %}
 </div>
 {% endmacro %}
 
-{% macro transaction_form(request, form, action_url, account_id, transaction_id=false) %}
+{% macro transaction_form(request, form, action_url, account_id, transaction_id=false, is_income=false) %}
 <div>
     <form class="space-y-6" action="{{ action_url }}" method="POST">
         {{ form.csrf_token }}
-        {% for field in form %}
-        {% if field.type not in ("CSRFTokenField") %}
-        {% if field.type == "SelectField" and field.name == "offset_account_id" %}
-        {{ input_field(field, extra_params={"disabled": "disabled"} if field.choices|length==1
-        else {}) }}
-        {% else %}
-        {{ input_field(field) }}
-        {% endif %}
-        {% endif %}
-        {% endfor %}
+        {{ input_field(form.reference) }}
+
+        
+        <div class="inline-block relative w-full">
+            <div class="{{'flex flex-row ' ~ label_base_classname}}">
+                <div>
+                    {{ form.amount.label(class=label_classname) }}
+                </div>
+            </div>
+
+            <div class="flex w-full">
+                <span class="inline-flex items-center px-3 text-sm  fill-gray-600 bg-gray-200 border border-r-0 border-gray-200 rounded-l-lg">
+                    {% if is_income %}
+                    {{ icon.plus() }}
+                    {% else %}
+                    {{ icon.minus() }}
+                    {% endif %}
+                </span>
+                {{
+                    form.amount(class=input_base_classname ~ " rounded-l-none",
+                    onkeyup="hideError(this)"
+                    )
+                }}
+            </div>
+        </div>
+        
+        {{ input_field(form.category_id) }}
+        {{ input_field(form.date) }}
+        {{ input_field(form.offset_account_id) }}
+
 
         <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full">
             <div class="w-full md:w-auto">
