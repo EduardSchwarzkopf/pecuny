@@ -93,8 +93,36 @@ async def page_list_accounts(
 
 
 @csrf_protect
-@router.get("/add-transaction")
-async def page_create_transaction_form(
+@router.get("/add-income/")
+async def page_create_income_form(
+    request: Request,
+    account_id: int,
+    user: models.User = Depends(current_active_user),
+):
+    await handle_account_route(request, user, account_id)
+
+    form = schemas.CreateTransactionForm(request)
+    await populate_transaction_form_choices(account_id, user, form)
+
+    is_income = True
+
+    return render_template(
+        "pages/dashboard/page_form_transaction.html",
+        request,
+        {
+            "form": form,
+            "account_id": account_id,
+            "is_income": is_income,
+            "action_url": request.url_for(
+                "page_create_transaction", account_id=account_id
+            ).include_query_params(is_income=is_income),
+        },
+    )
+
+
+@csrf_protect
+@router.get("/add-expense/")
+async def page_create_expense_form(
     request: Request,
     account_id: int,
     user: models.User = Depends(current_active_user),
@@ -110,6 +138,7 @@ async def page_create_transaction_form(
         {
             "form": form,
             "account_id": account_id,
+            "is_income": False,
             "action_url": router.url_path_for(
                 "page_create_transaction", account_id=account_id
             ),
@@ -121,12 +150,18 @@ async def page_create_transaction_form(
 async def page_create_transaction(
     request: Request,
     account_id: int,
+    is_income: bool = False,
     user: models.User = Depends(current_active_user),
 ):
     await handle_account_route(request, user, account_id)
 
     form = await schemas.CreateTransactionForm.from_formdata(request)
     await populate_transaction_form_choices(account_id, user, form)
+
+    form.amount.data = abs(form.amount.data)
+
+    if is_income is False:
+        form.amount.data *= -1
 
     if not await form.validate_on_submit():
         return render_template(
@@ -135,6 +170,7 @@ async def page_create_transaction(
             {
                 "form": form,
                 "account_id": account_id,
+                "is_income": is_income,
                 "action_url": router.url_path_for(
                     "page_create_transaction", account_id=account_id
                 ),
@@ -153,8 +189,10 @@ async def page_create_transaction(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
-        account_router.url_path_for("page_get_account", account_id=account_id), status_code=302
+        account_router.url_path_for("page_get_account", account_id=account_id),
+        status_code=302,
     )
+
 
 @router.get("/{transaction_id}")
 async def page_update_transaction(
@@ -249,10 +287,9 @@ async def page_update_transaction(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
-        account_router.url_path_for("page_get_account", account_id=account_id), status_code=302
+        account_router.url_path_for("page_get_account", account_id=account_id),
+        status_code=302,
     )
-
-
 
 
 @csrf_protect
@@ -276,5 +313,6 @@ async def page_delete_transaction(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
-        account_router.url_path_for("page_get_account", account_id=account_id), status_code=302
+        account_router.url_path_for("page_get_account", account_id=account_id),
+        status_code=302,
     )
