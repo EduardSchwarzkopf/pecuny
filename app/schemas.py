@@ -257,7 +257,7 @@ class CreateTransactionForm(StarletteForm):
         render_kw={"placeholder": "e.g. 'Rent payment for March'"},
     )
     amount = DecimalField(
-        "Amount", validators=[InputRequired()], render_kw={"placeholder": "e.g. '-500'"}
+        "Amount", validators=[InputRequired()], render_kw={"placeholder": "500"}
     )
     category_id = SelectField(
         "Category",
