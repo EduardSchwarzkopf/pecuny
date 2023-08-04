@@ -3,5 +3,5 @@
 {% import 'macros/form_controls.html' as form_ctrl %}
 
 {% block content %}
-{{ form_ctrl.transaction_form(request, form, action_url, account_id, transaction_id, is_income) }}
+{{ form_ctrl.transaction_form(request, form, action_url, account_id, transaction_id) }}
 {% endblock %}
