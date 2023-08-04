@@ -7,18 +7,30 @@
 block appearance-none border-2 w-full shadow bg-white border border-gray-200 px-4 py-3 rounded-lg
 leading-tight focus:outline-none focus:border-primary" %}
 
-{% macro input_field(field, field_classname='', label_classname='', extra_params={}) %}
+{% macro input_field(field, field_classname='', label_classname='', prefix_icon='', postfix_icon='', extra_params={}) %}
 <div {% if field.type=="HiddenField" %} class="hidden" {% endif %}>
+
     <div class="inline-block relative w-full">
 
         <div class="{{'flex flex-row ' ~ label_base_classname}}">
             <div>
                 {{ field.label(class=label_classname) }}
             </div>
-            {% if not field.flags.required %}
+            {% if not field.flags.required and field.type != "BooleanField" %}
             <div class="ml-2">(optional)</div>
             {% endif %}
         </div>
+
+        {% if field.type == "BooleanField" %}
+
+        <label class="relative inline-flex items-center mb-4 cursor-pointer">
+            {{field(class="sr-only peer")}}
+            <div
+                class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-primary-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all  peer-checked:bg-primary-600">
+            </div>
+        </label>
+
+        {% else %}
 
         {{
         field(class=input_base_classname ~ field_classname,
@@ -34,6 +46,8 @@ leading-tight focus:outline-none focus:border-primary" %}
             </svg>
         </div>
         {% endif %}
+        {% endif %}
+
 
     </div>
     {% if field.errors %}
@@ -111,14 +125,10 @@ leading-tight focus:outline-none focus:border-primary" %}
         {{ form.csrf_token }}
         {% for field in form %}
         {% if field.type not in ("CSRFTokenField") %}
-        {% if field.type == "SelectField" and field.name == "offset_account_id" %}
-        {{ input_field(field, extra_params={"disabled": "disabled"} if field.choices|length==1
-        else {}) }}
-        {% else %}
         {{ input_field(field) }}
         {% endif %}
-        {% endif %}
         {% endfor %}
+
 
         <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full">
             <div class="w-full md:w-auto">

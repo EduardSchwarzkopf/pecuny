@@ -93,7 +93,7 @@ async def page_list_accounts(
 
 
 @csrf_protect
-@router.get("/add-transaction")
+@router.get("/add-transaction/")
 async def page_create_transaction_form(
     request: Request,
     account_id: int,
@@ -110,7 +110,7 @@ async def page_create_transaction_form(
         {
             "form": form,
             "account_id": account_id,
-            "action_url": router.url_path_for(
+            "action_url": request.url_for(
                 "page_create_transaction", account_id=account_id
             ),
         },
@@ -141,6 +141,9 @@ async def page_create_transaction(
             },
         )
 
+    if form.is_expense.data:
+        form.amount.data *= -1
+
     transaction = schemas.TransactionInformationCreate(
         account_id=account_id, **form.data
     )
@@ -153,8 +156,10 @@ async def page_create_transaction(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
-        account_router.url_path_for("page_get_account", account_id=account_id), status_code=302
+        account_router.url_path_for("page_get_account", account_id=account_id),
+        status_code=302,
     )
+
 
 @router.get("/{transaction_id}")
 async def page_update_transaction(
@@ -170,11 +175,19 @@ async def page_update_transaction(
     if transaction is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
-    form = schemas.UpdateTransactionForm(request, data=transaction.information.__dict__)
+    form: schemas.UpdateTransactionForm = schemas.UpdateTransactionForm(
+        request, data=transaction.information.__dict__
+    )
     await populate_transaction_form_choices(
         account_id, user, form, "Linked account (not editable)"
     )
     form.date.data = transaction.information.date.strftime("%Y-%m-%d")
+
+    form_amount = form.amount.data
+    if form_amount < 0:
+        form.is_expense.data = True
+
+    form.amount.data = abs(form_amount)
 
     if transaction.offset_transactions_id:
         offset_transaction = await transaction_service.get_transaction(
@@ -234,6 +247,9 @@ async def page_update_transaction(
             },
         )
 
+    if form.is_expense.data:
+        form.amount.data *= -1
+
     transaction_information = schemas.TransactionInformtionUpdate(
         account_id=account_id, **form.data
     )
@@ -249,10 +265,9 @@ async def page_update_transaction(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
-        account_router.url_path_for("page_get_account", account_id=account_id), status_code=302
+        account_router.url_path_for("page_get_account", account_id=account_id),
+        status_code=302,
     )
-
-
 
 
 @csrf_protect
@@ -276,5 +291,6 @@ async def page_delete_transaction(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
-        account_router.url_path_for("page_get_account", account_id=account_id), status_code=302
+        account_router.url_path_for("page_get_account", account_id=account_id),
+        status_code=302,
     )
