@@ -9,16 +9,28 @@ leading-tight focus:outline-none focus:border-primary" %}
 
 {% macro input_field(field, field_classname='', label_classname='', prefix_icon='', postfix_icon='', extra_params={}) %}
 <div {% if field.type=="HiddenField" %} class="hidden" {% endif %}>
+
     <div class="inline-block relative w-full">
 
         <div class="{{'flex flex-row ' ~ label_base_classname}}">
             <div>
                 {{ field.label(class=label_classname) }}
             </div>
-            {% if not field.flags.required %}
+            {% if not field.flags.required and field.type != "BooleanField" %}
             <div class="ml-2">(optional)</div>
             {% endif %}
         </div>
+
+        {% if field.type == "BooleanField" %}
+
+        <label class="relative inline-flex items-center mb-4 cursor-pointer">
+            {{field(class="sr-only peer")}}
+            <div
+                class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-primary-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all  peer-checked:bg-primary-600">
+            </div>
+        </label>
+
+        {% else %}
 
         {{
         field(class=input_base_classname ~ field_classname,
@@ -34,6 +46,8 @@ leading-tight focus:outline-none focus:border-primary" %}
             </svg>
         </div>
         {% endif %}
+        {% endif %}
+
 
     </div>
     {% if field.errors %}
@@ -105,39 +119,15 @@ leading-tight focus:outline-none focus:border-primary" %}
 </div>
 {% endmacro %}
 
-{% macro transaction_form(request, form, action_url, account_id, transaction_id=false, is_income=false) %}
+{% macro transaction_form(request, form, action_url, account_id, transaction_id=false) %}
 <div>
     <form class="space-y-6" action="{{ action_url }}" method="POST">
         {{ form.csrf_token }}
-        {{ input_field(form.reference) }}
-
-        
-        <div class="inline-block relative w-full">
-            <div class="{{'flex flex-row ' ~ label_base_classname}}">
-                <div>
-                    {{ form.amount.label(class=label_classname) }}
-                </div>
-            </div>
-
-            <div class="flex w-full">
-                <span class="inline-flex items-center px-3 text-sm  fill-gray-600 bg-gray-200 border border-r-0 border-gray-200 rounded-l-lg">
-                    {% if is_income %}
-                    {{ icon.plus() }}
-                    {% else %}
-                    {{ icon.minus() }}
-                    {% endif %}
-                </span>
-                {{
-                    form.amount(class=input_base_classname ~ " rounded-l-none",
-                    onkeyup="hideError(this)"
-                    )
-                }}
-            </div>
-        </div>
-        
-        {{ input_field(form.category_id) }}
-        {{ input_field(form.date) }}
-        {{ input_field(form.offset_account_id) }}
+        {% for field in form %}
+        {% if field.type not in ("CSRFTokenField") %}
+        {{ input_field(field) }}
+        {% endif %}
+        {% endfor %}
 
 
         <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full">
