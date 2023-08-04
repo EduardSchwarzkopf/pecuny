@@ -17,8 +17,10 @@ from wtforms import (
     PasswordField,
     HiddenField,
     SelectField,
+    BooleanField,
 )
 from wtforms.validators import (
+    NumberRange,
     Length,
     DataRequired,
     InputRequired,
@@ -257,8 +259,11 @@ class CreateTransactionForm(StarletteForm):
         render_kw={"placeholder": "e.g. 'Rent payment for March'"},
     )
     amount = DecimalField(
-        "Amount", validators=[InputRequired()], render_kw={"placeholder": "500"}
+        "Amount",
+        validators=[InputRequired(), NumberRange(min=0)],
+        render_kw={"placeholder": "500"},
     )
+    is_expense = BooleanField("Is this an expense?", default=True)
     category_id = SelectField(
         "Category",
         validators=[InputRequired()],
@@ -280,7 +285,8 @@ class CreateTransactionForm(StarletteForm):
 
 class UpdateTransactionForm(StarletteForm):
     reference = StringField("Reference", validators=[InputRequired(), Length(max=128)])
-    amount = DecimalField("Amount", validators=[InputRequired()])
+    amount = DecimalField("Amount", validators=[InputRequired(), NumberRange(min=0)])
+    is_expense = BooleanField("Is this an expense?")
     category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
     date = DatetimeLocalFieldWithoutTime("Date", validators=[InputRequired()])
     offset_account_id = SelectField(
