@@ -26,6 +26,7 @@ fastapi-mail==1.2.8
 FastAPI-SQLAlchemy==0.2.1
 fastapi-users==11.0.0
 fastapi-users-db-sqlalchemy==4.0.5
+fastapi-utils==0.2.1
 greenlet==2.0.2
 h11==0.14.0
 httpcore==0.17.0
