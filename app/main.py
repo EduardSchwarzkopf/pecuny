@@ -1,29 +1,25 @@
-from fastapi import FastAPI, Request, status
-from app.routes import router_list
-
-from app.database import db
-
-from app import schemas, templates
-import arel
 import os
 
-
-# from .routers import users, posts, auth, vote
+import arel
+from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException
-from fastapi.exceptions import RequestValidationError
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
-from app.utils.exceptions import UnauthorizedPageException
-from app.middleware import HeaderLinkMiddleware
-from app.utils import BreadcrumbBuilder
-from app.config import settings
-from app.logger import get_logger
-
-
-from starlette_wtf import CSRFProtectMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+from starlette_wtf import CSRFProtectMiddleware
+
+from app import schemas, templates
+from app.config import settings
+from app.database import db
+from app.logger import get_logger
+from app.middleware import HeaderLinkMiddleware
+from app.routes import router_list
+from app.utils import BreadcrumbBuilder
+from app.utils.exceptions import UnauthorizedPageException
+from app.services.scheduled_transactions import process_scheduled_transactions
 
 app = FastAPI()
 logger = get_logger(__name__)
