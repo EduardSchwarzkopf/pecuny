@@ -8,10 +8,8 @@ logger = get_logger(__name__)
 async def get_transaction_list(
     user: models.User, account_id: int, date_start: datetime, date_end: datetime
 ):
-
     account = await repo.get(models.Account, account_id)
     if account.user_id == user.id:
-
         return await repo.get_scheduled_transactions_from_period(
             account_id, date_start, date_end
         )
@@ -33,7 +31,6 @@ async def create_scheduled_transaction(
     user: models.User,
     transaction_information: schemas.ScheduledTransactionInformationCreate,
 ) -> models.TransactionScheduled:
-
     account = await repo.get(models.Account, transaction_information.account_id)
 
     if user.id.bytes != account.user_id.bytes:
@@ -67,3 +64,32 @@ async def create_scheduled_transaction(
     await repo.save([transaction, db_transaction_information])
 
     return transaction
+
+
+async def delete_scheduled_transaction(
+    current_user: models.User, transaction_id: int
+) -> bool:
+    logger.info(
+        "Deleting scheduled_transaction with ID %s for user %s",
+        transaction_id,
+        current_user.id,
+    )
+
+    transaction = await repo.get(
+        models.TransactionScheduled,
+        transaction_id,
+        load_relationships=["offset_transaction"],
+    )
+
+    if transaction is None:
+        logger.warning("Scheduled Transaction with ID %s not found.", transaction_id)
+        return
+
+    account = await repo.get(models.Account, transaction.account_id)
+    if current_user.id != account.user_id:
+        logger.warning("User ID does not match the account's User ID.")
+        return
+
+    await repo.delete(transaction)
+
+    return True
