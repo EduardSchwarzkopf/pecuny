@@ -1,5 +1,8 @@
 from app import models, schemas, repository as repo
 from datetime import datetime
+from app.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 async def get_transaction_list(
