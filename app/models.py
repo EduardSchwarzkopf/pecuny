@@ -98,6 +98,13 @@ class TransactionScheduled(BaseModel):
     __tablename__ = "transactions_scheduled"
 
     account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"))
+    account = relationship(
+        "Account",
+        back_populates="scheduled_transactions",
+        lazy="selectin",
+        foreign_keys=[account_id],
+    )
+
     information = relationship(
         "TransactionInformation",
         backref="transactions_scheduled",
