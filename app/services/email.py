@@ -25,25 +25,26 @@ conf = ConnectionConfig(
 async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONResponse:
     message = MessageSchema(
         subject=subject,
-        recipients=email.dict().get("email"),
-        template_body=email.dict().get("body"),
+        recipients=email.model_dump().get("email"),
+        template_body=email.model_dump().get("body"),
         subtype=MessageType.html,
     )
 
     fm = FastMail(conf)
     try:
         await fm.send_message(message, template_name=template_name)
-        log.info(f"Email has been sent to {email.dict().get('email')}")
+        log.info(f"Email has been sent to {email.model_dump().get('email')}")
         return JSONResponse(status_code=200, content={"message": "email has been sent"})
     except Exception as e:
-        log.error(f"Email could not be sent to {email.dict().get('email')} due to {e}")
+        log.error(
+            f"Email could not be sent to {email.model_dump().get('email')} due to {e}"
+        )
         raise
 
 
 async def send_register(user: User) -> JSONResponse:
-    pass
-    # email = EmailSchema(email=[user.email], body={"user": user})
-    # return await _send(email, "Welcome", template_name="emails/register.html")
+    email = EmailSchema(email=[user.email], body={"user": user})
+    return await _send(email, "Welcome", template_name="emails/register.html")
 
 
 async def send_verification(user: User, token: str) -> JSONResponse:
