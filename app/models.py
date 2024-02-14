@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Numeric, text
 from typing import List
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.ext.declarative import declared_attr
@@ -39,7 +39,9 @@ class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
     displayname = Column(String(50))
-    oauth_accounts: List[OAuthAccount] = relationship("OAuthAccount", lazy="joined")
+    oauth_accounts: Mapped[List[OAuthAccount]] = relationship(
+        "OAuthAccount", lazy="joined"
+    )
 
 
 class UserId(Base):
