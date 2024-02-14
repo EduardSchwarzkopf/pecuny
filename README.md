@@ -10,6 +10,24 @@ This is my learning project for various subjects:
 
 ## Dev notes
 
+### Prerequisites
+
+1. [poetry](https://python-poetry.org/docs/) installed
+2. python ^3.12 installed
+
+### Install packages
+
+Use `poetry` to install packages: `poetry install`
+
+### VSCode Setup
+
+Set the correct env in VS Code with: 
+
+1. Get the env path with: `poetry env info --path`
+2. `Ctrl` + `P`
+2. Search for `Python interpreter`
+3. Set the path from step 1
+
 ### Starting backend 
 
 Database
@@ -24,18 +42,18 @@ FastAPI directly
 ### Database
 
 Migrate DB with:
-`alembic upgrade head`
+`poetry run alembic upgrade head`
 
 Create new revision with:
-`alembic revision --autogenerate -m "your message"`
+`poetry run alembic revision --autogenerate -m "your message"`
 
 ### Tests
 
 Use the VS Code Test Module or use the following commands
 
 run all tests with:
-`pytest  -v -x -v -s --disable-warnings`
+`poetry run pytest  -v -x -v -s --disable-warnings`
 
 run single test with:
-`pytest test_transactions.py::test_update_transaction -v -x -v -s`
+`poetry run pytest test_transactions.py::test_update_transaction -v -x -v -s`
 
