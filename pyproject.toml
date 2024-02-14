@@ -4,7 +4,6 @@ version = "0.1.0"
 description = ""
 authors = ["Eduard Schwarzkopf <48969167+EduardSchwarzkopf@users.noreply.github.com>"]
 readme = "README.md"
-packages = [{ include = "app" }]
 
 [tool.poetry.dependencies]
 python = "^3.12"
