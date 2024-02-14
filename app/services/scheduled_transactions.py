@@ -5,45 +5,6 @@ from app.logger import get_logger
 logger = get_logger(__name__)
 
 
-import pytz
-from fastapi_utils.tasks import repeat_every
-from app import transaction_manager as tm
-from app.services import transactions as service
-
-
-@repeat_every(seconds=24 * 60 * 60)  # 24 hours
-async def process_scheduled_transactions() -> None:
-    logger.info("Processing scheduled transactions...")
-    scheduled_transaction_list: list[models.TransactionScheduled] = await repo.get_all(
-        models.TransactionScheduled
-    )
-
-    for scheduled_transaction in scheduled_transaction_list:
-        today = datetime.now(tz=pytz.utc)
-
-        if scheduled_transaction.date_start <= today >= scheduled_transaction.date_end:
-            try:
-                user = await repo.get(
-                    models.User, scheduled_transaction.account.user_id
-                )
-                info: models.TransactionInformation = scheduled_transaction.information
-                transaction = schemas.TransactionInformationCreate(
-                    account_id=scheduled_transaction.account_id,
-                    offset_account_id=scheduled_transaction.offset_account_id,
-                    amount=info.amount,
-                    reference=info.reference,
-                    category_id=info.category_id,
-                    date=today,
-                )
-                result = await tm.transaction(
-                    service.create_transaction, user, transaction
-                )
-            except Exception as e:
-                logger.error(e)
-                continue
-            a = 1
-
-
 async def get_transaction_list(
     user: models.User, account_id: int, date_start: datetime, date_end: datetime
 ):
