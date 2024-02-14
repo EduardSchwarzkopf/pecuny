@@ -27,6 +27,7 @@ setuptools = "^69.1.0"
 pydantic-settings = "^2.1.0"
 alembic = "^1.13.1"
 asyncpg = "^0.29.0"
+bcrypt = "^4.1.2"
 
 
 [build-system]
