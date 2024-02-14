@@ -19,7 +19,6 @@ from app.middleware import HeaderLinkMiddleware
 from app.routes import router_list
 from app.utils import BreadcrumbBuilder
 from app.utils.exceptions import UnauthorizedPageException
-from app.services.scheduled_transactions import process_scheduled_transactions
 
 app = FastAPI()
 logger = get_logger(__name__)
@@ -99,6 +98,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         {"request": request},
         status_code=status_code,
     )
+
 
 @app.exception_handler(404)
 async def page_not_found_exception_handler(request: Request, exc: HTTPException):
