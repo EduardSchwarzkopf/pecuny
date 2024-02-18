@@ -35,11 +35,6 @@ async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONRes
     message = MessageSchema(
         subject=subject,
         recipients=recipients,
-    )
-
-    message = MessageSchema(
-        subject=subject,
-        recipients=recipients,
         template_body=email_dump.get("body"),
         subtype=MessageType.html,
     )
