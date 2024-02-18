@@ -93,13 +93,20 @@ class Transaction(BaseModel):
         lazy="selectin",
     )
 
-    account = relationship("Account", lazy="selectin")
+    account = relationship("Account", back_populates="transactions", lazy="selectin")
 
 
 class TransactionScheduled(BaseModel):
     __tablename__ = "transactions_scheduled"
 
     account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"))
+    account = relationship(
+        "Account",
+        back_populates="scheduled_transactions",
+        lazy="selectin",
+        foreign_keys=[account_id],
+    )
+
     information = relationship(
         "TransactionInformation",
         backref="transactions_scheduled",
@@ -124,7 +131,9 @@ class Account(BaseModel, UserId):
     balance = Column(
         Numeric(10, 2, asdecimal=False, decimal_return_scale=None), default=0
     )
-    transactions = relationship("Transaction", cascade="all,delete", lazy=True)
+    transactions = relationship(
+        "Transaction", back_populates="account", cascade="all,delete", lazy=True
+    )
     scheduled_transactions = relationship(
         "TransactionScheduled",
         cascade="all,delete",

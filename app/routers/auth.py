@@ -139,7 +139,14 @@ async def register(
         set_feedback(request, FeedbackType.ERROR, "Passwords do not match")
         return render_form_template(TEMPLATE_REGISTER, request, form)
 
-    await user_service.create_user(email, displayname, password)
+    try:
+        await user_service.create_user(email, displayname, password)
+    except Exception:
+        set_feedback(
+            request, FeedbackType.ERROR, "Something went wrong! Please try again later."
+        )
+        return render_form_template(TEMPLATE_REGISTER, request, form)
+
     return RedirectResponse(f"{LOGIN}?msg=registered", 302)
 
 
