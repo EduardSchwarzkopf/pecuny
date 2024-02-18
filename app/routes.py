@@ -4,11 +4,12 @@ from app.routers.api import (
     users as api_users,
     categories as api_categories,
     scheduled_transactions as api_scheduled_transactions,
+    auth as api_auth,
 )
 
 from app.routers import dashboard, accounts, auth, index, users, transactions
 import fastapi_users
-from app.schemas import UserCreate, UserRead, UserUpdate
+from app.schemas import UserRead, UserUpdate
 from app.auth_manager import auth_backend, fastapi_users
 
 from fastapi import APIRouter
@@ -47,6 +48,7 @@ router_list = [
         "router": api_users.router,
     },
     {"router": api_categories.router},
+    {"router": api_auth.router},
     {
         "router": api_accounts.router,
     },
@@ -64,11 +66,6 @@ router_list = [
     },
     {
         "router": fastapi_users.get_auth_router(auth_backend),
-        "prefix": f"{api_prefix}/auth",
-        "tags": auth_tag_list,
-    },
-    {
-        "router": fastapi_users.get_register_router(UserRead, UserCreate),
         "prefix": f"{api_prefix}/auth",
         "tags": auth_tag_list,
     },
