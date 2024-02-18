@@ -24,10 +24,23 @@ conf = ConnectionConfig(
 
 
 async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONResponse:
+    email_dump = email.model_dump()
+    recipients = email_dump.get("email")
+
+    if recipients is None:
+        raise ValueError(
+            f"Email key is missing from the email model dump - [email_dump]: {email_dump}"
+        )
+
     message = MessageSchema(
         subject=subject,
-        recipients=email.model_dump().get("email"),
-        template_body=email.model_dump().get("body"),
+        recipients=recipients,
+    )
+
+    message = MessageSchema(
+        subject=subject,
+        recipients=recipients,
+        template_body=email_dump.get("body"),
         subtype=MessageType.html,
     )
 
