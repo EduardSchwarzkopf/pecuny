@@ -1,8 +1,10 @@
+from fastapi import Request
 from app import models, repository as repo
 from app.logger import get_logger
 from app.schemas import UserCreate, EmailStr, UserUpdate
 from fastapi_users import exceptions
 from app.auth_manager import UserManager
+from app.utils.displayname_generator import generate_displayname
 from app.utils.enums import EmailVerificationStatus
 from app import database
 from app.utils.exceptions import (
@@ -36,12 +38,17 @@ class UserService:
     async def create_user(
         self,
         email: str,
-        displayname: str,
         password: str,
+        displayname: str = "",
         is_verified: bool = False,
         is_superuser: bool = False,
+        request: Request = None,
     ) -> bool:
         logger.info("Creating new user with email %s", email)
+
+        if not displayname:
+            displayname = generate_displayname()
+
         try:
             return await self.user_manager.create(
                 UserCreate(
@@ -50,7 +57,8 @@ class UserService:
                     password=password,
                     is_superuser=is_superuser,
                     is_verified=is_verified,
-                )
+                ),
+                request=request,
             )
         except exceptions.UserAlreadyExists:
             logger.warning("User with email %s already exists", email)
