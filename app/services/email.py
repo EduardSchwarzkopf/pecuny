@@ -9,21 +9,18 @@ from app.logger import get_logger
 
 log = get_logger(__name__)
 
-try:
-    conf = ConnectionConfig(
-        MAIL_USERNAME=settings.mail_username,
-        MAIL_PASSWORD=settings.mail_password,
-        MAIL_FROM=settings.mail_from,
-        MAIL_PORT=settings.mail_port,
-        MAIL_SERVER=settings.mail_server,
-        MAIL_STARTTLS=False,
-        MAIL_SSL_TLS=True,
-        USE_CREDENTIALS=True,
-        VALIDATE_CERTS=True,
-        TEMPLATE_FOLDER="templates",
-    )
-except ConnectionError:
-    log.error("No connection established")
+conf = ConnectionConfig(
+    MAIL_USERNAME=settings.mail_username,
+    MAIL_PASSWORD=settings.mail_password,
+    MAIL_FROM=settings.mail_from,
+    MAIL_PORT=settings.mail_port,
+    MAIL_SERVER=settings.mail_server,
+    MAIL_STARTTLS=False,
+    MAIL_SSL_TLS=True,
+    USE_CREDENTIALS=True,
+    VALIDATE_CERTS=True,
+    TEMPLATE_FOLDER="templates",
+)
 
 
 async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONResponse:
