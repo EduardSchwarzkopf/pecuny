@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from fastapi import Depends, Form, HTTPException, Request
+from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
 from fastapi_users.authentication import (
     AuthenticationBackend,
@@ -29,7 +29,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             return
 
         await self.request_verify(user, request)
-        await email.send_register(user)
+        # await email.send_register(user)
 
         print(f"User {user.id} has registered.")
 
