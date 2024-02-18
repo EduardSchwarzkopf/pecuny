@@ -40,7 +40,7 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
 
 
 class UserCreate(schemas.BaseUserCreate):
-    displayname: str
+    displayname: Optional[str]
 
 
 class UserCreateForm(BaseModel):
@@ -50,8 +50,8 @@ class UserCreateForm(BaseModel):
     password_confirm: str = Form(...)
 
 
-class UserUpdate(schemas.BaseUserUpdate):
-    displayname: Optional[str]
+class UserUpdate(UserCreate):
+    pass
 
 
 class Base(BaseModel):
@@ -200,9 +200,7 @@ password_policy = Regexp(
 
 class RegisterForm(StarletteForm):
     email = StringField("Email", validators=[InputRequired(), Email(), Length(max=320)])
-    displayname = StringField(
-        "Displayname", validators=[InputRequired(), Length(max=50)]
-    )
+    displayname = StringField("Displayname", validators=[Length(max=50)])
     password = PasswordField("Password", validators=[InputRequired(), password_policy])
     password_confirm = PasswordField(
         "Confirm Password",
@@ -303,6 +301,4 @@ class DatePickerForm(StarletteForm):
 
 class UpdateUserForm(StarletteForm):
     email = StringField("Email", validators=[Email(), InputRequired(), Length(max=320)])
-    displayname = StringField(
-        "Displayname", validators=[InputRequired(), Length(max=50)]
-    )
+    displayname = StringField("Displayname", validators=[Length(max=50)])
