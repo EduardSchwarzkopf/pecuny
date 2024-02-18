@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     algorithm: str
     access_token_expire_minutes: int = 30
 
-    test_db_port: str = 5433
+    test_db_port: int = 5433
     test_db_url: str = ""
 
     mail_username: str
