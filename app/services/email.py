@@ -44,8 +44,9 @@ async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONRes
 
 
 async def send_register(user: User) -> JSONResponse:
-    email = EmailSchema(email=[user.email], body={"user": user})
-    return await _send(email, "Welcome", template_name="emails/register.html")
+    pass
+    # email = EmailSchema(email=[user.email], body={"user": user})
+    # return await _send(email, "Welcome", template_name="emails/register.html")
 
 
 async def send_verification(user: User, token: str) -> JSONResponse:
