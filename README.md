@@ -34,7 +34,7 @@ Database
 `docker compose up --profile dev -d `
 
 FastAPI in docker
-`docker run --name=monika --rm -dp 8000:8000 --env-file .env monika`
+`docker run --name=pecuny --rm -dp 8000:8000 --env-file .env pecuny`
 
 FastAPI directly
 `uvicorn app.main:app` or via VS Code debugger
