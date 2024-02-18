@@ -30,7 +30,11 @@ services:
       - '16543:80'
     depends_on:
       - db
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
 
 volumes:
   db_volume:
+    driver: local
+  pgadmin_data:
     driver: local
