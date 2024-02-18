@@ -5,7 +5,7 @@ on:
         branches: ["main"]
 
 env:
-    IMAGE: ${{ secrets.DOCKER_USERNAME }}/monika-backend:latest
+    IMAGE: ${{ secrets.DOCKER_USERNAME }}/pecuny:latest
 
 jobs:
     build-and-publish:
@@ -27,7 +27,7 @@ jobs:
         runs-on: ubuntu-latest
         env:
             SSH_HOST: webserver
-            CONTAINER: monika
+            CONTAINER: pecuny
             SSH_CMD: ssh -o "StrictHostKeyChecking=no"
         steps:
             - uses: actions/checkout@v3
@@ -40,7 +40,7 @@ jobs:
                   chmod 600 ~/.ssh/id_rsa
             - name: config ssh
               run: echo -e 'Host ${{ env.SSH_HOST }}\n  HostName ${{ vars.HOSTNAME }}\n  Port 22\n  User root\n  IdentityFile ~/.ssh/id_rsa' > ~/.ssh/config
-            - name: stop monika
+            - name: stop pecuny
               run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker rm --force ${{ env.CONTAINER }} || :"
             - name: pull latest image
               run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker pull ${{ env.IMAGE }}
@@ -66,7 +66,7 @@ jobs:
                   echo 'MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}' >> .env
             - name: copy .env file
               run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
-            - name: monika start
+            - name: pecuny start
               run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d --name ${{ env.CONTAINER }} -p ${{ vars.PORT }}:8000 --env-file .env ${{ env.IMAGE }}
             - name: upgrade database
               run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker exec ${{ env.CONTAINER }} poetry run alembic upgrade head
