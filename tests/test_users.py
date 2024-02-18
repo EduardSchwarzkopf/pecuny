@@ -14,22 +14,31 @@ success_login_status_code = 204
 endpoint = "/api/auth"
 
 
-@pytest.mark.anyio
-async def test_create_user(session, client):
+@pytest.mark.parametrize(
+    "username, displayname, password",
+    [
+        ("john@pytest.de", "John", "password123"),
+        ("random-name@pytest.de", "", "password123"),
+    ],
+)
+async def test_create_user(
+    session, client: AsyncClient, username, displayname, password
+):
     async with session:
         res = await client.post(
             f"{endpoint}/register",
             json={
-                "email": "hello123@pytest.de",
-                "password": "password123",
-                "displayname": "John",
+                "email": username,
+                "password": password,
+                "displayname": displayname,
             },
         )
     assert res.status_code == 201
 
     new_user = schemas.UserRead(**res.json())
 
-    assert new_user.email == "hello123@pytest.de"
+    assert new_user.email == username
+    assert new_user.displayname != ""
     assert new_user.is_active == True
     assert new_user.is_superuser == False
     assert new_user.is_verified == False

@@ -140,7 +140,7 @@ async def register(
         return render_form_template(TEMPLATE_REGISTER, request, form)
 
     try:
-        await user_service.create_user(email, displayname, password)
+        await user_service.create_user(email, password, displayname)
     except Exception:
         set_feedback(
             request, FeedbackType.ERROR, "Something went wrong! Please try again later."
