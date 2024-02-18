@@ -21,7 +21,7 @@ async def test_user(session, user_service: UserService):
         return user_list[0]
     else:
         return await user_service.create_user(
-            "hello123@pytest.de", "John", "password123", True
+            "hello123@pytest.de", "password123", is_verified=True
         )
 
 
@@ -44,13 +44,13 @@ async def authorized_client(client: AsyncClient, token):
 @pytest.fixture
 async def test_users(session, user_service: UserService):
     users_data = [
-        ["user01@pytest.de", "Smith01", "password123"],
-        ["user02@pytest.de", "Smith02", "password123"],
-        ["user03@pytest.de", "Smith03", "password123"],
+        ["user01@pytest.de", "password123"],
+        ["user02@pytest.de", "password123"],
+        ["user03@pytest.de", "password123"],
     ]
 
     for data in users_data:
-        await user_service.create_user(data[0], data[1], data[2], True)
+        await user_service.create_user(data[0], data[1], is_verified=True)
 
     yield await repo.get_all(models.User)
 
