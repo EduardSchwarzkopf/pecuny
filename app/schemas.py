@@ -2,6 +2,7 @@ import uuid
 import datetime
 
 from datetime import datetime as dt
+from click import Option
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Dict, Any
 from fastapi_users import schemas
@@ -43,13 +44,15 @@ class UserCreate(schemas.BaseUserCreate):
     displayname: Optional[str]
 
 
-class UserUpdate(UserCreate):
-    pass
-
-
 class Base(BaseModel):
     class Config:
         from_attributes = True
+
+
+class UserUpdate(schemas.BaseUserUpdate):
+    displayname: Optional[str] = None
+    password: Optional[str] = None
+    email: Optional[EmailStr] = None
 
 
 class Token(BaseModel):
