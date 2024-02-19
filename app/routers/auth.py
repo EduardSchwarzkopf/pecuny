@@ -126,7 +126,6 @@ async def register(
         return render_form_template(TEMPLATE_REGISTER, request, form)
 
     email = form.email.data
-    displayname = form.displayname.data
     password = form.password.data
     password_confirm = form.password_confirm.data
 
@@ -140,7 +139,7 @@ async def register(
         return render_form_template(TEMPLATE_REGISTER, request, form)
 
     try:
-        await user_service.create_user(email, password, displayname)
+        await user_service.create_user(email, password)
     except Exception:
         set_feedback(
             request, FeedbackType.ERROR, "Something went wrong! Please try again later."
@@ -196,7 +195,7 @@ async def send_new_token(
 
     try:
         user = await user_service.user_manager.get_by_email(email)
-        await user_service.user_manager.request_verify(user)
+        await user_service.user_manager.request_new_token(user)
 
     except exceptions.UserInactive:
         set_feedback(request, FeedbackType.ERROR, "Not possible for this user")
