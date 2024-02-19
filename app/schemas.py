@@ -43,13 +43,6 @@ class UserCreate(schemas.BaseUserCreate):
     displayname: Optional[str]
 
 
-class UserCreateForm(BaseModel):
-    email: str = Form(...)
-    displayname: str = Form(...)
-    password: str = Form(...)
-    password_confirm: str = Form(...)
-
-
 class UserUpdate(UserCreate):
     pass
 
@@ -200,7 +193,6 @@ password_policy = Regexp(
 
 class RegisterForm(StarletteForm):
     email = StringField("Email", validators=[InputRequired(), Email(), Length(max=320)])
-    displayname = StringField("Displayname", validators=[Length(max=50)])
     password = PasswordField("Password", validators=[InputRequired(), password_policy])
     password_confirm = PasswordField(
         "Confirm Password",
