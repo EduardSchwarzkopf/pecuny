@@ -1,0 +1,31 @@
+{% extends 'layouts/email.html' %} {% block content %}
+<h1>Hello there,</h1>
+
+<p>
+    my priority here is to help you with your finances and budgeting,
+    understandable and enjoyable.
+</p>
+
+<p>
+    I have decided that your name will be <b>{{user.displayname}}</b>! If it's
+    not resonating with your vibe, worry not; you can always change it in your
+    <b>user settings</b>.
+</p>
+
+<p>
+    But first, let's make sure you're ready to get started. Please verify your
+    email address by clicking the link below:
+</p>
+
+<p>
+    <a href="{{url}}/verify?token={{token}}">Verify My Email</a>
+</p>
+
+<p>
+    Cheers,<br />
+    pecuny
+</p>
+
+<p>Token expired? <a href="{{url}}/get-new-token">Request new token.</a></p>
+
+{% endblock %}
