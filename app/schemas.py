@@ -97,7 +97,7 @@ class CategoryData(Base):
 
 class TransactionInformationCreate(TransactionInformation):
     account_id: int
-    offset_account_id: Optional[int]
+    offset_account_id: Optional[int] = None
 
 
 class TransactionInformtionUpdate(TransactionInformationCreate):
