@@ -171,7 +171,9 @@ async def delete_transaction(current_user: models.User, transaction_id: int) -> 
         "Deleting transaction with ID %s for user %s", transaction_id, current_user.id
     )
     transaction = await repo.get(
-        models.Transaction, transaction_id, load_relationships=["offset_transaction"]
+        models.Transaction,
+        transaction_id,
+        load_relationships=[models.Transaction.offset_transaction],
     )
 
     if transaction is None:
