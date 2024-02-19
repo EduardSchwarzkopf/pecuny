@@ -1,6 +1,4 @@
-import logging
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
-from fastapi_mail.errors import ConnectionErrors
 from app.schemas import EmailSchema
 from starlette.responses import JSONResponse
 from app.config import settings
@@ -13,6 +11,7 @@ conf = ConnectionConfig(
     MAIL_USERNAME=settings.mail_username,
     MAIL_PASSWORD=settings.mail_password,
     MAIL_FROM=settings.mail_from,
+    MAIL_FROM_NAME=settings.app_name,
     MAIL_PORT=settings.mail_port,
     MAIL_SERVER=settings.mail_server,
     MAIL_STARTTLS=False,
@@ -51,21 +50,13 @@ async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONRes
         raise
 
 
-async def send_register(user: User) -> JSONResponse:
-    pass
-    # email = EmailSchema(email=[user.email], body={"user": user})
-    # return await _send(email, "Welcome", template_name="emails/register.html")
-
-
-async def send_verification(user: User, token: str) -> JSONResponse:
+async def send_welcome(user: User, token: str) -> JSONResponse:
     email = EmailSchema(
         email=[user.email],
         body={"user": user, "url": settings.domain, "token": token},
     )
-    log.info(f"Sending verification email to {user.email}")
-    return await _send(
-        email, "Please verify your email", template_name="emails/verify-email.html"
-    )
+    log.info(f"Sending welcome email to {user.email}")
+    return await _send(email, "Welcome! 🎉", template_name="emails/welcome.html")
 
 
 async def send_forgot_password(user: User, token: str) -> JSONResponse:
@@ -77,4 +68,15 @@ async def send_forgot_password(user: User, token: str) -> JSONResponse:
     log.info(f"Sending forgot password email to {user.email}")
     return await _send(
         email, "Reset Password Request", template_name="emails/forgot-password.html"
+    )
+
+
+async def send_new_token(user: User, token: str) -> JSONResponse:
+    email = EmailSchema(
+        email=[user.email],
+        body={"user": user, "url": settings.domain, "token": token},
+    )
+    log.info(f"Sending new token email to {user.email}")
+    return await _send(
+        email, "Your verification Token!", template_name="emails/new-token.html"
     )
