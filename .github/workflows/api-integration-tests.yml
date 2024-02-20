@@ -43,7 +43,7 @@ jobs:
       - name: Install dependencies
         run: "poetry install"
       - name: Run Tests
-        run: "poetry run pytest  -v -x -v -s --disable-warnings"
+        run: "poetry run pytest --disable-warnings -x"
         env:
           ENVIRONMENT: "test"
           DOMAIN: "http://127.0.0.1:8000"
