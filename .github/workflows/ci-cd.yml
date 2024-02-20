@@ -12,11 +12,12 @@ env:
   TEST_DB_PASSWORD: postgres
   TEST_DB_HOST: localhost
   TEST_DB_USER: postgres
-  TEST_DB_PORT: "5432"
+  RUNS_ON: ubuntu-latest
+  TEST_DB_PORT: 5432
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.RUNS_ON }}
     services:
       db:
         image: postgres:14-alpine
@@ -30,7 +31,7 @@ jobs:
           --health-timeout 5s 
           --health-retries 5
         ports:
-          - "${{ env.TEST_DB_PORT }}:5432"
+          - ${{ env.TEST_DB_PORT }}:5432
 
     steps:
       - uses: actions/checkout@v2
@@ -70,7 +71,7 @@ jobs:
 
   build-and-publish:
     needs: [test]
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.RUNS_ON }}
     steps:
       - uses: actions/checkout@v3
       - name: build docker image
@@ -85,7 +86,7 @@ jobs:
 
   deploy:
     needs: [build-and-publish]
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.RUNS_ON }}
     env:
       SSH_HOST: webserver
       CONTAINER: pecuny
