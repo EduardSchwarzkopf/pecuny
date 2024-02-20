@@ -26,7 +26,7 @@ jobs:
           python-version: 3.12
       - name: Install pipx
         run: |
-          apt install pipx
+          sudo apt install pipx
           pipx ensurepath
       - name: Install poetry
         run: "pipx install poetry"
