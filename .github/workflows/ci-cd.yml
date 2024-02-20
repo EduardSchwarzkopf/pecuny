@@ -1,8 +1,11 @@
 name: CI/CD
 
 on:
-  push:
-    branches: ["main"]
+  workflow_run:
+    workflows: ["Test Deployment"]
+    types:
+      - completed
+    branches: [main]
 
 env:
   IMAGE: ${{ secrets.DOCKER_USERNAME }}/pecuny:latest

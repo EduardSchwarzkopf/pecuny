@@ -1,8 +1,7 @@
-name: Test FastAPI application
+name: Test Deployment
 "on":
   push:
-    branches:
-      - add-testing-to-pipeline
+    branches: ["main", "pull_request"]
 
 env:
   DB_NAME: test_db
