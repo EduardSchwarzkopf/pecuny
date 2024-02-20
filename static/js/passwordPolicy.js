@@ -1,11 +1,7 @@
 document.addEventListener("DOMContentLoaded", (event) => {
     const passwordField = document.getElementById("password");
-    const passwordConfirmField = document.getElementById("password_confirm");
     const submitButton = document.getElementById("submit");
 
-    const passwordConfirmErrorDiv = document.getElementById(
-        "password_confirm_error"
-    );
     const passwordPolicyDiv = document.getElementById("password_policy");
     const passwordPolicy = {
         length: document.getElementById("password_length"),
@@ -21,7 +17,10 @@ document.addEventListener("DOMContentLoaded", (event) => {
             uppercase: /[A-Z]/.test(password),
             lowercase: /[a-z]/.test(password),
             digit: /[0-9]/.test(password),
-            special: /[\@\#\$\%\^\&\*\(\)\-\_\=\+\{\}\[\]\|\:\;\,\.\<\>\?\/\!]/.test(password),
+            special:
+                /[\@\#\$\%\^\&\*\(\)\-\_\=\+\{\}\[\]\|\:\;\,\.\<\>\?\/\!]/.test(
+                    password
+                ),
         };
 
         for (const policy in policies) {
@@ -43,29 +42,10 @@ document.addEventListener("DOMContentLoaded", (event) => {
         return true;
     }
 
-    function comparePasswords() {
-        const password = passwordField.value;
-        const passwordConfirm = passwordConfirmField.value;
-        const policyPassed = checkPasswordPolicy(password);
-        if (password !== passwordConfirm) {
-            passwordConfirmErrorDiv.style.display = "block";
-            passwordConfirmErrorDiv.textContent = "Passwords do not match.";
-            submitButton.disabled = true;
-        } else {
-            passwordConfirmErrorDiv.style.display = "none";
-            submitButton.disabled = !policyPassed;
-        }
-    }
-
     passwordField.addEventListener("input", function () {
         passwordPolicyDiv.style.display = "block";
         const password = passwordField.value;
         const policyPassed = checkPasswordPolicy(password);
         submitButton.disabled = !policyPassed;
-        if (policyPassed) {
-            comparePasswords();
-        }
     });
-
-    passwordConfirmField.addEventListener("input", comparePasswords);
 });

@@ -127,15 +127,11 @@ async def register(
 
     email = form.email.data
     password = form.password.data
-    password_confirm = form.password_confirm.data
 
     try:
-        await user_service.validate_new_user(email, password, password_confirm)
+        await user_service.validate_new_user(email)
     except UserAlreadyExistsException:
         set_feedback(request, FeedbackType.ERROR, "Email already exists")
-        return render_form_template(TEMPLATE_REGISTER, request, form)
-    except PasswordsDontMatchException:
-        set_feedback(request, FeedbackType.ERROR, "Passwords do not match")
         return render_form_template(TEMPLATE_REGISTER, request, form)
 
     try:
