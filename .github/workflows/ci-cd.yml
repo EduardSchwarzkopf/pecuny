@@ -15,7 +15,7 @@ env:
 
 jobs:
   test:
-  runs-on: ${{env.RUNS_ON}}
+    runs-on: ${{env.RUNS_ON}}
     services:
       db:
         image: postgres:14-alpine
