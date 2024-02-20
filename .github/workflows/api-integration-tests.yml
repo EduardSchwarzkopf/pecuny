@@ -5,23 +5,10 @@ name: Test FastAPI application
       - add-testing-to-pipeline
 
 env:
-  ENVIRONMENT: "test"
-  DOMAIN: "http://127.0.0.1:8000"
-  SECRET_KEY: "test"
-  CSRF_SECRET: "test"
-  SESSION_SECRET_KEY: "test"
-  ALGORITHM: ${{ vars.ALGORITHM }}
-  ACCESS_TOKEN_EXPIRE_MINUTES: 30
   DB_NAME: test_db
   DB_PASSWORD: postgres
   DB_HOST: localhost
-  DB_PORT: 5432
   DB_USER: postgres
-  MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
-  MAIL_FROM: ${{ secrets.MAIL_FROM }}
-  MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
-  MAIL_PORT: ${{ secrets.MAIL_PORT }}
-  MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
 
 jobs:
   integration-test:
@@ -57,3 +44,21 @@ jobs:
         run: "poetry install"
       - name: Run Tests
         run: "poetry run pytest  -v -x -v -s --disable-warnings"
+        env:
+          ENVIRONMENT: "test"
+          DOMAIN: "http://127.0.0.1:8000"
+          SECRET_KEY: "test"
+          CSRF_SECRET: "test"
+          SESSION_SECRET_KEY: "test"
+          ALGORITHM: ${{ vars.ALGORITHM }}
+          ACCESS_TOKEN_EXPIRE_MINUTES: 30
+          DB_NAME: ${{ env.DB_NAME }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD }}
+          DB_HOST: "127.0.0.1"
+          DB_PORT: 5432
+          DB_USER: ${{ env.DB_USER }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
