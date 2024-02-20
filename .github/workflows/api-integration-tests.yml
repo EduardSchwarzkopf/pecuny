@@ -56,7 +56,7 @@ jobs:
           DB_PASSWORD: ${{ env.DB_PASSWORD }}
           DB_HOST: "127.0.0.1"
           DB_PORT: 5432
-          DB_TEST_PORT: 5432
+          TEST_DB_PORT: 5432
           DB_USER: ${{ env.DB_USER }}
           MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
