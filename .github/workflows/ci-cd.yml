@@ -2,9 +2,7 @@ name: CI/CD
 
 on:
   push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
+    branches: ["main", "pull_request"]
 
 env:
   IMAGE: ${{ secrets.DOCKER_USERNAME }}/pecuny:latest
@@ -12,12 +10,10 @@ env:
   TEST_DB_PASSWORD: postgres
   TEST_DB_HOST: localhost
   TEST_DB_USER: postgres
-  RUNS_ON: ubuntu-latest
-  TEST_DB_PORT: 5432
 
 jobs:
   test:
-    runs-on: ${{ env.RUNS_ON }}
+    runs-on: ubuntu-latest
     services:
       db:
         image: postgres:14-alpine
@@ -31,7 +27,7 @@ jobs:
           --health-timeout 5s 
           --health-retries 5
         ports:
-          - ${{ env.TEST_DB_PORT }}:5432
+          - 5432:5432
 
     steps:
       - uses: actions/checkout@v2
@@ -60,8 +56,8 @@ jobs:
           DB_NAME: ${{ env.TEST_DB_NAME }}
           DB_PASSWORD: ${{ env.TEST_DB_PASSWORD }}
           DB_HOST: "127.0.0.1"
-          DB_PORT: ${{ env.TEST_DB_PORT }}
-          TEST_DB_PORT: ${{ env.TEST_DB_PORT }}
+          DB_PORT: 5432
+          TEST_DB_PORT: 5432
           DB_USER: ${{ env.TEST_DB_USER }}
           MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
@@ -71,7 +67,7 @@ jobs:
 
   build-and-publish:
     needs: [test]
-    runs-on: ${{ env.RUNS_ON }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: build docker image
@@ -86,7 +82,7 @@ jobs:
 
   deploy:
     needs: [build-and-publish]
-    runs-on: ${{ env.RUNS_ON }}
+    runs-on: ubuntu-latest
     env:
       SSH_HOST: webserver
       CONTAINER: pecuny
