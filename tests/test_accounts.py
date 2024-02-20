@@ -15,7 +15,7 @@ async def test_create_account(session, authorized_client):
             json={"label": "test_account", "description": "test", "balance": 500},
         )
 
-    assert res.status_code == 201
+    assert res.status_code == 200
 
     new_account = schemas.Account(**res.json())
 
