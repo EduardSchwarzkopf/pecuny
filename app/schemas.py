@@ -197,13 +197,6 @@ password_policy = Regexp(
 class RegisterForm(StarletteForm):
     email = StringField("Email", validators=[InputRequired(), Email(), Length(max=320)])
     password = PasswordField("Password", validators=[InputRequired(), password_policy])
-    password_confirm = PasswordField(
-        "Confirm Password",
-        validators=[
-            InputRequired(),
-            EqualTo("password", message="Passwords must match"),
-        ],
-    )
 
 
 class ForgotPasswordForm(StarletteForm):
@@ -217,13 +210,6 @@ class GetNewTokenForm(StarletteForm):
 class ResetPasswordForm(StarletteForm):
     token = HiddenField("Token", validators=[InputRequired()])
     password = PasswordField("Password", validators=[InputRequired(), password_policy])
-    password_confirm = PasswordField(
-        "Confirm Password",
-        validators=[
-            InputRequired(),
-            EqualTo("password", message="Passwords must match"),
-        ],
-    )
 
 
 class DatetimeLocalFieldWithoutTime(StringField):
