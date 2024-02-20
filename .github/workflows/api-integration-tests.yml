@@ -1,0 +1,54 @@
+name: Test FastAPI application
+"on":
+  push:
+    branches:
+      - add-testing-to-pipeline
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    services:
+      db:
+        image: "postgres:13"
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.12
+      - name: Install pipx
+        run: |
+          apt install pipx
+          pipx ensurepath
+      - name: Install poetry
+        run: "pipx install poetry"
+      - name: Install dependencies
+        run: "poetry install"
+      - name: Run Tests
+        run: "poetry run pytest  -v -x -v -s --disable-warnings"
+        env:
+          ENVIRONMENT: "test"
+          DOMAIN: "http://127.0.0.1:8000"
+          SECRET_KEY: "test"
+          CSRF_SECRET: "test"
+          SESSION_SECRET_KEY: "test"
+          ALGORITHM: ${{ vars.ALGORITHM }}
+          ACCESS_TOKEN_EXPIRE_MINUTES: 30
+          DB_NAME: "postgres"
+          DB_PASSWORD: "postgres"
+          DB_HOST: "db"
+          DB_PORT: 5432
+          DB_USER: "postgres"
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
