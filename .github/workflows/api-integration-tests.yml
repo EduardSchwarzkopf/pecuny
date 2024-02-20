@@ -3,63 +3,64 @@ name: Test FastAPI application
   push:
     branches:
       - add-testing-to-pipeline
-
 env:
-  ENVIRONMENT: "test"
-  DOMAIN: "http://127.0.0.1:8000"
-  SECRET_KEY: "test"
-  CSRF_SECRET: "test"
-  SESSION_SECRET_KEY: "test"
-  ALGORITHM: ${{ vars.ALGORITHM }}
-  ACCESS_TOKEN_EXPIRE_MINUTES: 30
-  DB_NAME: test_db
-  DB_PASSWORD: postgres
-  DB_HOST: localhost
-  DB_PORT: 5432
-  DB_USER: postgres
-  MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
-  MAIL_FROM: ${{ secrets.MAIL_FROM }}
-  MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
-  MAIL_PORT: ${{ secrets.MAIL_PORT }}
-  MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+  DB_NAME: "postgres"
+  DB_PASSWORD: "postgres"
+  DB_USER: "postgres"
 
 jobs:
-  build:
-    runs-on: ubuntu-22.04
+  build_and_test:
+    runs-on: ubuntu-latest
+
     services:
       db:
-        image: "postgres:13"
+        image: postgres:14-alpine
         env:
-          POSTGRES_USER: "${{env.DB_USER}}"
-          POSTGRES_PASSWORD: "${{env.DB_PASSWORD}}"
-          POSTGRES_DB: "${{env.DB_NAME}}"
-        ports:
-          - "5432:5432"
+          POSTGRES_USER: ${{ env.DB_USER }}
+          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
+          POSTGRES_DB: ${{ env.DB_NAME }}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
-          --health-timeout 5s
+          --health-timeout 5s 
           --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.12
-      - name: Install pipx
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag pecuny
+
+      - name: Run Container
         run: |
-          sudo apt install pipx
-          pipx ensurepath
-      - name: Install poetry
-        run: "pipx install poetry"
-      - name: Install dependencies
-        run: "poetry install"
-      - name: Check PostgreSQL service
-        run: |
-          while ! pg_isready -h db -p  5432 -U postgres; do
-            echo "Waiting for PostgreSQL to be ready..."
-            sleep  5
-          done
+          docker run -d \
+            --name testing_pecuny \
+            --network="host" \
+            -e ENVIRONMENT=test \
+            -e DOMAIN="http://127.0.0.1:8000" \
+            -e SECRET_KEY="testingsecretkey" \
+            -e CSRF_SECRET="csrf_secret" \
+            -e SESSION_SECRET_KEY="session_secret_key" \
+            -e ALGORITHM=${{ vars.ALGORITHM }} \
+            -e ACCESS_TOKEN_EXPIRE_MINUTES=${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }} \
+            -e DB_NAME=${{ env.DB_NAME }} \
+            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -e DB_HOST="localhost" \
+            -e DB_PORT="5432" \
+            -e DB_USER=${{ env.DB_USER }} \
+            -e MAIL_USERNAME=${{ secrets.MAIL_USERNAME }} \
+            -e MAIL_FROM=${{ secrets.MAIL_FROM }} \
+            -e MAIL_SERVER=${{ secrets.MAIL_SERVER }} \
+            -e MAIL_PORT=${{ secrets.MAIL_PORT }} \
+            -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }} \
+            pecuny
+
+      - name: Check Running Docker Containers
+        run: docker ps -a
+
       - name: Run Tests
-        run: "poetry run pytest  -v -x -v -s --disable-warnings"
+        run: |
+          docker exec  testing_pecuny poetry run pytest  -v -x -v -s --disable-warnings
