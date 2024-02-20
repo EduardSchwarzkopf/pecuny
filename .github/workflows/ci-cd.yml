@@ -1,18 +1,75 @@
 name: CI/CD
 
-on:
-  workflow_run:
-    workflows: ["Test Deployment"]
-    types:
-      - completed
-    branches: [main]
+"on":
+  push:
+    branches: ["main", "pull_request"]
 
 env:
   IMAGE: ${{ secrets.DOCKER_USERNAME }}/pecuny:latest
+  TEST_DB_NAME: test_db
+  TEST_DB_PASSWORD: postgres
+  TEST_DB_HOST: localhost
+  TEST_DB_USER: postgres
+  TEST_DB_PORT: 5432
+  RUNS_ON: ubuntu-latest
 
 jobs:
+  test:
+  runs-on: ${{env.RUNS_ON}}
+    services:
+      db:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_USER: ${{ env.TEST_DB_USER }}
+          POSTGRES_PASSWORD: ${{ env.TEST_DB_PASSWORD }}
+          POSTGRES_DB: ${{ env.TEST_DB_NAME }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s 
+          --health-retries 5
+        ports:
+          - ${{env.TEST_DB_PORT}}:5432
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.12
+      - name: Install pipx
+        run: |
+          sudo apt install pipx
+          pipx ensurepath
+      - name: Install poetry
+        run: "pipx install poetry"
+      - name: Install dependencies
+        run: "poetry install"
+      - name: Run Tests
+        run: "poetry run pytest --disable-warnings -x"
+        env:
+          ENVIRONMENT: "test"
+          DOMAIN: "http://127.0.0.1:8000"
+          SECRET_KEY: "test"
+          CSRF_SECRET: "test"
+          SESSION_SECRET_KEY: "test"
+          ALGORITHM: ${{ vars.ALGORITHM }}
+          ACCESS_TOKEN_EXPIRE_MINUTES: 30
+          DB_NAME: ${{ env.TEST_DB_NAME }}
+          DB_PASSWORD: ${{ env.TEST_DB_PASSWORD }}
+          DB_HOST: "127.0.0.1"
+          DB_PORT: ${{env.TEST_DB_PORT}}
+          TEST_DB_PORT: ${{env.TEST_DB_PORT}}
+          DB_USER: ${{ env.TEST_DB_USER }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+
   build-and-publish:
-    runs-on: ubuntu-latest
+    needs: [test]
+    runs-on: ${{env.RUNS_ON}}
     steps:
       - uses: actions/checkout@v3
       - name: build docker image
@@ -27,7 +84,7 @@ jobs:
 
   deploy:
     needs: [build-and-publish]
-    runs-on: ubuntu-latest
+    runs-on: ${{env.RUNS_ON}}
     env:
       SSH_HOST: webserver
       CONTAINER: pecuny
