@@ -64,7 +64,7 @@ class UserService:
             logger.warning("User with email %s already exists", email)
             return None
 
-    async def validate_new_user(self, email, password, password_confirm):
+    async def validate_new_user(self, email):
         logger.info("Validating new user with email %s", email)
         try:
             existing_user = await self.user_manager.get_by_email(email)
@@ -74,10 +74,6 @@ class UserService:
         if existing_user is not None:
             logger.warning("User with email %s already exists", email)
             raise UserAlreadyExistsException()
-
-        if password != password_confirm:
-            logger.warning("Passwords do not match for new user with email %s", email)
-            raise PasswordsDontMatchException()
 
     async def verify_email(self, token: str) -> EmailVerificationStatus:
         logger.info("Verifying email with token %s", token)
