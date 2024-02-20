@@ -32,6 +32,12 @@ jobs:
         run: "pipx install poetry"
       - name: Install dependencies
         run: "poetry install"
+      - name: Check PostgreSQL service
+        run: |
+          while ! pg_isready -h db -p  5432 -U postgres; do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep  5
+          done
       - name: Run Tests
         run: "poetry run pytest  -v -x -v -s --disable-warnings"
         env:
