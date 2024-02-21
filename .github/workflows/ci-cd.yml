@@ -1,5 +1,12 @@
 name: CI/CD
 
+# TODO: 
+# - poetry build
+# - wheel file into docker container
+# - in docker pip install on wheel file
+# - run command without venv
+ 
+
 on:
   push:
     branches: ["main", "pull_request"]
