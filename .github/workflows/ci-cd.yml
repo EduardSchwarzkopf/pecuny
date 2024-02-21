@@ -5,6 +5,12 @@ name: CI/CD
 # - wheel file into docker container
 # - in docker pip install on wheel file
 # - run command without venv
+
+# - remove pipx
+# - add poetry dependencies with: https://pypi.org/project/pip-tools/
+# - use created requirements.txt in this action
+# - use requirements.txt as dev-setup (locally)
+
  
 
 on:
