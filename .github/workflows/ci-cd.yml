@@ -13,7 +13,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     services:
       db:
         image: postgres:14-alpine
@@ -67,7 +67,7 @@ jobs:
 
   build-and-publish:
     needs: [test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - name: build docker image
@@ -82,7 +82,7 @@ jobs:
 
   deploy:
     needs: [build-and-publish]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
       SSH_HOST: webserver
       CONTAINER: pecuny
