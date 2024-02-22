@@ -39,7 +39,8 @@ async def transaction(handler, *args: Any) -> Any:
     finally:
         await db.engine.dispose()
         logger.info("Transaction for %s finished, engine disposed", handler.__name__)
-        return result
+
+    return result
 
 
 def _is_models_object(db_object):
