@@ -1,11 +1,10 @@
 import sys
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import declarative_base, sessionmaker
+
+from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+
 from .config import settings
-from fastapi_users.db import (
-    SQLAlchemyUserDatabase,
-)
 
 Base = declarative_base()
 
@@ -30,7 +29,7 @@ class Database:
 
 
 async def get_user_db():
-    from app.models import User, OAuthAccount
+    from app.models import OAuthAccount, User
 
     yield SQLAlchemyUserDatabase(db.session, User, OAuthAccount)
 
