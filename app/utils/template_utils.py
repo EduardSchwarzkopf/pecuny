@@ -95,7 +95,9 @@ def group_categories_by_section(categorie_list: List[schemas.CategoryData]):
         categorie_list: A list of category data.
 
     Returns:
-        dict: A dictionary where the keys are section labels and the values are lists of category IDs and labels.
+        dict:
+            A dictionary where the keys are section labels and
+            the values are lists of category IDs and labels.
 
     Raises:
         None
