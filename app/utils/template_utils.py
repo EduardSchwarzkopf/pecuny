@@ -52,7 +52,7 @@ def get_default_context(request: Request) -> dict:
 
 
 def render_template(
-    template: str, request: Request, context_extra: Optional[dict] = {}
+    template: str, request: Request, context_extra: Optional[dict] = None
 ):  # sourcery skip: default-mutable-arg
     """Render a template with the provided context.
 
@@ -68,6 +68,10 @@ def render_template(
         None
     """
     context = get_default_context(request)
+
+    if context_extra is None:
+        context_extra = {}
+
     return templates.TemplateResponse(template, {**context, **context_extra})
 
 
