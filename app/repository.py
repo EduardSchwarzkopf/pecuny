@@ -13,6 +13,17 @@ ModelType = TypeVar("ModelType", bound=BaseModel)
 
 
 async def get_all(cls: Type[ModelType]) -> List[ModelType]:
+    """Retrieve all instances of the specified model from the database.
+
+    Args:
+        cls: The type of the model.
+
+    Returns:
+        List[ModelType]: A list of instances of the specified model.
+
+    Raises:
+        None
+    """
     q = select(cls)
     result = await db.session.execute(q)
     result.unique()
