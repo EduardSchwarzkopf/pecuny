@@ -124,4 +124,4 @@ jobs:
       - name: pecuny start
         run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d --name ${{ env.CONTAINER }} -p ${{ vars.PORT }}:8000 --env-file .env ${{ env.IMAGE }}
       - name: upgrade database
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker exec ${{ env.CONTAINER }} poetry run alembic upgrade head
+        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker exec ${{ env.CONTAINER }} alembic upgrade head
