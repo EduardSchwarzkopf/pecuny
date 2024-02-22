@@ -1,18 +1,5 @@
 name: CI/CD
 
-# TODO: 
-# - poetry build
-# - wheel file into docker container
-# - in docker pip install on wheel file
-# - run command without venv
-
-# - remove pipx
-# - add poetry dependencies with: https://pypi.org/project/pip-tools/
-# - use created requirements.txt in this action
-# - use requirements.txt as dev-setup (locally)
-
- 
-
 on:
   push:
     branches: ["main", "pull_request"]
@@ -23,6 +10,7 @@ env:
   TEST_DB_PASSWORD: postgres
   TEST_DB_HOST: localhost
   TEST_DB_USER: postgres
+  POETRY_VERSION: 1.7.1
 
 jobs:
   test:
@@ -48,12 +36,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.12
-      - name: Install pipx
-        run: |
-          sudo apt install pipx
-          pipx ensurepath
       - name: Install poetry
-        run: "pipx install poetry"
+        run: "pip install poetry==${{ env.POETRY_VERSION }}"
       - name: Install dependencies
         run: "poetry install"
       - name: Run Tests
