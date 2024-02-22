@@ -1,34 +1,29 @@
-import uuid
 import datetime
-
+import uuid
 from datetime import datetime as dt
-from click import Option
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from fastapi_users import schemas
-from fastapi import Form
-from wtforms.widgets import Input
-
+from pydantic import BaseModel, EmailStr
 from pydantic.types import constr
-
 from starlette_wtf import StarletteForm
 from wtforms import (
-    StringField,
-    DecimalField,
-    PasswordField,
-    HiddenField,
-    SelectField,
     BooleanField,
+    DecimalField,
+    HiddenField,
+    PasswordField,
+    SelectField,
+    StringField,
 )
 from wtforms.validators import (
-    NumberRange,
-    Length,
     DataRequired,
-    InputRequired,
     Email,
-    EqualTo,
+    InputRequired,
+    Length,
+    NumberRange,
     Regexp,
 )
+from wtforms.widgets import Input
 
 
 class EmailSchema(BaseModel):
