@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import List, Type, TypeVar
 
-from sqlalchemy import or_
 from sqlalchemy import update as sql_update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
