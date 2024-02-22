@@ -216,6 +216,10 @@ class ResetPasswordForm(StarletteForm):
 class DatetimeLocalFieldWithoutTime(StringField):
     widget = Input(input_type="date")
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.data = None
+
     def process_formdata(self, valuelist):
         if valuelist:
             date_str = " ".join(valuelist)
