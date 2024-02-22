@@ -11,6 +11,19 @@ def set_feedback(
     feedback_type: FeedbackType,
     feedback_message: str,
 ):
+    """Set the feedback type and message in the request state.
+
+    Args:
+        request: The request object.
+        feedback_type: The type of feedback.
+        feedback_message: The feedback message.
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
     request.state.feedback_type = feedback_type.value
     request.state.feedback_message = feedback_message
 
