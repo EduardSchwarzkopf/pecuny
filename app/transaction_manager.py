@@ -30,7 +30,7 @@ async def transaction(handler, *args: Any) -> Any:
                 "Transaction for %s successful, result refreshed", handler.__name__
             )
 
-    except Exception as e:  # pyling: disable=broad-exception-caught
+    except Exception as e:
         logger.error(
             "Error occurred during transaction for %s: %s", handler.__name__, e
         )
