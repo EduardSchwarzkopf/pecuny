@@ -29,6 +29,17 @@ def set_feedback(
 
 
 def get_default_context(request: Request) -> dict:
+    """Get the default context for a request.
+
+    Args:
+        request: The request object.
+
+    Returns:
+        dict: The default context dictionary.
+
+    Raises:
+        None
+    """
     return {
         "request": request,
         "breadcrumbs": request.state.breadcrumb_builder.build(),
