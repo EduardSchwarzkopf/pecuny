@@ -2,10 +2,32 @@ from datetime import datetime, timedelta, timezone
 
 
 def today():
+    """Get the current UTC date with time set to 00:00:00.
+
+    Args:
+        None
+
+    Returns:
+        datetime: The current UTC date.
+
+    Raises:
+        None
+    """
     return datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
 
 
 def get_datetime_from_timestamp(timestamp):
+    """Convert a timestamp to a datetime object.
+
+    Args:
+        timestamp: The timestamp to convert.
+
+    Returns:
+        datetime: The converted datetime object.
+
+    Raises:
+        None
+    """
     date = None
     try:
         # when timestamp is in seconds
@@ -18,6 +40,17 @@ def get_datetime_from_timestamp(timestamp):
 
 
 def string_to_datetime(str_date):
+    """Convert a string date to a datetime object.
+
+    Args:
+        str_date: The string date to convert.
+
+    Returns:
+        datetime: The converted datetime object.
+
+    Raises:
+        ValueError: If the string date is not in the expected format.
+    """
     # format: %d.%m.%Y
     return datetime.strptime(str_date, "%d.%m.%Y")
 
