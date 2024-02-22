@@ -29,6 +29,12 @@ asyncpg = "^0.29.0"
 bcrypt = "^4.1.2"
 
 
+[tool.poetry.group.dev.dependencies]
+pylint = "^3.0.3"
+
+[tool.poetry.group.linter.dependencies]
+pylint = "^3.0.3"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
