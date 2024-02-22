@@ -45,6 +45,18 @@ app.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.csrf_secret)
 
 @app.middleware("http")
 async def add_breadcrumbs(request: Request, call_next):
+    """Middleware to add breadcrumbs to the request state.
+
+    Args:
+        request: The request object.
+        call_next: The next middleware or route handler.
+
+    Returns:
+        Response: The response from the next middleware or route handler.
+
+    Raises:
+        None
+    """
     breadcrumb_builder = BreadcrumbBuilder(request)
     breadcrumb_builder.add("Dashboard", "/dashboard")
 
@@ -68,7 +80,19 @@ if _debug := os.getenv("DEBUG"):
 async def unauthorized_exception_handler(
     request: Request, exc: UnauthorizedPageException
 ):
-    logger.info(f"[UnauthorizedAccess] on path: {request.url.path}")
+    """Exception handler for 401 Unauthorized errors.
+
+    Args:
+        request: The request object.
+        exc: The UnauthorizedPageException object.
+
+    Returns:
+        Response: The response to return.
+
+    Raises:
+        None
+    """
+    logger.info("[UnauthorizedAccess] on path: %s", request.url.path)
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
@@ -85,8 +109,20 @@ async def unauthorized_exception_handler(
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Exception handler for RequestValidationError.
+
+    Args:
+        request: The request object.
+        exc: The RequestValidationError object.
+
+    Returns:
+        Response: The response to return.
+
+    Raises:
+        None
+    """
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-    logger.exception(f"UNPROCESSABLE_ENTITY - {request.__dict__}")
+    logger.exception("UNPROCESSABLE_ENTITY - %s", request.__dict__)
     if request.url.path.startswith("/api/"):
         return JSONResponse(
             status_code=status_code,
@@ -102,7 +138,19 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(404)
 async def page_not_found_exception_handler(request: Request, exc: HTTPException):
-    logger.warning(f"[PageNotFound] on path: {request.url.path}")
+    """Exception handler for 404 Page Not Found errors.
+
+    Args:
+        request: The request object.
+        exc: The HTTPException object.
+
+    Returns:
+        Response: The response to return.
+
+    Raises:
+        None
+    """
+    logger.warning("[PageNotFound] on path: %s", request.url.path)
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
@@ -115,11 +163,33 @@ async def page_not_found_exception_handler(request: Request, exc: HTTPException)
 
 @app.on_event("startup")
 async def startup_event():
+    """Event handler for the startup event.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
     await db.init()
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    """Event handler for the shutdown event.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
     await db.session.close()
 
 
