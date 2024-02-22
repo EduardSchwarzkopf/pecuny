@@ -1,13 +1,16 @@
-from sqlalchemy import or_, update as sql_update
-from sqlalchemy.future import select
-from . import models
 from datetime import datetime
-from app.database import db
-from sqlalchemy.orm import selectinload, joinedload
-from typing import Type, List, TypeVar
-from app.models import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Type, TypeVar
 
+from sqlalchemy import or_
+from sqlalchemy import update as sql_update
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy.orm import joinedload, selectinload
+
+from app.database import db
+from app.models import BaseModel
+
+from . import models
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
@@ -185,12 +188,12 @@ async def commit(session) -> None:
     await session.commit()
 
 
-async def update(cls: Type[ModelT], id: int, **kwargs) -> None:
+async def update(cls: Type[ModelT], instance_id: int, **kwargs) -> None:
     """Update an instance of the specified model with the given ID.
 
     Args:
         cls: The type of the model.
-        id: The ID of the instance to update.
+        instance_id: The ID of the instance to update.
         **kwargs: The attributes and values to update.
 
     Returns:
@@ -201,7 +204,7 @@ async def update(cls: Type[ModelT], id: int, **kwargs) -> None:
     """
     query = (
         sql_update(cls)
-        .where(cls.id == id)
+        .where(cls.id == instance_id)
         .values(**kwargs)
         .execution_options(synchronize_session="fetch")
     )
