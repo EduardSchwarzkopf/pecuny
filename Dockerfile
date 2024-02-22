@@ -1,5 +1,5 @@
 # Use the latest Python version
-FROM python:3.12.2-bookworm
+FROM python:3.12.2-slim
 
 # Create and switch to user
 RUN useradd -m app
@@ -10,13 +10,9 @@ ENV PATH="/home/app/.local/bin:${PATH}"
 WORKDIR /home/app
 
 # Install Poetry
-RUN curl -sSL https://install.python-poetry.org | python3 -
+COPY ./dist/*.whl ./dist/
 
-# Copy pyproject.toml and poetry.lock
-COPY pyproject.toml poetry.lock ./
-
-# Install dependencies with Poetry
-RUN poetry install --no-interaction --no-cache
+RUN pip install ./dist/*.whl
 
 # Copy application files
 COPY ./app ./app
@@ -26,4 +22,4 @@ COPY ./alembic.ini ./
 COPY ./alembic ./alembic
 
 # Run the application
-CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
