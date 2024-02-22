@@ -9,17 +9,17 @@ from app.models import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-ModelType = TypeVar("ModelType", bound=BaseModel)
+ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
-async def get_all(cls: Type[ModelType]) -> List[ModelType]:
+async def get_all(cls: Type[ModelT]) -> List[ModelT]:
     """Retrieve all instances of the specified model from the database.
 
     Args:
         cls: The type of the model.
 
     Returns:
-        List[ModelType]: A list of instances of the specified model.
+        List[ModelT]: A list of instances of the specified model.
 
     Raises:
         None
@@ -30,9 +30,7 @@ async def get_all(cls: Type[ModelType]) -> List[ModelType]:
     return result.scalars().all()
 
 
-async def filter_by(
-    cls: Type[ModelType], attribute: str, value: str
-) -> List[ModelType]:
+async def filter_by(cls: Type[ModelT], attribute: str, value: str) -> List[ModelT]:
     """Filter instances of the specified model by the given attribute and value.
 
     Args:
@@ -41,7 +39,7 @@ async def filter_by(
         value: The value to filter with.
 
     Returns:
-        List[ModelType]: A list of instances of the specified model that match the filter criteria.
+        List[ModelT]: A list of instances of the specified model that match the filter criteria.
 
     Raises:
         None
@@ -51,7 +49,7 @@ async def filter_by(
     return result.scalars().all()
 
 
-async def get(cls: Type[ModelType], id: int, load_relationships=None) -> ModelType:
+async def get(cls: Type[ModelT], id: int, load_relationships=None) -> ModelT:
     """Retrieve an instance of the specified model by its ID.
 
     Args:
@@ -60,7 +58,7 @@ async def get(cls: Type[ModelType], id: int, load_relationships=None) -> ModelTy
         load_relationships: Optional list of relationships to load.
 
     Returns:
-        ModelType: The instance of the specified model with the given ID.
+        ModelT: The instance of the specified model with the given ID.
 
     Raises:
         None
@@ -171,7 +169,7 @@ async def get_transactions_from_period(
     return result.scalars().all()
 
 
-async def save(obj: Type[ModelType]) -> None:
+async def save(obj: Type[ModelT]) -> None:
     """Save an object or a list of objects to the database.
 
     Args:
@@ -220,7 +218,7 @@ async def commit(session) -> None:
     await session.commit()
 
 
-async def update(cls: Type[ModelType], id: int, **kwargs) -> None:
+async def update(cls: Type[ModelT], id: int, **kwargs) -> None:
     """Update an instance of the specified model with the given ID.
 
     Args:
@@ -243,7 +241,7 @@ async def update(cls: Type[ModelType], id: int, **kwargs) -> None:
     await db.session.execute(query)
 
 
-async def delete(obj: Type[ModelType]) -> None:
+async def delete(obj: Type[ModelT]) -> None:
     """Delete an object from the database.
 
     Args:
@@ -258,7 +256,7 @@ async def delete(obj: Type[ModelType]) -> None:
     await db.session.delete(obj)
 
 
-async def refresh(obj: Type[ModelType]) -> None:
+async def refresh(obj: Type[ModelT]) -> None:
     """Refresh the state of an object from the database.
 
     Args:
@@ -273,7 +271,7 @@ async def refresh(obj: Type[ModelType]) -> None:
     return await db.session.refresh(obj)
 
 
-async def refresh_all(object_list: Type[ModelType]) -> None:
+async def refresh_all(object_list: Type[ModelT]) -> None:
     """Refresh the state of multiple objects from the database.
 
     Args:
