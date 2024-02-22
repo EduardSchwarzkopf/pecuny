@@ -228,7 +228,7 @@ class DatetimeLocalFieldWithoutTime(StringField):
             except ValueError as e:
                 self.data = None
                 raise ValueError(
-                    self.gettext("Not a valid date value: {0}".format(valuelist))
+                    self.gettext(f"Not a valid date value: {valuelist}")
                 ) from e
 
 
