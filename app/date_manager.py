@@ -13,8 +13,8 @@ def get_datetime_from_timestamp(timestamp):
     except ValueError:
         # when timestamp is in miliseconds
         date = datetime.fromtimestamp(timestamp / 1000)
-    finally:
-        return date
+
+    return date
 
 
 def string_to_datetime(str_date):
