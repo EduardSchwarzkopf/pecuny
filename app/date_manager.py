@@ -10,7 +10,7 @@ def get_datetime_from_timestamp(timestamp):
     try:
         # when timestamp is in seconds
         date = datetime.fromtimestamp(timestamp)
-    except (ValueError):
+    except ValueError:
         # when timestamp is in miliseconds
         date = datetime.fromtimestamp(timestamp / 1000)
     finally:
