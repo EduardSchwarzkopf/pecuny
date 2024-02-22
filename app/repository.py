@@ -136,39 +136,6 @@ async def get_transactions_from_period(
     return result.scalars().all()
 
 
-async def get_transactions_from_period(
-    account_id: int, start_date: datetime, end_date: datetime
-) -> List[models.Transaction]:
-    """Retrieve transactions for a specific account within a given period.
-
-    Args:
-        account_id: The ID of the account.
-        start_date: The start date of the period.
-        end_date: The end date of the period.
-
-    Returns:
-        List[models.Transaction]: A list of transactions within the specified period.
-
-    Raises:
-        None
-    """
-    transaction = models.Transaction
-    information = models.TransactionInformation
-    class_date = information.date
-
-    query = (
-        select(transaction)
-        .options(joinedload(transaction.offset_transaction))
-        .join(transaction.information)
-        .filter(class_date <= end_date)
-        .filter(class_date >= start_date)
-        .filter(account_id == transaction.account_id)
-    )
-
-    result = await db.session.execute(query)
-    return result.scalars().all()
-
-
 async def save(obj: Type[ModelT]) -> None:
     """Save an object or a list of objects to the database.
 
