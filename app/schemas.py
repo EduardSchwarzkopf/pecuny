@@ -258,7 +258,10 @@ class CreateTransactionForm(StarletteForm):
         "Linked Account",
         coerce=int,
         render_kw={
-            "placeholder": "Select an account if this transaction is transferring funds between accounts",
+            "placeholder": (
+                "Select an account if this transaction is "
+                "transferring funds between accounts"
+            ),
         },
     )
 
