@@ -1,9 +1,11 @@
+from collections import defaultdict
+from typing import List, Optional
+
 from fastapi import Request
 from starlette_wtf import StarletteForm
-from app import templates, schemas
+
+from app import schemas, templates
 from app.utils.enums import FeedbackType
-from typing import Optional, List
-from collections import defaultdict
 
 
 def set_feedback(
@@ -52,15 +54,52 @@ def get_default_context(request: Request) -> dict:
 def render_template(
     template: str, request: Request, context_extra: Optional[dict] = {}
 ):  # sourcery skip: default-mutable-arg
+    """Render a template with the provided context.
+
+    Args:
+        template: The name of the template to render.
+        request: The request object.
+        context_extra: Optional extra context to include.
+
+    Returns:
+        TemplateResponse: The rendered template response.
+
+    Raises:
+        None
+    """
     context = get_default_context(request)
     return templates.TemplateResponse(template, {**context, **context_extra})
 
 
 def render_form_template(template: str, request: Request, form: StarletteForm):
+    """Render a template with a form included in the context.
+
+    Args:
+        template: The name of the template to render.
+        request: The request object.
+        form: The form object to include in the context.
+
+    Returns:
+        TemplateResponse: The rendered template response.
+
+    Raises:
+        None
+    """
     return render_template(template, request, {"form": form})
 
 
 def group_categories_by_section(categorie_list: List[schemas.CategoryData]):
+    """Group categories by section.
+
+    Args:
+        categorie_list: A list of category data.
+
+    Returns:
+        dict: A dictionary where the keys are section labels and the values are lists of category IDs and labels.
+
+    Raises:
+        None
+    """
     grouped_data = defaultdict(list)
     for item in categorie_list:
         grouped_data[item.section.label].append((item.id, item.label))
@@ -68,4 +107,17 @@ def group_categories_by_section(categorie_list: List[schemas.CategoryData]):
 
 
 def add_breadcrumb(request: Request, label: str, url: str):
+    """Add a breadcrumb to the request state.
+
+    Args:
+        request: The request object.
+        label: The label of the breadcrumb.
+        url: The URL of the breadcrumb.
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
     request.state.breadcrumb_builder.add(label, url)
