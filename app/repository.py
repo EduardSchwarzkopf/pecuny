@@ -86,7 +86,8 @@ async def get_scheduled_transactions_from_period(
         end_date: The end date of the period.
 
     Returns:
-        List[models.TransactionScheduled]: A list of scheduled transactions within the specified period.
+        List[models.TransactionScheduled]:
+            A list of scheduled transactions within the specified period.
 
     Raises:
         None
