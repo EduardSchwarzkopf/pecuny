@@ -16,6 +16,17 @@ class Database:
         self.url = url
 
     async def init(self):
+        """Initialize the database connection.
+
+        Args:
+            self
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
         # closes connections if a session is created,
         # so as not to create repeated connections
         if self.session:
@@ -25,11 +36,33 @@ class Database:
         self.session = self.get_session()
 
     def get_session(self) -> AsyncSession:
+        """Get the database session.
+
+        Args:
+            self
+
+        Returns:
+            AsyncSession: The database session.
+
+        Raises:
+            None
+        """
         return sessionmaker(self.engine, expire_on_commit=False, class_=AsyncSession)()
 
 
 async def get_user_db():
-    from app.models import OAuthAccount, User
+    """Get the user database.
+
+    Args:
+        None
+
+    Returns:
+        SQLAlchemyUserDatabase: The user database.
+
+    Raises:
+        None
+    """
+    from app.models import OAuthAccount, User  # pylint: disable=import-outside-toplevel
 
     yield SQLAlchemyUserDatabase(db.session, User, OAuthAccount)
 
