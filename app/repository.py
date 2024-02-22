@@ -49,12 +49,12 @@ async def filter_by(cls: Type[ModelT], attribute: str, value: str) -> List[Model
     return result.scalars().all()
 
 
-async def get(cls: Type[ModelT], id: int, load_relationships=None) -> ModelT:
+async def get(cls: Type[ModelT], instance_id: int, load_relationships=None) -> ModelT:
     """Retrieve an instance of the specified model by its ID.
 
     Args:
         cls: The type of the model.
-        id: The ID of the instance to retrieve.
+        instance_id: The ID of the instance to retrieve.
         load_relationships: Optional list of relationships to load.
 
     Returns:
@@ -63,7 +63,7 @@ async def get(cls: Type[ModelT], id: int, load_relationships=None) -> ModelT:
     Raises:
         None
     """
-    stmt = select(cls).where(cls.id == id)
+    stmt = select(cls).where(cls.id == instance_id)
     if load_relationships:
         options = [selectinload(rel) for rel in load_relationships]
         stmt = stmt.options(*options)
