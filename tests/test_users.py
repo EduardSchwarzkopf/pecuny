@@ -1,9 +1,11 @@
 import pytest
+from httpx import AsyncClient
 from jose import jwt
 
-from app import schemas, repository as repo, models
+from app import models
+from app import repository as repo
+from app import schemas
 from app.config import settings
-from httpx import AsyncClient
 
 #
 # use with: pytest --disable-warnings -v -x
