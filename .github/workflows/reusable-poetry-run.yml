@@ -1,7 +1,6 @@
 name: Poetry
 
-on:
-  workflow_call
+on: workflow_call
 
 env:
   POETRY_VERSION: 1.7.1
@@ -15,6 +14,6 @@ runs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Run image
-        uses: abatilo/actions-poetry@v3.0.0
-        with:
-          poetry-version: ${{ env.PYTHON_VERSION }}
+      uses: abatilo/actions-poetry@v3.0.0
+      with:
+        poetry-version: ${{ env.PYTHON_VERSION }}
