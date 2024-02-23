@@ -22,13 +22,12 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - name: Run image
-        uses: abatilo/actions-poetry@v3.0.0
-        with:
-          poetry-version: ${{ env.POETRY_VERSION }}
+      - name: Install poetry
+        run: pip install poetry==${{ env.POETRY_VERSION }}
       - name: Install the linter dependencies
         run: poetry install --only linter
       - name: Run pylint
@@ -53,17 +52,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - name: Run image
-        uses: abatilo/actions-poetry@v3.0.0
-        with:
-          poetry-version: ${{ env.POETRY_VERSION }}
-      - name: Install the linter dependencies
+      - name: Install poetry
+        run: pip install poetry==${{ env.POETRY_VERSION }}
+      - name: Install dependencies
         run: poetry install
       - name: Run Tests
-        run: "poetry run pytest --disable-warnings -x -v"
+        run: poetry run pytest --disable-warnings -x -v
         env:
           ENVIRONMENT: "test"
           DOMAIN: "http://127.0.0.1:8000"
