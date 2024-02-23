@@ -55,6 +55,10 @@ class Token(BaseModel):
     token_type: str
 
 
+class TokenData(BaseModel):
+    id: Optional[str]
+
+
 class AccountUpdate(Base):
     label: Optional[constr(strip_whitespace=True, min_length=1, max_length=36)]
     description: Optional[str]
