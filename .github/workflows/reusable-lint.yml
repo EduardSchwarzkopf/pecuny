@@ -1,4 +1,4 @@
-name: Pylint
+name: Reusable Pylint
 
 on: workflow_call
 
