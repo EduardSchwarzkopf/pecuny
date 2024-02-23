@@ -2,11 +2,9 @@ import sys
 
 from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from .config import settings
-
-Base = declarative_base()
 
 
 class Database:

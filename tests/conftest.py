@@ -1,12 +1,13 @@
 import pytest
-from app.config import settings
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from app.main import app
-from app.database import Base, db
-from sqlalchemy.orm import sessionmaker
 from httpx import AsyncClient
-from app.data import categories
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 
+from app.config import settings
+from app.data import categories
+from app.database import db
+from app.main import app
+from app.models import Base
 
 engine = create_async_engine(settings.test_db_url)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

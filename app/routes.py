@@ -1,18 +1,15 @@
-from app.routers.api import (
-    accounts as api_accounts,
-    transactions as api_transactions,
-    users as api_users,
-    categories as api_categories,
-    scheduled_transactions as api_scheduled_transactions,
-    auth as api_auth,
-)
-
-from app.routers import dashboard, accounts, auth, index, users, transactions
 import fastapi_users
-from app.schemas import UserRead, UserUpdate
-from app.auth_manager import auth_backend, fastapi_users
-
 from fastapi import APIRouter
+
+from app.auth_manager import auth_backend, fastapi_users
+from app.routers import accounts, auth, dashboard, index, transactions, users
+from app.routers.api import accounts as api_accounts
+from app.routers.api import auth as api_auth
+from app.routers.api import categories as api_categories
+from app.routers.api import scheduled_transactions as api_scheduled_transactions
+from app.routers.api import transactions as api_transactions
+from app.routers.api import users as api_users
+from app.schemas import UserRead, UserUpdate
 
 
 class APIRouterExtended(APIRouter):
@@ -31,7 +28,7 @@ class APIRouterExtended(APIRouter):
         super().__init__(*args, **kwargs)
 
 
-api_prefix = "/api"
+API_PREFIX = "/api"
 auth_tag_list = ["Api", "Auth"]
 user_tag_list = ["Api", "Users"]
 
@@ -61,22 +58,22 @@ router_list = [
     ## Fastapi Users
     {
         "router": fastapi_users.get_users_router(UserRead, UserUpdate),
-        "prefix": f"{api_prefix}/users",
+        "prefix": f"{API_PREFIX}/users",
         "tags": user_tag_list,
     },
     {
         "router": fastapi_users.get_auth_router(auth_backend),
-        "prefix": f"{api_prefix}/auth",
+        "prefix": f"{API_PREFIX}/auth",
         "tags": auth_tag_list,
     },
     {
         "router": fastapi_users.get_reset_password_router(),
-        "prefix": f"{api_prefix}/auth",
+        "prefix": f"{API_PREFIX}/auth",
         "tags": auth_tag_list,
     },
     {
         "router": fastapi_users.get_verify_router(UserRead),
-        "prefix": f"{api_prefix}/auth",
+        "prefix": f"{API_PREFIX}/auth",
         "tags": auth_tag_list,
     },
 ]

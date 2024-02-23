@@ -7,11 +7,11 @@ from fastapi_users.db import (
 from sqlalchemy import Column, Integer, Numeric, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy.orm import Mapped, declarative_base, relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 
-from .database import Base
+Base = declarative_base()
 
 
 class BaseModel(Base):
