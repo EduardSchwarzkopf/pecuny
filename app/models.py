@@ -1,17 +1,17 @@
-from sqlalchemy import Column, Integer, String, Numeric, text
 from typing import List
-from sqlalchemy.orm import relationship, Mapped
+
+from fastapi_users.db import (
+    SQLAlchemyBaseOAuthAccountTableUUID,
+    SQLAlchemyBaseUserTableUUID,
+)
+from sqlalchemy import Column, Integer, Numeric, String, text
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import TIMESTAMP
-from sqlalchemy.ext.declarative import declared_attr
-from .database import (
-    Base,
-)
-from sqlalchemy.dialects.postgresql import UUID
-from fastapi_users.db import (
-    SQLAlchemyBaseUserTableUUID,
-    SQLAlchemyBaseOAuthAccountTableUUID,
-)
+
+from .database import Base
 
 
 class BaseModel(Base):
@@ -26,6 +26,17 @@ class BaseModel(Base):
     )
 
     def add_attributes_from_dict(self, attribute_list: dict) -> None:
+        """
+        Adds attributes to the model instance from a dictionary.
+
+        Args:
+            self: The instance of the model.
+            attribute_list (dict): A dictionary containing attribute names and values.
+
+        Returns:
+            None
+        """
+
         model_attribute_list = self.__mapper__.attrs.keys()
 
         for key, value in attribute_list.items():
@@ -49,6 +60,16 @@ class UserId(Base):
 
     @declared_attr
     def user_id(self):
+        """
+        Defines a foreign key column for the user_id field.
+
+        Args:
+            self: The instance of the model.
+
+        Returns:
+            Column: The foreign key column for the user_id field.
+        """
+
         return Column(
             UUID(as_uuid=True),
             ForeignKey("user.id", ondelete="CASCADE"),
@@ -57,6 +78,15 @@ class UserId(Base):
 
     @declared_attr
     def user(self):
+        """
+        Defines a relationship to the User model.
+
+        Args:
+            self: The instance of the model.
+
+        Returns:
+            RelationshipProperty: The relationship to the User model.
+        """
         return relationship("User")
 
 
