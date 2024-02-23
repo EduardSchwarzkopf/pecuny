@@ -44,7 +44,8 @@ async def test_invalid_create_account(
     assert res.status_code == 422
 
 
-async def test_delete_account(authorized_client, test_account):
+@pytest.mark.usefixtures("test_account")
+async def test_delete_account(authorized_client):
     res = await authorized_client.delete(f"{endpoint}1")
 
     assert res.status_code == 204
@@ -54,9 +55,8 @@ async def test_delete_account(authorized_client, test_account):
     "account_id, status_code",
     [("2", 404), ("3", 404), ("4", 404), ("999999", 404)],
 )
-async def test_invalid_delete_account(
-    authorized_client, test_accounts, account_id, status_code
-):
+@pytest.mark.usefixtures("test_account")
+async def test_invalid_delete_account(authorized_client, account_id, status_code):
     res = await authorized_client.delete(f"{endpoint}{account_id}")
 
     assert res.status_code == status_code
@@ -95,7 +95,8 @@ async def test_invalid_delete_account(
         ),
     ],
 )
-async def test_update_account(session, authorized_client, test_account, values):
+@pytest.mark.usefixtures("test_account")
+async def test_update_account(session, authorized_client, values):
     async with session:
         res = await authorized_client.put(f"{endpoint}1", json=values)
 
