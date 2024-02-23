@@ -1,7 +1,5 @@
 name: Poetry
 
-on: workflow_call
-
 env:
   POETRY_VERSION: 1.7.1
   PYTHON_VERSION: 3.12
