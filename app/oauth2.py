@@ -1,10 +1,12 @@
-from datetime import timezone
-from fastapi import Depends, status, HTTPException
+from datetime import datetime, timedelta, timezone
+
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from app.database import db
-from . import schemas, models
 from jose import JWTError, jwt
-from datetime import datetime, timedelta
+
+from app.database import db
+
+from . import models, schemas
 from .config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
