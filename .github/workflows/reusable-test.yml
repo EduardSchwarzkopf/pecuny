@@ -6,6 +6,8 @@ env:
   TEST_DB_PASSWORD: postgres
   TEST_DB_HOST: localhost
   TEST_DB_USER: postgres
+  POETRY_VERSION: 1.7.1
+  PYTHON_VERSION: 3.12
 
 jobs:
   test:
@@ -26,8 +28,14 @@ jobs:
           - 5432:5432
 
     steps:
-      - name: Init poetry
-        uses: .github/workflows/reusable-poetry-run.yml
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Run image
+        uses: abatilo/actions-poetry@v3.0.0
+        with:
+          poetry-version: ${{ env.PYTHON_VERSION }}
       - name: Run Tests
         run: poetry run pytest --disable-warnings -x -v
         env:

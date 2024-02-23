@@ -2,10 +2,20 @@ name: Poetry run
 
 on: workflow_call
 
+env:
+  POETRY_VERSION: 1.7.1
+  PYTHON_VERSION: 3.12
+
 jobs:
   lint:
     steps:
-      - name: Init poetry
-        uses: .github/workflows/reusable-poetry-run.yml
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Run image
+        uses: abatilo/actions-poetry@v3.0.0
+        with:
+          poetry-version: ${{ env.PYTHON_VERSION }}
       - name: Run linter
         run: poetry run pylint $(git ls-files '*.py')
