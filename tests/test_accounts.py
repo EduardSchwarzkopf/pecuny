@@ -1,17 +1,15 @@
 import pytest
-from jose import jwt
 
 from app import schemas
-from app.config import settings
 
 pytestmark = pytest.mark.anyio
-endpoint = "/api/accounts/"
+ENDPOINT = "/api/accounts/"
 
 
 async def test_create_account(session, authorized_client):
     async with session:
         res = await authorized_client.post(
-            endpoint,
+            ENDPOINT,
             json={"label": "test_account", "description": "test", "balance": 500},
         )
 
@@ -37,7 +35,7 @@ async def test_invalid_create_account(
 ):
     async with session:
         res = await authorized_client.post(
-            endpoint,
+            ENDPOINT,
             json={"label": label, "description": description, "balance": balance},
         )
 
@@ -46,7 +44,7 @@ async def test_invalid_create_account(
 
 @pytest.mark.usefixtures("test_account")
 async def test_delete_account(authorized_client):
-    res = await authorized_client.delete(f"{endpoint}1")
+    res = await authorized_client.delete(f"{ENDPOINT}1")
 
     assert res.status_code == 204
 
@@ -57,7 +55,7 @@ async def test_delete_account(authorized_client):
 )
 @pytest.mark.usefixtures("test_account")
 async def test_invalid_delete_account(authorized_client, account_id, status_code):
-    res = await authorized_client.delete(f"{endpoint}{account_id}")
+    res = await authorized_client.delete(f"{ENDPOINT}{account_id}")
 
     assert res.status_code == status_code
 
@@ -98,10 +96,9 @@ async def test_invalid_delete_account(authorized_client, account_id, status_code
 @pytest.mark.usefixtures("test_account")
 async def test_update_account(session, authorized_client, values):
     async with session:
-        res = await authorized_client.put(f"{endpoint}1", json=values)
+        res = await authorized_client.put(f"{ENDPOINT}1", json=values)
 
     assert res.status_code == 200
-    d = res.json()
     account = schemas.AccountData(**res.json())
 
     for key, value in values.items():
