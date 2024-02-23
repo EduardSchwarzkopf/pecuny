@@ -1,0 +1,11 @@
+name: Poetry run
+
+on: workflow_call
+
+jobs:
+  lint:
+    steps:
+      - name: Init poetry
+        uses: .github/workflows/reusable-poetry-run.yml
+      - name: Run linter
+        run: poetry run pylint $(git ls-files '*.py')
