@@ -7,6 +7,17 @@ ENDPOINT = "/api/accounts/"
 
 
 async def test_create_account(session, authorized_client):
+    """
+    Tests the create account functionality.
+
+    Args:
+        session: The session fixture.
+        authorized_client: The authorized client fixture.
+
+    Returns:
+        None
+    """
+
     async with session:
         res = await authorized_client.post(
             ENDPOINT,
@@ -33,6 +44,18 @@ async def test_create_account(session, authorized_client):
 async def test_invalid_create_account(
     session, authorized_client, label, description, balance
 ):
+    """
+    Tests the delete account functionality.
+
+    Args:
+        authorized_client: The authorized client fixture.
+        account_id (str): The ID of the account to delete.
+        status_code (int): The expected status code.
+
+    Returns:
+        None
+    """
+
     async with session:
         res = await authorized_client.post(
             ENDPOINT,
@@ -44,6 +67,18 @@ async def test_invalid_create_account(
 
 @pytest.mark.usefixtures("test_account")
 async def test_delete_account(authorized_client):
+    """
+    Tests the update account functionality.
+
+    Args:
+        session: The session fixture.
+        authorized_client: The authorized client fixture.
+        values: The values to update the account with.
+
+    Returns:
+        None
+    """
+
     res = await authorized_client.delete(f"{ENDPOINT}1")
 
     assert res.status_code == 204
@@ -55,6 +90,18 @@ async def test_delete_account(authorized_client):
 )
 @pytest.mark.usefixtures("test_account")
 async def test_invalid_delete_account(authorized_client, account_id, status_code):
+    """
+    Tests the update account functionality.
+
+    Args:
+        session: The session fixture.
+        authorized_client: The authorized client fixture.
+        values: The values to update the account with.
+
+    Returns:
+        None
+    """
+
     res = await authorized_client.delete(f"{ENDPOINT}{account_id}")
 
     assert res.status_code == status_code
@@ -95,6 +142,18 @@ async def test_invalid_delete_account(authorized_client, account_id, status_code
 )
 @pytest.mark.usefixtures("test_account")
 async def test_update_account(session, authorized_client, values):
+    """
+    Tests the update account functionality.
+
+    Args:
+        session: The session fixture.
+        authorized_client: The authorized client fixture.
+        values: The values to update the account with.
+
+    Returns:
+        None
+    """
+
     async with session:
         res = await authorized_client.put(f"{ENDPOINT}1", json=values)
 
