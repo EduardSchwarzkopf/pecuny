@@ -19,4 +19,4 @@ jobs:
       - name: Install the linter dependencies
         run: poetry install --only linter
       - name: Run pylint
-        run: poetry run pylint app
+        run: poetry run pylint $(git ls-files '*.py')
