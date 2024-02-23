@@ -1,12 +1,20 @@
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from app.routers.dashboard import router as dashboard_router
 
 
 class HeaderLinkMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        current_path = request.url.path
+        """
+        Dispatches the request to the next middleware or route handler.
 
+        Args:
+            self: The instance of the middleware.
+            request (Request): The incoming request object.
+            call_next (Callable): The next middleware or route handler.
+
+        Returns:
+            Awaitable: The response returned by the next middleware or route handler.
+        """
         request.state.header_links = [
             # {
             #     "url": dashboard_router.prefix,
