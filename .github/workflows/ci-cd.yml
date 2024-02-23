@@ -1,11 +1,13 @@
-name: CI
+name: CI/CD
+
 on:
   push:
-    branches: 
+    branches:
       - main
   pull_request:
-    branches: 
+    branches:
       - main
+
 env:
   IMAGE: ${{ secrets.DOCKER_USERNAME }}/pecuny:latest
   TEST_DB_NAME: test_db
@@ -13,8 +15,25 @@ env:
   TEST_DB_HOST: localhost
   TEST_DB_USER: postgres
   POETRY_VERSION: 1.7.1
+  PYTHON_VERSION: 3.12
 
 jobs:
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Run image
+        uses: abatilo/actions-poetry@v3.0.0
+        with:
+          poetry-version: ${{ env.POETRY_VERSION }}
+      - name: Install the linter dependencies
+        run: poetry install --only linter
+      - name: Run pylint
+        run: poetry run pylint $(git ls-files '*.py')
+
   test:
     runs-on: ubuntu-22.04
     services:
@@ -34,14 +53,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v4
         with:
-          python-version: 3.12
-      - name: Install poetry
-        run: "pip install poetry==${{ env.POETRY_VERSION }}"
-      - name: Install dependencies
-        run: "poetry install"
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Run image
+        uses: abatilo/actions-poetry@v3.0.0
+        with:
+          poetry-version: ${{ env.POETRY_VERSION }}
+      - name: Install the linter dependencies
+        run: poetry install
       - name: Run Tests
         run: "poetry run pytest --disable-warnings -x -v"
         env:
@@ -65,7 +85,7 @@ jobs:
           MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
 
   build-and-publish:
-    needs: [test]
+    needs: [lint, test]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
