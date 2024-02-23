@@ -83,6 +83,7 @@ jobs:
           MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
 
   build-and-publish:
+    if: github.event_name == 'push'
     needs: [lint, test]
     runs-on: ubuntu-22.04
     steps:
@@ -98,6 +99,7 @@ jobs:
         run: docker push ${{ env.IMAGE }}
 
   deploy:
+    if: github.event_name == 'push'
     needs: [build-and-publish]
     runs-on: ubuntu-22.04
     env:
