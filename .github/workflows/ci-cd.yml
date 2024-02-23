@@ -1,9 +1,11 @@
-name: CI/CD
-
+name: CI
 on:
   push:
-    branches: ["main", "pull_request"]
-
+    branches: 
+      - main
+  pull_request:
+    branches: 
+      - main
 env:
   IMAGE: ${{ secrets.DOCKER_USERNAME }}/pecuny:latest
   TEST_DB_NAME: test_db
