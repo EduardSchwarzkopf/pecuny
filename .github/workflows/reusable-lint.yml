@@ -1,4 +1,4 @@
-name: Poetry run
+name: Pylint
 
 on: workflow_call
 
