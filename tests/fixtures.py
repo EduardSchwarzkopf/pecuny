@@ -27,6 +27,7 @@ class ClientSessionWrapper:
 
 
 @pytest.fixture(name="test_user")
+@pytest.mark.usefixtures("session")
 async def fixture_test_user(session, user_service: UserService):
     user_list = await repo.get_all(models.User)
 
@@ -71,8 +72,9 @@ async def fixture_client_session_wrapper_fixture(
     yield ClientSessionWrapper(client, authorized_client, session)
 
 
+@pytest.mark.usefixtures("session")
 @pytest.fixture(name="test_users")
-async def fixture_test_users(session, user_service: UserService):
+async def fixture_test_users(user_service: UserService):
     users_data = [
         ["user01@pytest.de", "password123"],
         ["user02@pytest.de", "password123"],
