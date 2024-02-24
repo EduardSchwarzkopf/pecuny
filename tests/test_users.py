@@ -64,7 +64,7 @@ async def test_invalid_create_user(
     client_session_wrapper_fixture: ClientSessionWrapper,
 ):
     """
-    Tests the create user functionality.
+    Tests the invalid user creation.
 
     Args:
         session: The session fixture.
@@ -108,7 +108,7 @@ async def test_login(
     password,
 ):
     """
-    Tests the delete user functionality.
+    Tests successful user login
 
     Args:
         authorized_client: The authorized client fixture.
@@ -160,7 +160,7 @@ async def test_invalid_login(
     status_code,
 ):
     """
-    Tests the delete user functionality.
+    Tests failed user login.
 
     Args:
         authorized_client: The authorized client fixture.
@@ -192,7 +192,7 @@ async def test_updated_user(
     client_session_wrapper_fixture: ClientSessionWrapper, values
 ):
     """
-    Tests the create user functionality.
+    Tests successful update user parameter.
 
     Args:
         session: The session fixture.
@@ -238,7 +238,7 @@ async def test_invalid_updated_user(
     client_session_wrapper_fixture: ClientSessionWrapper, test_user, values
 ):
     """
-    Tests the delete user functionality.
+    Tests tests invalid update user functionality.
 
     Args:
         authorized_client: The authorized client fixture.
@@ -290,7 +290,7 @@ async def test_invalid_delete_user(
     client_session_wrapper_fixture: ClientSessionWrapper,
 ):
     """
-    Tests the create user functionality.
+    Tests invalid user deletion.
 
     Args:
         session: The session fixture.
