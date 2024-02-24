@@ -1,13 +1,14 @@
 from typing import List
-from fastapi import Depends, APIRouter, status, Response
+
+from fastapi import Depends, status
 from fastapi.exceptions import HTTPException
 
-from app import schemas, transaction_manager as tm
-from app.services import accounts as service
-from app.routers.api.users import current_active_user
+from app import schemas
+from app import transaction_manager as tm
 from app.models import User
+from app.routers.api.users import current_active_user
+from app.services import accounts as service
 from app.utils import APIRouterExtended
-
 
 router = APIRouterExtended(prefix="/accounts", tags=["Accounts"])
 response_model = schemas.AccountData
