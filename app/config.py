@@ -33,18 +33,18 @@ class Settings(BaseSettings):
     mail_server: str
 
 
-# TODO: add lru_cache: https://fastapi.tiangolo.com/advanced/settings/
+# TODO: add lru_cache: https://fastapi.tiangolo.com/advanced/settings/ # pylint: disable=fixme
 settings = Settings()
 
 setattr(
     settings,
     "db_url",
-    f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}",
+    f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}",  # pylint: disable=line-too-long
 )
 
 
 setattr(
     settings,
     "test_db_url",
-    f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.test_db_port}/{settings.test_db_name}",
+    f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.test_db_port}/{settings.test_db_name}",  # pylint: disable=line-too-long
 )

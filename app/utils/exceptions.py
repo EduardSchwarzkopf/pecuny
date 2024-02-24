@@ -33,3 +33,7 @@ class ForbiddenException(HTTPException):
 class NotFoundException(HTTPException):
     def __init__(self):
         super().__init__(status.HTTP_404_NOT_FOUND, "Not Found")
+
+
+class AccessDeniedError(Exception):
+    """Raised when a user tries to access a resource they don't have permission to."""

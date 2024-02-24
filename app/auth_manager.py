@@ -1,15 +1,15 @@
 import uuid
-from typing import Optional
+from typing import AsyncGenerator, Optional
 
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, exceptions
-from fastapi_users.jwt import generate_jwt
 from fastapi_users.authentication import (
     AuthenticationBackend,
     CookieTransport,
     JWTStrategy,
 )
 from fastapi_users.db import SQLAlchemyUserDatabase
+from fastapi_users.jwt import generate_jwt
 
 from app.config import settings
 from app.database import get_user_db
@@ -57,6 +57,17 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         await self.on_after_request_verify(user, self.get_token(user), request)
 
     def get_token(self, user: User) -> str:
+        """Generate a token for the specified user.
+
+        Args:
+            user: The user object.
+
+        Returns:
+            str: The generated token.
+
+        Raises:
+            None
+        """
         token_data = {
             "sub": str(user.id),
             "email": user.email,
@@ -69,6 +80,18 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         )
 
     async def request_new_token(self, user: User) -> None:
+        """Request a new token for the specified user.
+
+        Args:
+            user: The user object.
+
+        Returns:
+            None
+
+        Raises:
+            UserInactive: If the user is inactive.
+            UserAlreadyVerified: If the user is already verified.
+        """
         if not user.is_active:
             raise exceptions.UserInactive()
         if user.is_verified:
@@ -77,7 +100,22 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         await email.send_new_token(user, self.get_token(user))
 
 
-async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):
+async def get_user_manager(
+    user_db: SQLAlchemyUserDatabase = Depends(get_user_db),
+) -> AsyncGenerator[UserManager, None]:
+    """
+    Asynchronously yields a UserManager for the provided user.
+
+    Args:
+        user_db: The user object.
+
+    Yields:
+        UserManager: A manager for the user.
+
+    Raises:
+        UserInactive: If the user is inactive.
+        UserAlreadyVerified: If the user is already verified.
+    """
     yield UserManager(user_db)
 
 
@@ -87,6 +125,18 @@ cookie_transport = CookieTransport(
 
 
 def get_jwt_strategy() -> JWTStrategy:
+    """
+    Returns a JWTStrategy object configured with a secret and lifetime.
+
+    This function creates and returns a JWTStrategy object, which is configured with
+    a secret key and a token expiration time. These configurations are essential for
+    the secure handling and validation of JWT tokens.
+
+    Returns:
+        JWTStrategy: An instance of JWTStrategy configured with the secret key and
+                      token lifetime.
+    """
+
     return JWTStrategy(secret=SECRET, lifetime_seconds=TOKEN_EXPIRE)
 
 

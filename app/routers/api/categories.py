@@ -1,27 +1,55 @@
-from sys import prefix
 from typing import List
-from fastapi import Depends, APIRouter, status, Response
+
+from fastapi import Depends, status
 from fastapi.exceptions import HTTPException
 
-from app import schemas, transaction_manager as tm
-from app.services import categories as service
-from app.routers.api.users import current_active_user
+from app import schemas
 from app.models import User
+from app.routers.api.users import current_active_user
+from app.services import categories as service
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(prefix="/categories", tags=["Categories"])
-response_model = schemas.CategoryData
+ResponseModel = schemas.CategoryData
 
 
-@router.get("/", response_model=List[response_model])
+@router.get("/", response_model=List[ResponseModel])
 async def api_get_categories(current_user: User = Depends(current_active_user)):
+    """
+    Retrieves a category by ID.
+
+    Args:
+        category_id: The ID of the category.
+        current_user: The current active user.
+
+    Returns:
+        ResponseModel: The retrieved category information.
+
+    Raises:
+        HTTPException: If the category is not found.
+    """
+
     return await service.get_categories(current_user)
 
 
-@router.get("/{category_id}", response_model=response_model)
+@router.get("/{category_id}", response_model=ResponseModel)
 async def api_get_category(
     category_id: int, current_user: User = Depends(current_active_user)
 ):
+    """
+    Retrieves a category by ID.
+
+    Args:
+        category_id: The ID of the category.
+        current_user: The current active user.
+
+    Returns:
+        ResponseModel: The retrieved category information.
+
+    Raises:
+        HTTPException: If the category is not found.
+    """
+
     category = await service.get_category(current_user, category_id)
 
     if category is None:

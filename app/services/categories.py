@@ -1,5 +1,7 @@
 from typing import List
-from app import models, schemas, repository as repo
+
+from app import models
+from app import repository as repo
 from app.logger import get_logger
 
 # Create a custom logger
@@ -9,6 +11,16 @@ logger = get_logger(__name__)
 async def get_categories(
     current_user: models.User,
 ) -> List[models.TransactionCategory]:
+    """
+    Retrieves a list of transaction categories.
+
+    Args:
+        current_user: The current active user.
+
+    Returns:
+        List[TransactionCategory]: A list of transaction category objects.
+    """
+
     logger.info("Getting categories for user %s", current_user.id)
     return await repo.get_all(models.TransactionCategory)
 
@@ -16,6 +28,20 @@ async def get_categories(
 async def get_category(
     current_user: models.User, category_id: int
 ) -> models.TransactionCategory:
+    """
+    Retrieves a transaction category by ID.
+
+    Args:
+        current_user: The current active user.
+        category_id: The ID of the transaction category to retrieve.
+
+    Returns:
+        TransactionCategory: The retrieved transaction category.
+
+    Raises:
+        None
+    """
+
     logger.info("Getting category with id %s for user %s", category_id, current_user.id)
     category = await repo.get(models.TransactionCategory, category_id)
 
@@ -30,7 +56,9 @@ async def get_category(
     return None
 
 
-# async def create_category(user: models.User, category: schemas.TransactionCategory) -> models.TransactionCategory:
+# async def create_category(
+#     user: models.User, category: schemas.TransactionCategory
+# ) -> models.TransactionCategory:
 
 #     db_category = models.TransactionCategory(user=user, **category.dict())
 #     await repo.save(db_category)

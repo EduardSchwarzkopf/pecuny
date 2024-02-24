@@ -2,6 +2,17 @@ import random
 
 
 def generate_displayname() -> str:
+    """Generate a random display name.
+
+    Args:
+        None
+
+    Returns:
+        str: The generated display name.
+
+    Raises:
+        None
+    """
     adjective_list = [
         "Mighty",
         "Powerful",

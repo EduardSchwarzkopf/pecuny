@@ -1,34 +1,29 @@
-import uuid
 import datetime
-
+import uuid
 from datetime import datetime as dt
-from click import Option
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from fastapi_users import schemas
-from fastapi import Form
-from wtforms.widgets import Input
-
+from pydantic import BaseModel, EmailStr
 from pydantic.types import constr
-
 from starlette_wtf import StarletteForm
 from wtforms import (
-    StringField,
-    DecimalField,
-    PasswordField,
-    HiddenField,
-    SelectField,
     BooleanField,
+    DecimalField,
+    HiddenField,
+    PasswordField,
+    SelectField,
+    StringField,
 )
 from wtforms.validators import (
-    NumberRange,
-    Length,
     DataRequired,
-    InputRequired,
     Email,
-    EqualTo,
+    InputRequired,
+    Length,
+    NumberRange,
     Regexp,
 )
+from wtforms.widgets import Input
 
 
 class EmailSchema(BaseModel):
@@ -58,6 +53,10 @@ class UserUpdate(schemas.BaseUserUpdate):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+class TokenData(BaseModel):
+    id: Optional[str]
 
 
 class AccountUpdate(Base):
@@ -190,7 +189,13 @@ class UpdateAccountForm(StarletteForm):
 
 password_policy = Regexp(
     r"^(?=.*[A-Z])(?=.*\d)(?=.*[\@\#\$\%\^\&\*\(\)\-\_\=\+\{\}\[\]\|\:\;\,\.\<\>\?\/\!]).{8,}",
-    message="Password should have at least 8 characters, 1 uppercase, 1 digit and 1 special character",
+    message=(
+        "Password should have at least "
+        "8 characters,"
+        "1 uppercase, "
+        "1 digit and "
+        "1 special character"
+    ),
 )
 
 
@@ -215,6 +220,10 @@ class ResetPasswordForm(StarletteForm):
 class DatetimeLocalFieldWithoutTime(StringField):
     widget = Input(input_type="date")
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.data = None
+
     def process_formdata(self, valuelist):
         if valuelist:
             date_str = " ".join(valuelist)
@@ -227,7 +236,7 @@ class DatetimeLocalFieldWithoutTime(StringField):
             except ValueError as e:
                 self.data = None
                 raise ValueError(
-                    self.gettext("Not a valid date value: {0}".format(valuelist))
+                    self.gettext(f"Not a valid date value: {valuelist}")
                 ) from e
 
 
@@ -257,7 +266,10 @@ class CreateTransactionForm(StarletteForm):
         "Linked Account",
         coerce=int,
         render_kw={
-            "placeholder": "Select an account if this transaction is transferring funds between accounts",
+            "placeholder": (
+                "Select an account if this transaction is "
+                "transferring funds between accounts"
+            ),
         },
     )
 

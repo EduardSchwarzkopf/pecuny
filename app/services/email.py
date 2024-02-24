@@ -1,9 +1,10 @@
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
-from app.schemas import EmailSchema
 from starlette.responses import JSONResponse
+
 from app.config import settings
-from app.models import User
 from app.logger import get_logger
+from app.models import User
+from app.schemas import EmailSchema
 
 log = get_logger(__name__)
 
@@ -23,12 +24,28 @@ conf = ConnectionConfig(
 
 
 async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONResponse:
+    """
+    Sends an email.
+
+    Args:
+        email: The email object.
+        subject: The subject of the email.
+        template_name: The name of the email template.
+
+    Returns:
+        JSONResponse: A JSON response indicating the status of the email sending.
+
+    Raises:
+        ValueError: If the email key is missing from the email model dump.
+        Exception: If the email could not be sent.
+    """
+
     email_dump = email.model_dump()
     recipients = email_dump.get("email")
 
     if recipients is None:
         raise ValueError(
-            f"Email key is missing from the email model dump - [email_dump]: {email_dump}"
+            f"Email key is missing from the email model dump - [email_dump]: {email_dump}",
         )
 
     message = MessageSchema(
@@ -41,42 +58,86 @@ async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONRes
     fm = FastMail(conf)
     try:
         await fm.send_message(message, template_name=template_name)
-        log.info(f"Email has been sent to {email.model_dump().get('email')}")
+        log.info("Email has been sent to %s", email.model_dump().get("email"))
         return JSONResponse(status_code=200, content={"message": "email has been sent"})
     except Exception as e:
         log.error(
-            f"Email could not be sent to {email.model_dump().get('email')} due to {e}"
+            "Email could not be sent to %s due to %s",
+            email.model_dump().get("email"),
+            e,
         )
         raise
 
 
 async def send_welcome(user: User, token: str) -> JSONResponse:
+    """
+    Sends a welcome email to a user.
+
+    Args:
+        user: The user object.
+        token: The token for email verification.
+
+    Returns:
+        JSONResponse: A JSON response indicating the status of the email sending.
+
+    Raises:
+        None
+    """
+
     email = EmailSchema(
         email=[user.email],
         body={"user": user, "url": settings.domain, "token": token},
     )
-    log.info(f"Sending welcome email to {user.email}")
+    log.info("Sending welcome email to %s", user.email)
     return await _send(email, "Welcome! 🎉", template_name="emails/welcome.html")
 
 
 async def send_forgot_password(user: User, token: str) -> JSONResponse:
+    """
+    Sends a forgot password email to a user.
+
+    Args:
+        user: The user object.
+        token: The token for password reset.
+
+    Returns:
+        JSONResponse: A JSON response indicating the status of the email sending.
+
+    Raises:
+        None
+    """
+
     email = EmailSchema(
         email=[user.email],
         body={"user": user, "url": settings.domain, "token": token},
     )
 
-    log.info(f"Sending forgot password email to {user.email}")
+    log.info("Sending forgot password email to %s", user.email)
     return await _send(
         email, "Reset Password Request", template_name="emails/forgot-password.html"
     )
 
 
 async def send_new_token(user: User, token: str) -> JSONResponse:
+    """
+    Sends a new token email to a user.
+
+    Args:
+        user: The user object.
+        token: The new token for verification.
+
+    Returns:
+        JSONResponse: A JSON response indicating the status of the email sending.
+
+    Raises:
+        None
+    """
+
     email = EmailSchema(
         email=[user.email],
         body={"user": user, "url": settings.domain, "token": token},
     )
-    log.info(f"Sending new token email to {user.email}")
+    log.info("Sending new token email to %s", user.email)
     return await _send(
         email, "Your verification Token!", template_name="emails/new-token.html"
     )

@@ -1,17 +1,27 @@
 import pytest
-from jose import jwt
 
 from app import schemas
-from app.config import settings
+from app.utils.dataclasses_utils import ClientSessionWrapper
 
 pytestmark = pytest.mark.anyio
-endpoint = "/api/accounts/"
+ENDPOINT = "/api/accounts/"
 
 
-async def test_create_account(session, authorized_client):
-    async with session:
-        res = await authorized_client.post(
-            endpoint,
+async def test_create_account(client_session_wrapper: ClientSessionWrapper):
+    """
+    Tests the create account functionality.
+
+    Args:
+        session: The session fixture.
+        authorized_client: The authorized client fixture.
+
+    Returns:
+        None
+    """
+
+    async with client_session_wrapper.session:
+        res = await client_session_wrapper.authorized_client.post(
+            ENDPOINT,
             json={"label": "test_account", "description": "test", "balance": 500},
         )
 
@@ -33,19 +43,44 @@ async def test_create_account(session, authorized_client):
     ],
 )
 async def test_invalid_create_account(
-    session, authorized_client, label, description, balance
+    client_session_wrapper: ClientSessionWrapper, label, description, balance
 ):
-    async with session:
-        res = await authorized_client.post(
-            endpoint,
+    """
+    Tests the delete account functionality.
+
+    Args:
+        authorized_client: The authorized client fixture.
+        account_id (str): The ID of the account to delete.
+        status_code (int): The expected status code.
+
+    Returns:
+        None
+    """
+
+    async with client_session_wrapper.session:
+        res = await client_session_wrapper.authorized_client.post(
+            ENDPOINT,
             json={"label": label, "description": description, "balance": balance},
         )
 
     assert res.status_code == 422
 
 
-async def test_delete_account(authorized_client, test_account):
-    res = await authorized_client.delete(f"{endpoint}1")
+@pytest.mark.usefixtures("test_account")
+async def test_delete_account(client_session_wrapper: ClientSessionWrapper):
+    """
+    Tests the update account functionality.
+
+    Args:
+        session: The session fixture.
+        authorized_client: The authorized client fixture.
+        values: The values to update the account with.
+
+    Returns:
+        None
+    """
+
+    res = await client_session_wrapper.authorized_client.delete(f"{ENDPOINT}1")
 
     assert res.status_code == 204
 
@@ -54,10 +89,25 @@ async def test_delete_account(authorized_client, test_account):
     "account_id, status_code",
     [("2", 404), ("3", 404), ("4", 404), ("999999", 404)],
 )
+@pytest.mark.usefixtures("test_account")
 async def test_invalid_delete_account(
-    authorized_client, test_accounts, account_id, status_code
+    client_session_wrapper: ClientSessionWrapper, account_id, status_code
 ):
-    res = await authorized_client.delete(f"{endpoint}{account_id}")
+    """
+    Tests the update account functionality.
+
+    Args:
+        session: The session fixture.
+        authorized_client: The authorized client fixture.
+        values: The values to update the account with.
+
+    Returns:
+        None
+    """
+
+    res = await client_session_wrapper.authorized_client.delete(
+        f"{ENDPOINT}{account_id}"
+    )
 
     assert res.status_code == status_code
 
@@ -95,12 +145,26 @@ async def test_invalid_delete_account(
         ),
     ],
 )
-async def test_update_account(session, authorized_client, test_account, values):
-    async with session:
-        res = await authorized_client.put(f"{endpoint}1", json=values)
+@pytest.mark.usefixtures("test_account")
+async def test_update_account(client_session_wrapper: ClientSessionWrapper, values):
+    """
+    Tests the update account functionality.
+
+    Args:
+        session: The session fixture.
+        authorized_client: The authorized client fixture.
+        values: The values to update the account with.
+
+    Returns:
+        None
+    """
+
+    async with client_session_wrapper.session:
+        res = await client_session_wrapper.authorized_client.put(
+            f"{ENDPOINT}1", json=values
+        )
 
     assert res.status_code == 200
-    d = res.json()
     account = schemas.AccountData(**res.json())
 
     for key, value in values.items():
