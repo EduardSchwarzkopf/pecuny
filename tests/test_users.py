@@ -8,8 +8,8 @@ from app.config import settings
 from tests.fixtures import ClientSessionWrapper
 
 pytestmark = pytest.mark.anyio
-success_login_status_code = 204
-endpoint = "/api/auth"
+SUCCESS_LOGIN_STATUS_CODE = 204
+ENDPOINT = "/api/auth"
 
 
 @pytest.mark.parametrize(
@@ -41,7 +41,7 @@ async def test_create_user(
 
     async with client_session_wrapper_fixture.session:
         res = await client_session_wrapper_fixture.client.post(
-            f"{endpoint}/register",
+            f"{ENDPOINT}/register",
             json={
                 "email": username,
                 "password": password,
@@ -79,7 +79,7 @@ async def test_invalid_create_user(
 
     async with client_session_wrapper_fixture.session:
         res = await client_session_wrapper_fixture.client.post(
-            f"{endpoint}/register",
+            f"{ENDPOINT}/register",
             json={
                 "email": "hello123@pytest.de",
                 "password": "testpassword",
@@ -120,7 +120,7 @@ async def test_login(
 
     async with client_session_wrapper_fixture.session:
         res = await client_session_wrapper_fixture.client.post(
-            f"{endpoint}/login",
+            f"{ENDPOINT}/login",
             data={
                 "username": username,
                 "displayname": displayname,
@@ -138,7 +138,7 @@ async def test_login(
     user_id = payload["sub"]
 
     assert user_id == str(test_user.id)
-    assert res.status_code == success_login_status_code
+    assert res.status_code == SUCCESS_LOGIN_STATUS_CODE
 
 
 @pytest.mark.parametrize(
@@ -172,7 +172,7 @@ async def test_invalid_login(
 
     async with client_session_wrapper_fixture.session:
         res = await client_session_wrapper_fixture.client.post(
-            f"{endpoint}/login", data={"username": username, "password": password}
+            f"{ENDPOINT}/login", data={"username": username, "password": password}
         )
 
     assert res.status_code == status_code
@@ -216,10 +216,10 @@ async def test_updated_user(
         for key, value in values.items():
             if key == "password":
                 login_res = await client_session_wrapper_fixture.authorized_client.post(
-                    f"{endpoint}/login",
+                    f"{ENDPOINT}/login",
                     data={"username": user.email, "password": value},
                 )
-                assert login_res.status_code == success_login_status_code
+                assert login_res.status_code == SUCCESS_LOGIN_STATUS_CODE
                 continue
 
             assert getattr(user, key) == value
