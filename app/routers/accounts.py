@@ -93,7 +93,8 @@ async def max_accounts_reached(user: models.User, request: Request) -> RedirectR
         request: The request object.
 
     Returns:
-        RedirectResponse: A redirect response to the list accounts page if the maximum number of accounts has been reached.
+        RedirectResponse: A redirect response to the list accounts page
+            if the maximum number of accounts has been reached.
     """
 
     if await service.check_max_accounts(user):
