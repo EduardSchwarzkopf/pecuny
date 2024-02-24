@@ -226,6 +226,17 @@ async def fixture_test_accounts(test_users: List[models.User], session):
 
 
 async def get_date_range(date_start, days=5):
+    """
+    Returns a list of dates in a range starting from a given date.
+
+    Args:
+        date_start: The starting date.
+        days: The number of days in the range (default is 5).
+
+    Returns:
+        List[datetime.date]: A list of dates in the range.
+    """
+
     return [(date_start - datetime.timedelta(days=idx)) for idx in range(days)]
 
 
