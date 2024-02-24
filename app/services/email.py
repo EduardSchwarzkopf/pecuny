@@ -45,8 +45,7 @@ async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONRes
 
     if recipients is None:
         raise ValueError(
-            "Email key is missing from the email model dump - [email_dump]: %s",
-            email_dump,
+            f"Email key is missing from the email model dump - [email_dump]: {email_dump}",
         )
 
     message = MessageSchema(
