@@ -108,13 +108,13 @@ class UserService:
         logger.info("Creating new user with email %s", user_data.email)
 
         if not user_data.displayname:
-            displayname = generate_displayname()
+            user_data.displayname = generate_displayname()
 
         try:
             return await self.user_manager.create(
                 UserCreate(
                     email=user_data.email,
-                    displayname=displayname,
+                    displayname=user_data.displayname,
                     password=user_data.password,
                     is_superuser=user_data.is_superuser,
                     is_verified=user_data.is_verified,
