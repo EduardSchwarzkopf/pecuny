@@ -17,6 +17,16 @@ pytestmark = pytest.mark.anyio
 
 
 async def populate_db(session: AsyncSession):
+    """
+    Populates the database with transaction sections and categories.
+
+    Args:
+        session: Database session.
+
+    Returns:
+        None
+    """
+
     section_list = categories.get_section_list()
     category_list = categories.get_category_list()
 
@@ -34,7 +44,17 @@ async def populate_db(session: AsyncSession):
 
 
 @pytest.fixture(name="session")
-async def fixture_session() -> AsyncSession:
+async def fixture_session() -> AsyncSession:  # type: ignore
+    """
+    Fixture that provides an async session.
+
+    Args:
+        None
+
+    Returns:
+        AsyncSession: An async session.
+    """
+
     await db.init()
     async with db.engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -46,13 +66,33 @@ async def fixture_session() -> AsyncSession:
 
 @pytest.fixture(name="client")
 @pytest.mark.usefixtures("session")
-async def fixture_client() -> AsyncClient:
+async def fixture_client() -> AsyncClient:  # type: ignore
+    """
+    Fixture that provides an async HTTP client.
+
+    Args:
+        None
+
+    Returns:
+        AsyncClient: An async HTTP client.
+    """
+
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
 
 
 @pytest.fixture
 def anyio_backend():
+    """
+    Fixture that provides the anyio backend.
+
+    Args:
+        None
+
+    Returns:
+        str: The anyio backend.
+    """
+
     return "asyncio"
 
 
