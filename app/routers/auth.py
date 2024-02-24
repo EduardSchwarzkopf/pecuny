@@ -1,17 +1,9 @@
-from fastapi import Depends, Request, logger
+from fastapi import Depends, Request
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_users import exceptions
 from starlette_wtf import csrf_protect
-from app.utils import PageRouter
-from app.utils.exceptions import (
-    PasswordsDontMatchException,
-    UserAlreadyExistsException,
-    UserNotFoundException,
-)
-from app.utils.template_utils import set_feedback, render_form_template
-from app.utils.enums import FeedbackType
-from .dashboard import router as dashboard_router
+
 from app import schemas, templates
 from app.auth_manager import (
     JWTStrategy,
@@ -22,6 +14,12 @@ from app.auth_manager import (
 )
 from app.models import User
 from app.services.users import UserService
+from app.utils import PageRouter
+from app.utils.enums import FeedbackType
+from app.utils.exceptions import UserAlreadyExistsException, UserNotFoundException
+from app.utils.template_utils import render_form_template, set_feedback
+
+from .dashboard import router as dashboard_router
 
 router = PageRouter()
 
@@ -93,9 +91,7 @@ async def login(
 
 
 @router.get(path="/logout", tags=["Pages", "Authentication"])
-async def logout(
-    request: Request,
-):
+async def logout():
     response = RedirectResponse(LOGIN, status_code=302)
     response.delete_cookie(auth_backend.transport.cookie_name)
     return response
@@ -251,7 +247,6 @@ async def get_forgot_password(
     return render_form_template(
         f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, form
     )
-
 
 
 @router.get(
