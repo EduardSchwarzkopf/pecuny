@@ -4,15 +4,22 @@ on:
   push:
     branches:
       - main
-  workflow_call
+  workflow_call:
+    inputs:
+      python_version:
+        description: "Python version"
+        required: false
+        default: "3.12"
+      poetry_version:
+        description: "Poetry version"
+        required: false
+        default: "1.7.1"
 
 env:
   TEST_DB_NAME: test_db
   TEST_DB_PASSWORD: postgres
   TEST_DB_HOST: localhost
   TEST_DB_USER: postgres
-  POETRY_VERSION: 1.7.1
-  PYTHON_VERSION: 3.12
 
 jobs:
   lint:
@@ -21,11 +28,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ inputs.python_version }}
       - name: Run image
         uses: abatilo/actions-poetry@v3.0.0
         with:
-          poetry-version: ${{ env.POETRY_VERSION }}
+          poetry-version: ${{ inputs.poetry_version }}
       - name: Install Dependencies
         run: poetry install --only linter
       - name: Run linter
