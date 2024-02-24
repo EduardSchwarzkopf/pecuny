@@ -1,12 +1,13 @@
 import pytest
 
 from app import schemas
+from tests.fixtures import ClientSessionWrapper
 
 pytestmark = pytest.mark.anyio
 ENDPOINT = "/api/accounts/"
 
 
-async def test_create_account(session, authorized_client):
+async def test_create_account(client_session_wrapper_fixture: ClientSessionWrapper):
     """
     Tests the create account functionality.
 
@@ -18,8 +19,8 @@ async def test_create_account(session, authorized_client):
         None
     """
 
-    async with session:
-        res = await authorized_client.post(
+    async with client_session_wrapper_fixture.session:
+        res = await client_session_wrapper_fixture.authorized_client.post(
             ENDPOINT,
             json={"label": "test_account", "description": "test", "balance": 500},
         )
@@ -42,7 +43,7 @@ async def test_create_account(session, authorized_client):
     ],
 )
 async def test_invalid_create_account(
-    session, authorized_client, label, description, balance
+    client_session_wrapper_fixture: ClientSessionWrapper, label, description, balance
 ):
     """
     Tests the delete account functionality.
@@ -56,8 +57,8 @@ async def test_invalid_create_account(
         None
     """
 
-    async with session:
-        res = await authorized_client.post(
+    async with client_session_wrapper_fixture.session:
+        res = await client_session_wrapper_fixture.authorized_client.post(
             ENDPOINT,
             json={"label": label, "description": description, "balance": balance},
         )
@@ -66,7 +67,7 @@ async def test_invalid_create_account(
 
 
 @pytest.mark.usefixtures("test_account")
-async def test_delete_account(authorized_client):
+async def test_delete_account(client_session_wrapper_fixture: ClientSessionWrapper):
     """
     Tests the update account functionality.
 
@@ -79,7 +80,7 @@ async def test_delete_account(authorized_client):
         None
     """
 
-    res = await authorized_client.delete(f"{ENDPOINT}1")
+    res = await client_session_wrapper_fixture.authorized_client.delete(f"{ENDPOINT}1")
 
     assert res.status_code == 204
 
@@ -89,7 +90,9 @@ async def test_delete_account(authorized_client):
     [("2", 404), ("3", 404), ("4", 404), ("999999", 404)],
 )
 @pytest.mark.usefixtures("test_account")
-async def test_invalid_delete_account(authorized_client, account_id, status_code):
+async def test_invalid_delete_account(
+    client_session_wrapper_fixture: ClientSessionWrapper, account_id, status_code
+):
     """
     Tests the update account functionality.
 
@@ -102,7 +105,9 @@ async def test_invalid_delete_account(authorized_client, account_id, status_code
         None
     """
 
-    res = await authorized_client.delete(f"{ENDPOINT}{account_id}")
+    res = await client_session_wrapper_fixture.authorized_client.delete(
+        f"{ENDPOINT}{account_id}"
+    )
 
     assert res.status_code == status_code
 
@@ -141,7 +146,9 @@ async def test_invalid_delete_account(authorized_client, account_id, status_code
     ],
 )
 @pytest.mark.usefixtures("test_account")
-async def test_update_account(session, authorized_client, values):
+async def test_update_account(
+    client_session_wrapper_fixture: ClientSessionWrapper, values
+):
     """
     Tests the update account functionality.
 
@@ -154,8 +161,10 @@ async def test_update_account(session, authorized_client, values):
         None
     """
 
-    async with session:
-        res = await authorized_client.put(f"{ENDPOINT}1", json=values)
+    async with client_session_wrapper_fixture.session:
+        res = await client_session_wrapper_fixture.authorized_client.put(
+            f"{ENDPOINT}1", json=values
+        )
 
     assert res.status_code == 200
     account = schemas.AccountData(**res.json())
