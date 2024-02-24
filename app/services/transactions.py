@@ -274,7 +274,6 @@ async def delete_transaction(current_user: models.User, transaction_id: int) -> 
 
     account = await repo.get(models.Account, transaction.account_id)
     if current_user.id != account.user_id:
-        logger.warning(ACCOUNT_USER_ID_MISMATCH)
         return
 
     amount = transaction.information.amount
