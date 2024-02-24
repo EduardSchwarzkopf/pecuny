@@ -18,6 +18,7 @@ from app.models import User
 from app.routers.dashboard import router as dashboard_router
 from app.services.users import UserService
 from app.utils import PageRouter
+from app.utils.dataclasses_utils import CreateUserData
 from app.utils.enums import FeedbackType
 from app.utils.exceptions import UserAlreadyExistsException, UserNotFoundException
 from app.utils.template_utils import render_form_template, set_feedback
@@ -198,7 +199,7 @@ async def register(
         return render_form_template(TEMPLATE_REGISTER, request, form)
 
     try:
-        await user_service.create_user(email, password)
+        await user_service.create_user(CreateUserData(email, password))
     except Exception:
         set_feedback(
             request, FeedbackType.ERROR, "Something went wrong! Please try again later."
