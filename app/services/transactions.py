@@ -38,8 +38,8 @@ async def get_transaction_list(
     if account.user_id == user.id:
         logger.info("User ID verified. Retrieving transactions.")
         return await repo.get_transactions_from_period(account_id, date_start, date_end)
-    else:
-        logger.warning(ACCOUNT_USER_ID_MISMATCH)
+
+    logger.warning(ACCOUNT_USER_ID_MISMATCH)
 
 
 async def get_transaction(user: models.User, transaction_id: int) -> models.Transaction:
@@ -71,8 +71,8 @@ async def get_transaction(user: models.User, transaction_id: int) -> models.Tran
     if account.user_id == user.id:
         logger.info("User ID verified. Returning transaction.")
         return transaction
-    else:
-        logger.warning(ACCOUNT_USER_ID_MISMATCH)
+
+    logger.warning(ACCOUNT_USER_ID_MISMATCH)
 
 
 async def create_transaction(
