@@ -16,7 +16,7 @@ from app.routers.dashboard import router as dashboard_router
 from app.services import accounts as service
 from app.services import transactions as transaction_service
 from app.utils import PageRouter
-from app.utils.account_utils import calculate_total_balance
+from app.utils.account_utils import get_account_list_template
 from app.utils.enums import FeedbackType
 from app.utils.template_utils import add_breadcrumb, render_template, set_feedback
 
@@ -71,17 +71,8 @@ async def page_list_accounts(
         TemplateResponse: The rendered list accounts page.
     """
 
-    account_list = await service.get_accounts(user)
-    total_balance = calculate_total_balance(account_list)
-
-    return render_template(
-        "pages/dashboard/page_list_accounts.html",
-        request,
-        {
-            "account_list": account_list,
-            "max_allowed_accounts": settings.max_allowed_accounts,
-            "total_balance": total_balance,
-        },
+    return await get_account_list_template(
+        user, "pages/dashboard/page_list_accounts.html", request
     )
 
 
