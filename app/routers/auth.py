@@ -1,3 +1,5 @@
+import contextlib
+
 from fastapi import Depends, Request
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
@@ -221,14 +223,8 @@ async def forgot_password(
             f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, form
         )
 
-    try:
+    with contextlib.suppress(UserNotFoundException):
         await user_service.forgot_password(form.email.data)
-    except UserNotFoundException:
-        # TODO: Security update: Log exception, but give no feedback to the user
-        set_feedback(request, FeedbackType.ERROR, "User does not exist.")
-        return render_form_template(
-            f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, form
-        )
 
     return render_form_template(
         f"{TEMPLATE_PREFIX}/page_request_reset.html", request, form
