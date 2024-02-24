@@ -12,9 +12,13 @@ env:
 
 jobs:
   lint:
+    permissions:
+      contents: read
     uses: ./.github/workflows/reusable-lint.yml
 
   test:
+    permissions:
+      contents: read
     uses: ./.github/workflows/reusable-test.yml
 
   build-and-publish:
