@@ -37,5 +37,3 @@ class NotFoundException(HTTPException):
 
 class AccessDeniedError(Exception):
     """Raised when a user tries to access a resource they don't have permission to."""
-
-    pass
