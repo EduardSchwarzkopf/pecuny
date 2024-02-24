@@ -15,10 +15,12 @@ from tests.fixtures import ClientSessionWrapper
 pytestmark = pytest.mark.anyio
 ENDPOINT = "/api/transactions/"
 STATUS_CODE = status.HTTP_201_CREATED
+ACCOUNT_ID = 1
+OFFSET_ACCOUNT_ID = 5
 
 
 @pytest.mark.parametrize(
-    "account_id, amount, expected_amount, reference, category_id",
+    "amount, expected_amount, reference, category_id",
     [
         (1, 10, 10, "Added 10", 1),
         (1, 20.5, 20.5, "Added 20.5", 3),
@@ -29,21 +31,20 @@ STATUS_CODE = status.HTTP_201_CREATED
 @pytest.mark.usefixtures("test_accounts")
 async def test_create_transaction(
     client_session_wrapper_fixture: ClientSessionWrapper,
-    account_id,
     amount,
     expected_amount,
     reference,
     category_id,
 ):
     async with client_session_wrapper_fixture.session:
-        account = await repo.get(models.Account, account_id)
+        account = await repo.get(models.Account, ACCOUNT_ID)
 
         account_balance = account.balance
 
         res = await client_session_wrapper_fixture.authorized_client.post(
             ENDPOINT,
             json={
-                "account_id": account_id,
+                "account_id": ACCOUNT_ID,
                 "amount": amount,
                 "reference": reference,
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
@@ -59,7 +60,7 @@ async def test_create_transaction(
 
     assert res.status_code == status.HTTP_201_CREATED
     assert account_balance + amount == account_balance_after
-    assert new_transaction.account_id == account_id
+    assert new_transaction.account_id == ACCOUNT_ID
     assert new_transaction.information.amount == expected_amount
     assert type(new_transaction.information.amount) == float
     assert new_transaction.information.reference == reference
@@ -68,20 +69,19 @@ async def test_create_transaction(
 @pytest.mark.parametrize(
     "account_id, transaction_id, category_id, amount",
     [
-        (1, 1, 1, 2.5),
-        (1, 2, 1, 0),
-        (1, 1, 2, 3.666666666667),
-        (1, 2, 3, 0.133333333334),
-        (1, 2, 4, -25),
-        (1, 1, 1, -35),
-        (1, 1, 1, -0.3333333334),
-        (1, 1, 7, 0),
+        (1, 1, 2.5),
+        (2, 1, 0),
+        (1, 2, 3.666666666667),
+        (2, 3, 0.133333333334),
+        (2, 4, -25),
+        (1, 1, -35),
+        (1, 1, -0.3333333334),
+        (1, 7, 0),
     ],
 )
 @pytest.mark.usefixtures("test_transactions")
 async def test_updated_transaction(
     client_session_wrapper_fixture: ClientSessionWrapper,
-    account_id,
     transaction_id,
     category_id,
     amount,
@@ -89,7 +89,7 @@ async def test_updated_transaction(
     reference = f"Updated Val {amount}"
 
     json = {
-        "account_id": account_id,
+        "account_id": ACCOUNT_ID,
         "amount": amount,
         "reference": f"Updated Val {amount}",
         "date": str(datetime.datetime.now(datetime.timezone.utc)),
@@ -97,7 +97,7 @@ async def test_updated_transaction(
     }
 
     async with client_session_wrapper_fixture.session:
-        account = await repo.get(models.Account, account_id)
+        account = await repo.get(models.Account, ACCOUNT_ID)
         account_balance = account.balance
 
         transaction_before = await repo.get(models.Transaction, transaction_id)
@@ -125,20 +125,19 @@ async def test_updated_transaction(
 
 
 @pytest.mark.parametrize(
-    "account_id, transaction_id",
+    "transaction_id",
     [
-        (1, 1),
-        (1, 2),
+        (1),
+        (2),
     ],
 )
 @pytest.mark.usefixtures("test_transactions")
 async def test_delete_transaction(
     client_session_wrapper_fixture: ClientSessionWrapper,
-    account_id,
     transaction_id,
 ):
     async with client_session_wrapper_fixture.session:
-        account = await repo.get(models.Account, account_id)
+        account = await repo.get(models.Account, ACCOUNT_ID)
         await repo.refresh(account)  # session not updated, so we need to refresh first
         account_balance = account.balance
         transaction = await repo.get(models.Transaction, transaction_id)
@@ -156,20 +155,19 @@ async def test_delete_transaction(
 
 
 @pytest.mark.parametrize(
-    "account_id, transaction_id",
+    "transaction_id",
     [
-        (1, 3),
-        (1, 9999),
+        (3),
+        (9999),
     ],
 )
 @pytest.mark.usefixtures("test_accounts")
 async def test_delete_transaction_fail(
     client_session_wrapper_fixture: ClientSessionWrapper,
-    account_id,
     transaction_id,
 ):
     async with client_session_wrapper_fixture.session:
-        account = await repo.get(models.Account, account_id)
+        account = await repo.get(models.Account, ACCOUNT_ID)
         await repo.refresh(account)  # session not updated, so we need to refresh first
         account_balance = account.balance
 
@@ -185,21 +183,19 @@ async def test_delete_transaction_fail(
 
 
 @pytest.mark.parametrize(
-    "account_id, offset_account_id, amount, expected_offset_amount, reference, category_id",
+    "amount, expected_offset_amount, reference, category_id",
     [
-        (1, 5, 10, -10, "Added 10", 1),
-        (1, 5, 20.5, -20.5, "Added 20.5", 3),
-        (1, 5, -30.5, 30.5, "Substract 30.5", 6),
-        (1, 5, -40.5, 40.5, "Substract 40.5", 6),
-        (1, 5, 5.9999999999, -6, "Added 6", 6),
-        (1, 5, 1.00000000004, -1, "Added 1", 6),
+        (10, -10, "Added 10", 1),
+        (20.5, -20.5, "Added 20.5", 3),
+        (-30.5, 30.5, "Substract 30.5", 6),
+        (-40.5, 40.5, "Substract 40.5", 6),
+        (5.9999999999, -6, "Added 6", 6),
+        (1.00000000004, -1, "Added 1", 6),
     ],
 )
 @pytest.mark.usefixtures("test_accounts")
 async def test_create_offset_transaction(
     client_session_wrapper_fixture: ClientSessionWrapper,
-    account_id,
-    offset_account_id,
     amount,
     expected_offset_amount,
     reference,
@@ -209,12 +205,12 @@ async def test_create_offset_transaction(
         res = await client_session_wrapper_fixture.authorized_client.post(
             ENDPOINT,
             json={
-                "account_id": account_id,
+                "account_id": ACCOUNT_ID,
                 "amount": amount,
                 "reference": reference,
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
                 "category_id": category_id,
-                "offset_account_id": offset_account_id,
+                "offset_account_id": OFFSET_ACCOUNT_ID,
             },
         )
 
@@ -228,8 +224,8 @@ async def test_create_offset_transaction(
         )
         await repo.refresh(new_offset_transaction)
 
-    assert new_transaction.account_id == account_id
-    assert new_offset_transaction.account_id == offset_account_id
+    assert new_transaction.account_id == ACCOUNT_ID
+    assert new_offset_transaction.account_id == OFFSET_ACCOUNT_ID
 
     assert new_transaction.information.amount == round(amount, 2)
     assert new_offset_transaction.information.amount == round(expected_offset_amount, 2)
@@ -244,23 +240,22 @@ async def test_create_offset_transaction(
 @pytest.mark.parametrize(
     "account_id, offset_account_id, amount",
     [
-        (1, 2, 10),
-        (1, 3, 20.5),
-        (1, 4, -30.5),
-        (1, 2, -40.5),
-        (1, 2, 5.9999999999),
-        (1, 2, 1.00000000004),
+        (2, 10),
+        (3, 20.5),
+        (4, -30.5),
+        (2, -40.5),
+        (2, 5.9999999999),
+        (2, 1.00000000004),
     ],
 )
 @pytest.mark.usefixtures("test_accounts")
 async def test_create_offset_transaction_other_account_fail(
     client_session_wrapper_fixture: ClientSessionWrapper,
-    account_id,
     offset_account_id,
     amount,
 ):
     async with client_session_wrapper_fixture.session:
-        account = await repo.get(models.Account, account_id)
+        account = await repo.get(models.Account, ACCOUNT_ID)
         offset_account = await repo.get(models.Account, offset_account_id)
 
         account_balance = account.balance
@@ -269,7 +264,7 @@ async def test_create_offset_transaction_other_account_fail(
         res = await client_session_wrapper_fixture.authorized_client.post(
             ENDPOINT,
             json={
-                "account_id": account_id,
+                "account_id": ACCOUNT_ID,
                 "amount": amount,
                 "reference": "Not allowed",
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
@@ -290,29 +285,27 @@ async def test_create_offset_transaction_other_account_fail(
 
 
 @pytest.mark.parametrize(
-    "account_id, offset_account_id, category_id, amount",
+    "category_id, amount",
     [
-        (1, 5, 1, 2.5),
-        (1, 5, 1, 0),
-        (1, 5, 2, 3.666666666667),
-        (1, 5, 3, 0.133333333334),
-        (1, 5, 4, -25),
-        (1, 5, 1, -35),
-        (1, 5, 1, -0.3333333334),
-        (1, 5, 7, 0),
+        (1, 2.5),
+        (1, 0),
+        (2, 3.666666666667),
+        (3, 0.133333333334),
+        (4, -25),
+        (1, -35),
+        (1, -0.3333333334),
+        (5, 7, 0),
     ],
 )
 @pytest.mark.usefixtures("test_accounts")
 async def test_updated_offset_transaction(
     client_session_wrapper_fixture: ClientSessionWrapper,
-    account_id,
-    offset_account_id,
     category_id,
     amount,
 ):
     async with client_session_wrapper_fixture.session:
-        account = await repo.get(models.Account, account_id)
-        offset_account = await repo.get(models.Account, offset_account_id)
+        account = await repo.get(models.Account, ACCOUNT_ID)
+        offset_account = await repo.get(models.Account, OFFSET_ACCOUNT_ID)
 
         account_balance = account.balance
         offset_account_balance = offset_account.balance
@@ -320,12 +313,12 @@ async def test_updated_offset_transaction(
         transaction_res = await client_session_wrapper_fixture.authorized_client.post(
             ENDPOINT,
             json={
-                "account_id": account_id,
+                "account_id": ACCOUNT_ID,
                 "amount": amount + 5,
                 "reference": "creation",
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
                 "category_id": category_id,
-                "offset_account_id": offset_account_id,
+                "offset_account_id": OFFSET_ACCOUNT_ID,
             },
         )
 
@@ -335,7 +328,7 @@ async def test_updated_offset_transaction(
         res = await client_session_wrapper_fixture.authorized_client.post(
             f"{ENDPOINT}{transaction_before.id}",
             json={
-                "account_id": account_id,
+                "account_id": ACCOUNT_ID,
                 "amount": amount,
                 "reference": reference,
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
@@ -358,29 +351,27 @@ async def test_updated_offset_transaction(
 
 
 @pytest.mark.parametrize(
-    "account_id, offset_account_id, category_id, amount",
+    "category_id, amount",
     [
-        (1, 5, 1, 2.5),
-        (1, 5, 1, 0),
-        (1, 5, 2, 3.666666666667),
-        (1, 5, 3, 0.133333333334),
-        (1, 5, 4, -25),
-        (1, 5, 1, -35),
-        (1, 5, 1, -0.3333333334),
-        (1, 5, 7, 0),
+        (1, 2.5),
+        (1, 0),
+        (2, 3.666666666667),
+        (3, 0.133333333334),
+        (4, -25),
+        (1, -35),
+        (1, -0.3333333334),
+        (7, 0),
     ],
 )
 @pytest.mark.usefixtures("test_accounts")
 async def test_delete_offset_transaction(
     client_session_wrapper_fixture: ClientSessionWrapper,
-    account_id,
-    offset_account_id,
     category_id,
     amount,
 ):
     async with client_session_wrapper_fixture.session:
-        account = await repo.get(models.Account, account_id)
-        offset_account = await repo.get(models.Account, offset_account_id)
+        account = await repo.get(models.Account, ACCOUNT_ID)
+        offset_account = await repo.get(models.Account, OFFSET_ACCOUNT_ID)
 
         account_balance = account.balance
         offset_account_balance = offset_account.balance
@@ -388,12 +379,12 @@ async def test_delete_offset_transaction(
         transaction_res = await client_session_wrapper_fixture.authorized_client.post(
             ENDPOINT,
             json={
-                "account_id": account_id,
+                "account_id": ACCOUNT_ID,
                 "amount": amount,
                 "reference": "creation",
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
                 "category_id": category_id,
-                "offset_account_id": offset_account_id,
+                "offset_account_id": ACCOUNT_ID,
             },
         )
 
