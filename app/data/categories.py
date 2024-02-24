@@ -1,3 +1,5 @@
+from typing import Dict, List, Union
+
 INCOME_ID = 1
 HOUSING_ID = 2
 HOUSHOLD_ID = 3
@@ -12,12 +14,14 @@ FAMILY_ID = 11
 HEALTH_ID = 12
 
 
-def get_category_list():
+def get_category_list() -> List[Dict[str, Union[str, int]]]:
     """
     Returns a list of all available expense categories.
 
     Returns:
-        List[Dict[str, Union[str, int]]]: A list of dictionaries representing the expense categories. Each dictionary contains the label and section_id of a category.
+        List[Dict[str, Union[str, int]]]:
+            A list of dictionaries representing the expense categories.
+            Each dictionary contains the label and section_id of a category.
     """
 
     education_cats = [
@@ -159,12 +163,14 @@ def get_category_list():
     )
 
 
-def get_section_list():
+def get_section_list() -> List[Dict[str, Union[str, int]]]:
     """
     Returns a list of all available expense sections.
 
     Returns:
-        List[Dict[str, Union[str, int]]]: A list of dictionaries representing the expense sections. Each dictionary contains the id and label of a section.
+        List[Dict[str, Union[str, int]]]:
+            A list of dictionaries representing the expense sections.
+            Each dictionary contains the id and label of a section.
     """
 
     return [
