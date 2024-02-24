@@ -9,15 +9,11 @@ env:
   IMAGE: ${{ secrets.DOCKER_USERNAME }}/pecuny:latest
 
 jobs:
-  lint:
-    uses: ./.github/workflows/reusable-lint.yml
-
-  test:
-    secrets: inherit
-    uses: ./.github/workflows/reusable-test.yml
+  ci:
+    uses: ./.github/workflows/ci.yml
 
   build-and-publish:
-    needs: [lint, test]
+    needs: [ci]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
