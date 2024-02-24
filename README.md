@@ -12,12 +12,12 @@ This is my learning project for various subjects:
 
 ### Prerequisites
 
-1. [poetry](https://python-poetry.org/docs/) installed
-2. python ^3.12 installed
+1. python ^3.12 installed
+2. install poetry with: `pip install -r dev-requirements.txt`
 
 ### Install packages
 
-Use `poetry` to install packages: `poetry install`
+Use `poetry` to install packages: `poetry install --with dev`
 
 ### VSCode Setup
 
