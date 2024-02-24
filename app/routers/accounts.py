@@ -26,6 +26,22 @@ router = PageRouter(prefix=PREFIX, tags=["Accounts"])
 async def handle_account_route(
     request, user: models.User, account_id: int, create_link=True
 ) -> models.Account:
+    """
+    Handles the account route.
+
+    Args:
+        request: The request object.
+        user: The current active user.
+        account_id: The ID of the account.
+        create_link: Whether to create a link for the account breadcrumb (default is True).
+
+    Returns:
+        Account: The account object.
+
+    Raises:
+        HTTPException: If the account is not found.
+    """
+
     account = await service.get_account(user, account_id)
 
     if account is None:
@@ -43,6 +59,17 @@ async def page_list_accounts(
     request: Request,
     user: models.User = Depends(current_active_user),
 ):
+    """
+    Renders the list accounts page.
+
+    Args:
+        request: The request object.
+        user: The current active user.
+
+    Returns:
+        TemplateResponse: The rendered list accounts page.
+    """
+
     account_list = await service.get_accounts(user)
     total_balance = sum(account.balance for account in account_list)
 
@@ -58,6 +85,17 @@ async def page_list_accounts(
 
 
 async def max_accounts_reached(user: models.User, request: Request) -> RedirectResponse:
+    """
+    Checks if the maximum number of accounts has been reached for a user.
+
+    Args:
+        user: The user object.
+        request: The request object.
+
+    Returns:
+        RedirectResponse: A redirect response to the list accounts page if the maximum number of accounts has been reached.
+    """
+
     if await service.check_max_accounts(user):
         set_feedback(request, FeedbackType.ERROR, "Maximum number of accounts reached")
         return RedirectResponse(
@@ -72,6 +110,17 @@ async def page_create_account_form(
     request: Request,
     user: models.User = Depends(current_active_user),
 ):
+    """
+    Renders the create account form page.
+
+    Args:
+        request: The request object.
+        user: The current active user.
+
+    Returns:
+        TemplateResponse: The rendered create account form page.
+    """
+
     if response := await max_accounts_reached(user, request):
         return response
 
@@ -89,6 +138,17 @@ async def page_create_account_form(
 async def page_create_account(
     request: Request, user: models.User = Depends(current_active_user)
 ):
+    """
+    Creates a new account.
+
+    Args:
+        request: The request object.
+        user: The current active user.
+
+    Returns:
+        RedirectResponse: A redirect response to the list accounts page.
+    """
+
     if response := await max_accounts_reached(user, request):
         return response
 
@@ -119,6 +179,20 @@ async def page_get_account(
     date_start: datetime = Cookie(None),
     date_end: datetime = Cookie(None),
 ):
+    """
+    Renders the account details page.
+
+    Args:
+        request: The request object.
+        account_id: The ID of the account.
+        user: The current active user.
+        date_start: The start date for filtering transactions (optional).
+        date_end: The end date for filtering transactions (optional).
+
+    Returns:
+        TemplateResponse: The rendered account details page.
+    """
+
     account = await handle_account_route(request, user, account_id, False)
 
     if date_start is None:
@@ -178,6 +252,18 @@ async def page_get_account(
 async def page_update_account_form(
     request: Request, account_id: int, user: models.User = Depends(current_active_user)
 ):
+    """
+    Renders the update account form page.
+
+    Args:
+        request: The request object.
+        account_id: The ID of the account.
+        user: The current active user.
+
+    Returns:
+        TemplateResponse: The rendered update account form page.
+    """
+
     account = await handle_account_route(request, user, account_id)
 
     form = schemas.UpdateAccountForm(request, data=account.__dict__)
@@ -202,6 +288,18 @@ async def page_delete_account(
     account_id: int,
     user: models.User = Depends(current_active_user),
 ):
+    """
+    Handles the deletion of an account.
+
+    Args:
+        request: The request object.
+        account_id: The ID of the account.
+        user: The current active user.
+
+    Returns:
+        RedirectResponse: A redirect response to the list accounts page.
+    """
+
     await handle_account_route(request, user, account_id)
 
     response = await tm.transaction(service.delete_account, user, account_id)
@@ -219,6 +317,18 @@ async def page_update_account(
     account_id: int,
     user: models.User = Depends(current_active_user),
 ):
+    """
+    Handles the update of an account.
+
+    Args:
+        request: The request object.
+        account_id: The ID of the account.
+        user: The current active user.
+
+    Returns:
+        RedirectResponse: A redirect response to the account page.
+    """
+
     account = await handle_account_route(request, user, account_id)
 
     form = await schemas.UpdateAccountForm.from_formdata(request)
