@@ -63,7 +63,9 @@ async def get_login(
         msg: A message to display on the page (optional).
 
     Returns:
-        Union[RedirectResponse, TemplateResponse]: A redirect response to the dashboard page if the user is already logged in, or the rendered login form page.
+        Union[RedirectResponse, TemplateResponse]:
+            A redirect response to the dashboard page
+            if the user is already logged in, or the rendered login form page.
     """
 
     if user:
@@ -177,7 +179,8 @@ async def register(
         user_service: The user service.
 
     Returns:
-        Union[TemplateResponse, RedirectResponse]: The rendered registration form page or a redirect response.
+        Union[TemplateResponse, RedirectResponse]:
+            The rendered registration form page or a redirect response.
     """
 
     form: schemas.RegisterForm = await schemas.RegisterForm.from_formdata(request)
@@ -270,7 +273,8 @@ async def send_new_token(
         user_service: The user service.
 
     Returns:
-        Union[TemplateResponse, RedirectResponse]: The rendered get new token form page or a redirect response.
+        Union[TemplateResponse, RedirectResponse]:
+            The rendered get new token form page or a redirect response.
     """
 
     form: schemas.GetNewTokenForm = await schemas.GetNewTokenForm.from_formdata(request)
@@ -402,7 +406,8 @@ async def reset_password(
         user_service: The user service.
 
     Returns:
-        Union[TemplateResponse, RedirectResponse]: The rendered reset password form page or a redirect response.
+        Union[TemplateResponse, RedirectResponse]:
+            The rendered reset password form page or a redirect response.
     """
 
     form: schemas.ResetPasswordForm = await schemas.ResetPasswordForm.from_formdata(
