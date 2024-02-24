@@ -7,14 +7,13 @@ from starlette_wtf import csrf_protect
 from app import models, schemas
 from app import transaction_manager as tm
 from app.auth_manager import current_active_user
-from app.config import settings
 from app.routers.accounts import handle_account_route
 from app.routers.accounts import router as account_router
 from app.services import accounts as service
 from app.services import categories as category_service
 from app.services import transactions as transaction_service
 from app.utils import PageRouter
-from app.utils.account_utils import calculate_total_balance
+from app.utils.account_utils import get_account_list_template
 from app.utils.template_utils import group_categories_by_section, render_template
 
 PREFIX = account_router.prefix + "/{account_id}/transactions"
@@ -121,17 +120,8 @@ async def page_list_accounts(
         TemplateResponse: The rendered list accounts page.
     """
 
-    account_list = await service.get_accounts(user)
-    total_balance = calculate_total_balance(account_list)
-
-    return render_template(
-        "pages/dashboard/page_list_accounts.html",
-        request,
-        {
-            "account_list": account_list,
-            "max_allowed_accounts": settings.max_allowed_accounts,
-            "total_balance": total_balance,
-        },
+    return await get_account_list_template(
+        user, "pages/dashboard/page_list_accounts.html", request
     )
 
 
