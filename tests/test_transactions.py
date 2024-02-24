@@ -1,7 +1,11 @@
 import datetime
+
 import pytest
 
-from app import schemas, repository as repo, models
+from app import models
+from app import repository as repo
+from app import schemas
+from tests.fixtures import ClientSessionWrapper
 
 #
 # use with: pytest --disable-warnings -v -x
@@ -20,10 +24,9 @@ endpoint = "/api/transactions/"
         (1, -40.5, -40.5, "Subsctract 40.5", 6, 201),
     ],
 )
+@pytest.mark.usefixtures("test_accounts")
 async def test_create_transaction(
-    authorized_client,
-    session,
-    test_account,
+    client_session_wrapper_fixture: ClientSessionWrapper,
     account_id,
     amount,
     expected_amount,
@@ -31,12 +34,12 @@ async def test_create_transaction(
     category_id,
     status_code,
 ):
-    async with session:
+    async with client_session_wrapper_fixture.session:
         account = await repo.get(models.Account, account_id)
 
         account_balance = account.balance
 
-        res = await authorized_client.post(
+        res = await client_session_wrapper_fixture.authorized_client.post(
             endpoint,
             json={
                 "account_id": account_id,
@@ -74,10 +77,9 @@ async def test_create_transaction(
         (1, 1, 7, 0, 200),
     ],
 )
+@pytest.mark.usefixtures("test_transactions")
 async def test_updated_transaction(
-    session,
-    authorized_client,
-    test_transactions,
+    client_session_wrapper_fixture: ClientSessionWrapper,
     account_id,
     transaction_id,
     category_id,
@@ -94,14 +96,16 @@ async def test_updated_transaction(
         "category_id": category_id,
     }
 
-    async with session:
+    async with client_session_wrapper_fixture.session:
         account = await repo.get(models.Account, account_id)
         account_balance = account.balance
 
         transaction_before = await repo.get(models.Transaction, transaction_id)
         transaction_amount_before = transaction_before.information.amount
 
-        res = await authorized_client.post(f"{endpoint}{transaction_id}", json=json)
+        res = await client_session_wrapper_fixture.authorized_client.post(
+            f"{endpoint}{transaction_id}", json=json
+        )
 
         assert res.status_code == status_code
         t = res.json()
@@ -127,22 +131,23 @@ async def test_updated_transaction(
         (1, 2, 204),
     ],
 )
+@pytest.mark.usefixtures("test_transactions")
 async def test_delete_transaction(
-    session,
-    authorized_client,
-    test_transactions,
+    client_session_wrapper_fixture: ClientSessionWrapper,
     account_id,
     transaction_id,
     status_code,
 ):
-    async with session:
+    async with client_session_wrapper_fixture.session:
         account = await repo.get(models.Account, account_id)
         await repo.refresh(account)  # session not updated, so we need to refresh first
         account_balance = account.balance
         transaction = await repo.get(models.Transaction, transaction_id)
         amount = transaction.information.amount
 
-        res = await authorized_client.delete(f"{endpoint}{transaction_id}")
+        res = await client_session_wrapper_fixture.authorized_client.delete(
+            f"{endpoint}{transaction_id}"
+        )
         assert res.status_code == status_code
 
         await repo.refresh(account)
@@ -158,20 +163,21 @@ async def test_delete_transaction(
         (1, 9999, 404),
     ],
 )
+@pytest.mark.usefixtures("test_accounts")
 async def test_delete_transaction_fail(
-    session,
-    authorized_client,
-    test_transactions,
+    client_session_wrapper_fixture: ClientSessionWrapper,
     account_id,
     transaction_id,
     status_code,
 ):
-    async with session:
+    async with client_session_wrapper_fixture.session:
         account = await repo.get(models.Account, account_id)
         await repo.refresh(account)  # session not updated, so we need to refresh first
         account_balance = account.balance
 
-        res = await authorized_client.delete(f"{endpoint}{transaction_id}")
+        res = await client_session_wrapper_fixture.authorized_client.delete(
+            f"{endpoint}{transaction_id}"
+        )
         assert res.status_code == status_code
 
         await repo.refresh(account)
@@ -191,10 +197,9 @@ async def test_delete_transaction_fail(
         (1, 5, 1.00000000004, -1, "Added 1", 6, 201),
     ],
 )
+@pytest.mark.usefixtures("test_accounts")
 async def test_create_offset_transaction(
-    session,
-    authorized_client,
-    test_accounts,
+    client_session_wrapper_fixture: ClientSessionWrapper,
     account_id,
     offset_account_id,
     amount,
@@ -203,8 +208,8 @@ async def test_create_offset_transaction(
     category_id,
     status_code,
 ):
-    async with session:
-        res = await authorized_client.post(
+    async with client_session_wrapper_fixture.session:
+        res = await client_session_wrapper_fixture.authorized_client.post(
             endpoint,
             json={
                 "account_id": account_id,
@@ -250,22 +255,21 @@ async def test_create_offset_transaction(
         (1, 2, 1.00000000004),
     ],
 )
+@pytest.mark.usefixtures("test_accounts")
 async def test_create_offset_transaction_other_account_fail(
-    session,
-    authorized_client,
-    test_accounts,
+    client_session_wrapper_fixture: ClientSessionWrapper,
     account_id,
     offset_account_id,
     amount,
 ):
-    async with session:
+    async with client_session_wrapper_fixture.session:
         account = await repo.get(models.Account, account_id)
         offset_account = await repo.get(models.Account, offset_account_id)
 
         account_balance = account.balance
         offset_account_balance = offset_account.balance
 
-        res = await authorized_client.post(
+        res = await client_session_wrapper_fixture.authorized_client.post(
             endpoint,
             json={
                 "account_id": account_id,
@@ -301,23 +305,22 @@ async def test_create_offset_transaction_other_account_fail(
         (1, 5, 7, 0),
     ],
 )
+@pytest.mark.usefixtures("test_accounts")
 async def test_updated_offset_transaction(
-    session,
-    authorized_client,
-    test_accounts,
+    client_session_wrapper_fixture: ClientSessionWrapper,
     account_id,
     offset_account_id,
     category_id,
     amount,
 ):
-    async with session:
+    async with client_session_wrapper_fixture.session:
         account = await repo.get(models.Account, account_id)
         offset_account = await repo.get(models.Account, offset_account_id)
 
         account_balance = account.balance
         offset_account_balance = offset_account.balance
 
-        transaction_res = await authorized_client.post(
+        transaction_res = await client_session_wrapper_fixture.authorized_client.post(
             endpoint,
             json={
                 "account_id": account_id,
@@ -332,7 +335,7 @@ async def test_updated_offset_transaction(
         transaction_before = schemas.Transaction(**transaction_res.json())
 
         reference = f"Offset_transaction with {amount}"
-        res = await authorized_client.post(
+        res = await client_session_wrapper_fixture.authorized_client.post(
             f"{endpoint}{transaction_before.id}",
             json={
                 "account_id": account_id,
@@ -374,23 +377,22 @@ async def test_updated_offset_transaction(
         (1, 5, 7, 0),
     ],
 )
+@pytest.mark.usefixtures("test_accounts")
 async def test_delete_offset_transaction(
-    session,
-    authorized_client,
-    test_accounts,
+    client_session_wrapper_fixture: ClientSessionWrapper,
     account_id,
     offset_account_id,
     category_id,
     amount,
 ):
-    async with session:
+    async with client_session_wrapper_fixture.client_session_wrapper_fixture.session:
         account = await repo.get(models.Account, account_id)
         offset_account = await repo.get(models.Account, offset_account_id)
 
         account_balance = account.balance
         offset_account_balance = offset_account.balance
 
-        transaction_res = await authorized_client.post(
+        transaction_res = await client_session_wrapper_fixture.client_session_wrapper_fixture.authorized_client.post(
             endpoint,
             json={
                 "account_id": account_id,
@@ -404,8 +406,10 @@ async def test_delete_offset_transaction(
 
         transaction = schemas.Transaction(**transaction_res.json())
 
-        res = await authorized_client.delete(f"{endpoint}{transaction.id}")
-        offset_transaction_res = await authorized_client.get(
+        res = await client_session_wrapper_fixture.client_session_wrapper_fixture.authorized_client.delete(
+            f"{endpoint}{transaction.id}"
+        )
+        offset_transaction_res = await client_session_wrapper_fixture.client_session_wrapper_fixture.authorized_client.get(
             f"{endpoint}{transaction.offset_transactions_id}"
         )
 
@@ -414,8 +418,5 @@ async def test_delete_offset_transaction(
 
         await repo.refresh_all([account, offset_account])
 
-    account_balance_after = account.balance
-    offset_account_balance_after = offset_account.balance
-
-    assert offset_account_balance == offset_account_balance_after
-    assert account_balance_after == account_balance_after
+    assert offset_account_balance == offset_account.balance
+    assert account_balance == account.balance
