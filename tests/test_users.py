@@ -60,7 +60,8 @@ async def test_create_user(
     assert new_user.is_verified == False
 
 
-async def test_invalid_create_user(session, client: AsyncClient, test_user):
+@pytest.mark.usefixtures("test_user")
+async def test_invalid_create_user(session, client: AsyncClient):
     """
     Tests the create user functionality.
 
@@ -146,8 +147,9 @@ async def test_login(
         ("wrongemail@gmail.com", None, 422),
     ],
 )
+@pytest.mark.usefixtures("test_user")
 async def test_invalid_login(
-    session, client: AsyncClient, test_user, username, password, status_code
+    session, client: AsyncClient, username, password, status_code
 ):
     """
     Tests the delete user functionality.
@@ -177,7 +179,8 @@ async def test_invalid_login(
         ({"password": "lancelot"}),
     ],
 )
-async def test_updated_user(session, authorized_client: AsyncClient, test_user, values):
+@pytest.mark.usefixtures("test_user")
+async def test_updated_user(session, authorized_client: AsyncClient, values):
     """
     Tests the create user functionality.
 
@@ -240,7 +243,8 @@ async def test_invalid_updated_user(
     assert res.status_code == 403
 
 
-async def test_delete_user(session, client, test_user, authorized_client):
+@pytest.mark.usefixtures("client")
+async def test_delete_user(session, test_user, authorized_client):
     """
     Tests the create user functionality.
 
