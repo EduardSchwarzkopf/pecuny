@@ -5,7 +5,7 @@ from app import models
 from app import repository as repo
 from app import schemas
 from app.config import settings
-from tests.fixtures import ClientSessionWrapper
+from app.utils.dataclasses_utils import ClientSessionWrapper
 
 pytestmark = pytest.mark.anyio
 SUCCESS_LOGIN_STATUS_CODE = 204
