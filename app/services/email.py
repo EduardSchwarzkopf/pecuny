@@ -24,6 +24,22 @@ conf = ConnectionConfig(
 
 
 async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONResponse:
+    """
+    Sends an email.
+
+    Args:
+        email: The email object.
+        subject: The subject of the email.
+        template_name: The name of the email template.
+
+    Returns:
+        JSONResponse: A JSON response indicating the status of the email sending.
+
+    Raises:
+        ValueError: If the email key is missing from the email model dump.
+        Exception: If the email could not be sent.
+    """
+
     email_dump = email.model_dump()
     recipients = email_dump.get("email")
 
@@ -55,6 +71,20 @@ async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONRes
 
 
 async def send_welcome(user: User, token: str) -> JSONResponse:
+    """
+    Sends a welcome email to a user.
+
+    Args:
+        user: The user object.
+        token: The token for email verification.
+
+    Returns:
+        JSONResponse: A JSON response indicating the status of the email sending.
+
+    Raises:
+        None
+    """
+
     email = EmailSchema(
         email=[user.email],
         body={"user": user, "url": settings.domain, "token": token},
@@ -64,6 +94,20 @@ async def send_welcome(user: User, token: str) -> JSONResponse:
 
 
 async def send_forgot_password(user: User, token: str) -> JSONResponse:
+    """
+    Sends a forgot password email to a user.
+
+    Args:
+        user: The user object.
+        token: The token for password reset.
+
+    Returns:
+        JSONResponse: A JSON response indicating the status of the email sending.
+
+    Raises:
+        None
+    """
+
     email = EmailSchema(
         email=[user.email],
         body={"user": user, "url": settings.domain, "token": token},
@@ -76,6 +120,20 @@ async def send_forgot_password(user: User, token: str) -> JSONResponse:
 
 
 async def send_new_token(user: User, token: str) -> JSONResponse:
+    """
+    Sends a new token email to a user.
+
+    Args:
+        user: The user object.
+        token: The new token for verification.
+
+    Returns:
+        JSONResponse: A JSON response indicating the status of the email sending.
+
+    Raises:
+        None
+    """
+
     email = EmailSchema(
         email=[user.email],
         body={"user": user, "url": settings.domain, "token": token},
