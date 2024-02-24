@@ -1,5 +1,10 @@
-from app import models, schemas, repository as repo
 from datetime import datetime
+
+from utils.log_messages import ACCOUNT_USER_ID_MISMATCH
+
+from app import models
+from app import repository as repo
+from app import schemas
 from app.logger import get_logger
 
 logger = get_logger(__name__)
@@ -87,7 +92,7 @@ async def delete_scheduled_transaction(
 
     account = await repo.get(models.Account, transaction.account_id)
     if current_user.id != account.user_id:
-        logger.warning("User ID does not match the account's User ID.")
+        logger.warning(ACCOUNT_USER_ID_MISMATCH)
         return
 
     await repo.delete(transaction)

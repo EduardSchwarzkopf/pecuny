@@ -1,5 +1,10 @@
 from datetime import datetime
-from app import models, schemas, repository as repo
+
+from utils.log_messages import ACCOUNT_USER_ID_MISMATCH
+
+from app import models
+from app import repository as repo
+from app import schemas
 from app.logger import get_logger
 
 logger = get_logger(__name__)
@@ -18,7 +23,7 @@ async def get_transaction_list(
         logger.info("User ID verified. Retrieving transactions.")
         return await repo.get_transactions_from_period(account_id, date_start, date_end)
     else:
-        logger.warning("User ID does not match the account's User ID.")
+        logger.warning(ACCOUNT_USER_ID_MISMATCH)
 
 
 async def get_transaction(user: models.User, transaction_id: int) -> models.Transaction:
@@ -37,7 +42,7 @@ async def get_transaction(user: models.User, transaction_id: int) -> models.Tran
         logger.info("User ID verified. Returning transaction.")
         return transaction
     else:
-        logger.warning("User ID does not match the account's User ID.")
+        logger.warning(ACCOUNT_USER_ID_MISMATCH)
 
 
 async def create_transaction(
@@ -47,7 +52,7 @@ async def create_transaction(
     account = await repo.get(models.Account, transaction_information.account_id)
 
     if user.id.bytes != account.user_id.bytes:
-        logger.warning("User ID does not match the account's User ID.")
+        logger.warning(ACCOUNT_USER_ID_MISMATCH)
         return None
 
     db_transaction_information = models.TransactionInformation()
@@ -126,7 +131,7 @@ async def update_transaction(
 
     account = await repo.get(models.Account, transaction.account_id)
     if current_user.id != account.user_id:
-        logger.warning("User ID does not match the account's User ID.")
+        logger.warning(ACCOUNT_USER_ID_MISMATCH)
         return
 
     amount_updated = (
@@ -182,7 +187,7 @@ async def delete_transaction(current_user: models.User, transaction_id: int) -> 
 
     account = await repo.get(models.Account, transaction.account_id)
     if current_user.id != account.user_id:
-        logger.warning("User ID does not match the account's User ID.")
+        logger.warning(ACCOUNT_USER_ID_MISMATCH)
         return
 
     amount = transaction.information.amount
