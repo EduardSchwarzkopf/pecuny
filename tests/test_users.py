@@ -20,7 +20,7 @@ ENDPOINT = "/api/auth"
     ],
 )
 async def test_create_user(
-    client_session_wrapper_fixture: ClientSessionWrapper,
+    client_session_wrapper: ClientSessionWrapper,
     username,
     displayname,
     password,
@@ -39,8 +39,8 @@ async def test_create_user(
         None
     """
 
-    async with client_session_wrapper_fixture.session:
-        res = await client_session_wrapper_fixture.client.post(
+    async with client_session_wrapper.session:
+        res = await client_session_wrapper.client.post(
             f"{ENDPOINT}/register",
             json={
                 "email": username,
@@ -61,7 +61,7 @@ async def test_create_user(
 
 @pytest.mark.usefixtures("test_user")
 async def test_invalid_create_user(
-    client_session_wrapper_fixture: ClientSessionWrapper,
+    client_session_wrapper: ClientSessionWrapper,
 ):
     """
     Tests the invalid user creation.
@@ -77,8 +77,8 @@ async def test_invalid_create_user(
         None
     """
 
-    async with client_session_wrapper_fixture.session:
-        res = await client_session_wrapper_fixture.client.post(
+    async with client_session_wrapper.session:
+        res = await client_session_wrapper.client.post(
             f"{ENDPOINT}/register",
             json={
                 "email": "hello123@pytest.de",
@@ -101,7 +101,7 @@ async def test_invalid_create_user(
     ],
 )
 async def test_login(
-    client_session_wrapper_fixture: ClientSessionWrapper,
+    client_session_wrapper: ClientSessionWrapper,
     test_user,
     username,
     displayname,
@@ -118,8 +118,8 @@ async def test_login(
         None
     """
 
-    async with client_session_wrapper_fixture.session:
-        res = await client_session_wrapper_fixture.client.post(
+    async with client_session_wrapper.session:
+        res = await client_session_wrapper.client.post(
             f"{ENDPOINT}/login",
             data={
                 "username": username,
@@ -154,7 +154,7 @@ async def test_login(
 )
 @pytest.mark.usefixtures("test_user")
 async def test_invalid_login(
-    client_session_wrapper_fixture: ClientSessionWrapper,
+    client_session_wrapper: ClientSessionWrapper,
     username,
     password,
     status_code,
@@ -170,8 +170,8 @@ async def test_invalid_login(
         None
     """
 
-    async with client_session_wrapper_fixture.session:
-        res = await client_session_wrapper_fixture.client.post(
+    async with client_session_wrapper.session:
+        res = await client_session_wrapper.client.post(
             f"{ENDPOINT}/login", data={"username": username, "password": password}
         )
 
@@ -188,9 +188,7 @@ async def test_invalid_login(
     ],
 )
 @pytest.mark.usefixtures("test_user")
-async def test_updated_user(
-    client_session_wrapper_fixture: ClientSessionWrapper, values
-):
+async def test_updated_user(client_session_wrapper: ClientSessionWrapper, values):
     """
     Tests successful update user parameter.
 
@@ -205,8 +203,8 @@ async def test_updated_user(
         None
     """
 
-    async with client_session_wrapper_fixture.session:
-        res = await client_session_wrapper_fixture.authorized_client.patch(
+    async with client_session_wrapper.session:
+        res = await client_session_wrapper.authorized_client.patch(
             "/api/users/me", json=values
         )
 
@@ -215,7 +213,7 @@ async def test_updated_user(
 
         for key, value in values.items():
             if key == "password":
-                login_res = await client_session_wrapper_fixture.authorized_client.post(
+                login_res = await client_session_wrapper.authorized_client.post(
                     f"{ENDPOINT}/login",
                     data={"username": user.email, "password": value},
                 )
@@ -235,7 +233,7 @@ async def test_updated_user(
     ],
 )
 async def test_invalid_updated_user(
-    client_session_wrapper_fixture: ClientSessionWrapper, test_user, values
+    client_session_wrapper: ClientSessionWrapper, test_user, values
 ):
     """
     Tests tests invalid update user functionality.
@@ -249,8 +247,8 @@ async def test_invalid_updated_user(
     """
 
     user_id = str(test_user.id)
-    async with client_session_wrapper_fixture.session:
-        res = await client_session_wrapper_fixture.authorized_client.patch(
+    async with client_session_wrapper.session:
+        res = await client_session_wrapper.authorized_client.patch(
             f"/api/users/{user_id}", json=values
         )
 
@@ -258,9 +256,7 @@ async def test_invalid_updated_user(
 
 
 @pytest.mark.usefixtures("client")
-async def test_delete_user(
-    client_session_wrapper_fixture: ClientSessionWrapper, test_user
-):
+async def test_delete_user(client_session_wrapper: ClientSessionWrapper, test_user):
     """
     Tests the create user functionality.
 
@@ -274,10 +270,8 @@ async def test_delete_user(
     Returns:
         None
     """
-    async with client_session_wrapper_fixture.session:
-        res = await client_session_wrapper_fixture.authorized_client.delete(
-            "/api/users/me"
-        )
+    async with client_session_wrapper.session:
+        res = await client_session_wrapper.authorized_client.delete("/api/users/me")
 
         assert res.status_code == 204
 
@@ -287,7 +281,7 @@ async def test_delete_user(
 
 
 async def test_invalid_delete_user(
-    client_session_wrapper_fixture: ClientSessionWrapper,
+    client_session_wrapper: ClientSessionWrapper,
 ):
     """
     Tests invalid user deletion.
@@ -303,9 +297,7 @@ async def test_invalid_delete_user(
         None
     """
 
-    async with client_session_wrapper_fixture.session:
-        res = await client_session_wrapper_fixture.authorized_client.delete(
-            "/api/users/2"
-        )
+    async with client_session_wrapper.session:
+        res = await client_session_wrapper.authorized_client.delete("/api/users/2")
 
     assert res.status_code == 403

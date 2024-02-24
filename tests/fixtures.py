@@ -14,8 +14,8 @@ from app.services.users import UserService
 
 # TODO: Rename all append all fixtures functions with: _fixture
 # this will be more clear later on what an fixture is
-@pytest.fixture
-async def user_service():
+@pytest.fixture(name="aaaaa")
+async def fixture_user_service():
     yield UserService()
 
 
@@ -26,8 +26,8 @@ class ClientSessionWrapper:
     session: AsyncSession = None
 
 
-@pytest.fixture
-async def test_user(session, user_service: UserService):
+@pytest.fixture(name="test_user")
+async def fixture_test_user(session, user_service: UserService):
     user_list = await repo.get_all(models.User)
 
     if len(user_list) > 0:
@@ -38,8 +38,8 @@ async def test_user(session, user_service: UserService):
         )
 
 
-@pytest.fixture
-async def token(test_user):
+@pytest.fixture(name="token")
+async def fixture_token(test_user):
     yield create_access_token(
         {
             "sub": str(test_user.id),
@@ -48,14 +48,14 @@ async def token(test_user):
     )
 
 
-@pytest.fixture
-async def authorized_client(client: AsyncClient, token):
+@pytest.fixture(name="authorized_client")
+async def fixture_authorized_client(client: AsyncClient, token):
     client.cookies = {**client.cookies, "fastapiusersauth": token}
     yield client
 
 
-@pytest.fixture
-async def client_session_wrapper_fixture(
+@pytest.fixture(name="client_session_wrapper")
+async def fixture_client_session_wrapper_fixture(
     client: AsyncClient, authorized_client: AsyncClient, session: AsyncSession
 ):
     """
@@ -71,8 +71,8 @@ async def client_session_wrapper_fixture(
     yield ClientSessionWrapper(client, authorized_client, session)
 
 
-@pytest.fixture
-async def test_users(session, user_service: UserService):
+@pytest.fixture(name="test_users")
+async def fixture_test_users(session, user_service: UserService):
     users_data = [
         ["user01@pytest.de", "password123"],
         ["user02@pytest.de", "password123"],
@@ -89,8 +89,8 @@ async def test_users(session, user_service: UserService):
     yield user_list
 
 
-@pytest.fixture
-async def test_account(test_user: models.User, session):
+@pytest.fixture(name="test_account")
+async def fixture_test_account(test_user: models.User, session):
     account_data = {"label": "test_account", "description": "test", "balance": 5000}
 
     db_account = models.Account(
@@ -105,8 +105,8 @@ async def test_account(test_user: models.User, session):
     yield await repo.get(models.Account, db_account.id)
 
 
-@pytest.fixture
-async def test_accounts(test_users: List[models.User], session):
+@pytest.fixture(name="test_accounts")
+async def fixture_test_accounts(test_users: List[models.User], session):
     accounts_data = [
         {
             "user": test_users[0],
@@ -156,8 +156,8 @@ async def get_date_range(date_start, days=5):
     return [(date_start - datetime.timedelta(days=idx)) for idx in range(days)]
 
 
-@pytest.fixture
-async def test_transactions(test_accounts, session):
+@pytest.fixture(name="test_transactions")
+async def fixture_test_transactions(test_accounts, session):
     dates = await get_date_range(datetime.datetime.now(datetime.timezone.utc))
 
     transaction_data = [

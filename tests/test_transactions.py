@@ -30,7 +30,7 @@ OFFSET_ACCOUNT_ID = 5
 )
 @pytest.mark.usefixtures("test_accounts")
 async def test_create_transaction(
-    client_session_wrapper_fixture: ClientSessionWrapper,
+    client_session_wrapper: ClientSessionWrapper,
     amount,
     expected_amount,
     reference,
@@ -40,7 +40,7 @@ async def test_create_transaction(
     Tests the create transaction functionality.
 
     Args:
-        client_session_wrapper_fixture: The client session wrapper fixture.
+        client_session_wrapper: The client session wrapper fixture.
         amount: The amount of the transaction.
         expected_amount: The expected amount of the transaction.
         reference: The reference of the transaction.
@@ -50,12 +50,12 @@ async def test_create_transaction(
         None
     """
 
-    async with client_session_wrapper_fixture.session:
+    async with client_session_wrapper.session:
         account = await repo.get(models.Account, ACCOUNT_ID)
 
         account_balance = account.balance
 
-        res = await client_session_wrapper_fixture.authorized_client.post(
+        res = await client_session_wrapper.authorized_client.post(
             ENDPOINT,
             json={
                 "account_id": ACCOUNT_ID,
@@ -95,7 +95,7 @@ async def test_create_transaction(
 )
 @pytest.mark.usefixtures("test_transactions")
 async def test_updated_transaction(
-    client_session_wrapper_fixture: ClientSessionWrapper,
+    client_session_wrapper: ClientSessionWrapper,
     transaction_id,
     category_id,
     amount,
@@ -104,7 +104,7 @@ async def test_updated_transaction(
     Tests the updated transaction functionality.
 
     Args:
-        client_session_wrapper_fixture: The client session wrapper fixture.
+        client_session_wrapper: The client session wrapper fixture.
         transaction_id: The ID of the transaction.
         category_id: The ID of the category.
         amount: The amount of the transaction.
@@ -123,14 +123,14 @@ async def test_updated_transaction(
         "category_id": category_id,
     }
 
-    async with client_session_wrapper_fixture.session:
+    async with client_session_wrapper.session:
         account = await repo.get(models.Account, ACCOUNT_ID)
         account_balance = account.balance
 
         transaction_before = await repo.get(models.Transaction, transaction_id)
         transaction_amount_before = transaction_before.information.amount
 
-        res = await client_session_wrapper_fixture.authorized_client.post(
+        res = await client_session_wrapper.authorized_client.post(
             f"{ENDPOINT}{transaction_id}", json=json
         )
 
@@ -158,28 +158,28 @@ async def test_updated_transaction(
 )
 @pytest.mark.usefixtures("test_transactions")
 async def test_delete_transaction(
-    client_session_wrapper_fixture: ClientSessionWrapper,
+    client_session_wrapper: ClientSessionWrapper,
     transaction_id,
 ):
     """
     Tests the delete transaction functionality.
 
     Args:
-        client_session_wrapper_fixture: The client session wrapper fixture.
+        client_session_wrapper: The client session wrapper fixture.
         transaction_id: The ID of the transaction.
 
     Returns:
         None
     """
 
-    async with client_session_wrapper_fixture.session:
+    async with client_session_wrapper.session:
         account = await repo.get(models.Account, ACCOUNT_ID)
         await repo.refresh(account)  # session not updated, so we need to refresh first
         account_balance = account.balance
         transaction = await repo.get(models.Transaction, transaction_id)
         amount = transaction.information.amount
 
-        res = await client_session_wrapper_fixture.authorized_client.delete(
+        res = await client_session_wrapper.authorized_client.delete(
             f"{ENDPOINT}{transaction_id}"
         )
         assert res.status_code == status.HTTP_204_NO_CONTENT
@@ -199,26 +199,26 @@ async def test_delete_transaction(
 )
 @pytest.mark.usefixtures("test_accounts")
 async def test_delete_transaction_fail(
-    client_session_wrapper_fixture: ClientSessionWrapper,
+    client_session_wrapper: ClientSessionWrapper,
     transaction_id,
 ):
     """
     Tests the delete transaction functionality, which should fail.
 
     Args:
-        client_session_wrapper_fixture: The client session wrapper fixture.
+        client_session_wrapper: The client session wrapper fixture.
         transaction_id: The ID of the transaction.
 
     Returns:
         None
     """
 
-    async with client_session_wrapper_fixture.session:
+    async with client_session_wrapper.session:
         account = await repo.get(models.Account, ACCOUNT_ID)
         await repo.refresh(account)  # session not updated, so we need to refresh first
         account_balance = account.balance
 
-        res = await client_session_wrapper_fixture.authorized_client.delete(
+        res = await client_session_wrapper.authorized_client.delete(
             f"{ENDPOINT}{transaction_id}"
         )
         assert res.status_code == status.HTTP_404_NOT_FOUND
@@ -242,7 +242,7 @@ async def test_delete_transaction_fail(
 )
 @pytest.mark.usefixtures("test_accounts")
 async def test_create_offset_transaction(
-    client_session_wrapper_fixture: ClientSessionWrapper,
+    client_session_wrapper: ClientSessionWrapper,
     amount,
     expected_offset_amount,
     reference,
@@ -252,7 +252,7 @@ async def test_create_offset_transaction(
     Tests the create offset transaction functionality.
 
     Args:
-        client_session_wrapper_fixture: The client session wrapper fixture.
+        client_session_wrapper: The client session wrapper fixture.
         amount: The amount of the transaction.
         expected_offset_amount: The expected amount of the offset transaction.
         reference: The reference of the transaction.
@@ -262,8 +262,8 @@ async def test_create_offset_transaction(
         None
     """
 
-    async with client_session_wrapper_fixture.session:
-        res = await client_session_wrapper_fixture.authorized_client.post(
+    async with client_session_wrapper.session:
+        res = await client_session_wrapper.authorized_client.post(
             ENDPOINT,
             json={
                 "account_id": ACCOUNT_ID,
@@ -311,7 +311,7 @@ async def test_create_offset_transaction(
 )
 @pytest.mark.usefixtures("test_accounts")
 async def test_create_offset_transaction_other_account_fail(
-    client_session_wrapper_fixture: ClientSessionWrapper,
+    client_session_wrapper: ClientSessionWrapper,
     offset_account_id,
     amount,
 ):
@@ -320,7 +320,7 @@ async def test_create_offset_transaction_other_account_fail(
     which should fail.
 
     Args:
-        client_session_wrapper_fixture: The client session wrapper fixture.
+        client_session_wrapper: The client session wrapper fixture.
         offset_account_id: The ID of the offset account.
         amount: The amount of the transaction.
 
@@ -328,14 +328,14 @@ async def test_create_offset_transaction_other_account_fail(
         None
     """
 
-    async with client_session_wrapper_fixture.session:
+    async with client_session_wrapper.session:
         account = await repo.get(models.Account, ACCOUNT_ID)
         offset_account = await repo.get(models.Account, offset_account_id)
 
         account_balance = account.balance
         offset_account_balance = offset_account.balance
 
-        res = await client_session_wrapper_fixture.authorized_client.post(
+        res = await client_session_wrapper.authorized_client.post(
             ENDPOINT,
             json={
                 "account_id": ACCOUNT_ID,
@@ -373,7 +373,7 @@ async def test_create_offset_transaction_other_account_fail(
 )
 @pytest.mark.usefixtures("test_accounts")
 async def test_updated_offset_transaction(
-    client_session_wrapper_fixture: ClientSessionWrapper,
+    client_session_wrapper: ClientSessionWrapper,
     category_id,
     amount,
 ):
@@ -381,7 +381,7 @@ async def test_updated_offset_transaction(
     Tests the updated offset transaction functionality.
 
     Args:
-        client_session_wrapper_fixture: The client session wrapper fixture.
+        client_session_wrapper: The client session wrapper fixture.
         category_id: The ID of the category.
         amount: The amount of the transaction.
 
@@ -389,14 +389,14 @@ async def test_updated_offset_transaction(
         None
     """
 
-    async with client_session_wrapper_fixture.session:
+    async with client_session_wrapper.session:
         account = await repo.get(models.Account, ACCOUNT_ID)
         offset_account = await repo.get(models.Account, OFFSET_ACCOUNT_ID)
 
         account_balance = account.balance
         offset_account_balance = offset_account.balance
 
-        transaction_res = await client_session_wrapper_fixture.authorized_client.post(
+        transaction_res = await client_session_wrapper.authorized_client.post(
             ENDPOINT,
             json={
                 "account_id": ACCOUNT_ID,
@@ -411,7 +411,7 @@ async def test_updated_offset_transaction(
         transaction_before = schemas.Transaction(**transaction_res.json())
 
         reference = f"Offset_transaction with {amount}"
-        res = await client_session_wrapper_fixture.authorized_client.post(
+        res = await client_session_wrapper.authorized_client.post(
             f"{ENDPOINT}{transaction_before.id}",
             json={
                 "account_id": ACCOUNT_ID,
@@ -451,7 +451,7 @@ async def test_updated_offset_transaction(
 )
 @pytest.mark.usefixtures("test_accounts")
 async def test_delete_offset_transaction(
-    client_session_wrapper_fixture: ClientSessionWrapper,
+    client_session_wrapper: ClientSessionWrapper,
     category_id,
     amount,
 ):
@@ -459,7 +459,7 @@ async def test_delete_offset_transaction(
     Tests the delete offset transaction functionality.
 
     Args:
-        client_session_wrapper_fixture: The client session wrapper fixture.
+        client_session_wrapper: The client session wrapper fixture.
         category_id: The ID of the category.
         amount: The amount of the transaction.
 
@@ -467,14 +467,14 @@ async def test_delete_offset_transaction(
         None
     """
 
-    async with client_session_wrapper_fixture.session:
+    async with client_session_wrapper.session:
         account = await repo.get(models.Account, ACCOUNT_ID)
         offset_account = await repo.get(models.Account, OFFSET_ACCOUNT_ID)
 
         account_balance = account.balance
         offset_account_balance = offset_account.balance
 
-        transaction_res = await client_session_wrapper_fixture.authorized_client.post(
+        transaction_res = await client_session_wrapper.authorized_client.post(
             ENDPOINT,
             json={
                 "account_id": ACCOUNT_ID,
@@ -488,13 +488,11 @@ async def test_delete_offset_transaction(
 
         transaction = schemas.Transaction(**transaction_res.json())
 
-        res = await client_session_wrapper_fixture.authorized_client.delete(
+        res = await client_session_wrapper.authorized_client.delete(
             f"{ENDPOINT}{transaction.id}"
         )
-        offset_transaction_res = (
-            await client_session_wrapper_fixture.authorized_client.get(
-                f"{ENDPOINT}{transaction.offset_transactions_id}"
-            )
+        offset_transaction_res = await client_session_wrapper.authorized_client.get(
+            f"{ENDPOINT}{transaction.offset_transactions_id}"
         )
 
         assert res.status_code == status.HTTP_204_NO_CONTENT
