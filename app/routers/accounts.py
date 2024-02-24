@@ -11,7 +11,6 @@ from starlette_wtf import csrf_protect
 from app import models, schemas
 from app import transaction_manager as tm
 from app.auth_manager import current_active_user
-from app.config import settings
 from app.routers.dashboard import router as dashboard_router
 from app.services import accounts as service
 from app.services import transactions as transaction_service
