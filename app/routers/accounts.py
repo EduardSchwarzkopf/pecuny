@@ -1,26 +1,23 @@
-from datetime import datetime
 import calendar
+from datetime import datetime
 from itertools import groupby
-from fastapi import Request, Depends, Cookie
-from fastapi.responses import HTMLResponse, RedirectResponse
-from starlette_wtf import csrf_protect
-from app.config import settings
+
+from fastapi import Cookie, Depends, Request
 from fastapi.exceptions import HTTPException
+from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette import status
+from starlette_wtf import csrf_protect
+
+from app import models, schemas
+from app import transaction_manager as tm
+from app.auth_manager import current_active_user
+from app.config import settings
+from app.routers.dashboard import router as dashboard_router
+from app.services import accounts as service
+from app.services import transactions as transaction_service
 from app.utils import PageRouter
 from app.utils.enums import FeedbackType
-from app.utils.template_utils import (
-    add_breadcrumb,
-    render_template,
-    set_feedback,
-)
-from app import schemas, transaction_manager as tm, models
-from app.services import (
-    accounts as service,
-    transactions as transaction_service,
-)
-from app.auth_manager import current_active_user
-from app.routers.dashboard import router as dashboard_router
+from app.utils.template_utils import add_breadcrumb, render_template, set_feedback
 
 PREFIX = f"{dashboard_router.prefix}/accounts"
 router = PageRouter(prefix=PREFIX, tags=["Accounts"])
@@ -135,10 +132,10 @@ async def page_get_account(
             day=last_day, hour=23, minute=59, second=59, microsecond=999999
         )
 
-    transaction_list: list[
-        models.Transaction
-    ] = await transaction_service.get_transaction_list(
-        user, account_id, date_start, date_end
+    transaction_list: list[models.Transaction] = (
+        await transaction_service.get_transaction_list(
+            user, account_id, date_start, date_end
+        )
     )
 
     expenses = 0
