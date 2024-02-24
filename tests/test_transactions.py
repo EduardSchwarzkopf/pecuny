@@ -22,10 +22,10 @@ OFFSET_ACCOUNT_ID = 5
 @pytest.mark.parametrize(
     "amount, expected_amount, reference, category_id",
     [
-        (1, 10, 10, "Added 10", 1),
-        (1, 20.5, 20.5, "Added 20.5", 3),
-        (1, -30.5, -30.5, "Substract 30.5", 6),
-        (1, -40.5, -40.5, "Subsctract 40.5", 6),
+        (10, 10, "Added 10", 1),
+        (20.5, 20.5, "Added 20.5", 3),
+        (-30.5, -30.5, "Substract 30.5", 6),
+        (-40.5, -40.5, "Subsctract 40.5", 6),
     ],
 )
 @pytest.mark.usefixtures("test_accounts")
@@ -62,12 +62,12 @@ async def test_create_transaction(
     assert account_balance + amount == account_balance_after
     assert new_transaction.account_id == ACCOUNT_ID
     assert new_transaction.information.amount == expected_amount
-    assert type(new_transaction.information.amount) == float
+    assert isinstance(new_transaction.information.amount, float)
     assert new_transaction.information.reference == reference
 
 
 @pytest.mark.parametrize(
-    "account_id, transaction_id, category_id, amount",
+    "transaction_id, category_id, amount",
     [
         (1, 1, 2.5),
         (2, 1, 0),
@@ -108,8 +108,6 @@ async def test_updated_transaction(
         )
 
         assert res.status_code == status.HTTP_200_OK
-        t = res.json()
-
         await repo.refresh(account)
 
     account_balance_after = account.balance
@@ -230,15 +228,15 @@ async def test_create_offset_transaction(
     assert new_transaction.information.amount == round(amount, 2)
     assert new_offset_transaction.information.amount == round(expected_offset_amount, 2)
 
-    assert isinstance(new_transaction.information.amount) == float
-    assert isinstance(new_offset_transaction.information.amount) == float
+    assert isinstance(new_transaction.information.amount, float)
+    assert isinstance(new_offset_transaction.information.amount, float)
 
     assert new_transaction.information.reference == reference
     assert new_offset_transaction.information.reference == reference
 
 
 @pytest.mark.parametrize(
-    "account_id, offset_account_id, amount",
+    "offset_account_id, amount",
     [
         (2, 10),
         (3, 20.5),
@@ -294,7 +292,7 @@ async def test_create_offset_transaction_other_account_fail(
         (4, -25),
         (1, -35),
         (1, -0.3333333334),
-        (5, 7, 0),
+        (7, 0),
     ],
 )
 @pytest.mark.usefixtures("test_accounts")

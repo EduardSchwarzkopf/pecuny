@@ -1,5 +1,6 @@
 import datetime
 from dataclasses import dataclass
+from typing import List
 
 import pytest
 from httpx import AsyncClient
@@ -9,8 +10,6 @@ from app import models
 from app import repository as repo
 from app.oauth2 import create_access_token
 from app.services.users import UserService
-
-pytestmark = pytest.mark.anyio
 
 
 # TODO: Rename all append all fixtures functions with: _fixture
@@ -78,12 +77,16 @@ async def test_users(session, user_service: UserService):
         ["user01@pytest.de", "password123"],
         ["user02@pytest.de", "password123"],
         ["user03@pytest.de", "password123"],
+        ["user04@pytest.de", "password123"],
     ]
 
-    for data in users_data:
-        await user_service.create_user(data[0], data[1], is_verified=True)
+    user_list = []
 
-    yield await repo.get_all(models.User)
+    for data in users_data:
+        user = await user_service.create_user(data[0], data[1], is_verified=True)
+        user_list.append(user)
+
+    yield user_list
 
 
 @pytest.fixture
@@ -103,7 +106,7 @@ async def test_account(test_user: models.User, session):
 
 
 @pytest.fixture
-async def test_accounts(test_users, session):
+async def test_accounts(test_users: List[models.User], session):
     accounts_data = [
         {
             "user": test_users[0],
