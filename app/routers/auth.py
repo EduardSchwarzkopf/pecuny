@@ -15,13 +15,12 @@ from app.auth_manager import (
     optional_current_active_verified_user,
 )
 from app.models import User
+from app.routers.dashboard import router as dashboard_router
 from app.services.users import UserService
 from app.utils import PageRouter
 from app.utils.enums import FeedbackType
 from app.utils.exceptions import UserAlreadyExistsException, UserNotFoundException
 from app.utils.template_utils import render_form_template, set_feedback
-
-from .dashboard import router as dashboard_router
 
 router = PageRouter()
 
