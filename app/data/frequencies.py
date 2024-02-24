@@ -2,8 +2,8 @@ def get_frequency_list():
     """
     Returns a list of all available frequencies.
 
-    Returns:
-        List[Dict[str, Union[str, int]]]: A list of dictionaries representing the frequencies. Each dictionary contains the id and label of a frequency.
+    Returns: A list of dictionaries representing the frequencies.
+        Each dictionary contains the id and label of a frequency.
     """
 
     frequencies = ["once", "daily", "weekly", "monthly", "yearly"]
