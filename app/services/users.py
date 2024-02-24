@@ -1,17 +1,14 @@
 from fastapi import Request
-from app import models, repository as repo
-from app.logger import get_logger
-from app.schemas import UserCreate, EmailStr, UserUpdate
 from fastapi_users import exceptions
+
+from app import database, models
+from app import repository as repo
 from app.auth_manager import UserManager
+from app.logger import get_logger
+from app.schemas import EmailStr, UserCreate, UserUpdate
 from app.utils.displayname_generator import generate_displayname
 from app.utils.enums import EmailVerificationStatus
-from app import database
-from app.utils.exceptions import (
-    PasswordsDontMatchException,
-    UserAlreadyExistsException,
-    UserNotFoundException,
-)
+from app.utils.exceptions import UserAlreadyExistsException, UserNotFoundException
 
 logger = get_logger(__name__)
 
