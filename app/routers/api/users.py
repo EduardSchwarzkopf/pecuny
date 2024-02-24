@@ -1,8 +1,9 @@
-from fastapi import Depends, APIRouter, status, Response, HTTPException
+from fastapi import Depends, HTTPException, Response, status
+
 from app import transaction_manager as tm
-from app.services.users import UserService
-from app.models import User
 from app.auth_manager import current_active_user
+from app.models import User
+from app.services.users import UserService
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(prefix="/users", tags=["Users"])
