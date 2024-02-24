@@ -18,5 +18,7 @@ jobs:
         uses: abatilo/actions-poetry@v3.0.0
         with:
           poetry-version: ${{ env.POETRY_VERSION }}
+      - name: Install Dependencies
+        run: poetry install --only linter
       - name: Run linter
         run: poetry run pylint $(git ls-files '*.py')
