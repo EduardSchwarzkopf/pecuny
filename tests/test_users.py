@@ -26,6 +26,20 @@ endpoint = "/api/auth"
 async def test_create_user(
     session, client: AsyncClient, username, displayname, password
 ):
+    """
+    Tests the create user functionality.
+
+    Args:
+        session: The session fixture.
+        client: The async client fixture.
+        username (str): The username of the user to create.
+        displayname (str): The display name of the user to create.
+        password (str): The password of the user to create.
+
+    Returns:
+        None
+    """
+
     async with session:
         res = await client.post(
             f"{endpoint}/register",
@@ -47,6 +61,20 @@ async def test_create_user(
 
 
 async def test_invalid_create_user(session, client: AsyncClient, test_user):
+    """
+    Tests the create user functionality.
+
+    Args:
+        session: The session fixture.
+        client: The async client fixture.
+        username (str): The username of the user to create.
+        displayname (str): The display name of the user to create.
+        password (str): The password of the user to create.
+
+    Returns:
+        None
+    """
+
     async with session:
         res = await client.post(
             f"{endpoint}/register",
@@ -73,6 +101,17 @@ async def test_invalid_create_user(session, client: AsyncClient, test_user):
 async def test_login(
     session, client: AsyncClient, test_user, username, displayname, password
 ):
+    """
+    Tests the delete user functionality.
+
+    Args:
+        authorized_client: The authorized client fixture.
+        session: The session fixture.
+
+    Returns:
+        None
+    """
+
     async with session:
         res = await client.post(
             f"{endpoint}/login",
@@ -110,6 +149,17 @@ async def test_login(
 async def test_invalid_login(
     session, client: AsyncClient, test_user, username, password, status_code
 ):
+    """
+    Tests the delete user functionality.
+
+    Args:
+        authorized_client: The authorized client fixture.
+        session: The session fixture.
+
+    Returns:
+        None
+    """
+
     async with session:
         res = await client.post(
             f"{endpoint}/login", data={"username": username, "password": password}
@@ -128,6 +178,20 @@ async def test_invalid_login(
     ],
 )
 async def test_updated_user(session, authorized_client: AsyncClient, test_user, values):
+    """
+    Tests the create user functionality.
+
+    Args:
+        session: The session fixture.
+        client: The async client fixture.
+        username (str): The username of the user to create.
+        displayname (str): The display name of the user to create.
+        password (str): The password of the user to create.
+
+    Returns:
+        None
+    """
+
     async with session:
         res = await authorized_client.patch("/api/users/me", json=values)
 
@@ -158,6 +222,17 @@ async def test_updated_user(session, authorized_client: AsyncClient, test_user, 
 async def test_invalid_updated_user(
     session, authorized_client: AsyncClient, test_user, values
 ):
+    """
+    Tests the delete user functionality.
+
+    Args:
+        authorized_client: The authorized client fixture.
+        session: The session fixture.
+
+    Returns:
+        None
+    """
+
     id = str(test_user.id)
     async with session:
         res = await authorized_client.patch(f"/api/users/{id}", json=values)
@@ -166,6 +241,19 @@ async def test_invalid_updated_user(
 
 
 async def test_delete_user(session, client, test_user, authorized_client):
+    """
+    Tests the create user functionality.
+
+    Args:
+        session: The session fixture.
+        client: The async client fixture.
+        username (str): The username of the user to create.
+        displayname (str): The display name of the user to create.
+        password (str): The password of the user to create.
+
+    Returns:
+        None
+    """
     async with session:
         res = await authorized_client.delete("/api/users/me")
 
@@ -177,6 +265,20 @@ async def test_delete_user(session, client, test_user, authorized_client):
 
 
 async def test_invalid_delete_user(authorized_client: AsyncClient, session):
+    """
+    Tests the create user functionality.
+
+    Args:
+        session: The session fixture.
+        client: The async client fixture.
+        username (str): The username of the user to create.
+        displayname (str): The display name of the user to create.
+        password (str): The password of the user to create.
+
+    Returns:
+        None
+    """
+
     async with session:
         res = await authorized_client.delete("/api/users/2")
 
