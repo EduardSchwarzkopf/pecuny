@@ -16,6 +16,16 @@ from app.services.users import UserService
 # this will be more clear later on what an fixture is
 @pytest.fixture(name="aaaaa")
 async def fixture_user_service():
+    """
+    Fixture that provides a user service.
+
+    Args:
+        None
+
+    Returns:
+        UserService: An instance of the user service.
+    """
+
     yield UserService()
 
 
@@ -29,6 +39,16 @@ class ClientSessionWrapper:
 @pytest.fixture(name="test_user")
 @pytest.mark.usefixtures("session")
 async def fixture_test_user(user_service: UserService):
+    """
+    Fixture that retrieves an existing user or creates a new user.
+
+    Args:
+        user_service: The user service fixture.
+
+    Returns:
+        User: An existing user or a newly created user.
+    """
+
     user_list = await repo.get_all(models.User)
 
     if len(user_list) > 0:
@@ -41,6 +61,16 @@ async def fixture_test_user(user_service: UserService):
 
 @pytest.fixture(name="token")
 async def fixture_token(test_user):
+    """
+    Fixture that generates an access token for a test user.
+
+    Args:
+        test_user: The test user fixture.
+
+    Returns:
+        str: An access token for the test user.
+    """
+
     yield create_access_token(
         {
             "sub": str(test_user.id),
@@ -51,6 +81,17 @@ async def fixture_token(test_user):
 
 @pytest.fixture(name="authorized_client")
 async def fixture_authorized_client(client: AsyncClient, token):
+    """
+    Fixture that provides an authorized client with a token.
+
+    Args:
+        client: The async client fixture.
+        token: The authentication token.
+
+    Returns:
+        AsyncClient: An authorized client with the provided token.
+    """
+
     client.cookies = {**client.cookies, "fastapiusersauth": token}
     yield client
 
@@ -75,6 +116,16 @@ async def fixture_client_session_wrapper_fixture(
 @pytest.mark.usefixtures("session")
 @pytest.fixture(name="test_users")
 async def fixture_test_users(user_service: UserService):
+    """
+    Fixture that creates test users.
+
+    Args:
+        user_service: The user service fixture.
+
+    Returns:
+        List[User]: A list of test users.
+    """
+
     users_data = [
         ["user01@pytest.de", "password123"],
         ["user02@pytest.de", "password123"],
@@ -93,6 +144,17 @@ async def fixture_test_users(user_service: UserService):
 
 @pytest.fixture(name="test_account")
 async def fixture_test_account(test_user: models.User, session):
+    """
+    Fixture that creates a test account.
+
+    Args:
+        test_user: The test user fixture.
+        session: The session fixture.
+
+    Returns:
+        Account: A test account.
+    """
+
     account_data = {"label": "test_account", "description": "test", "balance": 5000}
 
     db_account = models.Account(
@@ -109,6 +171,17 @@ async def fixture_test_account(test_user: models.User, session):
 
 @pytest.fixture(name="test_accounts")
 async def fixture_test_accounts(test_users: List[models.User], session):
+    """
+    Fixture that creates test accounts.
+
+    Args:
+        test_users: A list of test users.
+        session: The session fixture.
+
+    Returns:
+        List[Account]: A list of test accounts.
+    """
+
     accounts_data = [
         {
             "user": test_users[0],
@@ -160,6 +233,17 @@ async def get_date_range(date_start, days=5):
 
 @pytest.fixture(name="test_transactions")
 async def fixture_test_transactions(test_accounts, session):
+    """
+    Fixture that creates test transactions.
+
+    Args:
+        test_accounts: The test accounts fixture.
+        session: The session fixture.
+
+    Returns:
+        List[Transaction]: A list of test transactions.
+    """
+
     dates = await get_date_range(datetime.datetime.now(datetime.timezone.utc))
 
     transaction_data = [
