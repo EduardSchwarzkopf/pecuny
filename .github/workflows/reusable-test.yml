@@ -55,7 +55,7 @@ jobs:
           TEST_DB_PORT: 5432
           DB_USER: ${{ env.TEST_DB_USER }}
           MAIL_USERNAME: "test@example.com"
-          MAIL_FROM: "example"
+          MAIL_FROM: "example@example.com"
           MAIL_SERVER: "example.com"
           MAIL_PORT: 25
           MAIL_PASSWORD: "test"
