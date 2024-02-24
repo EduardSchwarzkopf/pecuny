@@ -12,6 +12,22 @@ logger = get_logger(__name__)
 async def get_transaction_list(
     user: models.User, account_id: int, date_start: datetime, date_end: datetime
 ):
+    """
+    Retrieves a list of transactions within a specified period for a given account.
+
+    Args:
+        user: The user object.
+        account_id: The ID of the account.
+        date_start: The start date of the period.
+        date_end: The end date of the period.
+
+    Returns:
+        List[Transaction]: A list of transactions within the specified period.
+
+    Raises:
+        None
+    """
+
     logger.info(
         "Starting transaction list retrieval for user %s and account %s",
         user.id,
@@ -26,6 +42,20 @@ async def get_transaction_list(
 
 
 async def get_transaction(user: models.User, transaction_id: int) -> models.Transaction:
+    """
+    Retrieves a transaction by ID.
+
+    Args:
+        user: The user object.
+        transaction_id: The ID of the transaction to retrieve.
+
+    Returns:
+        Transaction: The retrieved transaction.
+
+    Raises:
+        None
+    """
+
     logger.info(
         "Retrieving transaction with ID %s for user %s", transaction_id, user.id
     )
@@ -47,6 +77,20 @@ async def get_transaction(user: models.User, transaction_id: int) -> models.Tran
 async def create_transaction(
     user: models.User, transaction_information: schemas.TransactionInformationCreate
 ) -> models.Transaction:
+    """
+    Creates a new transaction.
+
+    Args:
+        user: The user object.
+        transaction_information: The information for the transaction.
+
+    Returns:
+        Transaction: The created transaction.
+
+    Raises:
+        None
+    """
+
     logger.info("Creating new transaction for user %s", user.id)
     account = await repo.get(models.Account, transaction_information.account_id)
 
@@ -90,6 +134,20 @@ async def create_transaction(
 async def _handle_offset_transaction(
     user: models.User, transaction_information: schemas.TransactionInformationCreate
 ) -> models.Transaction:
+    """
+    Handles an offset transaction for a user.
+
+    Args:
+        user: The user object.
+        transaction_information: The information for the offset transaction.
+
+    Returns:
+        Transaction: The created offset transaction.
+
+    Raises:
+        None
+    """
+
     logger.info("Handling offset transaction for user %s", user.id)
     offset_account_id = transaction_information.offset_account_id
     offset_account = await repo.get(models.Account, offset_account_id)
@@ -120,6 +178,21 @@ async def update_transaction(
     transaction_id: int,
     transaction_information: schemas.TransactionInformtionUpdate,
 ):
+    """
+    Updates a transaction.
+
+    Args:
+        current_user: The current active user.
+        transaction_id: The ID of the transaction to update.
+        transaction_information: The updated transaction information.
+
+    Returns:
+        Transaction: The updated transaction.
+
+    Raises:
+        None
+    """
+
     logger.info(
         "Updating transaction with ID %s for user %s", transaction_id, current_user.id
     )
@@ -171,6 +244,17 @@ async def update_transaction(
 
 
 async def delete_transaction(current_user: models.User, transaction_id: int) -> bool:
+    """
+    Deletes a transaction.
+
+    Args:
+        current_user: The current active user.
+        transaction_id: The ID of the transaction to delete.
+
+    Returns:
+        bool: True if the transaction is successfully deleted, False otherwise.
+    """
+
     logger.info(
         "Deleting transaction with ID %s for user %s", transaction_id, current_user.id
     )
