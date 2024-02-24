@@ -119,7 +119,7 @@ async def delete_account(current_user: models.User, account_id: int) -> bool:
     return None
 
 
-async def check_max_accounts(user: models.User):
+async def check_max_accounts(user: models.User) -> bool:
     """
     Checks if the maximum number of accounts has been reached for a user.
 
