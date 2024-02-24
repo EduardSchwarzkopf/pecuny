@@ -1,5 +1,4 @@
 import pytest
-from httpx import AsyncClient
 from jose import jwt
 
 from app import models
@@ -61,7 +60,9 @@ async def test_create_user(
 
 
 @pytest.mark.usefixtures("test_user")
-async def test_invalid_create_user(client_session_wrapper_fixture):
+async def test_invalid_create_user(
+    client_session_wrapper_fixture: ClientSessionWrapper,
+):
     """
     Tests the create user functionality.
 
@@ -257,7 +258,9 @@ async def test_invalid_updated_user(
 
 
 @pytest.mark.usefixtures("client")
-async def test_delete_user(session, test_user, authorized_client):
+async def test_delete_user(
+    client_session_wrapper_fixture: ClientSessionWrapper, test_user
+):
     """
     Tests the create user functionality.
 
@@ -271,8 +274,10 @@ async def test_delete_user(session, test_user, authorized_client):
     Returns:
         None
     """
-    async with session:
-        res = await authorized_client.delete("/api/users/me")
+    async with client_session_wrapper_fixture.session:
+        res = await client_session_wrapper_fixture.authorized_client.delete(
+            "/api/users/me"
+        )
 
         assert res.status_code == 204
 
@@ -281,7 +286,9 @@ async def test_delete_user(session, test_user, authorized_client):
     assert user is None
 
 
-async def test_invalid_delete_user(authorized_client: AsyncClient, session):
+async def test_invalid_delete_user(
+    client_session_wrapper_fixture: ClientSessionWrapper,
+):
     """
     Tests the create user functionality.
 
@@ -296,7 +303,9 @@ async def test_invalid_delete_user(authorized_client: AsyncClient, session):
         None
     """
 
-    async with session:
-        res = await authorized_client.delete("/api/users/2")
+    async with client_session_wrapper_fixture.session:
+        res = await client_session_wrapper_fixture.authorized_client.delete(
+            "/api/users/2"
+        )
 
     assert res.status_code == 403
