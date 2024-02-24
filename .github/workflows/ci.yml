@@ -8,10 +8,12 @@ on:
     inputs:
       python_version:
         description: "Python version"
+        type: string
         required: false
         default: "3.12"
       poetry_version:
         description: "Poetry version"
+        type: string
         required: false
         default: "1.7.1"
 
