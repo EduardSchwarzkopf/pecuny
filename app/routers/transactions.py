@@ -14,6 +14,7 @@ from app.services import accounts as service
 from app.services import categories as category_service
 from app.services import transactions as transaction_service
 from app.utils import PageRouter
+from app.utils.account_utils import calculate_total_balance
 from app.utils.template_utils import group_categories_by_section, render_template
 
 PREFIX = account_router.prefix + "/{account_id}/transactions"
@@ -121,7 +122,7 @@ async def page_list_accounts(
     """
 
     account_list = await service.get_accounts(user)
-    total_balance = sum(account.balance for account in account_list)
+    total_balance = calculate_total_balance(account_list)
 
     return render_template(
         "pages/dashboard/page_list_accounts.html",
