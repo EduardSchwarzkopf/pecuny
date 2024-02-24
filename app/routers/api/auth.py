@@ -1,4 +1,5 @@
-from fastapi import Depends, Request, status, HTTPException
+from fastapi import Depends, HTTPException, Request, status
+
 from app import schemas
 from app.services.users import UserService
 from app.utils import APIRouterExtended
@@ -6,7 +7,16 @@ from app.utils import APIRouterExtended
 router = APIRouterExtended(prefix="/auth", tags=["Auth"])
 
 
+# TODO: Create a single place for this function
+# it can be found on several places now
 async def get_user_service() -> UserService:
+    """
+    Returns an instance of the UserService class.
+
+    Returns:
+        UserService: An instance of the UserService class.
+    """
+
     return UserService()
 
 
@@ -18,6 +28,18 @@ async def api_create_user(
     request: Request,
     service: UserService = Depends(get_user_service),
 ):
+    """
+    Creates a new user.
+
+    Args:
+        user: The user information.
+        request: The request object.
+        service: The user service.
+
+    Returns:
+        UserRead: The created user information.
+    """
+
     user = await service.create_user(
         user.email, user.password, user.displayname, request=request
     )
