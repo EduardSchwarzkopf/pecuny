@@ -11,10 +11,10 @@ from app.services import accounts as service
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(prefix="/accounts", tags=["Accounts"])
-response_model = schemas.AccountData
+ResponseModel = schemas.AccountData
 
 
-@router.get("/", response_model=List[response_model])
+@router.get("/", response_model=List[ResponseModel])
 async def api_get_accounts(current_user: User = Depends(current_active_user)):
     """
     Retrieves a list of accounts.
@@ -29,7 +29,7 @@ async def api_get_accounts(current_user: User = Depends(current_active_user)):
     return await service.get_accounts(current_user)
 
 
-@router.get("/{account_id}", response_model=response_model)
+@router.get("/{account_id}", response_model=ResponseModel)
 async def api_get_account(
     account_id: int, current_user: User = Depends(current_active_user)
 ):
@@ -55,7 +55,7 @@ async def api_get_account(
     return account
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=ResponseModel)
 async def api_create_account(
     account: schemas.Account, current_user: User = Depends(current_active_user)
 ):
@@ -74,7 +74,7 @@ async def api_create_account(
     return account
 
 
-@router.put("/{account_id}", response_model=response_model)
+@router.put("/{account_id}", response_model=ResponseModel)
 async def api_update_account(
     account_id: int,
     account_data: schemas.AccountUpdate,
