@@ -1,5 +1,4 @@
 import datetime
-from dataclasses import dataclass
 from typing import List
 
 import pytest
@@ -10,6 +9,7 @@ from app import models
 from app import repository as repo
 from app.oauth2 import create_access_token
 from app.services.users import UserService
+from app.utils.dataclasses_utils import ClientSessionWrapper, CreateUserData
 
 
 @pytest.fixture(name="user_service")
@@ -27,13 +27,6 @@ async def fixture_user_service():
     yield UserService()
 
 
-@dataclass
-class ClientSessionWrapper:
-    client: AsyncClient = None
-    authorized_client: AsyncClient = None
-    session: AsyncSession = None
-
-
 @pytest.fixture(name="test_user")
 @pytest.mark.usefixtures("session")
 async def fixture_test_user(user_service: UserService):
@@ -46,14 +39,13 @@ async def fixture_test_user(user_service: UserService):
     Returns:
         User: An existing user or a newly created user.
     """
-    s = await repo.get_session()
     user_list = await repo.get_all(models.User)
 
     if len(user_list) > 0:
         return user_list[0]
 
     return await user_service.create_user(
-        "hello123@pytest.de", "password123", is_verified=True
+        CreateUserData("hello123@pytest.de", "password123", is_verified=True)
     )
 
 
@@ -134,7 +126,9 @@ async def fixture_test_users(user_service: UserService):
     user_list = []
 
     for data in users_data:
-        user = await user_service.create_user(data[0], data[1], is_verified=True)
+        user = await user_service.create_user(
+            CreateUserData(data[0], data[1], is_verified=True)
+        )
         user_list.append(user)
 
     yield user_list
