@@ -64,7 +64,7 @@ async def create_account(user: models.User, account: schemas.Account) -> models.
     """
 
     logger.info("Creating new account for user: %s", user.id)
-    db_account = models.Account(user=user, **account.dict())
+    db_account = models.Account(user=user, **account.model_dump())
     await repo.save(db_account)
     logger.info("Account %s created for user: %s", db_account.id, user.id)
     return db_account
@@ -88,7 +88,7 @@ async def update_account(
     logger.info("Updating account %s for user: %s", account_id, current_user.id)
     db_account = await repo.get(models.Account, account_id)
     if db_account.user_id == current_user.id:
-        await repo.update(models.Account, db_account.id, **account.dict())
+        await repo.update(models.Account, db_account.id, **account.model_dump())
         logger.info("Account %s updated for user:  %s", account, current_user.id)
         return db_account
     logger.warning(
