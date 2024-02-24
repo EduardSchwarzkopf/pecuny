@@ -1,26 +1,20 @@
-from fastapi import Request, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
-from starlette_wtf import csrf_protect
-from app.config import settings
+from fastapi import Depends, Request
 from fastapi.exceptions import HTTPException
+from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette import status
-from app.utils import PageRouter
-from app.utils.template_utils import (
-    group_categories_by_section,
-    render_template,
-)
-from app import schemas, transaction_manager as tm, models
-from app.services import (
-    accounts as service,
-    transactions as transaction_service,
-    categories as category_service,
-)
+from starlette_wtf import csrf_protect
+
+from app import models, schemas
+from app import transaction_manager as tm
 from app.auth_manager import current_active_user
-from app.routers.accounts import (
-    handle_account_route,
-    router as account_router,
-    handle_account_route,
-)
+from app.config import settings
+from app.routers.accounts import handle_account_route
+from app.routers.accounts import router as account_router
+from app.services import accounts as service
+from app.services import categories as category_service
+from app.services import transactions as transaction_service
+from app.utils import PageRouter
+from app.utils.template_utils import group_categories_by_section, render_template
 
 PREFIX = account_router.prefix + "/{account_id}/transactions"
 
@@ -33,6 +27,19 @@ async def populate_transaction_form_choices(
     form: schemas.CreateTransactionForm,
     first_select_label: str = "Select target account for transfers",
 ) -> None:
+    """
+    Populates the choices in the transaction form.
+
+    Args:
+        account_id: The ID of the account.
+        user: The current active user.
+        form: The create transaction form.
+        first_select_label: The label for the first select option.
+
+    Returns:
+        None
+    """
+
     await populate_transaction_form_category_choices(user, form)
     await populate_transaction_form_account_choices(
         account_id, user, form, first_select_label
@@ -45,6 +52,19 @@ async def populate_transaction_form_account_choices(
     form: schemas.CreateTransactionForm,
     first_select_label,
 ) -> None:
+    """
+    Populates the account choices in the transaction form.
+
+    Args:
+        account_id: The ID of the account.
+        user: The current active user.
+        form: The create transaction form.
+        first_select_label: The label for the first select option.
+
+    Returns:
+        None
+    """
+
     account_list = await service.get_accounts(user)
     account_list_length = len(account_list)
 
@@ -69,6 +89,17 @@ async def populate_transaction_form_account_choices(
 async def populate_transaction_form_category_choices(
     user: models.User, form: schemas.CreateTransactionForm
 ) -> None:
+    """
+    Populates the category choices in the transaction form.
+
+    Args:
+        user: The current active user.
+        form: The create transaction form.
+
+    Returns:
+        None
+    """
+
     category_list = category_service.get_categories(user)
     form.category_id.choices = group_categories_by_section(await category_list)
 
@@ -78,6 +109,17 @@ async def page_list_accounts(
     request: Request,
     user: models.User = Depends(current_active_user),
 ):
+    """
+    Renders the list accounts page.
+
+    Args:
+        request: The request object.
+        user: The current active user.
+
+    Returns:
+        TemplateResponse: The rendered list accounts page.
+    """
+
     account_list = await service.get_accounts(user)
     total_balance = sum(account.balance for account in account_list)
 
@@ -99,6 +141,17 @@ async def page_create_transaction_form(
     account_id: int,
     user: models.User = Depends(current_active_user),
 ):
+    """
+    Renders the create transaction form page.
+
+    Args:
+        request: The request object.
+        account_id: The ID of the account.
+        user: The current active user.
+
+    Returns:
+        TemplateResponse: The rendered create transaction
+    """
     await handle_account_route(request, user, account_id)
 
     form = schemas.CreateTransactionForm(request)
@@ -123,6 +176,18 @@ async def page_create_transaction(
     account_id: int,
     user: models.User = Depends(current_active_user),
 ):
+    """
+    Handles the creation of a transaction.
+
+    Args:
+        request: The request object.
+        account_id: The ID of the account.
+        user: The current active user.
+
+    Returns:
+        RedirectResponse: A redirect response to the account page.
+    """
+
     await handle_account_route(request, user, account_id)
 
     form = await schemas.CreateTransactionForm.from_formdata(request)
@@ -162,12 +227,25 @@ async def page_create_transaction(
 
 
 @router.get("/{transaction_id}")
-async def page_update_transaction(
+async def page_update_transaction_get(
     request: Request,
     account_id: int,
     transaction_id: int,
     user: models.User = Depends(current_active_user),
 ):
+    """
+    Renders the transaction update form page.
+
+    Args:
+        request: The request object.
+        account_id: The ID of the account.
+        transaction_id: The ID of the transaction.
+        user: The current active user.
+
+    Returns:
+        TemplateResponse: The rendered transaction update form page.
+    """
+
     await handle_account_route(request, user, account_id)
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
@@ -212,12 +290,26 @@ async def page_update_transaction(
 
 
 @router.post("/{transaction_id}")
-async def page_update_transaction(
+async def page_update_transaction_post(
     request: Request,
     account_id: int,
     transaction_id: int,
     user: models.User = Depends(current_active_user),
 ):
+    """
+    Handles the update of a transaction.
+
+    Args:
+        request: The request object.
+        account_id: The ID of the account.
+        transaction_id: The ID of the transaction.
+        user: The current active user.
+
+    Returns:
+        Union[TemplateResponse, RedirectResponse]:
+            The rendered transaction update form page or a redirect response.
+    """
+
     await handle_account_route(request, user, account_id)
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
@@ -273,11 +365,22 @@ async def page_update_transaction(
 @csrf_protect
 @router.post("/{transaction_id}/delete")
 async def page_delete_transaction(
-    request: Request,
     account_id: int,
     transaction_id: int,
     user: models.User = Depends(current_active_user),
 ):
+    """
+    Handles the deletion of a transaction.
+
+    Args:
+        account_id: The ID of the account.
+        transaction_id: The ID of the transaction.
+        user: The current active user.
+
+    Returns:
+        RedirectResponse: A redirect response to the account page.
+    """
+
     transaction = await transaction_service.get_transaction(user, transaction_id)
 
     if transaction is None:
