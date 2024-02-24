@@ -46,7 +46,7 @@ async def fixture_test_user(user_service: UserService):
     Returns:
         User: An existing user or a newly created user.
     """
-
+    s = await repo.get_session()
     user_list = await repo.get_all(models.User)
 
     if len(user_list) > 0:

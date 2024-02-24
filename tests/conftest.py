@@ -43,7 +43,7 @@ async def populate_db(session: AsyncSession):
     await session.commit()
 
 
-@pytest.fixture(name="session")
+@pytest.fixture(name="session", scope="class")
 async def fixture_session() -> AsyncSession:  # type: ignore
     """
     Fixture that provides an async session.
@@ -65,7 +65,7 @@ async def fixture_session() -> AsyncSession:  # type: ignore
 
 
 @pytest.fixture(name="client")
-@pytest.mark.usefixtures("session")
+@pytest.mark.usefixtures("module")
 async def fixture_client() -> AsyncClient:  # type: ignore
     """
     Fixture that provides an async HTTP client.
@@ -81,7 +81,7 @@ async def fixture_client() -> AsyncClient:  # type: ignore
         yield client
 
 
-@pytest.fixture
+@pytest.fixture(scope="session", autouse=True)
 def anyio_backend():
     """
     Fixture that provides the anyio backend.
