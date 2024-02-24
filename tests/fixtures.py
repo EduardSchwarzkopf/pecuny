@@ -1,16 +1,30 @@
-import pytest
-from app.oauth2 import create_access_token
-from app import models, repository as repo
-from httpx import AsyncClient
-from app.services.users import UserService
 import datetime
+from dataclasses import dataclass
+
+import pytest
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app import models
+from app import repository as repo
+from app.oauth2 import create_access_token
+from app.services.users import UserService
 
 pytestmark = pytest.mark.anyio
 
 
+# TODO: Rename all append all fixtures functions with: _fixture
+# this will be more clear later on what an fixture is
 @pytest.fixture
 async def user_service():
     yield UserService()
+
+
+@dataclass
+class ClientSessionWrapper:
+    client: AsyncClient = None
+    authorized_client: AsyncClient = None
+    session: AsyncSession = None
 
 
 @pytest.fixture
@@ -39,6 +53,23 @@ async def token(test_user):
 async def authorized_client(client: AsyncClient, token):
     client.cookies = {**client.cookies, "fastapiusersauth": token}
     yield client
+
+
+@pytest.fixture
+async def client_session_wrapper_fixture(
+    client: AsyncClient, authorized_client: AsyncClient, session: AsyncSession
+):
+    """
+    Fixture that combines the client and session fixtures into a single object.
+
+    Args:
+        client: The async client fixture.
+        session: The async session fixture.
+
+    Returns:
+        SessionClient: An object containing the client and session.
+    """
+    yield ClientSessionWrapper(client, authorized_client, session)
 
 
 @pytest.fixture

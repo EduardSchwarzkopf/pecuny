@@ -34,7 +34,7 @@ async def populate_db(session: AsyncSession):
 
 
 @pytest.fixture
-async def session():
+async def session() -> AsyncSession:
     await db.init()
     async with db.engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
