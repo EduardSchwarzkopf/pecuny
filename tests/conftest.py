@@ -33,8 +33,8 @@ async def populate_db(session: AsyncSession):
     await session.commit()
 
 
-@pytest.fixture
-async def session() -> AsyncSession:
+@pytest.fixture(name="session")
+async def fixture_session() -> AsyncSession:
     await db.init()
     async with db.engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -44,8 +44,9 @@ async def session() -> AsyncSession:
     yield db.session
 
 
-@pytest.fixture
-async def client(session) -> AsyncClient:
+@pytest.fixture(name="client")
+@pytest.mark.usefixtures("session")
+async def fixture_client() -> AsyncClient:
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
 
@@ -55,4 +56,4 @@ def anyio_backend():
     return "asyncio"
 
 
-from .fixtures import *
+from .fixtures import *  # pylint: disable=wildcard-import,unused-wildcard-import,wrong-import-position
