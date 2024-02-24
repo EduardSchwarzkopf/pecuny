@@ -52,8 +52,8 @@ Create new revision with:
 Use the VS Code Test Module or use the following commands
 
 run all tests with:
-`poetry run pytest  -v -x -v -s --disable-warnings`
+`poetry run pytest  -v -x -s --disable-warnings`
 
 run single test with:
-`poetry run pytest test_transactions.py::test_update_transaction -v -x -v -s`
+`poetry run pytest test_transactions.py::test_update_transaction -v -x -s`
 
