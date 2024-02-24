@@ -39,7 +39,7 @@ jobs:
         with:
           poetry-version: ${{ env.POETRY_VERSION }}
       - name: Install Dependencies
-        run: poetry install --only linter
+        run: poetry install --with linter
       - name: Run linter
         run: poetry run pylint $(git ls-files '*.py')
 
