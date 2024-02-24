@@ -32,7 +32,9 @@ async def get_category(
     return None
 
 
-# async def create_category(user: models.User, category: schemas.TransactionCategory) -> models.TransactionCategory:
+# async def create_category(
+#     user: models.User, category: schemas.TransactionCategory
+# ) -> models.TransactionCategory:
 
 #     db_category = models.TransactionCategory(user=user, **category.dict())
 #     await repo.save(db_category)
