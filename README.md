@@ -12,12 +12,12 @@ This is my learning project for various subjects:
 
 ### Prerequisites
 
-1. [poetry](https://python-poetry.org/docs/) installed
-2. python ^3.12 installed
+1. python ^3.12 installed
+2. install poetry with: `pip install -r dev-requirements.txt`
 
 ### Install packages
 
-Use `poetry` to install packages: `poetry install`
+Use `poetry` to install packages: `poetry install --with dev`
 
 ### VSCode Setup
 
@@ -52,8 +52,8 @@ Create new revision with:
 Use the VS Code Test Module or use the following commands
 
 run all tests with:
-`poetry run pytest  -v -x -v -s --disable-warnings`
+`poetry run pytest  -v -x -s --disable-warnings`
 
 run single test with:
-`poetry run pytest test_transactions.py::test_update_transaction -v -x -v -s`
+`poetry run pytest test_transactions.py::test_update_transaction -v -x -s`
 

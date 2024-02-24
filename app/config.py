@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     secret_key: str
     session_secret_key: str
     csrf_secret: str
-    algorithm: str
+    algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
     test_db_name: str = "test_db"

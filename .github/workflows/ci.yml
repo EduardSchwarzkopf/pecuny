@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_call:
+    inputs:
+      python_version:
+        description: "Python version"
+        type: string
+        required: false
+      poetry_version:
+        description: "Poetry version"
+        type: string
+        required: false
+
+env:
+  TEST_DB_NAME: test_db
+  TEST_DB_PASSWORD: postgres
+  TEST_DB_HOST: localhost
+  TEST_DB_USER: postgres
+  PYTHON_VERSION: ${{ inputs.python_version || '3.12' }}
+  POETRY_VERSION: ${{ inputs.poetry_version || '1.7.1' }}
+
+jobs:
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Run image
+        uses: abatilo/actions-poetry@v3.0.0
+        with:
+          poetry-version: ${{ env.POETRY_VERSION }}
+      - name: Install Dependencies
+        run: poetry install --only linter
+      - name: Run linter
+        run: poetry run pylint $(git ls-files '*.py')
+
+  test:
+    runs-on: ubuntu-22.04
+    services:
+      db:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_USER: ${{ env.TEST_DB_USER }}
+          POSTGRES_PASSWORD: ${{ env.TEST_DB_PASSWORD }}
+          POSTGRES_DB: ${{ env.TEST_DB_NAME }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s 
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Run image
+        uses: abatilo/actions-poetry@v3.0.0
+        with:
+          poetry-version: ${{ env.POETRY_VERSION }}
+      - name: Install Dependencies
+        run: poetry install
+      - name: Run Tests
+        run: poetry run pytest --disable-warnings -x -v
+        env:
+          ENVIRONMENT: "test"
+          DOMAIN: "http://127.0.0.1:8000"
+          SECRET_KEY: "test"
+          CSRF_SECRET: "test"
+          SESSION_SECRET_KEY: "test"
+          ACCESS_TOKEN_EXPIRE_MINUTES: 30
+          DB_NAME: ${{ env.TEST_DB_NAME }}
+          DB_PASSWORD: ${{ env.TEST_DB_PASSWORD }}
+          DB_HOST: "127.0.0.1"
+          DB_PORT: 5432
+          TEST_DB_PORT: 5432
+          DB_USER: ${{ env.TEST_DB_USER }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
