@@ -12,6 +12,22 @@ logger = get_logger(__name__)
 async def get_transaction_list(
     user: models.User, account_id: int, date_start: datetime, date_end: datetime
 ):
+    """
+    Retrieves a list of transactions within a specified period for a given account.
+
+    Args:
+        user: The user object.
+        account_id: The ID of the account.
+        date_start: The start date of the period.
+        date_end: The end date of the period.
+
+    Returns:
+        List[Transaction]: A list of transactions within the specified period.
+
+    Raises:
+        None
+    """
+
     account = await repo.get(models.Account, account_id)
     if account.user_id == user.id:
         return await repo.get_scheduled_transactions_from_period(
@@ -20,6 +36,20 @@ async def get_transaction_list(
 
 
 async def get_transaction(user: models.User, transaction_id: int) -> models.Transaction:
+    """
+    Retrieves a transaction by ID.
+
+    Args:
+        user: The user object.
+        transaction_id: The ID of the transaction to retrieve.
+
+    Returns:
+        Transaction: The retrieved transaction.
+
+    Raises:
+        None
+    """
+
     transaction = await repo.get(models.TransactionScheduled, transaction_id)
 
     if transaction is None:
@@ -35,6 +65,20 @@ async def create_scheduled_transaction(
     user: models.User,
     transaction_information: schemas.ScheduledTransactionInformationCreate,
 ) -> models.TransactionScheduled:
+    """
+    Creates a scheduled transaction.
+
+    Args:
+        user: The user object.
+        transaction_information: The information for the scheduled transaction.
+
+    Returns:
+        TransactionScheduled: The created scheduled transaction.
+
+    Raises:
+        None
+    """
+
     account = await repo.get(models.Account, transaction_information.account_id)
 
     if user.id.bytes != account.user_id.bytes:
@@ -73,6 +117,17 @@ async def create_scheduled_transaction(
 async def delete_scheduled_transaction(
     current_user: models.User, transaction_id: int
 ) -> bool:
+    """
+    Deletes a scheduled transaction.
+
+    Args:
+        current_user: The current active user.
+        transaction_id: The ID of the scheduled transaction to delete.
+
+    Returns:
+        bool: True if the scheduled transaction is successfully deleted, False otherwise.
+    """
+
     logger.info(
         "Deleting scheduled_transaction with ID %s for user %s",
         transaction_id,
