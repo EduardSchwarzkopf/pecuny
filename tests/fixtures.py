@@ -28,7 +28,7 @@ class ClientSessionWrapper:
 
 @pytest.fixture(name="test_user")
 @pytest.mark.usefixtures("session")
-async def fixture_test_user(session, user_service: UserService):
+async def fixture_test_user(user_service: UserService):
     user_list = await repo.get_all(models.User)
 
     if len(user_list) > 0:
