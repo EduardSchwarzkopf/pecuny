@@ -3,6 +3,7 @@ from fastapi import Depends, HTTPException, Request, status
 from app import schemas
 from app.services.users import UserService
 from app.utils import APIRouterExtended
+from app.utils.dataclasses_utils import CreateUserData
 
 router = APIRouterExtended(prefix="/auth", tags=["Auth"])
 
@@ -41,7 +42,7 @@ async def api_create_user(
     """
 
     user = await service.create_user(
-        user.email, user.password, user.displayname, request=request
+        CreateUserData(user.email, user.password, user.displayname), request=request
     )
 
     if user is None:
