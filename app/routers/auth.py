@@ -37,6 +37,13 @@ TEMPLATE_LOGIN = f"{TEMPLATE_PREFIX}/page_login.html"
 
 
 async def get_user_service() -> UserService:
+    """
+    Returns an instance of the UserService class.
+
+    Returns:
+        UserService: An instance of the UserService class.
+    """
+
     return UserService()
 
 
@@ -47,6 +54,18 @@ async def get_login(
     user: User = Depends(optional_current_active_verified_user),
     msg: str = "",
 ):
+    """
+    Renders the login form page.
+
+    Args:
+        request: The request object.
+        user: The current active and verified user (optional).
+        msg: A message to display on the page (optional).
+
+    Returns:
+        Union[RedirectResponse, TemplateResponse]: A redirect response to the dashboard page if the user is already logged in, or the rendered login form page.
+    """
+
     if user:
         return RedirectResponse(dashboard_router.prefix, 302)
 
@@ -73,6 +92,19 @@ async def login(
     user_manager: UserManager = Depends(get_user_manager),
     strategy: JWTStrategy = Depends(auth_backend.get_strategy),
 ):
+    """
+    Logs in the user.
+
+    Args:
+        request: The request object.
+        credentials: The OAuth2 password request form.
+        user_manager: The user manager.
+        strategy: The JWT strategy.
+
+    Returns:
+        RedirectResponse: A redirect response to the home page.
+    """
+
     user = await user_manager.authenticate(credentials)
 
     if user is None:
@@ -93,6 +125,16 @@ async def login(
 
 @router.get(path="/logout", tags=["Pages", "Authentication"])
 async def logout():
+    """
+    Logs out the user.
+
+    Args:
+        None
+
+    Returns:
+        RedirectResponse: A redirect response to the login page with the user logged out.
+    """
+
     response = RedirectResponse(LOGIN, status_code=302)
     response.delete_cookie(auth_backend.transport.cookie_name)
     return response
@@ -106,6 +148,16 @@ async def logout():
 async def get_regsiter(
     request: Request,
 ):
+    """
+    Renders the registration form page.
+
+    Args:
+        request: The request object.
+
+    Returns:
+        TemplateResponse: The rendered registration form page.
+    """
+
     return render_form_template(
         TEMPLATE_REGISTER, request, schemas.RegisterForm(request)
     )
@@ -117,6 +169,17 @@ async def register(
     request: Request,
     user_service: UserService = Depends(get_user_service),
 ):
+    """
+    Registers a new user.
+
+    Args:
+        request: The request object.
+        user_service: The user service.
+
+    Returns:
+        Union[TemplateResponse, RedirectResponse]: The rendered registration form page or a redirect response.
+    """
+
     form: schemas.RegisterForm = await schemas.RegisterForm.from_formdata(request)
 
     if not await form.validate_on_submit():
@@ -151,6 +214,18 @@ async def verify_email(
     token: str,
     user_service: UserService = Depends(get_user_service),
 ):
+    """
+    Verifies the email address associated with a user account.
+
+    Args:
+        request: The request object.
+        token: The verification token.
+        user_service: The user service.
+
+    Returns:
+        TemplateResponse: The rendered email verification page.
+    """
+
     status = await user_service.verify_email(token)
     return templates.TemplateResponse(
         f"{TEMPLATE_PREFIX}/page_email_verify.html",
@@ -164,6 +239,16 @@ async def verify_email(
 async def get_new_token(
     request: Request,
 ):
+    """
+    Renders the get new token form page.
+
+    Args:
+        request: The request object.
+
+    Returns:
+        TemplateResponse: The rendered get new token form page.
+    """
+
     return render_form_template(
         f"{TEMPLATE_PREFIX}/page_get_new_token.html",
         request,
@@ -177,6 +262,17 @@ async def send_new_token(
     request: Request,
     user_service: UserService = Depends(get_user_service),
 ):
+    """
+    Sends a new token to the user.
+
+    Args:
+        request: The request object.
+        user_service: The user service.
+
+    Returns:
+        Union[TemplateResponse, RedirectResponse]: The rendered get new token form page or a redirect response.
+    """
+
     form: schemas.GetNewTokenForm = await schemas.GetNewTokenForm.from_formdata(request)
 
     if not await form.validate_on_submit():
@@ -215,6 +311,17 @@ async def forgot_password(
     request: Request,
     user_service: UserService = Depends(get_user_service),
 ):
+    """
+    Handles the forgot password request.
+
+    Args:
+        request: The request object.
+        user_service: The user service.
+
+    Returns:
+        TemplateResponse: The rendered forgot password form page.
+    """
+
     form = await schemas.ForgotPasswordForm.from_formdata(request)
 
     if not await form.validate_on_submit():
@@ -238,6 +345,16 @@ async def forgot_password(
 async def get_forgot_password(
     request: Request,
 ):
+    """
+    Renders the forgot password form page.
+
+    Args:
+        request: The request object.
+
+    Returns:
+        TemplateResponse: The rendered forgot password form page.
+    """
+
     form: schemas.ForgotPasswordForm = schemas.ForgotPasswordForm(request)
     return render_form_template(
         f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, form
@@ -252,6 +369,17 @@ async def get_reset_password(
     request: Request,
     token: str,
 ):
+    """
+    Renders the reset password form page.
+
+    Args:
+        request: The request object.
+        token: The reset password token.
+
+    Returns:
+        TemplateResponse: The rendered reset password form page.
+    """
+
     form = schemas.ResetPasswordForm(request, token=token)
     return render_form_template(
         f"{TEMPLATE_PREFIX}/page_reset_password.html", request, form
@@ -266,6 +394,17 @@ async def reset_password(
     request: Request,
     user_service: UserService = Depends(get_user_service),
 ):
+    """
+    Resets the password for a user.
+
+    Args:
+        request: The request object.
+        user_service: The user service.
+
+    Returns:
+        Union[TemplateResponse, RedirectResponse]: The rendered reset password form page or a redirect response.
+    """
+
     form: schemas.ResetPasswordForm = await schemas.ResetPasswordForm.from_formdata(
         request
     )
