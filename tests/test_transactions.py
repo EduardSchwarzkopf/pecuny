@@ -6,7 +6,7 @@ from fastapi import status
 from app import models
 from app import repository as repo
 from app import schemas
-from tests.fixtures import ClientSessionWrapper
+from app.utils.dataclasses_utils import ClientSessionWrapper
 
 #
 # use with: pytest --disable-warnings -v -x
