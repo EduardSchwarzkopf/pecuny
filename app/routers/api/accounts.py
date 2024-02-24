@@ -16,6 +16,16 @@ response_model = schemas.AccountData
 
 @router.get("/", response_model=List[response_model])
 async def api_get_accounts(current_user: User = Depends(current_active_user)):
+    """
+    Retrieves a list of accounts.
+
+    Args:
+        current_user: The current active user.
+
+    Returns:
+        List[response_model]: A list of account information.
+    """
+
     return await service.get_accounts(current_user)
 
 
@@ -23,6 +33,20 @@ async def api_get_accounts(current_user: User = Depends(current_active_user)):
 async def api_get_account(
     account_id: int, current_user: User = Depends(current_active_user)
 ):
+    """
+    Retrieves an account by ID.
+
+    Args:
+        account_id: The ID of the account.
+        current_user: The current active user.
+
+    Returns:
+        ResponseModel: The retrieved account information.
+
+    Raises:
+        HTTPException: If the account is not found.
+    """
+
     account = await service.get_account(current_user, account_id)
 
     if account is None:
@@ -35,6 +59,17 @@ async def api_get_account(
 async def api_create_account(
     account: schemas.Account, current_user: User = Depends(current_active_user)
 ):
+    """
+    Creates a new account.
+
+    Args:
+        account: The account information.
+        current_user: The current active user.
+
+    Returns:
+        ResponseModel: The created account information.
+    """
+
     account = await tm.transaction(service.create_account, current_user, account)
     return account
 
@@ -45,6 +80,18 @@ async def api_update_account(
     account_data: schemas.AccountUpdate,
     current_user: User = Depends(current_active_user),
 ):
+    """
+    Updates an account.
+
+    Args:
+        account_id: The ID of the account.
+        account_data: The updated account data.
+        current_user: The current active user.
+
+    Returns:
+        ResponseModel: The updated account information.
+    """
+
     return await tm.transaction(
         service.update_account, current_user, account_id, account_data
     )
@@ -54,6 +101,20 @@ async def api_update_account(
 async def api_delete_account(
     account_id: int, current_user: User = Depends(current_active_user)
 ):
+    """
+    Deletes an account.
+
+    Args:
+        account_id: The ID of the account.
+        current_user: The current active user.
+
+    Returns:
+        None
+
+    Raises:
+        HTTPException: If the account is not found.
+    """
+
     result = await tm.transaction(service.delete_account, current_user, account_id)
     if result:
         return None
