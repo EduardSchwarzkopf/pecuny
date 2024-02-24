@@ -33,10 +33,10 @@ async def fixture_test_user(user_service: UserService):
 
     if len(user_list) > 0:
         return user_list[0]
-    else:
-        return await user_service.create_user(
-            "hello123@pytest.de", "password123", is_verified=True
-        )
+
+    return await user_service.create_user(
+        "hello123@pytest.de", "password123", is_verified=True
+    )
 
 
 @pytest.fixture(name="token")
