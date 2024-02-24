@@ -36,6 +36,20 @@ async def test_create_transaction(
     reference,
     category_id,
 ):
+    """
+    Tests the create transaction functionality.
+
+    Args:
+        client_session_wrapper_fixture: The client session wrapper fixture.
+        amount: The amount of the transaction.
+        expected_amount: The expected amount of the transaction.
+        reference: The reference of the transaction.
+        category_id: The ID of the category.
+
+    Returns:
+        None
+    """
+
     async with client_session_wrapper_fixture.session:
         account = await repo.get(models.Account, ACCOUNT_ID)
 
@@ -86,6 +100,19 @@ async def test_updated_transaction(
     category_id,
     amount,
 ):
+    """
+    Tests the updated transaction functionality.
+
+    Args:
+        client_session_wrapper_fixture: The client session wrapper fixture.
+        transaction_id: The ID of the transaction.
+        category_id: The ID of the category.
+        amount: The amount of the transaction.
+
+    Returns:
+        None
+    """
+
     reference = f"Updated Val {amount}"
 
     json = {
@@ -134,6 +161,17 @@ async def test_delete_transaction(
     client_session_wrapper_fixture: ClientSessionWrapper,
     transaction_id,
 ):
+    """
+    Tests the delete transaction functionality.
+
+    Args:
+        client_session_wrapper_fixture: The client session wrapper fixture.
+        transaction_id: The ID of the transaction.
+
+    Returns:
+        None
+    """
+
     async with client_session_wrapper_fixture.session:
         account = await repo.get(models.Account, ACCOUNT_ID)
         await repo.refresh(account)  # session not updated, so we need to refresh first
@@ -164,6 +202,17 @@ async def test_delete_transaction_fail(
     client_session_wrapper_fixture: ClientSessionWrapper,
     transaction_id,
 ):
+    """
+    Tests the delete transaction functionality, which should fail.
+
+    Args:
+        client_session_wrapper_fixture: The client session wrapper fixture.
+        transaction_id: The ID of the transaction.
+
+    Returns:
+        None
+    """
+
     async with client_session_wrapper_fixture.session:
         account = await repo.get(models.Account, ACCOUNT_ID)
         await repo.refresh(account)  # session not updated, so we need to refresh first
@@ -199,6 +248,20 @@ async def test_create_offset_transaction(
     reference,
     category_id,
 ):
+    """
+    Tests the create offset transaction functionality.
+
+    Args:
+        client_session_wrapper_fixture: The client session wrapper fixture.
+        amount: The amount of the transaction.
+        expected_offset_amount: The expected amount of the offset transaction.
+        reference: The reference of the transaction.
+        category_id: The ID of the category.
+
+    Returns:
+        None
+    """
+
     async with client_session_wrapper_fixture.session:
         res = await client_session_wrapper_fixture.authorized_client.post(
             ENDPOINT,
@@ -252,6 +315,19 @@ async def test_create_offset_transaction_other_account_fail(
     offset_account_id,
     amount,
 ):
+    """
+    Tests the create offset transaction functionality with a different account,
+    which should fail.
+
+    Args:
+        client_session_wrapper_fixture: The client session wrapper fixture.
+        offset_account_id: The ID of the offset account.
+        amount: The amount of the transaction.
+
+    Returns:
+        None
+    """
+
     async with client_session_wrapper_fixture.session:
         account = await repo.get(models.Account, ACCOUNT_ID)
         offset_account = await repo.get(models.Account, offset_account_id)
@@ -301,6 +377,18 @@ async def test_updated_offset_transaction(
     category_id,
     amount,
 ):
+    """
+    Tests the updated offset transaction functionality.
+
+    Args:
+        client_session_wrapper_fixture: The client session wrapper fixture.
+        category_id: The ID of the category.
+        amount: The amount of the transaction.
+
+    Returns:
+        None
+    """
+
     async with client_session_wrapper_fixture.session:
         account = await repo.get(models.Account, ACCOUNT_ID)
         offset_account = await repo.get(models.Account, OFFSET_ACCOUNT_ID)
@@ -367,6 +455,18 @@ async def test_delete_offset_transaction(
     category_id,
     amount,
 ):
+    """
+    Tests the delete offset transaction functionality.
+
+    Args:
+        client_session_wrapper_fixture: The client session wrapper fixture.
+        category_id: The ID of the category.
+        amount: The amount of the transaction.
+
+    Returns:
+        None
+    """
+
     async with client_session_wrapper_fixture.session:
         account = await repo.get(models.Account, ACCOUNT_ID)
         offset_account = await repo.get(models.Account, OFFSET_ACCOUNT_ID)
