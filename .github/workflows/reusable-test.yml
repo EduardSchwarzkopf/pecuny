@@ -46,7 +46,6 @@ jobs:
           SECRET_KEY: "test"
           CSRF_SECRET: "test"
           SESSION_SECRET_KEY: "test"
-          ALGORITHM: ${{ secrets.ALGORITHM }}
           ACCESS_TOKEN_EXPIRE_MINUTES: 30
           DB_NAME: ${{ env.TEST_DB_NAME }}
           DB_PASSWORD: ${{ env.TEST_DB_PASSWORD }}
