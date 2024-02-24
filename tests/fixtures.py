@@ -14,7 +14,7 @@ from app.services.users import UserService
 
 # TODO: Rename all append all fixtures functions with: _fixture
 # this will be more clear later on what an fixture is
-@pytest.fixture(name="aaaaa")
+@pytest.fixture(name="user_service")
 async def fixture_user_service():
     """
     Fixture that provides a user service.
