@@ -6,6 +6,7 @@ from app import repository as repo
 from app.auth_manager import UserManager
 from app.logger import get_logger
 from app.schemas import EmailStr, UserCreate, UserUpdate
+from app.utils.dataclasses_utils import CreateUserData
 from app.utils.displayname_generator import generate_displayname
 from app.utils.enums import EmailVerificationStatus
 from app.utils.exceptions import UserAlreadyExistsException, UserNotFoundException
@@ -87,29 +88,24 @@ class UserService:
 
     async def create_user(
         self,
-        email: str,
-        password: str,
-        displayname: str = "",
-        is_verified: bool = False,
-        is_superuser: bool = False,
+        user_data: CreateUserData,
         request: Request = None,
     ) -> bool:
         """
         Creates a new user.
 
         Args:
-            email: The email of the user.
-            password: The password of the user.
-            displayname: The display name of the user.
-            is_verified: Whether the user is verified or not.
-            is_superuser: Whether the user is a superuser or not.
+            user_data: The data for creating a new user.
             request: The request object.
 
         Returns:
             bool: True if the user is successfully created, False otherwise.
+
+        Raises:
+            None
         """
 
-        logger.info("Creating new user with email %s", email)
+        logger.info("Creating new user with email %s", user_data.email)
 
         if not displayname:
             displayname = generate_displayname()
@@ -117,16 +113,16 @@ class UserService:
         try:
             return await self.user_manager.create(
                 UserCreate(
-                    email=email,
+                    email=user_data.email,
                     displayname=displayname,
-                    password=password,
-                    is_superuser=is_superuser,
-                    is_verified=is_verified,
+                    password=user_data.password,
+                    is_superuser=user_data.is_superuser,
+                    is_verified=user_data.is_verified,
                 ),
                 request=request,
             )
         except exceptions.UserAlreadyExists:
-            logger.warning("User with email %s already exists", email)
+            logger.warning("User with email %s already exists", user_data.email)
             return None
 
     async def validate_new_user(self, email):
