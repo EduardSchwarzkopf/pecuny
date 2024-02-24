@@ -1,9 +1,10 @@
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
-from app.schemas import EmailSchema
 from starlette.responses import JSONResponse
+
 from app.config import settings
-from app.models import User
 from app.logger import get_logger
+from app.models import User
+from app.schemas import EmailSchema
 
 log = get_logger(__name__)
 
