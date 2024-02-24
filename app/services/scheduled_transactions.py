@@ -152,7 +152,6 @@ async def delete_scheduled_transaction(
 
     account = await repo.get(models.Account, transaction.account_id)
     if current_user.id != account.user_id:
-        logger.warning(ACCOUNT_USER_ID_MISMATCH)
         return
 
     await repo.delete(transaction)
