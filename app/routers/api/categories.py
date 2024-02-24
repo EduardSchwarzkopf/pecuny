@@ -15,6 +15,20 @@ ResponseModel = schemas.CategoryData
 
 @router.get("/", response_model=List[ResponseModel])
 async def api_get_categories(current_user: User = Depends(current_active_user)):
+    """
+    Retrieves a category by ID.
+
+    Args:
+        category_id: The ID of the category.
+        current_user: The current active user.
+
+    Returns:
+        ResponseModel: The retrieved category information.
+
+    Raises:
+        HTTPException: If the category is not found.
+    """
+
     return await service.get_categories(current_user)
 
 
@@ -22,6 +36,20 @@ async def api_get_categories(current_user: User = Depends(current_active_user)):
 async def api_get_category(
     category_id: int, current_user: User = Depends(current_active_user)
 ):
+    """
+    Retrieves a category by ID.
+
+    Args:
+        category_id: The ID of the category.
+        current_user: The current active user.
+
+    Returns:
+        ResponseModel: The retrieved category information.
+
+    Raises:
+        HTTPException: If the category is not found.
+    """
+
     category = await service.get_category(current_user, category_id)
 
     if category is None:
