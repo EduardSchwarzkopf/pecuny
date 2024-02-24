@@ -14,21 +14,74 @@ logger = get_logger(__name__)
 
 
 class UserService:
+    """
+    Provides user-related services.
+
+    Methods:
+    - delete_self: Deletes the current user.
+    - update_user: Updates a user.
+    - create_user: Creates a new user.
+    - validate_new_user: Validates a new user.
+    - verify_email: Verifies an email address.
+    - forgot_password: Handles the forgot password process.
+    - reset_password: Resets a user's password.
+    """
+
     def __init__(self):
+        """
+        Initializes the UserService.
+
+        Args:
+            self: The UserService instance.
+
+        Returns:
+            None
+        """
+
         self.user_manager = self._get_user_manager()
 
     def _get_user_manager(self):
+        """
+        Gets the user manager.
+
+        Args:
+            self: The UserService instance.
+
+        Returns:
+            UserManager: The user manager instance.
+        """
+
         user_db = database.SQLAlchemyUserDatabase(
             database.db.session, models.User, models.OAuthAccount
         )
         return UserManager(user_db)
 
     async def delete_self(self, current_user: models.User) -> bool:
+        """
+        Deletes the user.
+
+        Args:
+            current_user: The current user object.
+
+        Returns:
+            bool: True if the user is successfully deleted, False otherwise.
+        """
+
         logger.info("Deleting user %s", current_user.id)
         await repo.delete(current_user)
         return True
 
     async def update_user(self, user: models.User) -> bool:
+        """
+        Updates a user.
+
+        Args:
+            user: The user object.
+
+        Returns:
+            bool: True if the user is successfully updated, False otherwise.
+        """
+
         logger.info("Updating user %s", user.id)
         return await self.user_manager.update(UserUpdate(), user)
 
@@ -41,6 +94,21 @@ class UserService:
         is_superuser: bool = False,
         request: Request = None,
     ) -> bool:
+        """
+        Creates a new user.
+
+        Args:
+            email: The email of the user.
+            password: The password of the user.
+            displayname: The display name of the user.
+            is_verified: Whether the user is verified or not.
+            is_superuser: Whether the user is a superuser or not.
+            request: The request object.
+
+        Returns:
+            bool: True if the user is successfully created, False otherwise.
+        """
+
         logger.info("Creating new user with email %s", email)
 
         if not displayname:
@@ -62,6 +130,19 @@ class UserService:
             return None
 
     async def validate_new_user(self, email):
+        """
+        Validates a new user with the given email.
+
+        Args:
+            email: The email of the user.
+
+        Returns:
+            None
+
+        Raises:
+            UserAlreadyExistsException: If a user with the given email already exists.
+        """
+
         logger.info("Validating new user with email %s", email)
         try:
             existing_user = await self.user_manager.get_by_email(email)
@@ -73,6 +154,19 @@ class UserService:
             raise UserAlreadyExistsException()
 
     async def verify_email(self, token: str) -> EmailVerificationStatus:
+        """
+        Verifies an email with the given token.
+
+        Args:
+            token: The verification token.
+
+        Returns:
+            EmailVerificationStatus: The status of the email verification.
+
+        Raises:
+            None
+        """
+
         logger.info("Verifying email with token %s", token)
         try:
             await self.user_manager.verify(token)
@@ -85,6 +179,19 @@ class UserService:
             return EmailVerificationStatus.ALREADY_VERIFIED
 
     async def forgot_password(self, email: EmailStr) -> None:
+        """
+        Processes the forgot password request for the given email.
+
+        Args:
+            email: The email address of the user.
+
+        Returns:
+            None
+
+        Raises:
+            UserNotFoundException: If no user is found with the given email.
+        """
+
         logger.info("Processing forgot password for email %s", email)
         try:
             existing_user = await self.user_manager.get_by_email(email)
@@ -97,6 +204,22 @@ class UserService:
             raise UserNotFoundException from e
 
     async def reset_password(self, password: str, token: str) -> bool:
+        """
+        Resets the password with the given token.
+
+        Args:
+            password: The new password.
+            token: The reset password token.
+
+        Returns:
+            bool: True if the password is successfully reset, False otherwise.
+
+        Raises:
+            InvalidResetPasswordToken: If the reset password token is invalid.
+            UserInactive: If the user is inactive.
+            InvalidPasswordException: If the password is invalid.
+        """
+
         logger.info("Resetting password with token %s", token)
         try:
             await self.user_manager.reset_password(token, password)
