@@ -13,6 +13,13 @@ HEALTH_ID = 12
 
 
 def get_category_list():
+    """
+    Returns a list of all available expense categories.
+
+    Returns:
+        List[Dict[str, Union[str, int]]]: A list of dictionaries representing the expense categories. Each dictionary contains the label and section_id of a category.
+    """
+
     education_cats = [
         {"label": "Course fees", "section_id": EDUCATION_ID},
         {"label": "School fees", "section_id": EDUCATION_ID},
@@ -153,6 +160,13 @@ def get_category_list():
 
 
 def get_section_list():
+    """
+    Returns a list of all available expense sections.
+
+    Returns:
+        List[Dict[str, Union[str, int]]]: A list of dictionaries representing the expense sections. Each dictionary contains the id and label of a section.
+    """
+
     return [
         {"id": INCOME_ID, "label": "Income"},
         {"id": WORK_ID, "label": "Work"},
