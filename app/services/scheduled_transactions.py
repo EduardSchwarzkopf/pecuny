@@ -5,7 +5,6 @@ from app import repository as repo
 from app import schemas
 from app.logger import get_logger
 from app.utils.exceptions import AccessDeniedError
-from app.utils.log_messages import ACCOUNT_USER_ID_MISMATCH
 
 logger = get_logger(__name__)
 
