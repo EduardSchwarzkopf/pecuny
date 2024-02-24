@@ -12,10 +12,10 @@ from app.services import transactions as service
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(prefix="/transactions", tags=["Transactions"])
-response_model = schemas.Transaction
+ResponseModel = schemas.Transaction
 
 
-@router.get("/", response_model=List[response_model])
+@router.get("/", response_model=List[ResponseModel])
 async def api_get_transactions(
     account_id: int,
     date_start: datetime,
@@ -27,7 +27,7 @@ async def api_get_transactions(
     )
 
 
-@router.get("/{transaction_id}", response_model=response_model)
+@router.get("/{transaction_id}", response_model=ResponseModel)
 async def api_get_transaction(
     transaction_id: int,
     current_user: User = Depends(current_active_user),
@@ -44,7 +44,7 @@ async def api_get_transaction(
     )
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=ResponseModel)
 async def api_create_transaction(
     transaction_information: schemas.TransactionInformationCreate,
     current_user: User = Depends(current_active_user),
@@ -61,7 +61,7 @@ async def api_create_transaction(
     )
 
 
-@router.post("/{transaction_id}", response_model=response_model)
+@router.post("/{transaction_id}", response_model=ResponseModel)
 async def api_update_transaction(
     transaction_id: int,
     transaction_information: schemas.TransactionInformtionUpdate,
