@@ -107,7 +107,7 @@ class UserService:
 
         logger.info("Creating new user with email %s", user_data.email)
 
-        if not displayname:
+        if not user_data.displayname:
             displayname = generate_displayname()
 
         try:
