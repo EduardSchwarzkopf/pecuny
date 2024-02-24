@@ -1,7 +1,10 @@
 from typing import List
-from app import models, schemas, repository as repo
-from app.logger import get_logger
+
+from app import models
+from app import repository as repo
+from app import schemas
 from app.config import settings
+from app.logger import get_logger
 
 logger = get_logger(__name__)
 
