@@ -12,8 +12,6 @@ from app.oauth2 import create_access_token
 from app.services.users import UserService
 
 
-# TODO: Rename all append all fixtures functions with: _fixture
-# this will be more clear later on what an fixture is
 @pytest.fixture(name="user_service")
 async def fixture_user_service():
     """
