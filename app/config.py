@@ -1,3 +1,5 @@
+from typing import Union
+
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
@@ -23,28 +25,28 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
 
     test_db_name: str = "test_db"
-    test_db_port: int = 5433
+    test_db_port: Union[int, str] = 5433
     test_db_url: str = ""
 
     mail_username: str
     mail_password: str
     mail_from: str
-    mail_port: int = 465
+    mail_port: Union[int, str] = 465
     mail_server: str
 
 
-# TODO: add lru_cache: https://fastapi.tiangolo.com/advanced/settings/ # pylint: disable=fixme
+# TODO: add lru_cache: https://fastapi.tiangolo.com/advanced/settings/ # pylint : disable=fixme
 settings = Settings()
 
 setattr(
     settings,
     "db_url",
-    f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}",  # pylint: disable=line-too-long
+    f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}",  # pylUnion[int, str] : disable=line-too-long
 )
 
 
 setattr(
     settings,
     "test_db_url",
-    f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.test_db_port}/{settings.test_db_name}",  # pylint: disable=line-too-long
+    f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.test_db_port}/{settings.test_db_name}",  # pylUnion[int, str] : disable=line-too-long
 )
