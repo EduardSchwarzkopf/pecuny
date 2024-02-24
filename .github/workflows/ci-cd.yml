@@ -17,7 +17,7 @@ jobs:
     needs: [ci]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4.1.1
       - name: build docker image
         run: docker build --tag=${{ env.IMAGE }} .
       - name: login to container registry
@@ -36,7 +36,7 @@ jobs:
       CONTAINER: pecuny
       SSH_CMD: ssh -o "StrictHostKeyChecking=no"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4.1.1
       - name: create ssh dir
         run: mkdir --parents ~/.ssh
       - name: create ssh key
