@@ -1,5 +1,7 @@
 from typing import List
-from app import models, schemas, repository as repo
+
+from app import models
+from app import repository as repo
 from app.logger import get_logger
 
 # Create a custom logger
