@@ -29,7 +29,8 @@ async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONRes
 
     if recipients is None:
         raise ValueError(
-            f"Email key is missing from the email model dump - [email_dump]: {email_dump}"
+            "Email key is missing from the email model dump - [email_dump]: %s",
+            email_dump,
         )
 
     message = MessageSchema(
@@ -42,11 +43,13 @@ async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONRes
     fm = FastMail(conf)
     try:
         await fm.send_message(message, template_name=template_name)
-        log.info(f"Email has been sent to {email.model_dump().get('email')}")
+        log.info("Email has been sent to %s", email.model_dump().get("email"))
         return JSONResponse(status_code=200, content={"message": "email has been sent"})
     except Exception as e:
         log.error(
-            f"Email could not be sent to {email.model_dump().get('email')} due to {e}"
+            "Email could not be sent to %s due to %s",
+            email.model_dump().get("email"),
+            e,
         )
         raise
 
@@ -56,7 +59,7 @@ async def send_welcome(user: User, token: str) -> JSONResponse:
         email=[user.email],
         body={"user": user, "url": settings.domain, "token": token},
     )
-    log.info(f"Sending welcome email to {user.email}")
+    log.info("Sending welcome email to %s", user.email)
     return await _send(email, "Welcome! 🎉", template_name="emails/welcome.html")
 
 
@@ -66,7 +69,7 @@ async def send_forgot_password(user: User, token: str) -> JSONResponse:
         body={"user": user, "url": settings.domain, "token": token},
     )
 
-    log.info(f"Sending forgot password email to {user.email}")
+    log.info("Sending forgot password email to %s", user.email)
     return await _send(
         email, "Reset Password Request", template_name="emails/forgot-password.html"
     )
@@ -77,7 +80,7 @@ async def send_new_token(user: User, token: str) -> JSONResponse:
         email=[user.email],
         body={"user": user, "url": settings.domain, "token": token},
     )
-    log.info(f"Sending new token email to {user.email}")
+    log.info("Sending new token email to %s", user.email)
     return await _send(
         email, "Your verification Token!", template_name="emails/new-token.html"
     )
