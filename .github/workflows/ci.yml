@@ -7,63 +7,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - name: Run image
-        uses: abatilo/actions-poetry@v3.0.0
-        with:
-          poetry-version: ${{ env.POETRY_VERSION }}
-      - name: Run linter
-        run: poetry run pylint $(git ls-files '*.py')
+    uses: ./.github/workflows/reusable-lint.yml
 
   test:
-    runs-on: ubuntu-22.04
-    services:
-      db:
-        image: postgres:14-alpine
-        env:
-          POSTGRES_USER: ${{ inputs.TEST_DB_USER }}
-          POSTGRES_PASSWORD: ${{ inputs.TEST_DB_PASSWORD }}
-          POSTGRES_DB: ${{ inputs.TEST_DB_NAME }}
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s 
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - name: Run image
-        uses: abatilo/actions-poetry@v3.0.0
-        with:
-          poetry-version: ${{ env.POETRY_VERSION }}
-      - name: Run Tests
-        run: poetry run pytest --disable-warnings -x -v
-        env:
-          ENVIRONMENT: "test"
-          DOMAIN: "http://127.0.0.1:8000"
-          SECRET_KEY: "test"
-          CSRF_SECRET: "test"
-          SESSION_SECRET_KEY: "test"
-          ALGORITHM: ${{ secrets.ALGORITHM }}
-          ACCESS_TOKEN_EXPIRE_MINUTES: 30
-          DB_NAME: ${{ inputs.TEST_DB_NAME }}
-          DB_PASSWORD: ${{ inputs.TEST_DB_PASSWORD }}
-          DB_HOST: "127.0.0.1"
-          DB_PORT: 5432
-          TEST_DB_PORT: 5432
-          DB_USER: ${{ inputs.TEST_DB_USER }}
-          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
-          MAIL_FROM: ${{ secrets.MAIL_FROM }}
-          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
-          MAIL_PORT: ${{ secrets.MAIL_PORT }}
-          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+    uses: ./.github/workflows/reusable-test.yml
