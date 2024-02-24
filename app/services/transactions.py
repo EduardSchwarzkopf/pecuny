@@ -4,6 +4,7 @@ from app import models
 from app import repository as repo
 from app import schemas
 from app.logger import get_logger
+from app.utils.exceptions import AccessDeniedError
 from app.utils.log_messages import ACCOUNT_USER_ID_MISMATCH
 
 logger = get_logger(__name__)
@@ -118,8 +119,11 @@ async def create_transaction(
                 user.id,
                 transaction_information.offset_account_id,
             )
-            raise Exception(
-                f"User[id: {user.id}] not allowed to access offset_account[id: {transaction_information.offset_account_id}]"
+            raise AccessDeniedError(
+                (
+                    f"User[id: {user.id}] not allowed to access "
+                    f"offset_account[id: {transaction_information.offset_account_id}]"
+                )
             )
 
         transaction.offset_transaction = offset_transaction
