@@ -253,26 +253,6 @@ async def get_forgot_password(
     )
 
 
-@csrf_protect
-@router.post(
-    FORGOT_PASSWORD,
-)
-async def forgot_password(
-    request: Request,
-    user_service: UserService = Depends(get_user_service),
-):
-    form = await schemas.ForgotPasswordForm.from_formdata(request)
-
-    if not await form.validate_on_submit():
-        return render_form_template(
-            f"{TEMPLATE_PREFIX}/page_forgot_password.html", request, form
-        )
-
-    await user_service.forgot_password(form.email.data)
-    return render_form_template(
-        f"{TEMPLATE_PREFIX}/page_request_reset.html", request, form
-    )
-
 
 @router.get(
     path=RESET_PASSWORD,
