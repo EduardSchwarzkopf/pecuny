@@ -102,7 +102,9 @@ async def create_scheduled_transaction(
             )
 
     db_transaction_information = models.TransactionInformation()
-    db_transaction_information.add_attributes_from_dict(transaction_information.dict())
+    db_transaction_information.add_attributes_from_dict(
+        transaction_information.model_dump()
+    )
 
     transaction = models.TransactionScheduled(
         frequency_id=transaction_information.frequency_id,
