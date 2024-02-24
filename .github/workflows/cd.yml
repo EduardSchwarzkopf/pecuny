@@ -13,6 +13,7 @@ jobs:
     uses: ./.github/workflows/reusable-lint.yml
 
   test:
+    secrets: inherit
     uses: ./.github/workflows/reusable-test.yml
 
   build-and-publish:
