@@ -1,7 +1,7 @@
 import pytest
 
 from app import schemas
-from tests.fixtures import ClientSessionWrapper
+from app.utils.dataclasses_utils import ClientSessionWrapper
 
 pytestmark = pytest.mark.anyio
 ENDPOINT = "/api/accounts/"
