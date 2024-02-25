@@ -1,3 +1,4 @@
+import asyncio
 from typing import List
 
 from fastapi import Response
@@ -52,7 +53,9 @@ async def make_http_request(
 
 
 async def fixture_cleanup(session: AsyncSession, object_list: List[ModelT]) -> None:
-    for object in object_list:
-        session.delete(object)
+
+    delete_task = [session.delete(object) for object in object_list]
+
+    await asyncio.gather(*delete_task)
 
     await session.commit()
