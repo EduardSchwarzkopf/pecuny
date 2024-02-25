@@ -12,3 +12,10 @@ class FeedbackType(Enum):
     SUCCESS = "success"
     INFO = "info"
     WARNING = "warning"
+
+
+class RequestMethod(Enum):
+    GET = "get"
+    POST = "post"
+    PATCH = "patch"
+    DELETE = "delete"
