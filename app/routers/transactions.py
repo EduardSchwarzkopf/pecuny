@@ -323,7 +323,7 @@ async def page_update_transaction_post(
                 "account_id": account_id,
                 "transaction_id": transaction.id,
                 "action_url": router.url_path_for(
-                    "page_update_transaction",
+                    "page_update_transaction_get",
                     account_id=account_id,
                     transaction_id=transaction.id,
                 ),
