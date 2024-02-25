@@ -31,7 +31,7 @@ Set the correct env in VS Code with:
 ### Starting backend 
 
 Database
-`docker compose up --profile dev -d `
+`docker compose up -d `
 
 FastAPI in docker
 `docker run --name=pecuny --rm -dp 8000:8000 --env-file .env pecuny`
