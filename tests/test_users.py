@@ -6,6 +6,7 @@ from app import repository as repo
 from app import schemas
 from app.config import settings
 from app.utils.dataclasses_utils import ClientSessionWrapper
+from tests.helpers import make_http_request
 
 SUCCESS_LOGIN_STATUS_CODE = 204
 ENDPOINT = "/api/auth"
@@ -38,15 +39,15 @@ async def test_create_user(
         None
     """
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.client.post(
-            f"{ENDPOINT}/register",
-            json={
-                "email": username,
-                "password": password,
-                "displayname": displayname,
-            },
-        )
+    res = await make_http_request(
+        client_session_wrapper,
+        f"{ENDPOINT}/register",
+        {
+            "email": username,
+            "password": password,
+            "displayname": displayname,
+        },
+    )
     assert res.status_code == 201
 
     new_user = schemas.UserRead(**res.json())
@@ -76,15 +77,15 @@ async def test_invalid_create_user(
         None
     """
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.client.post(
-            f"{ENDPOINT}/register",
-            json={
-                "email": "hello123@pytest.de",
-                "password": "testpassword",
-                "displayname": "John",
-            },
-        )
+    res = await make_http_request(
+        client_session_wrapper,
+        f"{ENDPOINT}/register",
+        {
+            "email": "hello123@pytest.de",
+            "password": "testpassword",
+            "displayname": "John",
+        },
+    )
 
     assert res.status_code == 400
 
@@ -117,15 +118,15 @@ async def test_login(
         None
     """
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.client.post(
-            f"{ENDPOINT}/login",
-            data={
-                "username": username,
-                "displayname": displayname,
-                "password": password,
-            },
-        )
+    res = await make_http_request(
+        client_session_wrapper,
+        f"{ENDPOINT}/login",
+        {
+            "username": username,
+            "displayname": displayname,
+            "password": password,
+        },
+    )
 
     cookie = res.cookies.get("fastapiusersauth")
     payload = jwt.decode(
@@ -169,10 +170,11 @@ async def test_invalid_login(
         None
     """
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.client.post(
-            f"{ENDPOINT}/login", data={"username": username, "password": password}
-        )
+    res = await make_http_request(
+        client_session_wrapper,
+        f"{ENDPOINT}/login",
+        {"username": username, "password": password},
+    )
 
     assert res.status_code == status_code
 
@@ -202,24 +204,23 @@ async def test_updated_user(client_session_wrapper: ClientSessionWrapper, values
         None
     """
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.authorized_client.patch(
-            "/api/users/me", json=values
-        )
+    res = await make_http_request(
+        client_session_wrapper, "/api/users/me", values, "patch"
+    )
 
-        assert res.status_code == 200
-        user = schemas.UserRead(**res.json())
+    assert res.status_code == 200
+    user = schemas.UserRead(**res.json())
 
-        for key, value in values.items():
-            if key == "password":
-                login_res = await client_session_wrapper.authorized_client.post(
-                    f"{ENDPOINT}/login",
-                    data={"username": user.email, "password": value},
-                )
-                assert login_res.status_code == SUCCESS_LOGIN_STATUS_CODE
-                continue
+    for key, value in values.items():
+        if key == "password":
+            login_res = await make_http_request(
+                f"{ENDPOINT}/login",
+                {"username": user.email, "password": value},
+            )
+            assert login_res.status_code == SUCCESS_LOGIN_STATUS_CODE
+            continue
 
-            assert getattr(user, key) == value
+        assert getattr(user, key) == value
 
 
 @pytest.mark.parametrize(
