@@ -11,8 +11,6 @@ from tests.helpers import make_http_request
 
 ENDPOINT = "/api/transactions/"
 STATUS_CODE = status.HTTP_201_CREATED
-ACCOUNT_ID = 1
-OFFSET_ACCOUNT_ID = 5
 
 
 @pytest.mark.parametrize(
@@ -64,11 +62,8 @@ async def test_create_transaction(
 
     new_transaction = schemas.Transaction(**res.json())
 
-    # get recent data
-    account = await repo.get(models.Account, test_account.id)
-
     assert res.status_code == status.HTTP_201_CREATED
-    assert account_balance + amount == account.balance
+    assert account_balance + amount == test_account.balance
     assert new_transaction.account_id == test_account.id
     assert new_transaction.information.amount == expected_amount
     assert isinstance(new_transaction.information.amount, float)
@@ -76,24 +71,24 @@ async def test_create_transaction(
 
 
 @pytest.mark.parametrize(
-    "transaction_id, category_id, amount",
+    "category_id, amount",
     [
-        (1, 1, 2.5),
-        (2, 1, 0),
-        (1, 2, 3.666666666667),
-        (2, 3, 0.133333333334),
-        (2, 4, -25),
-        (1, 1, -35),
-        (1, 1, -0.3333333334),
-        (1, 7, 0),
+        (1, 2.5),
+        (1, 0),
+        (2, 3.666666666667),
+        (3, 0.133333333334),
+        (4, -25),
+        (1, -35),
+        (1, -0.3333333334),
+        (7, 0),
     ],
 )
 @pytest.mark.usefixtures("test_transactions")
 async def test_updated_transaction(
     client_session_wrapper: ClientSessionWrapper,
-    transaction_id,
     category_id,
     amount,
+    test_account,
 ):
     """
     Tests the updated transaction functionality.
@@ -111,34 +106,37 @@ async def test_updated_transaction(
     reference = f"Updated Val {amount}"
 
     json = {
-        "account_id": ACCOUNT_ID,
+        "account_id": test_account.id,
         "amount": amount,
         "reference": f"Updated Val {amount}",
         "date": str(datetime.datetime.now(datetime.timezone.utc)),
         "category_id": category_id,
     }
 
-    async with client_session_wrapper.session:
-        account = await repo.get(models.Account, ACCOUNT_ID)
-        account_balance = account.balance
+    account_balance = test_account.balance
 
-        transaction_before = await repo.get(models.Transaction, transaction_id)
-        transaction_amount_before = transaction_before.information.amount
+    transaction_list = await repo.filter_by(
+        models.Transaction, "account_id", test_account.id
+    )
 
-        res = await client_session_wrapper.authorized_client.post(
-            f"{ENDPOINT}{transaction_id}", json=json
-        )
+    transaction = transaction_list[0]
+    transaction_amount_before = transaction.information.amount
 
-        assert res.status_code == status.HTTP_200_OK
-        await repo.refresh(account)
+    res = await make_http_request(
+        client_session_wrapper.session,
+        client_session_wrapper.authorized_client,
+        f"{ENDPOINT}{transaction.id}",
+        json=json,
+    )
 
-    account_balance_after = account.balance
-
+    assert res.status_code == status.HTTP_200_OK
     transaction = schemas.Transaction(**res.json())
+
+    updated_test_account = await repo.get(models.Account, test_account.id)
 
     difference = transaction_amount_before - amount
 
-    assert account_balance_after == round(account_balance - difference, 2)
+    assert updated_test_account.balance == round(account_balance - difference, 2)
     assert transaction.information.amount == round(amount, 2)
     assert transaction.information.reference == reference
     assert transaction.information.category_id == category_id
