@@ -13,9 +13,6 @@ engine = create_async_engine(settings.test_db_url)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
-pytestmark = pytest.mark.anyio
-
-
 async def populate_db(session: AsyncSession):
     """
     Populates the database with transaction sections and categories.
@@ -43,7 +40,7 @@ async def populate_db(session: AsyncSession):
     await session.commit()
 
 
-@pytest.fixture(name="session", scope="class")
+@pytest.fixture(name="session", scope="session")
 async def fixture_session() -> AsyncSession:  # type: ignore
     """
     Fixture that provides an async session.
@@ -64,8 +61,8 @@ async def fixture_session() -> AsyncSession:  # type: ignore
     yield db.session
 
 
-@pytest.fixture(name="client")
-@pytest.mark.usefixtures("module")
+@pytest.fixture(name="client", scope="session")
+@pytest.mark.usefixtures("session")
 async def fixture_client() -> AsyncClient:  # type: ignore
     """
     Fixture that provides an async HTTP client.
