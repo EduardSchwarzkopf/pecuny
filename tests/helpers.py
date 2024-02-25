@@ -1,18 +1,17 @@
-from typing import Literal
-
 from fastapi import Response
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-_MethodName = Literal["get", "post", "patch", "delete"]
+from app.utils.enums import RequestMethod
 
 
 async def make_http_request(
     session: AsyncSession,
     client: AsyncClient,
     url: str,
-    json_data: dict = None,
-    method: _MethodName = "post",
+    data: dict = None,
+    json: dict = None,
+    method: RequestMethod = RequestMethod.POST,
 ) -> Response:
     """
     Makes an HTTP request to the specified URL using the given method and JSON data.
@@ -31,13 +30,13 @@ async def make_http_request(
     """
 
     async with session:
-        if method.lower() == "post":
-            response = await client.post(url, json=json_data)
-        elif method.lower() == "patch":
-            response = await client.patch(url, json=json_data)
-        elif method.lower() == "get":
+        if method == RequestMethod.POST:
+            response = await client.post(url, json=json, data=data)
+        elif method == RequestMethod.PATCH:
+            response = await client.patch(url, json=json, data=data)
+        elif method == RequestMethod.GET:
             response = await client.get(url)
-        elif method.lower() == "delete":
+        elif method == RequestMethod.DELETE:
             response = await client.delete(url)
         else:
             raise ValueError(
