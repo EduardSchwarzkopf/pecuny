@@ -222,6 +222,14 @@ async def delete(obj: Type[ModelT]) -> None:
     Raises:
         None
     """
+
+    # TODO: Test this
+    # if isinstance(obj, list):
+    #     for object in obj:
+    #         db.session.delete(object)
+    #     return
+
+    # TODO: Await needed?
     await db.session.delete(obj)
 
 
