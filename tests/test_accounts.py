@@ -6,6 +6,8 @@ from app.utils.dataclasses_utils import ClientSessionWrapper
 pytestmark = pytest.mark.anyio
 ENDPOINT = "/api/accounts/"
 
+# TODO: Add get account test
+
 
 async def test_create_account(client_session_wrapper: ClientSessionWrapper):
     """
