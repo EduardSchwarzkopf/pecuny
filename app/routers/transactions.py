@@ -11,7 +11,7 @@ from app.routers.accounts import handle_account_route
 from app.routers.accounts import router as account_router
 from app.services import accounts as service
 from app.services import categories as category_service
-from app.services import transactions as transaction_service
+from app.services.transactions import TransactionService
 from app.utils import PageRouter
 from app.utils.account_utils import get_account_list_template
 from app.utils.template_utils import group_categories_by_section, render_template
@@ -19,6 +19,8 @@ from app.utils.template_utils import group_categories_by_section, render_templat
 PREFIX = account_router.prefix + "/{account_id}/transactions"
 
 router = PageRouter(prefix=PREFIX, tags=["Transactions"])
+
+transaction_service = TransactionService()
 
 
 async def populate_transaction_form_choices(
