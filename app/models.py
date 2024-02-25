@@ -93,7 +93,9 @@ class UserId(Base):
 class Transaction(BaseModel):
     __tablename__ = "transactions"
 
-    account_id = Column(Integer, ForeignKey("accounts.id"))
+    account_id = Column(
+        Integer, ForeignKey("accounts.id", ondelete="CASCADE", onupdate="CASCADE")
+    )
     information_id = Column(Integer, ForeignKey("transactions_information.id"))
     information = relationship(
         "TransactionInformation",
@@ -129,7 +131,9 @@ class Transaction(BaseModel):
 class TransactionScheduled(BaseModel):
     __tablename__ = "transactions_scheduled"
 
-    account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"))
+    account_id = Column(
+        Integer, ForeignKey("accounts.id", ondelete="CASCADE", onupdate="CASCADE")
+    )
     account = relationship(
         "Account",
         back_populates="scheduled_transactions",
