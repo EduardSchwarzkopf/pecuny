@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models
 from app import repository as repo
+from app import schemas
 from app.oauth2 import create_access_token
+from app.services.transactions import TransactionService
 from app.services.users import UserService
 from app.utils.dataclasses_utils import ClientSessionWrapper, CreateUserData
 from tests.helpers import fixture_cleanup
@@ -247,7 +249,7 @@ async def get_date_range(date_start, days=5):
 
 
 @pytest.fixture(name="test_transactions")
-async def fixture_test_transactions(test_accounts, session):
+async def fixture_test_transactions(test_accounts, session, test_account):
     """
     Fixture that creates test transactions.
 
@@ -263,42 +265,36 @@ async def fixture_test_transactions(test_accounts, session):
 
     transaction_data = [
         {
-            "account_id": 1,
             "amount": 200,
             "reference": "transaction_001",
             "date": dates[0],
             "category_id": 1,
         },
         {
-            "account_id": 1,
             "amount": 100,
             "reference": "transaction_002",
             "date": dates[1],
             "category_id": 1,
         },
         {
-            "account_id": 2,
             "amount": 50,
             "reference": "transaction_003",
             "date": dates[3],
             "category_id": 4,
         },
         {
-            "account_id": 3,
             "amount": 100,
             "reference": "transaction_004",
             "date": dates[4],
             "category_id": 8,
         },
         {
-            "account_id": 4,
             "amount": 500,
             "reference": "transaction_005",
             "date": dates[3],
             "category_id": 7,
         },
         {
-            "account_id": 5,
             "amount": 200,
             "reference": "transaction_006",
             "date": dates[2],
@@ -306,34 +302,22 @@ async def fixture_test_transactions(test_accounts, session):
         },
     ]
 
-    transaction_list = []
+    service = TransactionService()
 
-    for transaction_info in transaction_data:
-        account_id = transaction_info["account_id"]
-        account_index = next(
-            (i for i, item in enumerate(test_accounts) if item.id == account_id), -1
-        )
-        if account_index == -1:
-            raise ValueError("No Account found with that Id")
-
-        db_transaction_information = models.TransactionInformation()
-        db_transaction_information.add_attributes_from_dict(transaction_info)
-
-        new_balance = (
-            test_accounts[account_index].balance + db_transaction_information.amount
-        )
-
-        update_info = {"balance": new_balance}
-        await repo.update(models.Account, account_id, **update_info)
-
-        transaction_list.append(
-            models.Transaction(
-                information=db_transaction_information, account_id=account_id
+    for account in test_accounts + [test_account]:
+        create_transactions_task = [
+            service.create_transaction(
+                account.user,
+                schemas.TransactionInformationCreate(
+                    **transaction, account_id=account.id
+                ),
             )
-        )
+            for transaction in transaction_data
+        ]
 
-    session.add_all(transaction_list)
-    await session.commit()
+        await asyncio.gather(*create_transactions_task)
+
+    transaction_list = await repo.get_all(models.Transaction)
 
     yield transaction_list
 
