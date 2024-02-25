@@ -1,74 +1,68 @@
-{% extends "layouts/dashboard.html" %}
-{% import 'macros/buttons.html' as btn %}
-{% import 'macros/icons.html' as icon %}
+{% extends "layouts/dashboard.html" %} {% import 'macros/buttons.html' as btn %}
+{% import 'macros/icons.html' as icon %} {% block content %}
 
-{% block content %}
-
-<div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full mb-6">
-    <div class="grow w-full md:w-auto">
-        <div class="flex flex-row space-x-4 items-center">
-            <p class="text-xl text-gray font-medium">{{account.label}}</p>
-            {{ btn.edit(url_for('page_update_account_form', account_id=account.id)) }}
-        </div>
+<div
+  class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full mb-6"
+>
+  <div class="grow w-full md:w-auto">
+    <div class="flex flex-row space-x-4 items-center">
+      <p class="text-xl text-gray font-medium">{{account.label}}</p>
+      {{ btn.edit(url_for('page_update_account_form', account_id=account.id)) }}
     </div>
-    <a href="{{ url_for('page_create_transaction_form', account_id=account.id)}}">
-        {{ btn.button("Create Transaction") }}
-    </a>
+  </div>
+  <a href="{{ url_for('page_create_transaction_form', account_id=account.id)}}">
+    {{ btn.button("Create Transaction") }}
+  </a>
 </div>
 
 <div class="flex flex-col items-center bg-white border py-6 rounded-lg">
+  <div class="uppercase tracking-wide text-center mb-6 md:mb-8">
+    <span class="text-gray text-xs font-bold mb-2">Balance</span>
+    <p class="text-primary text-4xl">{{ '%0.2f' % account.balance }}</p>
+  </div>
 
-    <div class="uppercase tracking-wide text-center mb-6 md:mb-8">
-        <span class="text-gray text-xs font-bold mb-2">Balance</span>
-        <p class="text-primary text-4xl">
-            {{ '%0.2f' % account.balance }}
-        </p>
+  <div class="uppercase tracking-wide text-center text-gray">
+    <span class="text-xs mb-2">Total</span>
+    <p class="text-xl font-medium">{{ '%0.2f' % total }}</p>
+  </div>
+
+  <div class="flex space-x-12 mt-2 text-gray">
+    <div class="flex flex-row items-center">
+      <div>
+        {{ icon.arrow_up('p-2 w-8 h-8 mr-3 fill-success-dark bg-success-100
+        rounded-full') }}
+      </div>
+      <div>{{ '%0.2f' % income }}</div>
     </div>
-
-    <div class="uppercase tracking-wide text-center text-gray">
-
-        <span class="text-xs mb-2">Total</span>
-        <p class="text-xl font-medium">
-            {{ '%0.2f' % total }}
-        </p>
+    <div class="flex flex-row items-center">
+      <div>
+        {{ icon.arrow_up("p-2 w-8 h-8 mr-3 rotate-180 fill-danger-dark
+        bg-red-100 rounded-full") }}
+      </div>
+      <div>{{ '%0.2f' % expenses }}</div>
     </div>
-
-    <div class="flex space-x-12 mt-2 text-gray">
-        <div class="flex flex-row items-center">
-            <div>
-                {{ icon.arrow_up('p-2 w-8 h-8 mr-3 fill-success-dark bg-success-100 rounded-full') }}
-            </div>
-            <div>
-                {{ '%0.2f' % income }}
-            </div>
-        </div>
-        <div class="flex flex-row items-center">
-            <div>
-                {{ icon.arrow_up("p-2 w-8 h-8 mr-3 rotate-180 fill-danger-dark bg-red-100 rounded-full") }}
-            </div>
-            <div>
-                {{ '%0.2f' % expenses }}
-            </div>
-        </div>
-    </div>
+  </div>
 </div>
 
-
 <div class="flex justify-end mt-6">
-    {% include'fragments/datePicker.html' %}
+  {% include'fragments/datePicker.html' %}
 </div>
 
 <div id="transactions" class="grid gap-4">
-    {% for group in transaction_list_grouped %}
-    <div class="w-full">
-        <span class="pb-4 text-gray font-medium text-lg ">{{ group.date.strftime('%A - %d %B') }}</span>
-        <div class="grid gap-3">
-            {% for transaction in group.transactions %}
-            <a href="{{ url_for('page_update_transaction', account_id=account.id, transaction_id=transaction.id)}}">
-                {% include 'fragments/accounts/transaction.html' %} {% endfor %}
-            </a>
-        </div>
+  {% for group in transaction_list_grouped %}
+  <div class="w-full">
+    <span class="pb-4 text-gray font-medium text-lg"
+      >{{ group.date.strftime('%A - %d %B') }}</span
+    >
+    <div class="grid gap-3">
+      {% for transaction in group.transactions %}
+      <a
+        href="{{ url_for('page_update_transaction_get', account_id=account.id, transaction_id=transaction.id)}}"
+      >
+        {% include 'fragments/accounts/transaction.html' %} {% endfor %}
+      </a>
     </div>
-    {% endfor %}
+  </div>
+  {% endfor %}
 </div>
 {% endblock %}
