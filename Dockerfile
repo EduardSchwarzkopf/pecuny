@@ -23,6 +23,9 @@ RUN pip install poetry
 COPY pyproject.toml poetry.lock ./
 RUN touch README.md
 
+# update lock file
+RUN poetry lock --no-update
+
 # Install dependencies
 RUN poetry install --only main --no-root && rm -rf $POETRY_CACHE_DIR
 
