@@ -55,6 +55,8 @@ async def fixture_session() -> AsyncSession:  # type: ignore
     await populate_db(db.session)
     yield db.session
 
+    db.session.close()
+
 
 @pytest.fixture(name="client")
 @pytest.mark.usefixtures("session")
