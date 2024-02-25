@@ -6,6 +6,7 @@ from app import repository as repo
 from app import schemas
 from app.config import settings
 from app.utils.dataclasses_utils import ClientSessionWrapper
+from app.utils.enums import RequestMethod
 from tests.helpers import make_http_request
 
 SUCCESS_LOGIN_STATUS_CODE = 204
@@ -38,12 +39,11 @@ async def test_create_user(
     Returns:
         None
     """
-
     res = await make_http_request(
         client_session_wrapper.session,
         client_session_wrapper.client,
         f"{ENDPOINT}/register",
-        {
+        json={
             "email": username,
             "password": password,
             "displayname": displayname,
@@ -60,9 +60,8 @@ async def test_create_user(
     assert new_user.is_verified is False
 
 
-@pytest.mark.usefixtures("test_user")
 async def test_invalid_create_user(
-    client_session_wrapper: ClientSessionWrapper,
+    client_session_wrapper: ClientSessionWrapper, test_user: models.User
 ):
     """
     Tests the invalid user creation.
@@ -77,16 +76,12 @@ async def test_invalid_create_user(
     Returns:
         None
     """
-
+    email = test_user.email
     res = await make_http_request(
         client_session_wrapper.session,
         client_session_wrapper.client,
         f"{ENDPOINT}/register",
-        {
-            "email": "hello123@pytest.de",
-            "password": "testpassword",
-            "displayname": "John",
-        },
+        json={"email": email, "password": "testpassword", "displayname": "John"},
     )
 
     assert res.status_code == 400
@@ -212,8 +207,8 @@ async def test_updated_user(client_session_wrapper: ClientSessionWrapper, values
         client_session_wrapper.session,
         client_session_wrapper.authorized_client,
         "/api/users/me",
-        values,
-        "patch",
+        json=values,
+        method=RequestMethod.PATCH,
     )
 
     assert res.status_code == 200
@@ -222,6 +217,8 @@ async def test_updated_user(client_session_wrapper: ClientSessionWrapper, values
     for key, value in values.items():
         if key == "password":
             login_res = await make_http_request(
+                client_session_wrapper.session,
+                client_session_wrapper.client,
                 f"{ENDPOINT}/login",
                 {"username": user.email, "password": value},
             )
@@ -259,8 +256,8 @@ async def test_invalid_updated_user(
         client_session_wrapper.session,
         client_session_wrapper.authorized_client,
         f"/api/users/{user_id}",
-        values,
-        "patch",
+        json=values,
+        method=RequestMethod.PATCH,
     )
 
     assert res.status_code == 403
@@ -284,7 +281,7 @@ async def test_delete_user(client_session_wrapper: ClientSessionWrapper, test_us
         client_session_wrapper.session,
         client_session_wrapper.authorized_client,
         "/api/users/me",
-        method="delete",
+        method=RequestMethod.DELETE,
     )
 
     assert res.status_code == 204
@@ -314,8 +311,8 @@ async def test_invalid_delete_user(
     res = await make_http_request(
         client_session_wrapper.session,
         client_session_wrapper.authorized_client,
-        "/api/users/2",
-        method="delete",
+        url="/api/users/2",
+        method=RequestMethod.DELETE,
     )
 
     assert res.status_code == 403
