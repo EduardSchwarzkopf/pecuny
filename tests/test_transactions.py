@@ -7,6 +7,7 @@ from app import models
 from app import repository as repo
 from app import schemas
 from app.utils.dataclasses_utils import ClientSessionWrapper
+from tests.helpers import make_http_request
 
 ENDPOINT = "/api/transactions/"
 STATUS_CODE = status.HTTP_201_CREATED
@@ -23,13 +24,14 @@ OFFSET_ACCOUNT_ID = 5
         (-40.5, -40.5, "Subsctract 40.5", 6),
     ],
 )
-@pytest.mark.usefixtures("test_accounts")
+@pytest.mark.usefixtures("test_account")
 async def test_create_transaction(
     client_session_wrapper: ClientSessionWrapper,
     amount,
     expected_amount,
     reference,
     category_id,
+    test_account,
 ):
     """
     Tests the create transaction functionality.
@@ -45,31 +47,29 @@ async def test_create_transaction(
         None
     """
 
-    async with client_session_wrapper.session:
-        account = await repo.get(models.Account, ACCOUNT_ID)
+    account_balance = test_account.balance
 
-        account_balance = account.balance
+    res = await make_http_request(
+        client_session_wrapper.session,
+        client_session_wrapper.authorized_client,
+        ENDPOINT,
+        json={
+            "account_id": test_account.id,
+            "amount": amount,
+            "reference": reference,
+            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "category_id": category_id,
+        },
+    )
 
-        res = await client_session_wrapper.authorized_client.post(
-            ENDPOINT,
-            json={
-                "account_id": ACCOUNT_ID,
-                "amount": amount,
-                "reference": reference,
-                "date": str(datetime.datetime.now(datetime.timezone.utc)),
-                "category_id": category_id,
-            },
-        )
+    new_transaction = schemas.Transaction(**res.json())
 
-        new_transaction = schemas.Transaction(**res.json())
-
-        await repo.refresh(account)
-
-        account_balance_after = account.balance
+    # get recent data
+    account = await repo.get(models.Account, test_account.id)
 
     assert res.status_code == status.HTTP_201_CREATED
-    assert account_balance + amount == account_balance_after
-    assert new_transaction.account_id == ACCOUNT_ID
+    assert account_balance + amount == account.balance
+    assert new_transaction.account_id == test_account.id
     assert new_transaction.information.amount == expected_amount
     assert isinstance(new_transaction.information.amount, float)
     assert new_transaction.information.reference == reference
