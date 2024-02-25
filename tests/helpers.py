@@ -44,3 +44,22 @@ async def make_http_request(
             )
 
     return response
+
+
+async def get_account(
+    client_session_wrapper: ClientSessionWrapper, account_id: int
+) -> schemas.Account:
+    account_response = await make_http_request(
+        client_session_wrapper.session,
+        client_session_wrapper.authorized_client,
+        f"/api/accounts/{account_id}",
+        method=RequestMethod.GET,
+    )
+    return schemas.Account(**account_response.json())
+
+
+async def fixture_cleanup(session: AsyncSession, object_list: List[ModelT]) -> None:
+    for object in object_list:
+        session.delete(object)
+
+    await session.commit()
