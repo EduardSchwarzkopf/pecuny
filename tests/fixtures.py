@@ -12,7 +12,7 @@ from app.services.users import UserService
 from app.utils.dataclasses_utils import ClientSessionWrapper, CreateUserData
 
 
-@pytest.fixture(name="user_service")
+@pytest.fixture(name="user_service", scope="session")
 async def fixture_user_service():
     """
     Fixture that provides a user service.
@@ -28,7 +28,6 @@ async def fixture_user_service():
 
 
 @pytest.fixture(name="test_user")
-@pytest.mark.usefixtures("session")
 async def fixture_test_user(user_service: UserService):
     """
     Fixture that retrieves an existing user or creates a new user.
@@ -39,14 +38,19 @@ async def fixture_test_user(user_service: UserService):
     Returns:
         User: An existing user or a newly created user.
     """
-    user_list = await repo.get_all(models.User)
+    test_user_email = "hello123@pytest.de"
+    user_list = await repo.filter_by(models.User, "email", test_user_email)
 
     if len(user_list) > 0:
-        return user_list[0]
+        yield user_list[0]
 
-    return await user_service.create_user(
-        CreateUserData("hello123@pytest.de", "password123", is_verified=True)
+    user = await user_service.create_user(
+        CreateUserData(test_user_email, "password123", is_verified=True)
     )
+
+    yield user
+
+    await user_service.delete_self(user)
 
 
 @pytest.fixture(name="token")
@@ -103,8 +107,7 @@ async def fixture_client_session_wrapper_fixture(
     yield ClientSessionWrapper(client, authorized_client, session)
 
 
-@pytest.mark.usefixtures("session")
-@pytest.fixture(name="test_users")
+@pytest.fixture(name="test_users", scope="module")
 async def fixture_test_users(user_service: UserService):
     """
     Fixture that creates test users.

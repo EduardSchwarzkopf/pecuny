@@ -56,7 +56,7 @@ async def fixture_session() -> AsyncSession:  # type: ignore
     yield db.session
 
 
-@pytest.fixture(name="client", scope="class")
+@pytest.fixture(name="client")
 @pytest.mark.usefixtures("session")
 async def fixture_client() -> AsyncClient:  # type: ignore
     """

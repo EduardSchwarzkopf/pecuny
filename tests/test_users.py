@@ -88,20 +88,19 @@ async def test_invalid_create_user(
 
 
 @pytest.mark.parametrize(
-    "username, displayname, password",
+    "username, password",
     [
-        ("hello123@pytest.de", "John", "password123"),
-        ("hellO123@pytest.de", "John", "password123"),
-        ("HELLO123@pytest.de", "John", "password123"),
-        ("hello123@PyTeSt.De", "John", "password123"),
-        ("hELLO123@pytest.de", "John", "password123"),
+        ("hello123@pytest.de", "password123"),
+        ("hellO123@pytest.de", "password123"),
+        ("HELLO123@pytest.de", "password123"),
+        ("hello123@PyTeSt.De", "password123"),
+        ("hELLO123@pytest.de", "password123"),
     ],
 )
 async def test_login(
     client_session_wrapper: ClientSessionWrapper,
     test_user,
     username,
-    displayname,
     password,
 ):
     """
@@ -121,7 +120,6 @@ async def test_login(
         f"{ENDPOINT}/login",
         {
             "username": username,
-            "displayname": displayname,
             "password": password,
         },
     )
@@ -263,7 +261,10 @@ async def test_invalid_updated_user(
     assert res.status_code == 403
 
 
-async def test_delete_user(client_session_wrapper: ClientSessionWrapper, test_user):
+async def test_delete_user(
+    client_session_wrapper: ClientSessionWrapper,
+    test_user,
+):
     """
     Tests the create user functionality.
 
@@ -277,6 +278,10 @@ async def test_delete_user(client_session_wrapper: ClientSessionWrapper, test_us
     Returns:
         None
     """
+
+    user = await repo.get(models.User, test_user.id)
+    assert user.email == test_user.email
+
     res = await make_http_request(
         client_session_wrapper.session,
         client_session_wrapper.authorized_client,
@@ -284,11 +289,10 @@ async def test_delete_user(client_session_wrapper: ClientSessionWrapper, test_us
         method=RequestMethod.DELETE,
     )
 
-    assert res.status_code == 204
-
     user = await repo.get(models.User, test_user.id)
-
     assert user is None
+
+    assert res.status_code == 204
 
 
 async def test_invalid_delete_user(
