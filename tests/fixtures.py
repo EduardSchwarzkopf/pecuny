@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from typing import List
 
@@ -10,6 +11,7 @@ from app import repository as repo
 from app.oauth2 import create_access_token
 from app.services.users import UserService
 from app.utils.dataclasses_utils import ClientSessionWrapper, CreateUserData
+from tests.helpers import fixture_cleanup
 
 
 @pytest.fixture(name="user_service", scope="session")
@@ -123,7 +125,6 @@ async def fixture_test_users(user_service: UserService):
         ["user01@pytest.de", "password123"],
         ["user02@pytest.de", "password123"],
         ["user03@pytest.de", "password123"],
-        ["user04@pytest.de", "password123"],
     ]
 
     user_list = []
@@ -136,9 +137,12 @@ async def fixture_test_users(user_service: UserService):
 
     yield user_list
 
+    delete_tasks = [user_service.delete_self(user) for user in user_list]
+    await asyncio.gather(*delete_tasks)
+
 
 @pytest.fixture(name="test_account")
-async def fixture_test_account(test_user: models.User, session):
+async def fixture_test_account(test_user: models.User, session: AsyncSession):
     """
     Fixture that creates a test account.
 
@@ -158,14 +162,17 @@ async def fixture_test_account(test_user: models.User, session):
     )
 
     session.add(db_account)
-
     await session.commit()
 
-    yield await repo.get(models.Account, db_account.id)
+    yield db_account
+
+    await fixture_cleanup(session, [db_account])
 
 
 @pytest.fixture(name="test_accounts")
-async def fixture_test_accounts(test_users: List[models.User], session):
+async def fixture_test_accounts(
+    test_user, test_users: List[models.User], session: AsyncSession
+):
     """
     Fixture that creates test accounts.
 
@@ -179,31 +186,31 @@ async def fixture_test_accounts(test_users: List[models.User], session):
 
     accounts_data = [
         {
-            "user": test_users[0],
+            "user": test_user,
             "label": "account_00",
             "description": "description_00",
             "balance": 100,
         },
         {
-            "user": test_users[1],
+            "user": test_users[0],
             "label": "account_01",
             "description": "description_01",
             "balance": 200,
         },
         {
-            "user": test_users[2],
+            "user": test_users[1],
             "label": "account_02",
             "description": "description_02",
             "balance": 500,
         },
         {
-            "user": test_users[3],
+            "user": test_users[2],
             "label": "account_03",
             "description": "description_03",
             "balance": 1000,
         },
         {
-            "user": test_users[0],
+            "user": test_user,
             "label": "account_04",
             "description": "description_04",
             "balance": 2000,
@@ -219,7 +226,9 @@ async def fixture_test_accounts(test_users: List[models.User], session):
     session.add_all(accounts)
     await session.commit()
 
-    yield await repo.get_all(models.Account)
+    yield accounts
+
+    await fixture_cleanup(session, accounts)
 
 
 async def get_date_range(date_start, days=5):
@@ -325,3 +334,7 @@ async def fixture_test_transactions(test_accounts, session):
 
     session.add_all(transaction_list)
     await session.commit()
+
+    yield transaction_list
+
+    await fixture_cleanup(session, transaction_list)
