@@ -8,11 +8,6 @@ from app import repository as repo
 from app import schemas
 from app.utils.dataclasses_utils import ClientSessionWrapper
 
-#
-# use with: pytest --disable-warnings -v -x
-#
-
-pytestmark = pytest.mark.anyio
 ENDPOINT = "/api/transactions/"
 STATUS_CODE = status.HTTP_201_CREATED
 ACCOUNT_ID = 1

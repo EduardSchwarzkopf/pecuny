@@ -7,7 +7,6 @@ from app import schemas
 from app.config import settings
 from app.utils.dataclasses_utils import ClientSessionWrapper
 
-pytestmark = pytest.mark.anyio
 SUCCESS_LOGIN_STATUS_CODE = 204
 ENDPOINT = "/api/auth"
 
