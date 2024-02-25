@@ -1,14 +1,15 @@
 from typing import Literal
 
 from fastapi import Response
-
-from app.utils.dataclasses_utils import ClientSessionWrapper
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 _MethodName = Literal["get", "post", "patch", "delete"]
 
 
 async def make_http_request(
-    client_session_wrapper: ClientSessionWrapper,
+    session: AsyncSession,
+    client: AsyncClient,
     url: str,
     json_data: dict = None,
     method: _MethodName = "post",
@@ -29,15 +30,15 @@ async def make_http_request(
         ValueError: If an invalid method is provided.
     """
 
-    async with client_session_wrapper.session:
+    async with session:
         if method.lower() == "post":
-            response = await client_session_wrapper.client.post(url, json=json_data)
+            response = await client.post(url, json=json_data)
         elif method.lower() == "patch":
-            response = await client_session_wrapper.client.patch(url, json=json_data)
+            response = await client.patch(url, json=json_data)
         elif method.lower() == "get":
-            response = await client_session_wrapper.client.get(url)
+            response = await client.get(url)
         elif method.lower() == "delete":
-            response = await client_session_wrapper.client.delete(url)
+            response = await client.delete(url)
         else:
             raise ValueError(
                 f"Invalid method: {method}. Expected one of: get, post, patch, delete."
