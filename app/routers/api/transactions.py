@@ -8,11 +8,12 @@ from app import schemas
 from app import transaction_manager as tm
 from app.models import User
 from app.routers.api.users import current_active_user
-from app.services import transactions as service
+from app.services.transactions import TransactionService
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(prefix="/transactions", tags=["Transactions"])
 ResponseModel = schemas.Transaction
+service = TransactionService()
 
 
 @router.get("/", response_model=List[ResponseModel])
