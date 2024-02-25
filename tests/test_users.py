@@ -40,7 +40,8 @@ async def test_create_user(
     """
 
     res = await make_http_request(
-        client_session_wrapper,
+        client_session_wrapper.session,
+        client_session_wrapper.client,
         f"{ENDPOINT}/register",
         {
             "email": username,
@@ -78,7 +79,8 @@ async def test_invalid_create_user(
     """
 
     res = await make_http_request(
-        client_session_wrapper,
+        client_session_wrapper.session,
+        client_session_wrapper.client,
         f"{ENDPOINT}/register",
         {
             "email": "hello123@pytest.de",
@@ -119,7 +121,8 @@ async def test_login(
     """
 
     res = await make_http_request(
-        client_session_wrapper,
+        client_session_wrapper.session,
+        client_session_wrapper.client,
         f"{ENDPOINT}/login",
         {
             "username": username,
@@ -171,7 +174,8 @@ async def test_invalid_login(
     """
 
     res = await make_http_request(
-        client_session_wrapper,
+        client_session_wrapper.session,
+        client_session_wrapper.client,
         f"{ENDPOINT}/login",
         {"username": username, "password": password},
     )
@@ -205,7 +209,11 @@ async def test_updated_user(client_session_wrapper: ClientSessionWrapper, values
     """
 
     res = await make_http_request(
-        client_session_wrapper, "/api/users/me", values, "patch"
+        client_session_wrapper.session,
+        client_session_wrapper.authorized_client,
+        "/api/users/me",
+        values,
+        "patch",
     )
 
     assert res.status_code == 200
@@ -247,15 +255,17 @@ async def test_invalid_updated_user(
     """
 
     user_id = str(test_user.id)
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.authorized_client.patch(
-            f"/api/users/{user_id}", json=values
-        )
+    res = await make_http_request(
+        client_session_wrapper.session,
+        client_session_wrapper.authorized_client,
+        f"/api/users/{user_id}",
+        values,
+        "patch",
+    )
 
     assert res.status_code == 403
 
 
-@pytest.mark.usefixtures("client")
 async def test_delete_user(client_session_wrapper: ClientSessionWrapper, test_user):
     """
     Tests the create user functionality.
@@ -270,12 +280,16 @@ async def test_delete_user(client_session_wrapper: ClientSessionWrapper, test_us
     Returns:
         None
     """
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.authorized_client.delete("/api/users/me")
+    res = await make_http_request(
+        client_session_wrapper.session,
+        client_session_wrapper.authorized_client,
+        "/api/users/me",
+        method="delete",
+    )
 
-        assert res.status_code == 204
+    assert res.status_code == 204
 
-        user = await repo.get(models.User, test_user.id)
+    user = await repo.get(models.User, test_user.id)
 
     assert user is None
 
@@ -297,7 +311,11 @@ async def test_invalid_delete_user(
         None
     """
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.authorized_client.delete("/api/users/2")
+    res = await make_http_request(
+        client_session_wrapper.session,
+        client_session_wrapper.authorized_client,
+        "/api/users/2",
+        method="delete",
+    )
 
     assert res.status_code == 403
