@@ -13,6 +13,9 @@ from app.utils.enums import DatabaseFilterOperator
 
 from . import models
 
+# from sqlalchemy.orm.attributes import InstrumentedAttribute
+
+
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
@@ -34,11 +37,13 @@ async def get_all(cls: Type[ModelT]) -> List[ModelT]:
     return result.scalars().all()
 
 
+# TODO: Make use of InstrumentetAttribute to get rid of attributes via str
 async def filter_by(
     cls: Type[ModelT],
     attribute: str,
     value: str,
     operator: DatabaseFilterOperator = DatabaseFilterOperator.EQUAL,
+    # attr: InstrumentedAttribute = None,
 ) -> List[ModelT]:
     """
     Filters the records of a given model by a specified attribute and value.
@@ -55,6 +60,9 @@ async def filter_by(
     Raises:
         None
     """
+    # if attr:
+    #     attr_name = attr.key
+
     condition = text(f"{attribute} {operator.value} :val")
 
     query = select(cls).where(condition).params(val=value)
