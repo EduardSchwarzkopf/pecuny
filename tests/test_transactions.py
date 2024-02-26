@@ -144,7 +144,7 @@ async def test_updated_transaction(
     assert transaction.information.category_id == category_id
 
 
-async def test_delete_transaction(
+async def test_delete_transactions(
     client_session_wrapper: ClientSessionWrapper,
     test_account: models.Account,
     test_account_transaction_list: List[models.Transaction],
