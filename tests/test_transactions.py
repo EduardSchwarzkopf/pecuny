@@ -185,16 +185,16 @@ async def test_delete_transactions_fail(
     test_transactions: List[models.Transaction],
 ):
     """
-    Tests the delete transaction functionality, which should fail.
+    Test case for failing to delete transactions.
 
     Args:
-        client_session_wrapper: The client session wrapper fixture.
-        transaction_id: The ID of the transaction.
+        client_session_wrapper: The client session wrapper.
+        test_account: The test account.
+        test_transactions: The list of test transactions.
 
     Returns:
         None
     """
-
     for transaction in test_transactions:
 
         account_id = transaction.account_id
