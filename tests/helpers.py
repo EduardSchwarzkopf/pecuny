@@ -58,4 +58,4 @@ async def fixture_cleanup(session: AsyncSession, object_list: List[ModelT]) -> N
 
     await asyncio.gather(*delete_task)
 
-    await session.commit()
+    session.commit()

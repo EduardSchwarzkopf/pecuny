@@ -168,7 +168,7 @@ async def fixture_test_account(test_user: models.User, session: AsyncSession):
 
     yield db_account
 
-    await fixture_cleanup(session, [db_account])
+    session.delete(db_account)
 
 
 @pytest.fixture(name="test_accounts")
@@ -230,7 +230,7 @@ async def fixture_test_accounts(
 
     yield accounts
 
-    await fixture_cleanup(session, accounts)
+    fixture_cleanup(session, accounts)
 
 
 @pytest.fixture(name="test_account_transaction_list")
@@ -328,4 +328,4 @@ async def fixture_test_transactions(test_accounts, session, test_account):
 
     yield transaction_list
 
-    await fixture_cleanup(session, transaction_list)
+    fixture_cleanup(session, transaction_list)
