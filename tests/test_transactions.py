@@ -231,9 +231,10 @@ async def test_delete_transactions_fail(
         (1.00000000004, -1, "Added 1", 6),
     ],
 )
-@pytest.mark.usefixtures("test_accounts")
 async def test_create_offset_transaction(
     client_session_wrapper: ClientSessionWrapper,
+    test_account: models.Account,
+    test_accounts: List[models.Account],
     amount,
     expected_offset_amount,
     reference,
@@ -253,31 +254,36 @@ async def test_create_offset_transaction(
         None
     """
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.authorized_client.post(
-            ENDPOINT,
-            json={
-                "account_id": ACCOUNT_ID,
-                "amount": amount,
-                "reference": reference,
-                "date": str(datetime.datetime.now(datetime.timezone.utc)),
-                "category_id": category_id,
-                "offset_account_id": OFFSET_ACCOUNT_ID,
-            },
-        )
+    account_id = test_account.id
 
-        assert res.status_code == status.HTTP_201_CREATED
+    for account in test_accounts:
+        if account.user_id == test_account.user_id and account.id != account_id:
+            offset_account = account
+            break
 
-        new_transaction = schemas.Transaction(**res.json())
-        offset_transactions_id = new_transaction.offset_transactions_id
+    res = await make_http_request(
+        client_session_wrapper.session,
+        client_session_wrapper.authorized_client,
+        ENDPOINT,
+        json={
+            "account_id": account_id,
+            "amount": amount,
+            "reference": reference,
+            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "category_id": category_id,
+            "offset_account_id": offset_account.id,
+        },
+    )
 
-        new_offset_transaction = await repo.get(
-            models.Transaction, offset_transactions_id
-        )
-        await repo.refresh(new_offset_transaction)
+    assert res.status_code == status.HTTP_201_CREATED
 
-    assert new_transaction.account_id == ACCOUNT_ID
-    assert new_offset_transaction.account_id == OFFSET_ACCOUNT_ID
+    new_transaction = schemas.Transaction(**res.json())
+    offset_transactions_id = new_transaction.offset_transactions_id
+
+    new_offset_transaction = await repo.get(models.Transaction, offset_transactions_id)
+
+    assert new_transaction.account_id == account_id
+    assert new_offset_transaction.account_id == offset_account.id
 
     assert new_transaction.information.amount == round(amount, 2)
     assert new_offset_transaction.information.amount == round(expected_offset_amount, 2)
