@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List, Type, TypeVar
 
+from sqlalchemy import text
 from sqlalchemy import update as sql_update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -8,6 +9,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from app.database import db
 from app.models import BaseModel
+from app.utils.enums import DatabaseFilterOperator
 
 from . import models
 
@@ -32,22 +34,33 @@ async def get_all(cls: Type[ModelT]) -> List[ModelT]:
     return result.scalars().all()
 
 
-async def filter_by(cls: Type[ModelT], attribute: str, value: str) -> List[ModelT]:
-    """Filter instances of the specified model by the given attribute and value.
+async def filter_by(
+    cls: Type[ModelT],
+    attribute: str,
+    value: str,
+    operator: DatabaseFilterOperator = DatabaseFilterOperator.EQUAL,
+) -> List[ModelT]:
+    """
+    Filters the records of a given model by a specified attribute and value.
 
     Args:
-        cls: The type of the model.
+        cls: The model class.
         attribute: The attribute to filter by.
         value: The value to filter with.
+        operator: The operator to use for the filter (default: EQUAL).
 
     Returns:
-        List[ModelT]: A list of instances of the specified model that match the filter criteria.
+        List[ModelT]: The filtered records.
 
     Raises:
         None
     """
-    query = select(cls).where(getattr(cls, attribute) == value)
+    condition = text(f"{attribute} {operator.value} :val")
+
+    query = select(cls).where(condition).params(val=value)
+
     result = await db.session.execute(query)
+
     return result.scalars().all()
 
 
