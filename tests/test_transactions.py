@@ -179,10 +179,10 @@ async def test_delete_transactions(
         assert account_balance_after == (account_balance - amount)
 
 
-@pytest.mark.usefixtures("test_accounts")
-async def test_delete_transaction_fail(
+async def test_delete_transactions_fail(
     client_session_wrapper: ClientSessionWrapper,
-    transaction_id,
+    test_account: models.Account,
+    test_transactions: List[models.Transaction],
 ):
     """
     Tests the delete transaction functionality, which should fail.
@@ -195,20 +195,29 @@ async def test_delete_transaction_fail(
         None
     """
 
-    async with client_session_wrapper.session:
-        account = await repo.get(models.Account, ACCOUNT_ID)
-        await repo.refresh(account)  # session not updated, so we need to refresh first
+    for transaction in test_transactions:
+
+        account_id = transaction.account_id
+        account = await repo.get(models.Account, account_id)
+
+        if account.user_id == test_account.user_id:
+            continue
+
         account_balance = account.balance
 
-        res = await client_session_wrapper.authorized_client.delete(
-            f"{ENDPOINT}{transaction_id}"
+        res = await make_http_request(
+            client_session_wrapper.session,
+            client_session_wrapper.authorized_client,
+            f"{ENDPOINT}{transaction.id}",
+            method=RequestMethod.DELETE,
         )
+
         assert res.status_code == status.HTTP_404_NOT_FOUND
 
-        await repo.refresh(account)
-    account_balance_after = account.balance
+        account_refresh = await repo.get(models.Account, account_id)
+        account_balance_after = account_refresh.balance
 
-    assert account_balance_after == account_balance
+        assert account_balance_after == account_balance
 
 
 @pytest.mark.parametrize(
