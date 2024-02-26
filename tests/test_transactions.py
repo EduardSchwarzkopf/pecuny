@@ -93,13 +93,13 @@ async def test_updated_transaction(
     test_account,
 ):
     """
-    Tests the updated transaction functionality.
+    Test case for updating a transaction.
 
     Args:
-        client_session_wrapper: The client session wrapper fixture.
-        transaction_id: The ID of the transaction.
-        category_id: The ID of the category.
-        amount: The amount of the transaction.
+        client_session_wrapper: The client session wrapper.
+        category_id: The category ID.
+        amount: The amount.
+        test_account: The test account.
 
     Returns:
         None
@@ -150,16 +150,16 @@ async def test_delete_transaction(
     test_account_transaction_list: List[models.Transaction],
 ):
     """
-    Tests the delete transaction functionality.
+    Test case for deleting a transaction.
 
     Args:
-        client_session_wrapper: The client session wrapper fixture.
-        transaction_id: The ID of the transaction.
+        client_session_wrapper: The client session wrapper.
+        test_account: The test account.
+        test_account_transaction_list: The list of test account transactions.
 
     Returns:
         None
     """
-
     for transaction in test_account_transaction_list:
 
         account_balance = test_account.balance
