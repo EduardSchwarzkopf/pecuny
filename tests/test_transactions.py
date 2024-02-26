@@ -1,4 +1,5 @@
 import datetime
+from typing import List
 
 import pytest
 from fastapi import status
@@ -7,6 +8,7 @@ from app import models
 from app import repository as repo
 from app import schemas
 from app.utils.dataclasses_utils import ClientSessionWrapper
+from app.utils.enums import RequestMethod
 from tests.helpers import make_http_request
 
 ENDPOINT = "/api/transactions/"
@@ -142,17 +144,10 @@ async def test_updated_transaction(
     assert transaction.information.category_id == category_id
 
 
-@pytest.mark.parametrize(
-    "transaction_id",
-    [
-        (1),
-        (2),
-    ],
-)
-@pytest.mark.usefixtures("test_transactions")
 async def test_delete_transaction(
     client_session_wrapper: ClientSessionWrapper,
-    transaction_id,
+    test_account: models.Account,
+    test_account_transaction_list: List[models.Transaction],
 ):
     """
     Tests the delete transaction functionality.
@@ -165,31 +160,25 @@ async def test_delete_transaction(
         None
     """
 
-    async with client_session_wrapper.session:
-        account = await repo.get(models.Account, ACCOUNT_ID)
-        await repo.refresh(account)  # session not updated, so we need to refresh first
-        account_balance = account.balance
-        transaction = await repo.get(models.Transaction, transaction_id)
+    for transaction in test_account_transaction_list:
+
+        account_balance = test_account.balance
         amount = transaction.information.amount
 
-        res = await client_session_wrapper.authorized_client.delete(
-            f"{ENDPOINT}{transaction_id}"
+        res = await make_http_request(
+            client_session_wrapper.session,
+            client_session_wrapper.authorized_client,
+            f"{ENDPOINT}{transaction.id}",
+            method=RequestMethod.DELETE,
         )
         assert res.status_code == status.HTTP_204_NO_CONTENT
 
-        await repo.refresh(account)
-    account_balance_after = account.balance
+        account = await repo.get(models.Account, test_account.id)
+        account_balance_after = account.balance
 
-    assert account_balance_after == (account_balance - amount)
+        assert account_balance_after == (account_balance - amount)
 
 
-@pytest.mark.parametrize(
-    "transaction_id",
-    [
-        (3),
-        (9999),
-    ],
-)
 @pytest.mark.usefixtures("test_accounts")
 async def test_delete_transaction_fail(
     client_session_wrapper: ClientSessionWrapper,
