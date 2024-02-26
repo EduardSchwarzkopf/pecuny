@@ -233,6 +233,13 @@ async def fixture_test_accounts(
     await fixture_cleanup(session, accounts)
 
 
+@pytest.fixture(name="test_account_transaction_list")
+@pytest.mark.usefixtures("test_transactions")
+async def fixture_test_account_transaction_list(test_account):
+
+    yield await repo.filter_by(models.Transaction, "account_id", test_account.id)
+
+
 async def get_date_range(date_start, days=5):
     """
     Returns a list of dates in a range starting from a given date.
