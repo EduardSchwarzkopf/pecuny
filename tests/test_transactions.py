@@ -295,48 +295,30 @@ async def test_create_offset_transaction(
     assert new_offset_transaction.information.reference == reference
 
 
-@pytest.mark.parametrize(
-    "offset_account_id, amount",
-    [
-        (2, 10),
-        (3, 20.5),
-        (4, -30.5),
-        (2, -40.5),
-        (2, 5.9999999999),
-        (2, 1.00000000004),
-    ],
-)
 @pytest.mark.usefixtures("test_accounts")
 async def test_create_offset_transaction_other_account_fail(
     client_session_wrapper: ClientSessionWrapper,
-    offset_account_id,
-    amount,
+    test_account: models.Account,
+    test_accounts: List[models.Account],
 ):
-    """
-    Tests the create offset transaction functionality with a different account,
-    which should fail.
 
-    Args:
-        client_session_wrapper: The client session wrapper fixture.
-        offset_account_id: The ID of the offset account.
-        amount: The amount of the transaction.
+    for offset_account in test_accounts:
 
-    Returns:
-        None
-    """
+        if offset_account.user_id == test_account.user_id:
+            continue
 
-    async with client_session_wrapper.session:
-        account = await repo.get(models.Account, ACCOUNT_ID)
-        offset_account = await repo.get(models.Account, offset_account_id)
-
-        account_balance = account.balance
+        account_balance = test_account.balance
         offset_account_balance = offset_account.balance
+        account_id = test_account.id
+        offset_account_id = offset_account.id
 
-        res = await client_session_wrapper.authorized_client.post(
+        res = await make_http_request(
+            client_session_wrapper.session,
+            client_session_wrapper.authorized_client,
             ENDPOINT,
             json={
-                "account_id": ACCOUNT_ID,
-                "amount": amount,
+                "account_id": account_id,
+                "amount": 42,
                 "reference": "Not allowed",
                 "date": str(datetime.datetime.now(datetime.timezone.utc)),
                 "category_id": 1,
@@ -344,15 +326,13 @@ async def test_create_offset_transaction_other_account_fail(
             },
         )
 
-        await repo.refresh_all([account, offset_account])
+        account_refreshed = await repo.get(models.Account, account_id)
+        offset_account_refreshed = await repo.get(models.Account, offset_account_id)
 
-    account_balance_after = account.balance
-    offset_account_balance_after = offset_account.balance
+        assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
-    assert res.status_code == status.HTTP_401_UNAUTHORIZED
-
-    assert account_balance == account_balance_after
-    assert offset_account_balance == offset_account_balance_after
+        assert account_balance == account_refreshed.balance
+        assert offset_account_balance == offset_account_refreshed.balance
 
 
 @pytest.mark.parametrize(
