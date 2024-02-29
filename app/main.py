@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 
 import arel
 from fastapi import FastAPI, Request, status
@@ -20,7 +21,15 @@ from app.routes import router_list
 from app.utils import BreadcrumbBuilder
 from app.utils.exceptions import UnauthorizedPageException
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan():
+    await db.init()
+    yield
+    await db.session.close()
+
+
+app = FastAPI(lifespan=lifespan)
 logger = get_logger(__name__)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -159,38 +168,6 @@ async def page_not_found_exception_handler(request: Request, exc: HTTPException)
         {"request": request},
         status_code=exc.status_code,
     )
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Event handler for the startup event.
-
-    Args:
-        None
-
-    Returns:
-        None
-
-    Raises:
-        None
-    """
-    await db.init()
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Event handler for the shutdown event.
-
-    Args:
-        None
-
-    Returns:
-        None
-
-    Raises:
-        None
-    """
-    await db.session.close()
 
 
 for route in router_list:
