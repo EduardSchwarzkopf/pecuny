@@ -1,13 +1,7 @@
-import asyncio
-from typing import List
-
 from fastapi import Response
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app import schemas
-from app.repository import ModelT
-from app.utils.dataclasses_utils import ClientSessionWrapper
 from app.utils.enums import RequestMethod
 
 
@@ -50,12 +44,3 @@ async def make_http_request(
             )
 
     return response
-
-
-async def fixture_cleanup(session: AsyncSession, object_list: List[ModelT]) -> None:
-
-    delete_task = [session.delete(object) for object in object_list]
-
-    await asyncio.gather(*delete_task)
-
-    session.commit()
