@@ -35,9 +35,25 @@ async def populate_db(session: AsyncSession):
     await session.commit()
 
 
-@pytest.fixture(name="session", scope="session")
+@pytest.fixture(scope="session", autouse=True)
+async def fixture_init_db():
+    await db.init()
+    async with db.engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+
+    await populate_db(db.session)
+
+    yield
+
+    db.engine.dispose()
+
+
+@pytest.fixture(name="session", autouse=True)
+@pytest.mark.usefixtures("fixture_init_db")
 async def fixture_session() -> AsyncSession:  # type: ignore
     """
+    async with session:
     Fixture that provides an async session.
 
     Args:
@@ -46,20 +62,12 @@ async def fixture_session() -> AsyncSession:  # type: ignore
     Returns:
         AsyncSession: An async session.
     """
-
-    await db.init()
-    async with db.engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
-
-    await populate_db(db.session)
     yield db.session
 
     db.session.close()
 
 
 @pytest.fixture(name="client")
-@pytest.mark.usefixtures("session")
 async def fixture_client() -> AsyncClient:  # type: ignore
     """
     Fixture that provides an async HTTP client.
