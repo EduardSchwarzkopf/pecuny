@@ -10,29 +10,14 @@ from app import models
 from app import repository as repo
 from app import schemas
 from app.oauth2 import create_access_token
+from app.services.accounts import AccountService
 from app.services.transactions import TransactionService
 from app.services.users import UserService
 from app.utils.dataclasses_utils import ClientSessionWrapper, CreateUserData
-from tests.helpers import fixture_cleanup
-
-
-@pytest.fixture(name="user_service", scope="session")
-async def fixture_user_service():
-    """
-    Fixture that provides a user service.
-
-    Args:
-        None
-
-    Returns:
-        UserService: An instance of the user service.
-    """
-
-    yield UserService()
 
 
 @pytest.fixture(name="test_user")
-async def fixture_test_user(user_service: UserService):
+async def fixture_test_user():
     """
     Fixture that retrieves an existing user or creates a new user.
 
@@ -48,6 +33,7 @@ async def fixture_test_user(user_service: UserService):
     if len(user_list) > 0:
         yield user_list[0]
 
+    user_service = UserService()
     user = await user_service.create_user(
         CreateUserData(test_user_email, "password123", is_verified=True)
     )
@@ -112,7 +98,7 @@ async def fixture_client_session_wrapper_fixture(
 
 
 @pytest.fixture(name="test_users", scope="module")
-async def fixture_test_users(user_service: UserService):
+async def fixture_test_users():
     """
     Fixture that creates test users.
 
@@ -123,19 +109,21 @@ async def fixture_test_users(user_service: UserService):
         List[User]: A list of test users.
     """
 
-    users_data = [
-        ["user01@pytest.de", "password123"],
-        ["user02@pytest.de", "password123"],
-        ["user03@pytest.de", "password123"],
+    create_user_list = [
+        ["user01@pytest.de", "password123", "User01"],
+        ["user02@pytest.de", "password123", "User02"],
+        ["user03@pytest.de", "password123", "User03"],
     ]
 
-    user_list = []
-
-    for data in users_data:
-        user = await user_service.create_user(
-            CreateUserData(data[0], data[1], is_verified=True)
+    user_service = UserService()
+    for user in create_user_list:
+        await user_service.create_user(
+            CreateUserData(
+                email=user[0], password=user[1], displayname=user[2], is_verified=True
+            )
         )
-        user_list.append(user)
+
+    user_list = await repo.get_all(models.User)
 
     yield user_list
 
@@ -144,7 +132,7 @@ async def fixture_test_users(user_service: UserService):
 
 
 @pytest.fixture(name="test_account")
-async def fixture_test_account(test_user: models.User, session: AsyncSession):
+async def fixture_test_account(test_user: models.User):
     """
     Fixture that creates a test account.
 
@@ -156,25 +144,20 @@ async def fixture_test_account(test_user: models.User, session: AsyncSession):
         Account: A test account.
     """
 
-    account_data = {"label": "test_account", "description": "test", "balance": 5000}
-
-    db_account = models.Account(
-        user=test_user,
-        **account_data,
+    account_data = schemas.Account(
+        user=test_user, label="test_account", description="test", balance=5000
     )
 
-    session.add(db_account)
-    await session.commit()
+    service = AccountService()
+    account = await service.create_account(user=test_user, account=account_data)
 
-    yield db_account
+    yield account
 
-    session.delete(db_account)
+    service.delete_account(test_user, account.id)
 
 
 @pytest.fixture(name="test_accounts")
-async def fixture_test_accounts(
-    test_user, test_users: List[models.User], session: AsyncSession
-):
+async def fixture_test_accounts(test_user, test_users: List[models.User]):
     """
     Fixture that creates test accounts.
 
@@ -186,7 +169,7 @@ async def fixture_test_accounts(
         List[Account]: A list of test accounts.
     """
 
-    accounts_data = [
+    account_data_list = [
         {
             "user": test_user,
             "label": "account_00",
@@ -219,18 +202,27 @@ async def fixture_test_accounts(
         },
     ]
 
-    def create_accounts_model(account):
-        return models.Account(**account)
+    service = AccountService()
 
-    accounts_map = map(create_accounts_model, accounts_data)
-    accounts = list(accounts_map)
+    # TODO: Make this Async
+    account_list = [
+        await service.create_account(
+            account_data["user"],
+            schemas.Account(
+                label=account_data["label"],
+                description=account_data["description"],
+                balance=account_data["balance"],
+            ),
+        )
+        for account_data in account_data_list
+    ]
 
-    session.add_all(accounts)
-    await session.commit()
+    yield account_list
 
-    yield accounts
-
-    fixture_cleanup(session, accounts)
+    delete_task = [
+        service.delete_account(account.user, account) for account in account_list
+    ]
+    await asyncio.gather(*delete_task)
 
 
 @pytest.fixture(name="test_account_transaction_list")
@@ -256,7 +248,7 @@ async def get_date_range(date_start, days=5):
 
 
 @pytest.fixture(name="test_transactions")
-async def fixture_test_transactions(test_accounts, session, test_account):
+async def fixture_test_transactions(test_accounts, test_account):
     """
     Fixture that creates test transactions.
 
@@ -328,4 +320,5 @@ async def fixture_test_transactions(test_accounts, session, test_account):
 
     yield transaction_list
 
-    fixture_cleanup(session, transaction_list)
+    delete_task = [service.delete_transaction(account) for account in transaction_list]
+    await asyncio.gather(*delete_task)
