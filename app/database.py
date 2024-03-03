@@ -31,7 +31,7 @@ class Database:
             await self.session.close()
 
         self.engine = create_async_engine(self.url, future=True)
-        self.session = self.get_session()
+        self.session = next(self.get_session())
 
     def get_session(self) -> AsyncSession:
         """Get the database session.
@@ -45,7 +45,11 @@ class Database:
         Raises:
             None
         """
-        return sessionmaker(self.engine, expire_on_commit=False, class_=AsyncSession)()
+        session = sessionmaker(
+            self.engine, expire_on_commit=False, class_=AsyncSession
+        )()
+        yield session
+        session.close()
 
 
 async def get_user_db():

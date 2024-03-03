@@ -178,21 +178,6 @@ async def save(obj: Type[ModelT]) -> None:
     db.session.add(obj)
 
 
-async def get_session() -> AsyncSession:
-    """Get the database session.
-
-    Args:
-        None
-
-    Returns:
-        AsyncSession: The database session.
-
-    Raises:
-        None
-    """
-    return db.session
-
-
 async def commit(session) -> None:
     """Commit the changes made in the session to the database.
 
