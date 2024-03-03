@@ -8,48 +8,46 @@ from app.config import settings
 
 
 class Database:
-    def __init__(self, url):
-        self.session = None
-        self.engine = None
+    def __init__(self, url: str) -> None:
+        """
+        Initializer/Constructor for Database class.
+
+        Parameters:
+        url: str - The URL of the database.
+        """
         self.url = url
+        self.engine = None
+        self.session = None
 
     async def init(self):
-        """Initialize the database connection.
-
-        Args:
-            self
-
-        Returns:
-            None
-
-        Raises:
-            None
         """
-        # closes connections if a session is created,
-        # so as not to create repeated connections
+        Asynchronous method to initialize the database connection and assign a new session.
+        """
+        # Close the session to avoid creating repeated connections
         if self.session:
             await self.session.close()
 
         self.engine = create_async_engine(self.url, future=True)
-        self.session = next(self.get_session())
+        self.session = await self.get_session()
 
-    def get_session(self) -> AsyncSession:
-        """Get the database session.
-
-        Args:
-            self
+    async def get_session(self) -> AsyncSession:
+        """
+        Creates and provides a new database session.
 
         Returns:
-            AsyncSession: The database session.
-
-        Raises:
-            None
+        AsyncSession: A database session
         """
-        session = sessionmaker(
+        session_factory = sessionmaker(
             self.engine, expire_on_commit=False, class_=AsyncSession
-        )()
-        yield session
-        session.close()
+        )
+        async with session_factory() as session:
+            try:
+                return session
+            except Exception as e:
+                await session.rollback()
+                raise e
+            finally:
+                await session.close()
 
 
 async def get_user_db():
