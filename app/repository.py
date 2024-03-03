@@ -3,7 +3,6 @@ from typing import List, Type, TypeVar
 
 from sqlalchemy import text
 from sqlalchemy import update as sql_update
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload, selectinload
 
