@@ -210,7 +210,8 @@ async def fixture_test_accounts(
 
     service = AccountService()
 
-    yield [
+    # TODO: Make this Async
+    account_list = [
         await tm.transaction(
             service.create_account,
             account_data["user"],
@@ -222,6 +223,13 @@ async def fixture_test_accounts(
         )
         for account_data in account_data_list
     ]
+
+    yield account_list
+
+    delete_task = [
+        service.delete_account(account.user, account) for account in account_list
+    ]
+    await asyncio.gather(*delete_task)
 
 
 @pytest.fixture(name="test_account_transaction_list")
