@@ -1,8 +1,5 @@
 from typing import Any
 
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app import models
 from app.database import db
 from app.logger import get_logger
@@ -10,9 +7,7 @@ from app.logger import get_logger
 logger = get_logger(__name__)
 
 
-async def transaction(
-    handler, session: AsyncSession = Depends(db.get_session), *args: Any
-) -> Any:
+async def transaction(handler, *args: Any) -> Any:
     """Execute a transaction for the specified handler function.
 
     Args:
@@ -25,6 +20,7 @@ async def transaction(
     Raises:
         None
     """
+    session = db.session
     logger.info("Starting transaction for %s with args %s", handler.__name__, args)
     try:
         result = await handler(*args)
