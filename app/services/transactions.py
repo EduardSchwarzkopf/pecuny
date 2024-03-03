@@ -118,6 +118,10 @@ class TransactionService:
             transaction_information.dict()
         )
 
+        transaction = models.Transaction(
+            information=db_transaction_information, account_id=account.id
+        )
+
         if transaction_information.offset_account_id:
             logger.info("Handling offset account for transaction.")
             offset_transaction = await self._handle_offset_transaction(
@@ -142,9 +146,6 @@ class TransactionService:
             await repo.save(offset_transaction)
 
         account.balance += transaction_information.amount
-        transaction = models.Transaction(
-            information=db_transaction_information, account_id=account.id
-        )
 
         await repo.save([account, transaction, db_transaction_information])
 
