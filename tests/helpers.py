@@ -59,7 +59,7 @@ def get_user_offset_account(
             account_element.user_id == account.user_id
             and account.id != account_element.id
         ):
-            return account
+            return account_element
 
 
 def get_date_range(date_start, days=5):
