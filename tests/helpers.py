@@ -1,7 +1,10 @@
+from typing import List
+
 from fastapi import Response
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app import models
 from app.utils.enums import RequestMethod
 
 
@@ -44,3 +47,15 @@ async def make_http_request(
             )
 
     return response
+
+
+def get_user_offset_account(
+    account: models.Account, account_list: List[models.Account]
+) -> models.Account:
+
+    for account_element in account_list:
+        if (
+            account_element.user_id == account.user_id
+            and account.id != account_element.id
+        ):
+            return account
