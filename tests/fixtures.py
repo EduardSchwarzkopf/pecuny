@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app import models
 from app import repository as repo
 from app import schemas
+from app import transaction_manager as tm
 from app.oauth2 import create_access_token
 from app.services.accounts import AccountService
 from app.services.transactions import TransactionService
@@ -17,7 +18,7 @@ from app.utils.dataclasses_utils import ClientSessionWrapper, CreateUserData
 
 
 @pytest.fixture(name="test_user")
-async def fixture_test_user():
+async def fixture_test_user(session: AsyncSession):
     """
     Fixture that retrieves an existing user or creates a new user.
 
@@ -34,8 +35,9 @@ async def fixture_test_user():
         yield user_list[0]
 
     user_service = UserService()
-    user = await user_service.create_user(
-        CreateUserData(test_user_email, "password123", is_verified=True)
+    user = await tm.transaction(
+        user_service.create_user,
+        CreateUserData(test_user_email, "password123", is_verified=True),
     )
 
     yield user
@@ -97,8 +99,8 @@ async def fixture_client_session_wrapper_fixture(
     yield ClientSessionWrapper(client, authorized_client, session)
 
 
-@pytest.fixture(name="test_users", scope="module")
-async def fixture_test_users():
+@pytest.fixture(name="test_users")
+async def fixture_test_users(session: AsyncSession):
     """
     Fixture that creates test users.
 
@@ -117,10 +119,11 @@ async def fixture_test_users():
 
     user_service = UserService()
     for user in create_user_list:
-        await user_service.create_user(
+        await tm.transaction(
+            user_service.create_user,
             CreateUserData(
                 email=user[0], password=user[1], displayname=user[2], is_verified=True
-            )
+            ),
         )
 
     user_list = await repo.get_all(models.User)
@@ -132,7 +135,7 @@ async def fixture_test_users():
 
 
 @pytest.fixture(name="test_account")
-async def fixture_test_account(test_user: models.User):
+async def fixture_test_account(session: AsyncSession, test_user: models.User):
     """
     Fixture that creates a test account.
 
@@ -149,7 +152,8 @@ async def fixture_test_account(test_user: models.User):
     )
 
     service = AccountService()
-    account = await service.create_account(user=test_user, account=account_data)
+
+    account = await tm.transaction(service.create_account, test_user, account_data)
 
     yield account
 
@@ -157,7 +161,9 @@ async def fixture_test_account(test_user: models.User):
 
 
 @pytest.fixture(name="test_accounts")
-async def fixture_test_accounts(test_user, test_users: List[models.User]):
+async def fixture_test_accounts(
+    session: AsyncSession, test_user, test_users: List[models.User]
+):
     """
     Fixture that creates test accounts.
 
@@ -204,9 +210,9 @@ async def fixture_test_accounts(test_user, test_users: List[models.User]):
 
     service = AccountService()
 
-    # TODO: Make this Async
-    account_list = [
-        await service.create_account(
+    yield [
+        await tm.transaction(
+            service.create_account,
             account_data["user"],
             schemas.Account(
                 label=account_data["label"],
@@ -216,13 +222,6 @@ async def fixture_test_accounts(test_user, test_users: List[models.User]):
         )
         for account_data in account_data_list
     ]
-
-    yield account_list
-
-    delete_task = [
-        service.delete_account(account.user, account) for account in account_list
-    ]
-    await asyncio.gather(*delete_task)
 
 
 @pytest.fixture(name="test_account_transaction_list")
@@ -248,7 +247,7 @@ async def get_date_range(date_start, days=5):
 
 
 @pytest.fixture(name="test_transactions")
-async def fixture_test_transactions(test_accounts, test_account):
+async def fixture_test_transactions(session: AsyncSession, test_accounts, test_account):
     """
     Fixture that creates test transactions.
 
@@ -305,7 +304,8 @@ async def fixture_test_transactions(test_accounts, test_account):
 
     for account in test_accounts + [test_account]:
         create_transactions_task = [
-            service.create_transaction(
+            tm.transaction(
+                service.create_transaction,
                 account.user,
                 schemas.TransactionInformationCreate(
                     **transaction, account_id=account.id
