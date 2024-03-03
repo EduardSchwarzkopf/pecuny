@@ -346,6 +346,8 @@ async def test_create_offset_transaction_other_account_fail(
 @pytest.mark.usefixtures("test_accounts")
 async def test_updated_offset_transaction(
     client_session_wrapper: ClientSessionWrapper,
+    test_account: models.Account,
+    test_accounts: List[models.Account],
     category_id,
     amount,
 ):
@@ -361,47 +363,50 @@ async def test_updated_offset_transaction(
         None
     """
 
-    async with client_session_wrapper.session:
-        account = await repo.get(models.Account, ACCOUNT_ID)
-        offset_account = await repo.get(models.Account, OFFSET_ACCOUNT_ID)
+    offset_account = get_user_offset_account(test_account, test_accounts)
 
-        account_balance = account.balance
-        offset_account_balance = offset_account.balance
+    account_balance = test_account.balance
+    offset_account_balance = offset_account.balance
+    account_id = test_account.id
+    offset_account_id = offset_account.id
 
-        transaction_res = await client_session_wrapper.authorized_client.post(
-            ENDPOINT,
-            json={
-                "account_id": ACCOUNT_ID,
-                "amount": amount + 5,
-                "reference": "creation",
-                "date": str(datetime.datetime.now(datetime.timezone.utc)),
-                "category_id": category_id,
-                "offset_account_id": OFFSET_ACCOUNT_ID,
-            },
-        )
+    # create base transaction
+    transaction_res = await client_session_wrapper.authorized_client.post(
+        ENDPOINT,
+        json={
+            "account_id": account_id,
+            "amount": 5,
+            "reference": "creation",
+            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "category_id": category_id,
+            "offset_account_id": offset_account_id,
+        },
+    )
 
-        transaction_before = schemas.Transaction(**transaction_res.json())
+    a = await repo.get(models.Account, account_id)
+    transaction_before = schemas.Transaction(**transaction_res.json())
 
-        reference = f"Offset_transaction with {amount}"
-        res = await client_session_wrapper.authorized_client.post(
-            f"{ENDPOINT}{transaction_before.id}",
-            json={
-                "account_id": ACCOUNT_ID,
-                "amount": amount,
-                "reference": reference,
-                "date": str(datetime.datetime.now(datetime.timezone.utc)),
-                "category_id": category_id,
-            },
-        )
+    reference = f"Offset_transaction with {amount}"
+    res = await client_session_wrapper.authorized_client.post(
+        f"{ENDPOINT}{transaction_before.id}",
+        json={
+            "account_id": account_id,
+            "amount": amount,
+            "reference": reference,
+            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "category_id": category_id,
+        },
+    )
 
-        assert res.status_code == status.HTTP_200_OK
-
-        await repo.refresh_all([account, offset_account])
+    assert res.status_code == status.HTTP_200_OK
 
     transaction = schemas.Transaction(**res.json())
 
-    assert account.balance == round(account_balance + amount, 2)
-    assert offset_account.balance == round(offset_account_balance - amount, 2)
+    account_refreshed = await repo.get(models.Account, account_id)
+    offset_account_refreshed = await repo.get(models.Account, offset_account_id)
+
+    assert account_refreshed.balance == round(account_balance + amount, 2)
+    assert offset_account_refreshed.balance == round(offset_account_balance - amount, 2)
 
     assert transaction.information.amount == round(amount, 2)
     assert transaction.information.reference == reference
