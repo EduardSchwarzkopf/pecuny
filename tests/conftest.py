@@ -49,6 +49,13 @@ async def fixture_init_db():
     db.engine.dispose()
 
 
+async def cleanup_tests():
+    user_list = await repo.get_all(models.User)
+
+    delete_task = [repo.delete(user) for user in user_list]
+    await asyncio.gather(*delete_task)
+
+
 @pytest.fixture(name="session", autouse=True)
 @pytest.mark.usefixtures("fixture_init_db")
 async def fixture_session() -> AsyncSession:  # type: ignore
@@ -62,6 +69,8 @@ async def fixture_session() -> AsyncSession:  # type: ignore
     Returns:
         AsyncSession: An async session.
     """
+    await cleanup_tests()
+
     yield db.session
 
     db.session.close()

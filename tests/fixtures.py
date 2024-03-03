@@ -35,14 +35,10 @@ async def fixture_test_user(session: AsyncSession):
         yield user_list[0]
 
     user_service = UserService()
-    user = await tm.transaction(
+    yield await tm.transaction(
         user_service.create_user,
         CreateUserData(test_user_email, "password123", is_verified=True),
     )
-
-    yield user
-
-    await user_service.delete_self(user)
 
 
 @pytest.fixture(name="token")
@@ -126,12 +122,7 @@ async def fixture_test_users(session: AsyncSession):
             ),
         )
 
-    user_list = await repo.get_all(models.User)
-
-    yield user_list
-
-    delete_tasks = [user_service.delete_self(user) for user in user_list]
-    await asyncio.gather(*delete_tasks)
+    yield await repo.get_all(models.User)
 
 
 @pytest.fixture(name="test_account")
@@ -153,11 +144,7 @@ async def fixture_test_account(session: AsyncSession, test_user: models.User):
 
     service = AccountService()
 
-    account = await tm.transaction(service.create_account, test_user, account_data)
-
-    yield account
-
-    service.delete_account(test_user, account.id)
+    yield await tm.transaction(service.create_account, test_user, account_data)
 
 
 @pytest.fixture(name="test_accounts")
@@ -210,8 +197,8 @@ async def fixture_test_accounts(
 
     service = AccountService()
 
-    # TODO: Make this Async
-    account_list = [
+    # TODO: Make this async?
+    yield [
         await tm.transaction(
             service.create_account,
             account_data["user"],
@@ -223,13 +210,6 @@ async def fixture_test_accounts(
         )
         for account_data in account_data_list
     ]
-
-    yield account_list
-
-    delete_task = [
-        service.delete_account(account.user, account) for account in account_list
-    ]
-    await asyncio.gather(*delete_task)
 
 
 @pytest.fixture(name="test_account_transaction_list")
@@ -324,9 +304,4 @@ async def fixture_test_transactions(session: AsyncSession, test_accounts, test_a
 
         await asyncio.gather(*create_transactions_task)
 
-    transaction_list = await repo.get_all(models.Transaction)
-
-    yield transaction_list
-
-    delete_task = [service.delete_transaction(account) for account in transaction_list]
-    await asyncio.gather(*delete_task)
+    yield await repo.get_all(models.Transaction)
