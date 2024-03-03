@@ -15,6 +15,7 @@ from app.services.accounts import AccountService
 from app.services.transactions import TransactionService
 from app.services.users import UserService
 from app.utils.dataclasses_utils import ClientSessionWrapper, CreateUserData
+from tests.helpers import get_date_range
 
 
 @pytest.fixture(name="test_user")
@@ -217,21 +218,6 @@ async def fixture_test_accounts(
 async def fixture_test_account_transaction_list(test_account):
 
     yield await repo.filter_by(models.Transaction, "account_id", test_account.id)
-
-
-async def get_date_range(date_start, days=5):
-    """
-    Returns a list of dates in a range starting from a given date.
-
-    Args:
-        date_start: The starting date.
-        days: The number of days in the range (default is 5).
-
-    Returns:
-        List[datetime.date]: A list of dates in the range.
-    """
-
-    return [(date_start - datetime.timedelta(days=idx)) for idx in range(days)]
 
 
 @pytest.fixture(name="test_transactions")
