@@ -221,7 +221,9 @@ async def fixture_test_account_transaction_list(test_account):
 
 
 @pytest.fixture(name="test_transactions")
-async def fixture_test_transactions(session: AsyncSession, test_accounts, test_account):
+async def fixture_test_transactions(
+    test_accounts: List[models.Account], test_account: models.Account
+):
     """
     Fixture that creates test transactions.
 
@@ -233,7 +235,7 @@ async def fixture_test_transactions(session: AsyncSession, test_accounts, test_a
         List[Transaction]: A list of test transactions.
     """
 
-    dates = await get_date_range(datetime.datetime.now(datetime.timezone.utc))
+    dates = get_date_range(datetime.datetime.now(datetime.timezone.utc))
 
     transaction_data = [
         {
@@ -277,10 +279,11 @@ async def fixture_test_transactions(session: AsyncSession, test_accounts, test_a
     service = TransactionService()
 
     for account in test_accounts + [test_account]:
+        user = account.user
         create_transactions_task = [
             tm.transaction(
                 service.create_transaction,
-                account.user,
+                user,
                 schemas.TransactionInformationCreate(
                     **transaction, account_id=account.id
                 ),
