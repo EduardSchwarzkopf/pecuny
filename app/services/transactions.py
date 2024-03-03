@@ -234,9 +234,6 @@ class TransactionService:
             round(transaction_information.amount, 2) - transaction.information.amount
         )
 
-        update_info = {"balance": account.balance + amount_updated}
-        await repo.update(models.Account, account.id, **update_info)
-
         if transaction.offset_transactions_id:
             logger.info("Handling offset transaction for update.")
             offset_transaction = await repo.get(
@@ -253,7 +250,11 @@ class TransactionService:
             offset_account.balance -= amount_updated
             offset_transaction.information.amount = transaction_information.amount * -1
 
-        update_info = {
+        account_values = {"balance": account.balance + amount_updated}
+
+        await repo.update(models.Account, account.id, **account_values)
+
+        transaction_values = {
             "amount": transaction_information.amount,
             "reference": transaction_information.reference,
             "date": transaction_information.date,
@@ -263,7 +264,7 @@ class TransactionService:
         await repo.update(
             models.TransactionInformation,
             transaction.information.id,
-            **update_info,
+            **transaction_values,
         )
 
         return transaction
