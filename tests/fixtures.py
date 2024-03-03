@@ -19,27 +19,8 @@ from tests.helpers import get_date_range
 
 
 @pytest.fixture(name="test_user")
-async def fixture_test_user(session: AsyncSession):
-    """
-    Fixture that retrieves an existing user or creates a new user.
-
-    Args:
-        user_service: The user service fixture.
-
-    Returns:
-        User: An existing user or a newly created user.
-    """
-    test_user_email = "hello123@pytest.de"
-    user_list = await repo.filter_by(models.User, "email", test_user_email)
-
-    if len(user_list) > 0:
-        yield user_list[0]
-
-    user_service = UserService()
-    yield await tm.transaction(
-        user_service.create_user,
-        CreateUserData(test_user_email, "password123", is_verified=True),
-    )
+async def fixture_test_user(test_users):
+    yield test_users[0]
 
 
 @pytest.fixture(name="token")
@@ -96,8 +77,8 @@ async def fixture_client_session_wrapper_fixture(
     yield ClientSessionWrapper(client, authorized_client, session)
 
 
-@pytest.fixture(name="test_users")
-async def fixture_test_users(session: AsyncSession):
+@pytest.fixture
+async def fixture_create_test_users(session: AsyncSession):
     """
     Fixture that creates test users.
 
@@ -109,47 +90,40 @@ async def fixture_test_users(session: AsyncSession):
     """
 
     create_user_list = [
+        ["hello123@pytest.de", "password123", "User00"],
         ["user01@pytest.de", "password123", "User01"],
         ["user02@pytest.de", "password123", "User02"],
         ["user03@pytest.de", "password123", "User03"],
     ]
 
-    user_service = UserService()
-    for user in create_user_list:
-        await tm.transaction(
-            user_service.create_user,
-            CreateUserData(
-                email=user[0], password=user[1], displayname=user[2], is_verified=True
-            ),
-        )
+    async with session:
+        user_service = UserService()
+        for user in create_user_list:
+            await user_service.create_user(
+                CreateUserData(
+                    email=user[0],
+                    password=user[1],
+                    displayname=user[2],
+                    is_verified=True,
+                ),
+            )
 
+    yield
+
+
+@pytest.fixture(name="test_users")
+async def fixture_test_user_list(fixture_create_test_users):
     yield await repo.get_all(models.User)
 
 
 @pytest.fixture(name="test_account")
-async def fixture_test_account(session: AsyncSession, test_user: models.User):
-    """
-    Fixture that creates a test account.
-
-    Args:
-        test_user: The test user fixture.
-        session: The session fixture.
-
-    Returns:
-        Account: A test account.
-    """
-
-    account_data = schemas.Account(
-        user=test_user, label="test_account", description="test", balance=5000
-    )
-
-    service = AccountService()
-
-    yield await tm.transaction(service.create_account, test_user, account_data)
+async def fixture_test_account(test_user: models.User, fixture_create_test_accounts):
+    account = await repo.filter_by(models.Account, "user_id", test_user.id)
+    yield account[0]
 
 
-@pytest.fixture(name="test_accounts")
-async def fixture_test_accounts(
+@pytest.fixture
+async def fixture_create_test_accounts(
     session: AsyncSession, test_user, test_users: List[models.User]
 ):
     """
@@ -199,30 +173,36 @@ async def fixture_test_accounts(
     service = AccountService()
 
     # TODO: Make this async?
-    yield [
-        await tm.transaction(
-            service.create_account,
-            account_data["user"],
-            schemas.Account(
-                label=account_data["label"],
-                description=account_data["description"],
-                balance=account_data["balance"],
-            ),
-        )
-        for account_data in account_data_list
-    ]
+    async with session:
+        for account_data in account_data_list:
+            await service.create_account(
+                account_data["user"],
+                schemas.Account(
+                    label=account_data["label"],
+                    description=account_data["description"],
+                    balance=account_data["balance"],
+                ),
+            )
+
+    yield
+
+
+@pytest.fixture(name="test_accounts")
+async def get_test_account_list(fixture_create_test_accounts):
+    yield await repo.get_all(models.Account)
 
 
 @pytest.fixture(name="test_account_transaction_list")
-@pytest.mark.usefixtures("test_transactions")
-async def fixture_test_account_transaction_list(test_account):
+async def fixture_test_account_transaction_list(fixture_create_transactions):
 
-    yield await repo.filter_by(models.Transaction, "account_id", test_account.id)
+    yield await repo.get_all(models.Transaction)
 
 
-@pytest.fixture(name="test_transactions")
-async def fixture_test_transactions(
-    test_accounts: List[models.Account], test_account: models.Account
+@pytest.fixture
+async def fixture_create_transactions(
+    test_accounts: List[models.Account],
+    test_account: models.Account,
+    session: AsyncSession,
 ):
     """
     Fixture that creates test transactions.
@@ -277,20 +257,26 @@ async def fixture_test_transactions(
     ]
 
     service = TransactionService()
+    transaction_list = []
 
-    for account in test_accounts + [test_account]:
-        user = account.user
-        create_transactions_task = [
-            tm.transaction(
-                service.create_transaction,
-                user,
-                schemas.TransactionInformationCreate(
-                    **transaction, account_id=account.id
-                ),
+    async with session:
+        for account in test_accounts:
+            user = await repo.get(models.User, account.user_id)
+            transaction_list.extend(
+                [
+                    await tm.transaction(
+                        service.create_transaction,
+                        user,
+                        schemas.TransactionInformationCreate(
+                            account_id=account.id,
+                            amount=transaction["amount"],
+                            reference=transaction["reference"],
+                            date=transaction["date"],
+                            category_id=transaction["category_id"],
+                        ),
+                    )
+                    for transaction in transaction_data
+                ]
             )
-            for transaction in transaction_data
-        ]
 
-        await asyncio.gather(*create_transactions_task)
-
-    yield await repo.get_all(models.Transaction)
+    yield
