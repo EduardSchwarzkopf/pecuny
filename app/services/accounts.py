@@ -70,7 +70,7 @@ class AccountService:
         logger.info("Creating new account for user: %s", user.id)
         db_account = models.Account(user=user, **account.model_dump())
         await repo.save(db_account)
-        logger.info("Account %s created for user: %s", db_account.id, user.id)
+        logger.info("Account created for user: %s", user.id)
         return db_account
 
     async def update_account(
