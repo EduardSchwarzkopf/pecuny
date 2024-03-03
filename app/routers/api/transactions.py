@@ -143,7 +143,7 @@ async def api_update_transaction(
 
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def api_delete_account(
+async def api_delete_transaction(
     transaction_id: int, current_user: User = Depends(current_active_user)
 ):
     """
