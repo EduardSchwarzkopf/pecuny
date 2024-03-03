@@ -71,9 +71,11 @@ async def fixture_session() -> AsyncSession:  # type: ignore
     """
     await cleanup_tests()
 
-    yield db.session
+    session = await db.get_session()
 
-    db.session.close()
+    yield session
+
+    session.close()
 
 
 @pytest.fixture(name="client")
