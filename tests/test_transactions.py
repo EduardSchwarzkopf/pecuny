@@ -9,7 +9,7 @@ from app import repository as repo
 from app import schemas
 from app.utils.dataclasses_utils import ClientSessionWrapper
 from app.utils.enums import RequestMethod
-from tests.helpers import make_http_request
+from tests.helpers import get_user_offset_account, make_http_request
 
 ENDPOINT = "/api/transactions/"
 STATUS_CODE = status.HTTP_201_CREATED
@@ -255,11 +255,7 @@ async def test_create_offset_transaction(
     """
 
     account_id = test_account.id
-
-    for account in test_accounts:
-        if account.user_id == test_account.user_id and account.id != account_id:
-            offset_account = account
-            break
+    offset_account = get_user_offset_account(test_account, test_accounts)
 
     res = await make_http_request(
         client_session_wrapper.session,
@@ -416,21 +412,23 @@ async def test_updated_offset_transaction(
 @pytest.mark.parametrize(
     "category_id, amount",
     [
-        (1, 2.5),
+        (1, 5),
         (1, 0),
         (2, 3.666666666667),
         (3, 0.133333333334),
-        (4, -25),
+        (4, -2.5),
         (1, -35),
         (1, -0.3333333334),
-        (7, 0),
+        (7, 05.5),
     ],
 )
-@pytest.mark.usefixtures("test_accounts")
+@pytest.mark.usefixtures()
 async def test_delete_offset_transaction(
     client_session_wrapper: ClientSessionWrapper,
     category_id,
     amount,
+    test_account,
+    test_accounts,
 ):
     """
     Tests the delete offset transaction functionality.
@@ -444,38 +442,37 @@ async def test_delete_offset_transaction(
         None
     """
 
-    async with client_session_wrapper.session:
-        account = await repo.get(models.Account, ACCOUNT_ID)
-        offset_account = await repo.get(models.Account, OFFSET_ACCOUNT_ID)
+    offset_account = get_user_offset_account(test_account, test_accounts)
 
-        account_balance = account.balance
-        offset_account_balance = offset_account.balance
+    account_balance = test_account.balance
+    offset_account_balance = offset_account.balance
 
-        transaction_res = await client_session_wrapper.authorized_client.post(
-            ENDPOINT,
-            json={
-                "account_id": ACCOUNT_ID,
-                "amount": amount,
-                "reference": "creation",
-                "date": str(datetime.datetime.now(datetime.timezone.utc)),
-                "category_id": category_id,
-                "offset_account_id": ACCOUNT_ID,
-            },
-        )
+    transaction_res = await client_session_wrapper.authorized_client.post(
+        ENDPOINT,
+        json={
+            "account_id": test_account.id,
+            "amount": amount,
+            "reference": "creation",
+            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "category_id": category_id,
+            "offset_account_id": offset_account.id,
+        },
+    )
 
-        transaction = schemas.Transaction(**transaction_res.json())
+    transaction = schemas.Transaction(**transaction_res.json())
 
-        res = await client_session_wrapper.authorized_client.delete(
-            f"{ENDPOINT}{transaction.id}"
-        )
-        offset_transaction_res = await client_session_wrapper.authorized_client.get(
-            f"{ENDPOINT}{transaction.offset_transactions_id}"
-        )
+    res = await client_session_wrapper.authorized_client.delete(
+        f"{ENDPOINT}{transaction.id}"
+    )
+    offset_transaction_res = await client_session_wrapper.authorized_client.get(
+        f"{ENDPOINT}{transaction.offset_transactions_id}"
+    )
 
-        assert res.status_code == status.HTTP_204_NO_CONTENT
-        assert offset_transaction_res.status_code == status.HTTP_404_NOT_FOUND
+    assert res.status_code == status.HTTP_204_NO_CONTENT
+    assert offset_transaction_res.status_code == status.HTTP_404_NOT_FOUND
 
-        await repo.refresh_all([account, offset_account])
+    account_refresh = await repo.get(models.Account, test_account.id)
+    offset_account_refresh = await repo.get(models.Account, offset_account.id)
 
-    assert offset_account_balance == offset_account.balance
-    assert account_balance == account.balance
+    assert offset_account_balance == offset_account_refresh.balance
+    assert account_balance == account_refresh.balance
