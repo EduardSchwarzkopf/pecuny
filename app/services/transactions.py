@@ -145,7 +145,7 @@ class TransactionService:
             offset_transaction.offset_transaction = transaction
             await repo.save(offset_transaction)
 
-        account.balance += transaction_information.amount
+        account.balance += db_transaction_information.amount
 
         await repo.save([account, transaction, db_transaction_information])
 
