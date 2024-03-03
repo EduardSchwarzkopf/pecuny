@@ -299,36 +299,35 @@ async def test_create_offset_transaction_other_account_fail(
 ):
 
     for offset_account in test_accounts:
+        if offset_account.user_id != test_account.user_id:
+            break
 
-        if offset_account.user_id == test_account.user_id:
-            continue
+    account_balance = test_account.balance
+    offset_account_balance = offset_account.balance
+    account_id = test_account.id
+    offset_account_id = offset_account.id
 
-        account_balance = test_account.balance
-        offset_account_balance = offset_account.balance
-        account_id = test_account.id
-        offset_account_id = offset_account.id
+    res = await make_http_request(
+        client_session_wrapper.session,
+        client_session_wrapper.authorized_client,
+        ENDPOINT,
+        json={
+            "account_id": account_id,
+            "amount": 42,
+            "reference": "Not allowed",
+            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "category_id": 1,
+            "offset_account_id": offset_account_id,
+        },
+    )
 
-        res = await make_http_request(
-            client_session_wrapper.session,
-            client_session_wrapper.authorized_client,
-            ENDPOINT,
-            json={
-                "account_id": account_id,
-                "amount": 42,
-                "reference": "Not allowed",
-                "date": str(datetime.datetime.now(datetime.timezone.utc)),
-                "category_id": 1,
-                "offset_account_id": offset_account_id,
-            },
-        )
+    account_refreshed = await repo.get(models.Account, account_id)
+    offset_account_refreshed = await repo.get(models.Account, offset_account_id)
 
-        account_refreshed = await repo.get(models.Account, account_id)
-        offset_account_refreshed = await repo.get(models.Account, offset_account_id)
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
-        assert res.status_code == status.HTTP_401_UNAUTHORIZED
-
-        assert account_balance == account_refreshed.balance
-        assert offset_account_balance == offset_account_refreshed.balance
+    assert account_balance == account_refreshed.balance
+    assert offset_account_balance == offset_account_refreshed.balance
 
 
 @pytest.mark.parametrize(
