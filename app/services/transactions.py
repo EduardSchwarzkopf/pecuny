@@ -115,7 +115,7 @@ class TransactionService:
 
         db_transaction_information = models.TransactionInformation()
         db_transaction_information.add_attributes_from_dict(
-            transaction_information.dict()
+            transaction_information.model_dump()
         )
 
         transaction = models.Transaction(
@@ -183,7 +183,7 @@ class TransactionService:
 
         db_offset_transaction_information = models.TransactionInformation()
         db_offset_transaction_information.add_attributes_from_dict(
-            transaction_information.dict()
+            transaction_information.model_dump()
         )
         offset_transaction = models.Transaction(
             information=db_offset_transaction_information,
