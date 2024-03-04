@@ -176,13 +176,14 @@ async def test_delete_transactions(
         account = await repo.get(models.Account, test_account.id)
         account_balance_after = account.balance
 
-        assert account_balance_after == (account_balance - amount)
+        expected_balance = account_balance - amount
+        assert account_balance_after == expected_balance
 
 
 async def test_delete_transactions_fail(
     client_session_wrapper: ClientSessionWrapper,
     test_account: models.Account,
-    test_transactions: List[models.Transaction],
+    transaction_list: List[models.Transaction],
 ):
     """
     Test case for failing to delete transactions.
@@ -195,10 +196,10 @@ async def test_delete_transactions_fail(
     Returns:
         None
     """
-    for transaction in test_transactions:
+    for transaction in transaction_list:
 
-        account_id = transaction.account_id
-        account = await repo.get(models.Account, account_id)
+        account = transaction.account
+        account_id = account.id
 
         if account.user_id == test_account.user_id:
             continue
