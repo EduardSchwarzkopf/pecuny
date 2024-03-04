@@ -22,16 +22,17 @@ async def populate_db(session: AsyncSession):
     section_list = categories.get_section_list()
     category_list = categories.get_category_list()
 
-    def create_section_model(section):
-        return models.TransactionSection(**section)
+    section_list = categories.get_section_list()
+    category_list = categories.get_category_list()
 
-    def create_category_model(category):
-        return models.TransactionCategory(**category)
+    transaction_section_list = [
+        models.TransactionSection(**section) for section in section_list
+    ]
+    transaction_category_list = [
+        models.TransactionCategory(**category) for category in category_list
+    ]
 
-    section = list(map(create_section_model, section_list))
-    category = list(map(create_category_model, category_list))
-
-    session.add_all(section + category)
+    session.add_all(transaction_category_list + transaction_section_list)
     await session.commit()
 
 
