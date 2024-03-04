@@ -9,7 +9,7 @@ from app import repository as repo
 from app import schemas
 from app.utils.dataclasses_utils import ClientSessionWrapper
 from app.utils.enums import RequestMethod
-from tests.helpers import get_user_offset_account, make_http_request
+from tests.utils import get_user_offset_account, make_http_request
 
 ENDPOINT = "/api/transactions/"
 STATUS_CODE = status.HTTP_201_CREATED
