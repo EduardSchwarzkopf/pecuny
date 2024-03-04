@@ -45,9 +45,7 @@ async def api_delete_me(
     if result:
         return Response(
             status_code=status.HTTP_204_NO_CONTENT,
-            content="Transaction deleted successfully",
+            content="User deleted successfully",
         )
 
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
-    )
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
