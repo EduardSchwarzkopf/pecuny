@@ -1,10 +1,11 @@
 import datetime
 import uuid
 from datetime import datetime as dt
+from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
 from fastapi_users import schemas
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from pydantic.types import constr
 from starlette_wtf import StarletteForm
 from wtforms import (
@@ -66,7 +67,7 @@ class AccountUpdate(Base):
 
 
 class TransactionInformationBase(Base):
-    amount: float
+    amount: Decimal = Field(..., decimal_places=2)
     reference: str
     category_id: int
 
