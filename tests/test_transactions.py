@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 from typing import List
 
 import pytest
@@ -56,11 +57,13 @@ async def test_create_transaction(
 
     new_transaction = schemas.Transaction(**res.json())
 
+    amount = Decimal(amount)
+
     assert res.status_code == status.HTTP_201_CREATED
     assert account_balance + amount == test_account.balance
     assert new_transaction.account_id == test_account.id
     assert new_transaction.information.amount == expected_amount
-    assert isinstance(new_transaction.information.amount, float)
+    assert isinstance(new_transaction.information.amount, Decimal)
     assert new_transaction.information.reference == reference
 
 
