@@ -3,19 +3,17 @@ import datetime
 from typing import List
 
 import pytest
-from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models
 from app import repository as repo
 from app import schemas
 from app import transaction_manager as tm
-from app.oauth2 import create_access_token
 from app.services.accounts import AccountService
 from app.services.transactions import TransactionService
 from app.services.users import UserService
-from app.utils.dataclasses_utils import ClientSessionWrapper, CreateUserData
-from tests.helpers import get_date_range
+from app.utils.dataclasses_utils import CreateUserData
+from tests.utils import get_date_range
 
 
 @pytest.fixture(name="test_user")
@@ -23,62 +21,8 @@ async def fixture_test_user(test_users):
     yield test_users[0]
 
 
-@pytest.fixture(name="token")
-async def fixture_token(test_user):
-    """
-    Fixture that generates an access token for a test user.
-
-    Args:
-        test_user: The test user fixture.
-
-    Returns:
-        str: An access token for the test user.
-    """
-
-    yield create_access_token(
-        {
-            "sub": str(test_user.id),
-            "aud": ["fastapi-users:auth"],
-        }
-    )
-
-
-@pytest.fixture(name="authorized_client")
-async def fixture_authorized_client(client: AsyncClient, token):
-    """
-    Fixture that provides an authorized client with a token.
-
-    Args:
-        client: The async client fixture.
-        token: The authentication token.
-
-    Returns:
-        AsyncClient: An authorized client with the provided token.
-    """
-
-    client.cookies = {**client.cookies, "fastapiusersauth": token}
-    yield client
-
-
-@pytest.fixture(name="client_session_wrapper")
-async def fixture_client_session_wrapper_fixture(
-    client: AsyncClient, authorized_client: AsyncClient, session: AsyncSession
-):
-    """
-    Fixture that combines the client and session fixtures into a single object.
-
-    Args:
-        client: The async client fixture.
-        session: The async session fixture.
-
-    Returns:
-        SessionClient: An object containing the client and session.
-    """
-    yield ClientSessionWrapper(client, authorized_client, session)
-
-
-@pytest.fixture
-async def fixture_create_test_users(session: AsyncSession):
+@pytest.fixture(scope="session")
+async def fixture_create_test_users():
     """
     Fixture that creates test users.
 
@@ -89,24 +33,25 @@ async def fixture_create_test_users(session: AsyncSession):
         List[User]: A list of test users.
     """
 
+    password = "password123"
     create_user_list = [
-        ["hello123@pytest.de", "password123", "User00"],
-        ["user01@pytest.de", "password123", "User01"],
-        ["user02@pytest.de", "password123", "User02"],
-        ["user03@pytest.de", "password123", "User03"],
+        ["user00@pytest.de", password, "User00"],
+        ["user01@pytest.de", password, "User01"],
+        ["user02@pytest.de", password, "User02"],
+        ["user03@pytest.de", password, "User03"],
+        ["hello123@pytest.de", password, "LoginUser"],
     ]
 
-    async with session:
-        user_service = UserService()
-        for user in create_user_list:
-            await user_service.create_user(
-                CreateUserData(
-                    email=user[0],
-                    password=user[1],
-                    displayname=user[2],
-                    is_verified=True,
-                ),
-            )
+    user_service = UserService()
+    for user in create_user_list:
+        await user_service.create_user(
+            CreateUserData(
+                email=user[0],
+                password=user[1],
+                displayname=user[2],
+                is_verified=True,
+            ),
+        )
 
     yield
 
@@ -173,16 +118,15 @@ async def fixture_create_test_accounts(
     service = AccountService()
 
     # TODO: Make this async?
-    async with session:
-        for account_data in account_data_list:
-            await service.create_account(
-                account_data["user"],
-                schemas.Account(
-                    label=account_data["label"],
-                    description=account_data["description"],
-                    balance=account_data["balance"],
-                ),
-            )
+    for account_data in account_data_list:
+        await service.create_account(
+            account_data["user"],
+            schemas.Account(
+                label=account_data["label"],
+                description=account_data["description"],
+                balance=account_data["balance"],
+            ),
+        )
 
     yield
 
