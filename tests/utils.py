@@ -3,18 +3,39 @@ from typing import List
 
 from fastapi import Response
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models
+from app.main import app
+from app.oauth2 import create_access_token
 from app.utils.enums import RequestMethod
 
 
+def authorized_httpx_client(client: AsyncClient, user: models.User):
+    """
+    Fixture that provides an authorized client with a token.
+
+    Args:
+        client: The async client fixture.
+        token: The authentication token.
+
+    Returns:
+        AsyncClient: An authorized client with the provided token.
+    """
+    token = create_access_token(
+        {
+            "sub": str(user.id),
+            "aud": ["fastapi-users:auth"],
+        }
+    )
+    client.cookies = {**client.cookies, "fastapiusersauth": token}
+    return client
+
+
 async def make_http_request(
-    session: AsyncSession,
-    client: AsyncClient,
     url: str,
     data: dict = None,
     json: dict = None,
+    as_user: models.User = None,
     method: RequestMethod = RequestMethod.POST,
 ) -> Response:
     """
@@ -32,8 +53,10 @@ async def make_http_request(
     Raises:
         ValueError: If an invalid method is provided.
     """
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        if as_user:
+            client = authorized_httpx_client(client, as_user)
 
-    async with session:
         if method == RequestMethod.POST:
             response = await client.post(url, json=json, data=data)
         elif method == RequestMethod.PATCH:
