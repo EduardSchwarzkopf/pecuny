@@ -21,7 +21,11 @@ class TransactionService:
     """
 
     async def get_transaction_list(
-        self, account_id: int, date_start: datetime, date_end: datetime
+        self,
+        user: models.User,
+        account_id: int,
+        date_start: datetime,
+        date_end: datetime,
     ) -> List[models.Transaction]:
         """
         Retrieves a list of transactions within a specified period for a given account.
@@ -41,11 +45,11 @@ class TransactionService:
 
         logger.info(
             "Starting transaction list retrieval for user %s and account %s",
-            self.id,
+            user.id,
             account_id,
         )
         account = await repo.get(models.Account, account_id)
-        if account.user_id == self.id:
+        if account.user_id == user.id:
             logger.info("User ID verified. Retrieving transactions.")
             return await repo.get_transactions_from_period(
                 account_id, date_start, date_end
