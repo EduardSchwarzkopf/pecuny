@@ -68,7 +68,7 @@ async def filter_by(
 
     result = await db.session.execute(query)
 
-    return result.scalars().all()
+    return result.unique().scalars().all()
 
 
 async def get(cls: Type[ModelT], instance_id: int, load_relationships=None) -> ModelT:
