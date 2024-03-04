@@ -7,7 +7,6 @@ from fastapi import status
 from app import models
 from app import repository as repo
 from app import schemas
-from app.utils.dataclasses_utils import ClientSessionWrapper
 from app.utils.enums import RequestMethod
 from tests.utils import get_user_offset_account, make_http_request
 
@@ -24,14 +23,8 @@ STATUS_CODE = status.HTTP_201_CREATED
         (-40.5, -40.5, "Subsctract 40.5", 6),
     ],
 )
-@pytest.mark.usefixtures("test_account")
 async def test_create_transaction(
-    client_session_wrapper: ClientSessionWrapper,
-    amount,
-    expected_amount,
-    reference,
-    category_id,
-    test_account,
+    amount, expected_amount, reference, category_id, test_account, test_user
 ):
     """
     Tests the create transaction functionality.
@@ -50,8 +43,6 @@ async def test_create_transaction(
     account_balance = test_account.balance
 
     res = await make_http_request(
-        client_session_wrapper.session,
-        client_session_wrapper.authorized_client,
         ENDPOINT,
         json={
             "account_id": test_account.id,
@@ -60,6 +51,7 @@ async def test_create_transaction(
             "date": str(datetime.datetime.now(datetime.timezone.utc)),
             "category_id": category_id,
         },
+        as_user=test_user,
     )
 
     new_transaction = schemas.Transaction(**res.json())
@@ -86,12 +78,7 @@ async def test_create_transaction(
     ],
 )
 @pytest.mark.usefixtures("test_transactions")
-async def test_updated_transaction(
-    client_session_wrapper: ClientSessionWrapper,
-    category_id,
-    amount,
-    test_account,
-):
+async def test_updated_transaction(category_id, amount, test_account, test_user):
     """
     Test case for updating a transaction.
 
@@ -125,10 +112,7 @@ async def test_updated_transaction(
     transaction_amount_before = transaction.information.amount
 
     res = await make_http_request(
-        client_session_wrapper.session,
-        client_session_wrapper.authorized_client,
-        f"{ENDPOINT}{transaction.id}",
-        json=json,
+        f"{ENDPOINT}{transaction.id}", json=json, as_user=test_user
     )
 
     assert res.status_code == status.HTTP_200_OK
@@ -145,9 +129,9 @@ async def test_updated_transaction(
 
 
 async def test_delete_transactions(
-    client_session_wrapper: ClientSessionWrapper,
     test_account: models.Account,
     test_account_transaction_list: List[models.Transaction],
+    test_user: models.User,
 ):
     """
     Test case for deleting a transaction.
@@ -166,10 +150,9 @@ async def test_delete_transactions(
         amount = transaction.information.amount
 
         res = await make_http_request(
-            client_session_wrapper.session,
-            client_session_wrapper.authorized_client,
             f"{ENDPOINT}{transaction.id}",
             method=RequestMethod.DELETE,
+            as_user=test_user,
         )
         assert res.status_code == status.HTTP_204_NO_CONTENT
 
@@ -181,8 +164,8 @@ async def test_delete_transactions(
 
 
 async def test_delete_transactions_fail(
-    client_session_wrapper: ClientSessionWrapper,
     test_account: models.Account,
+    test_user: models.User,
     transaction_list: List[models.Transaction],
 ):
     """
@@ -207,10 +190,9 @@ async def test_delete_transactions_fail(
         account_balance = account.balance
 
         res = await make_http_request(
-            client_session_wrapper.session,
-            client_session_wrapper.authorized_client,
             f"{ENDPOINT}{transaction.id}",
             method=RequestMethod.DELETE,
+            as_user=test_user,
         )
 
         assert res.status_code == status.HTTP_404_NOT_FOUND
@@ -233,9 +215,9 @@ async def test_delete_transactions_fail(
     ],
 )
 async def test_create_offset_transaction(
-    client_session_wrapper: ClientSessionWrapper,
     test_account: models.Account,
     test_accounts: List[models.Account],
+    test_user: models.User,
     amount,
     expected_offset_amount,
     reference,
@@ -259,8 +241,6 @@ async def test_create_offset_transaction(
     offset_account = get_user_offset_account(test_account, test_accounts)
 
     res = await make_http_request(
-        client_session_wrapper.session,
-        client_session_wrapper.authorized_client,
         ENDPOINT,
         json={
             "account_id": account_id,
@@ -270,6 +250,7 @@ async def test_create_offset_transaction(
             "category_id": category_id,
             "offset_account_id": offset_account.id,
         },
+        as_user=test_user,
     )
 
     assert res.status_code == status.HTTP_201_CREATED
@@ -294,9 +275,9 @@ async def test_create_offset_transaction(
 
 @pytest.mark.usefixtures("test_accounts")
 async def test_create_offset_transaction_other_account_fail(
-    client_session_wrapper: ClientSessionWrapper,
     test_account: models.Account,
     test_accounts: List[models.Account],
+    test_user: models.User,
 ):
 
     for offset_account in test_accounts:
@@ -309,8 +290,6 @@ async def test_create_offset_transaction_other_account_fail(
     offset_account_id = offset_account.id
 
     res = await make_http_request(
-        client_session_wrapper.session,
-        client_session_wrapper.authorized_client,
         ENDPOINT,
         json={
             "account_id": account_id,
@@ -320,6 +299,7 @@ async def test_create_offset_transaction_other_account_fail(
             "category_id": 1,
             "offset_account_id": offset_account_id,
         },
+        as_user=test_user,
     )
 
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
@@ -346,9 +326,9 @@ async def test_create_offset_transaction_other_account_fail(
 )
 @pytest.mark.usefixtures("test_accounts")
 async def test_updated_offset_transaction(
-    client_session_wrapper: ClientSessionWrapper,
     test_account: models.Account,
     test_accounts: List[models.Account],
+    test_user: models.User,
     category_id,
     amount,
 ):
@@ -372,7 +352,7 @@ async def test_updated_offset_transaction(
     offset_account_id = offset_account.id
 
     # create base transaction
-    transaction_res = await client_session_wrapper.authorized_client.post(
+    transaction_res = await make_http_request(
         ENDPOINT,
         json={
             "account_id": account_id,
@@ -382,13 +362,13 @@ async def test_updated_offset_transaction(
             "category_id": category_id,
             "offset_account_id": offset_account_id,
         },
+        as_user=test_user,
     )
 
-    a = await repo.get(models.Account, account_id)
     transaction_before = schemas.Transaction(**transaction_res.json())
 
     reference = f"Offset_transaction with {amount}"
-    res = await client_session_wrapper.authorized_client.post(
+    res = await make_http_request(
         f"{ENDPOINT}{transaction_before.id}",
         json={
             "account_id": account_id,
@@ -397,6 +377,7 @@ async def test_updated_offset_transaction(
             "date": str(datetime.datetime.now(datetime.timezone.utc)),
             "category_id": category_id,
         },
+        as_user=test_user,
     )
 
     assert res.status_code == status.HTTP_200_OK
@@ -429,11 +410,11 @@ async def test_updated_offset_transaction(
 )
 @pytest.mark.usefixtures()
 async def test_delete_offset_transaction(
-    client_session_wrapper: ClientSessionWrapper,
+    test_account: models.Account,
+    test_accounts: List[models.Account],
+    test_user: models.User,
     category_id,
     amount,
-    test_account,
-    test_accounts,
 ):
     """
     Tests the delete offset transaction functionality.
@@ -452,7 +433,7 @@ async def test_delete_offset_transaction(
     account_balance = test_account.balance
     offset_account_balance = offset_account.balance
 
-    transaction_res = await client_session_wrapper.authorized_client.post(
+    transaction_res = await make_http_request(
         ENDPOINT,
         json={
             "account_id": test_account.id,
@@ -462,15 +443,18 @@ async def test_delete_offset_transaction(
             "category_id": category_id,
             "offset_account_id": offset_account.id,
         },
+        as_user=test_user,
     )
 
     transaction = schemas.Transaction(**transaction_res.json())
 
-    res = await client_session_wrapper.authorized_client.delete(
-        f"{ENDPOINT}{transaction.id}"
+    res = await make_http_request(
+        f"{ENDPOINT}{transaction.id}", as_user=test_user, method=RequestMethod.DELETE
     )
-    offset_transaction_res = await client_session_wrapper.authorized_client.get(
-        f"{ENDPOINT}{transaction.offset_transactions_id}"
+    offset_transaction_res = await make_http_request(
+        f"{ENDPOINT}{transaction.offset_transactions_id}",
+        as_user=test_user,
+        method=RequestMethod.GET,
     )
 
     assert res.status_code == status.HTTP_204_NO_CONTENT
