@@ -211,24 +211,22 @@ async def fixture_create_transactions(
     service = TransactionService()
     transaction_list = []
 
-    async with session:
-        for account in test_accounts:
-            user = await repo.get(models.User, account.user_id)
-            transaction_list.extend(
-                [
-                    await tm.transaction(
-                        service.create_transaction,
-                        user,
-                        schemas.TransactionInformationCreate(
-                            account_id=account.id,
-                            amount=transaction["amount"],
-                            reference=transaction["reference"],
-                            date=transaction["date"],
-                            category_id=transaction["category_id"],
-                        ),
-                    )
-                    for transaction in transaction_data
-                ]
-            )
+    for account in test_accounts:
+        user = await repo.get(models.User, account.user_id)
+        transaction_list.extend(
+            [
+                await service.create_transaction(
+                    user,
+                    schemas.TransactionInformationCreate(
+                        account_id=account.id,
+                        amount=transaction["amount"],
+                        reference=transaction["reference"],
+                        date=transaction["date"],
+                        category_id=transaction["category_id"],
+                    ),
+                )
+                for transaction in transaction_data
+            ]
+        )
 
     yield
