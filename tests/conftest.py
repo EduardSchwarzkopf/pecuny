@@ -47,7 +47,7 @@ async def fixture_init_db():
 
     yield
 
-    db.engine.dispose()
+    await db.engine.dispose()
 
 
 async def cleanup_tests():
