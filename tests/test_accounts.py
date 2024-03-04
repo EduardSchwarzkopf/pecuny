@@ -152,7 +152,7 @@ async def test_invalid_delete_account(test_user, test_accounts):
         },
     ],
 )
-async def test_update_account(test_account, values):
+async def test_update_account(test_account, test_user, values):
     """
     Tests the update account functionality.
 
@@ -165,9 +165,8 @@ async def test_update_account(test_account, values):
         None
     """
 
-    user = await repo.get(models.User, test_account.user_id)
     response = await make_http_request(
-        f"{ENDPOINT}{test_account.id}", json=values, as_user=user
+        f"{ENDPOINT}{test_account.id}", json=values, as_user=test_user
     )
 
     assert response.status_code == 200
