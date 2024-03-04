@@ -322,10 +322,10 @@ async def test_create_offset_transaction_other_account_fail(
         },
     )
 
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
     account_refreshed = await repo.get(models.Account, account_id)
     offset_account_refreshed = await repo.get(models.Account, offset_account_id)
-
-    assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
     assert account_balance == account_refreshed.balance
     assert offset_account_balance == offset_account_refreshed.balance
