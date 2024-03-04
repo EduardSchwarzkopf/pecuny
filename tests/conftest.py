@@ -72,27 +72,7 @@ async def fixture_session() -> AsyncSession:  # type: ignore
     """
     await cleanup_tests()
 
-    session = db.session
-
-    yield session
-
-    session.close()
-
-
-@pytest.fixture(name="client")
-async def fixture_client() -> AsyncClient:  # type: ignore
-    """
-    Fixture that provides an async HTTP client.
-
-    Args:
-        None
-
-    Returns:
-        AsyncClient: An async HTTP client.
-    """
-
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        yield client
+    yield db.session
 
 
 @pytest.fixture(scope="session", autouse=True)
