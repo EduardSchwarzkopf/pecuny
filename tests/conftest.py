@@ -72,7 +72,7 @@ async def fixture_session() -> AsyncSession:  # type: ignore
     """
     await cleanup_tests()
 
-    session = await db.get_session()
+    session = db.session
 
     yield session
 
