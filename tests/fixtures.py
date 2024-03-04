@@ -193,7 +193,15 @@ async def get_test_account_list(fixture_create_test_accounts):
 
 
 @pytest.fixture(name="test_account_transaction_list")
-async def fixture_test_account_transaction_list(fixture_create_transactions):
+async def fixture_test_account_transaction_list(
+    fixture_create_transactions, test_account
+):
+
+    yield await repo.filter_by(models.Transaction, "account_id", test_account.id)
+
+
+@pytest.fixture(name="transaction_list")
+async def fixture_get_all_transactions(fixture_create_transactions, test_account):
 
     yield await repo.get_all(models.Transaction)
 
