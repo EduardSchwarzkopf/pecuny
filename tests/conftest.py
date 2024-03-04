@@ -1,10 +1,8 @@
 import pytest
-from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.data import categories
 from app.database import db
-from app.main import app
 from app.models import Base
 
 
@@ -57,7 +55,7 @@ async def cleanup_tests():
     await asyncio.gather(*delete_task)
 
 
-@pytest.fixture(name="session", autouse=True)
+@pytest.fixture(name="session", autouse=True, scope="session")
 @pytest.mark.usefixtures("fixture_init_db")
 async def fixture_session() -> AsyncSession:  # type: ignore
     """
