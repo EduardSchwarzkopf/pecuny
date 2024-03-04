@@ -20,13 +20,12 @@ async def transaction(handler, *args: Any) -> Any:
     Raises:
         None
     """
-    session = db.session
     logger.info("Starting transaction for %s with args %s", handler.__name__, args)
     try:
         result = await handler(*args)
-        await session.commit()
+        await db.session.commit()
         if _is_models_object(result):
-            await session.refresh(result)
+            await db.session.refresh(result)
             logger.info(
                 "Transaction for %s successful, result refreshed", handler.__name__
             )
@@ -36,9 +35,7 @@ async def transaction(handler, *args: Any) -> Any:
             "Error occurred during transaction for %s: %s", handler.__name__, e
         )
         result = {}
-        await session.rollback()
-    finally:
-        logger.info("Transaction for %s finished, engine disposed", handler.__name__)
+        await db.session.rollback()
 
     return result
 
