@@ -9,8 +9,8 @@ from app import transaction_manager as tm
 from app.auth_manager import current_active_user
 from app.routers.accounts import handle_account_route
 from app.routers.accounts import router as account_router
-from app.services import accounts as service
 from app.services import categories as category_service
+from app.services.accounts import AccountService
 from app.services.transactions import TransactionService
 from app.utils import PageRouter
 from app.utils.account_utils import get_account_list_template
@@ -20,6 +20,7 @@ PREFIX = account_router.prefix + "/{account_id}/transactions"
 
 router = PageRouter(prefix=PREFIX, tags=["Transactions"])
 
+service = AccountService()
 transaction_service = TransactionService()
 
 
@@ -274,7 +275,7 @@ async def page_update_transaction_get(
             "account_id": account_id,
             "transaction_id": transaction.id,
             "action_url": router.url_path_for(
-                "page_update_transaction",
+                "page_update_transaction_get",
                 account_id=account_id,
                 transaction_id=transaction.id,
             ),
