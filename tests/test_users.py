@@ -5,7 +5,6 @@ from app import models
 from app import repository as repo
 from app import schemas
 from app.config import settings
-from app.utils.dataclasses_utils import ClientSessionWrapper
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
 from tests.utils import make_http_request
 
