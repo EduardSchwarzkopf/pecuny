@@ -1,7 +1,7 @@
 import datetime
 import uuid
 from datetime import datetime as dt
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict, List, Optional
 
 from fastapi_users import schemas
@@ -66,10 +66,14 @@ class AccountUpdate(Base):
     balance: Optional[float]
 
 
-class TransactionInformationBase(Base):
-    amount: Decimal = Field(..., decimal_places=2)
+class TransactionInformationBase(BaseModel):
+    amount: Decimal
     reference: str
     category_id: int
+
+    @property
+    def rounded_amount(self) -> Decimal:
+        return self.amount.quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
 
 
 class TransactionInformation(TransactionInformationBase):
@@ -137,7 +141,11 @@ class ScheduledTransactionData(TransactionBase):
 class Account(Base):
     label: constr(strip_whitespace=True, min_length=1, max_length=36)
     description: str
-    balance: float
+    balance: Decimal
+
+    @property
+    def rounded_amount(self) -> Decimal:
+        return self.balance.quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
 
 
 class AccountData(Account):
