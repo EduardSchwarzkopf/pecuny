@@ -47,7 +47,7 @@ async def test_create_account(test_user):
         ("test", "", False),
     ],
 )
-async def test_optinal_fields_create_account(test_user, label, description, balance):
+async def test_optional_fields_create_account(test_user, label, description, balance):
     """
     Tests the delete account functionality.
 
