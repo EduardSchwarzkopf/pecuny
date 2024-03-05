@@ -295,7 +295,7 @@ class TransactionService:
         transaction = await repo.get(
             models.Transaction,
             transaction_id,
-            load_relationships=[models.Transaction.offset_transaction],
+            load_relationships_list=[models.Transaction.offset_transaction],
         )
 
         if transaction is None:
