@@ -142,7 +142,7 @@ async def delete_scheduled_transaction(
     transaction = await repo.get(
         models.TransactionScheduled,
         transaction_id,
-        load_relationships=["offset_transaction"],
+        load_relationships_list=[models.Transaction.offset_transaction],
     )
 
     if transaction is None:
