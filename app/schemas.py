@@ -1,11 +1,10 @@
 import datetime
 import uuid
 from datetime import datetime as dt
-from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict, List, Optional
 
 from fastapi_users import schemas
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 from pydantic.types import constr
 from starlette_wtf import StarletteForm
 from wtforms import (
@@ -67,13 +66,9 @@ class AccountUpdate(Base):
 
 
 class TransactionInformationBase(BaseModel):
-    amount: Decimal
+    amount: float
     reference: str
     category_id: int
-
-    @property
-    def rounded_amount(self) -> Decimal:
-        return self.amount.quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
 
 
 class TransactionInformation(TransactionInformationBase):
@@ -141,11 +136,7 @@ class ScheduledTransactionData(TransactionBase):
 class Account(Base):
     label: constr(strip_whitespace=True, min_length=1, max_length=36)
     description: str
-    balance: Decimal
-
-    @property
-    def rounded_amount(self) -> Decimal:
-        return self.balance.quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
+    balance: float
 
 
 class AccountData(Account):

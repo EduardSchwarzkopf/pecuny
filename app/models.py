@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import Mapped, declarative_base, relationship
 from sqlalchemy.sql.schema import ForeignKey
-from sqlalchemy.sql.sqltypes import DECIMAL, TIMESTAMP
+from sqlalchemy.sql.sqltypes import TIMESTAMP
 
 Base = declarative_base()
 
@@ -162,7 +162,9 @@ class Account(BaseModel, UserId):
 
     label = Column(String(36))
     description = Column(String(128))
-    balance = Column(DECIMAL(10, 2), default=0)
+    balance = Column(
+        Numeric(10, 2, asdecimal=False, decimal_return_scale=None), default=0
+    )
     transactions = relationship(
         "Transaction", back_populates="account", cascade="all,delete", lazy=True
     )
@@ -177,7 +179,9 @@ class Account(BaseModel, UserId):
 class TransactionInformation(BaseModel):
     __tablename__ = "transactions_information"
 
-    amount = Column(DECIMAL(10, 2), default=0)
+    amount = Column(
+        Numeric(10, 2, asdecimal=False, decimal_return_scale=None), default=0
+    )
     reference = Column(String(128))
     date = Column(type_=TIMESTAMP(timezone=True), default=text("now()"))
     category = relationship("TransactionCategory", lazy="selectin")

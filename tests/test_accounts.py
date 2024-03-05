@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 import pytest
 
 from app import models
@@ -180,4 +178,4 @@ async def test_update_account(test_account, test_user, values):
         if isinstance(value, str):
             assert account_val == value
         else:
-            assert account_val == round(Decimal(value), 2)
+            assert account_val == round(value, 2)
