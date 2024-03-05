@@ -112,10 +112,9 @@ async def test_delete_account(test_account):
         None
     """
 
-    user = await repo.get(models.User, test_account.user_id)
     res = await make_http_request(
         f"{ENDPOINT}{test_account.id}",
-        as_user=user,
+        as_user=test_account.user,
         method=RequestMethod.DELETE,
     )
 
