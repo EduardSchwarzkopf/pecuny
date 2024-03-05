@@ -17,7 +17,6 @@ ModelT = TypeVar("ModelT", bound=BaseModel)
 
 from typing import List, Optional, Type
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
@@ -40,7 +39,7 @@ def load_relationships(query: Select, relationships: InstrumentedAttribute = Non
 
 
 async def get_all(
-    cls: Type, load_relationships_list: Optional[List[str]] = None
+    cls: Type, load_relationships_list: Optional[List[InstrumentedAttribute]] = None
 ) -> List[ModelT]:
     """Retrieve all instances of the specified model from the database.
 
@@ -58,7 +57,9 @@ async def get_all(
 
 
 async def get(
-    cls: Type, instance_id: int, load_relationships_list: Optional[List[str]] = None
+    cls: Type,
+    instance_id: int,
+    load_relationships_list: Optional[List[InstrumentedAttribute]] = None,
 ) -> ModelT:
     """Retrieve an instance of the specified model by its ID.
 
@@ -76,14 +77,12 @@ async def get(
     return result.scalars().first()
 
 
-# TODO: Make use of InstrumentetAttribute to get rid of attributes via str
 async def filter_by(
     cls: Type[ModelT],
-    attribute: str,
+    attribute: str,  # TODO: InstrumentedAttribute,
     value: str,
     operator: DatabaseFilterOperator = DatabaseFilterOperator.EQUAL,
     load_relationships_list: Optional[List[str]] = None,
-    # attr: InstrumentedAttribute = None,
 ) -> List[ModelT]:
     """
     Filters the records of a given model by a specified attribute and value.
@@ -100,9 +99,8 @@ async def filter_by(
     Raises:
         None
     """
-    # if attr:
-    #     attr_name = attr.key
-
+    # TODO: Update for InstrumentedAttribute
+    # condition = text(f"{attribute.key} {operator.value} :val")
     condition = text(f"{attribute} {operator.value} :val")
 
     q = select(cls).where(condition).params(val=value)
