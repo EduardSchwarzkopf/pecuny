@@ -7,7 +7,7 @@ from fastapi import status
 from app import models
 from app import repository as repo
 from app import schemas
-from app.utils.enums import RequestMethod
+from app.utils.enums import DatabaseFilterOperator, RequestMethod
 from tests.utils import get_user_offset_account, make_http_request
 
 ENDPOINT = "/api/transactions/"
@@ -163,11 +163,8 @@ async def test_delete_transactions(
         assert account_balance_after == expected_balance
 
 
-async def test_delete_transactions_fail(
-    test_account: models.Account,
-    test_user: models.User,
-    transaction_list: List[models.Transaction],
-):
+@pytest.mark.usefixtures("fixture_create_transactions")
+async def test_delete_transactions_fail(test_account: models.Account, test_user):
     """
     Test case for failing to delete transactions.
 
@@ -179,15 +176,19 @@ async def test_delete_transactions_fail(
     Returns:
         None
     """
-    for transaction in transaction_list:
 
-        account = transaction.account
-        account_id = account.id
+    result = await repo.filter_by(
+        models.Account,
+        "user_id",
+        test_account.user_id,
+        DatabaseFilterOperator.NOT_EQUAL,
+        load_relationships_list=[models.Account.transactions],
+    )
+    account = result[0]
 
-        if account.user_id == test_account.user_id:
-            continue
+    account_balance = account.balance
 
-        account_balance = account.balance
+    for transaction in account.transactions:
 
         res = await make_http_request(
             f"{ENDPOINT}{transaction.id}",
@@ -197,7 +198,7 @@ async def test_delete_transactions_fail(
 
         assert res.status_code == status.HTTP_404_NOT_FOUND
 
-        account_refresh = await repo.get(models.Account, account_id)
+        account_refresh = await repo.get(models.Account, account.id)
         account_balance_after = account_refresh.balance
 
         assert account_balance_after == account_balance
