@@ -142,7 +142,9 @@ async def fixture_create_test_accounts(
 
 @pytest.fixture(name="test_accounts")
 async def get_test_account_list(fixture_create_test_accounts):
-    yield await repo.get_all(models.Account)
+    yield await repo.get_all(
+        models.Account, load_relationships_list=[models.Account.user]
+    )
 
 
 @pytest.fixture(name="test_account_transaction_list")
