@@ -1,10 +1,11 @@
 from datetime import datetime
-from typing import List, Type, TypeVar
+from typing import List, Optional, Type, TypeVar
 
-from sqlalchemy import text
+from sqlalchemy import Select, text
 from sqlalchemy import update as sql_update
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 from app.database import db
 from app.models import BaseModel
@@ -12,28 +13,67 @@ from app.utils.enums import DatabaseFilterOperator
 
 from . import models
 
-# from sqlalchemy.orm.attributes import InstrumentedAttribute
-
-
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
+from typing import List, Optional, Type
 
-async def get_all(cls: Type[ModelT]) -> List[ModelT]:
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
+
+
+def load_relationships(query: Select, relationships: InstrumentedAttribute = None):
+    """Apply loading options for specified relationships to a query.
+
+    Args:
+        cls: The model class.
+        query: The SQLAlchemy query object.
+        *relationships: Class-bound attributes representing relationships to load.
+
+    Returns:
+        The modified query with loading options applied.
+    """
+    if relationships:
+        options = [selectinload(rel) for rel in relationships]
+        query = query.options(*options)
+    return query
+
+
+async def get_all(
+    cls: Type, load_relationships_list: Optional[List[str]] = None
+) -> List[ModelT]:
     """Retrieve all instances of the specified model from the database.
 
     Args:
         cls: The type of the model.
+        load_relationships: Optional list of relationships to load.
 
     Returns:
         List[ModelT]: A list of instances of the specified model.
-
-    Raises:
-        None
     """
     q = select(cls)
+    q = load_relationships(q, load_relationships_list)
     result = await db.session.execute(q)
-    result.unique()
-    return result.scalars().all()
+    return result.unique().scalars().all()
+
+
+async def get(
+    cls: Type, instance_id: int, load_relationships_list: Optional[List[str]] = None
+) -> ModelT:
+    """Retrieve an instance of the specified model by its ID.
+
+    Args:
+        cls: The type of the model.
+        instance_id: The ID of the instance to retrieve.
+        load_relationships: Optional list of relationships to load.
+
+    Returns:
+        ModelT: The instance of the specified model with the given ID.
+    """
+    q = select(cls).where(cls.id == instance_id)
+    q = load_relationships(q, load_relationships_list)
+    result = await db.session.execute(q)
+    return result.scalars().first()
 
 
 # TODO: Make use of InstrumentetAttribute to get rid of attributes via str
@@ -42,6 +82,7 @@ async def filter_by(
     attribute: str,
     value: str,
     operator: DatabaseFilterOperator = DatabaseFilterOperator.EQUAL,
+    load_relationships_list: Optional[List[str]] = None,
     # attr: InstrumentedAttribute = None,
 ) -> List[ModelT]:
     """
@@ -64,33 +105,12 @@ async def filter_by(
 
     condition = text(f"{attribute} {operator.value} :val")
 
-    query = select(cls).where(condition).params(val=value)
+    q = select(cls).where(condition).params(val=value)
+    q = load_relationships(q, load_relationships_list)
 
-    result = await db.session.execute(query)
+    result = await db.session.execute(q)
 
     return result.unique().scalars().all()
-
-
-async def get(cls: Type[ModelT], instance_id: int, load_relationships=None) -> ModelT:
-    """Retrieve an instance of the specified model by its ID.
-
-    Args:
-        cls: The type of the model.
-        instance_id: The ID of the instance to retrieve.
-        load_relationships: Optional list of relationships to load.
-
-    Returns:
-        ModelT: The instance of the specified model with the given ID.
-
-    Raises:
-        None
-    """
-    stmt = select(cls).where(cls.id == instance_id)
-    if load_relationships:
-        options = [selectinload(rel) for rel in load_relationships]
-        stmt = stmt.options(*options)
-    result = await db.session.execute(stmt)
-    return result.scalars().first()
 
 
 async def get_scheduled_transactions_from_period(
