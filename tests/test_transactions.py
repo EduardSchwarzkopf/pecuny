@@ -273,7 +273,6 @@ async def test_create_offset_transaction(
     assert new_offset_transaction.information.reference == reference
 
 
-@pytest.mark.usefixtures("test_accounts")
 async def test_create_offset_transaction_other_account_fail(
     test_account: models.Account,
     test_accounts: List[models.Account],
