@@ -1,10 +1,11 @@
 import datetime
 import uuid
 from datetime import datetime as dt
+from decimal import ROUND_05UP
 from typing import Any, Dict, List, Optional
 
 from fastapi_users import schemas
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from pydantic.types import constr
 from starlette_wtf import StarletteForm
 from wtforms import (
@@ -24,6 +25,21 @@ from wtforms.validators import (
     Regexp,
 )
 from wtforms.widgets import Input
+
+
+class RoundField(float):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v, _):
+        try:
+            value = round(v, 2)
+        except TypeError:
+            value = None
+
+        return value
 
 
 class EmailSchema(BaseModel):
@@ -62,11 +78,11 @@ class TokenData(BaseModel):
 class AccountUpdate(Base):
     label: Optional[constr(strip_whitespace=True, min_length=1, max_length=36)]
     description: Optional[str]
-    balance: Optional[float]
+    balance: Optional[RoundField]
 
 
 class TransactionInformationBase(BaseModel):
-    amount: float
+    amount: RoundField = Field(...)
     reference: str
     category_id: int
 
@@ -135,8 +151,8 @@ class ScheduledTransactionData(TransactionBase):
 
 class Account(Base):
     label: constr(strip_whitespace=True, min_length=1, max_length=36)
-    description: str
-    balance: float
+    description: Optional[str] = None
+    balance: Optional[RoundField] = Field(...)
 
 
 class AccountData(Account):
@@ -169,6 +185,7 @@ class CreateAccountForm(StarletteForm):
     balance = DecimalField(
         "Balance",
         render_kw={"placeholder": "e.g. Current amount in savings"},
+        rounding=ROUND_05UP,
     )
 
 
@@ -250,6 +267,7 @@ class CreateTransactionForm(StarletteForm):
         "Amount",
         validators=[InputRequired(), NumberRange(min=0)],
         render_kw={"placeholder": "500"},
+        rounding=ROUND_05UP,
     )
     is_expense = BooleanField("Is this an expense?", default=True)
     category_id = SelectField(
@@ -276,7 +294,9 @@ class CreateTransactionForm(StarletteForm):
 
 class UpdateTransactionForm(StarletteForm):
     reference = StringField("Reference", validators=[InputRequired(), Length(max=128)])
-    amount = DecimalField("Amount", validators=[InputRequired(), NumberRange(min=0)])
+    amount = DecimalField(
+        "Amount", validators=[InputRequired(), NumberRange(min=0)], rounding=ROUND_05UP
+    )
     is_expense = BooleanField("Is this an expense?")
     category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
     date = DatetimeLocalFieldWithoutTime("Date", validators=[InputRequired()])
