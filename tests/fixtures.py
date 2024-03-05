@@ -63,7 +63,12 @@ async def fixture_test_user_list(fixture_create_test_users):
 
 @pytest.fixture(name="test_account")
 async def fixture_test_account(test_user: models.User, fixture_create_test_accounts):
-    account = await repo.filter_by(models.Account, "user_id", test_user.id)
+    account = await repo.filter_by(
+        models.Account,
+        "user_id",
+        test_user.id,
+        load_relationships_list=[models.Account.user],
+    )
     yield account[0]
 
 
@@ -117,9 +122,8 @@ async def fixture_create_test_accounts(
 
     service = AccountService()
 
-    # TODO: Make this async?
-    for account_data in account_data_list:
-        await service.create_account(
+    create_task = [
+        service.create_account(
             account_data["user"],
             schemas.Account(
                 label=account_data["label"],
@@ -127,7 +131,10 @@ async def fixture_create_test_accounts(
                 balance=account_data["balance"],
             ),
         )
+        for account_data in account_data_list
+    ]
 
+    await asyncio.gather(*create_task)
     await session.commit()
 
     yield
@@ -211,14 +218,13 @@ async def fixture_create_transactions(
     ]
 
     service = TransactionService()
-    transaction_list = []
+    create_task = []
 
     for account in test_accounts:
-        user = await repo.get(models.User, account.user_id)
-        transaction_list.extend(
+        create_task.extend(
             [
-                await service.create_transaction(
-                    user,
+                service.create_transaction(
+                    account.user,
                     schemas.TransactionInformationCreate(
                         account_id=account.id,
                         amount=transaction["amount"],
@@ -231,6 +237,7 @@ async def fixture_create_transactions(
             ]
         )
 
+    await asyncio.gather(*create_task)
     await session.commit()
 
     yield
