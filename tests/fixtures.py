@@ -128,6 +128,8 @@ async def fixture_create_test_accounts(
             ),
         )
 
+    await session.commit()
+
     yield
 
 
@@ -228,5 +230,7 @@ async def fixture_create_transactions(
                 for transaction in transaction_data
             ]
         )
+
+    await session.commit()
 
     yield
