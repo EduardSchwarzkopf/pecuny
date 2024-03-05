@@ -148,13 +148,17 @@ async def test_delete_transactions(
 
         account_balance = test_account.balance
         amount = transaction.information.amount
+        transaction_id = transaction.id
 
         res = await make_http_request(
-            f"{ENDPOINT}{transaction.id}",
+            f"{ENDPOINT}{transaction_id}",
             method=RequestMethod.DELETE,
             as_user=test_user,
         )
         assert res.status_code == status.HTTP_204_NO_CONTENT
+        result = await repo.get(models.Transaction, transaction_id)
+
+        assert result is None
 
         account = await repo.get(models.Account, test_account.id)
         account_balance_after = account.balance
