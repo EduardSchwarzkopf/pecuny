@@ -42,12 +42,12 @@ async def test_create_account(test_user):
 @pytest.mark.parametrize(
     "label, description, balance",
     [
-        ("", None, None),
         ("test", "test", "aaaa"),
-        ("test", "test", "0,3"),
+        ("test", None, "0,3"),
+        ("test", "", False),
     ],
 )
-async def test_invalid_create_account(test_user, label, description, balance):
+async def test_optinal_fields_create_account(test_user, label, description, balance):
     """
     Tests the delete account functionality.
 
@@ -63,6 +63,36 @@ async def test_invalid_create_account(test_user, label, description, balance):
     res = await make_http_request(
         ENDPOINT,
         json={"label": label, "description": description, "balance": balance},
+        as_user=test_user,
+    )
+
+    assert res.status_code == 201
+
+
+@pytest.mark.parametrize(
+    "label",
+    [
+        (""),
+        (None),
+        (True),
+    ],
+)
+async def test_invalid_title_create_account(test_user, label):
+    """
+    Tests the delete account functionality.
+
+    Args:
+        authorized_client: The authorized client fixture.
+        account_id (str): The ID of the account to delete.
+        status_code (int): The expected status code.
+
+    Returns:
+        None
+    """
+
+    res = await make_http_request(
+        ENDPOINT,
+        json={"label": label, "description": "test_invalid_title", "balance": 0},
         as_user=test_user,
     )
 
