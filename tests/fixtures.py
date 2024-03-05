@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app import models
 from app import repository as repo
 from app import schemas
-from app import transaction_manager as tm
 from app.services.accounts import AccountService
 from app.services.transactions import TransactionService
 from app.services.users import UserService
