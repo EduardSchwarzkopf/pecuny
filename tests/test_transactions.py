@@ -166,6 +166,8 @@ async def test_delete_transactions(
         expected_balance = account_balance - amount
         assert account_balance_after == expected_balance
 
+        assert await repo.get(models.Transaction, transaction_id) is None
+
 
 @pytest.mark.usefixtures("fixture_create_transactions")
 async def test_delete_transactions_fail(test_account: models.Account, test_user):
