@@ -20,9 +20,7 @@ class Database:
         self.session = None
 
     async def init(self):
-        """
-        Asynchronous method to initialize the database connection and assign a new session.
-        """
+
         if self.session:
             await self.session.close()
 
