@@ -46,8 +46,6 @@ class Database:
             except Exception as e:
                 await session.rollback()
                 raise e
-            finally:
-                await session.close()
 
 
 async def get_user_db():
