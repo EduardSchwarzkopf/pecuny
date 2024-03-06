@@ -23,7 +23,6 @@ class Database:
         """
         Asynchronous method to initialize the database connection and assign a new session.
         """
-        # Close the session to avoid creating repeated connections
         if self.session:
             await self.session.close()
 
