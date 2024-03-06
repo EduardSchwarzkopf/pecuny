@@ -201,10 +201,13 @@ async def test_update_account(test_account, test_user, values):
     assert response.status_code == 200
     account = schemas.AccountData(**response.json())
 
+    db_account = await repo.get(models.Account, account.id)
     for key, value in values.items():
         account_val = getattr(account, key)
+        db_account_val = getattr(db_account, key)
         print(f"key: {key} | value: {value} | account_val: {account_val}")
-        if isinstance(value, str):
-            assert account_val == value
-        else:
-            assert account_val == round(value, 2)
+        if not isinstance(value, str):
+            value = round(value, 2)
+
+        assert db_account_val == value
+        assert account_val == value
