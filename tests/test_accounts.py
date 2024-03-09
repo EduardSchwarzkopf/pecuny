@@ -14,14 +14,17 @@ ENDPOINT = "/api/accounts/"
 
 async def test_create_account(test_user):
     """
-    Tests the create account functionality.
+    Test case for creating an account.
 
     Args:
-        session: The session fixture.
-        authorized_client: The authorized client fixture.
+        test_user (fixture): The test user.
 
     Returns:
         None
+
+    Raises:
+        AssertionError: If the test fails.
+
     """
 
     res = await make_http_request(
