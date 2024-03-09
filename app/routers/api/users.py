@@ -21,7 +21,6 @@ def get_user_service() -> UserService:
     return UserService()
 
 
-# override fastapi_users functionality
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def api_delete_me(
     current_user: User = Depends(current_active_user),
