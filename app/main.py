@@ -24,6 +24,17 @@ from app.utils.exceptions import UnauthorizedPageException
 
 @asynccontextmanager
 async def lifespan(_api_app: FastAPI):
+    """
+    Context manager for managing the lifespan of the FastAPI application.
+
+    Args:
+        app (FastAPI): The FastAPI application instance.
+
+    Yields:
+        None
+
+    """
+
     await db.init()
     yield
     await db.session.close()
