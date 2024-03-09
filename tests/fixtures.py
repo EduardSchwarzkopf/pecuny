@@ -20,13 +20,13 @@ async def fixture_test_user(test_users):
     yield test_users[0]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", name="create_test_users")
 async def fixture_create_test_users():
     """
     Fixture that creates test users.
 
     Args:
-        user_service: The user service fixture.
+        None
 
     Returns:
         List[User]: A list of test users.
@@ -55,32 +55,48 @@ async def fixture_create_test_users():
     yield
 
 
+@pytest.fixture(name="test_user")
+async def fixture_test_user(test_users):
+    """
+    Fixture for retrieving a test user.
+
+    Args:
+        test_users (fixture): The list of test users.
+
+    Yields:
+        models.User: The test user.
+
+    """
+
+    yield test_users[0]
+
+
 @pytest.fixture(name="test_users")
-async def fixture_test_user_list(fixture_create_test_users):
+async def fixture_test_user_list(create_test_users):
+    """
+    Fixture for retrieving a list of test users.
+
+    Args:
+        create_test_users (fixture): Fixture to create test users.
+
+    Yields:
+        List[models.User]: A list of test users.
+    """
+
     yield await repo.get_all(models.User)
 
 
-@pytest.fixture(name="test_account")
-async def fixture_test_account(test_user: models.User, fixture_create_test_accounts):
-    account = await repo.filter_by(
-        models.Account,
-        "user_id",
-        test_user.id,
-        load_relationships_list=[models.Account.user],
-    )
-    yield account[0]
-
-
-@pytest.fixture
+@pytest.fixture(name="create_test_accounts")
 async def fixture_create_test_accounts(
-    session: AsyncSession, test_user, test_users: List[models.User]
+    session: AsyncSession, test_user: models.User, test_users: List[models.User]
 ):
     """
     Fixture that creates test accounts.
 
     Args:
-        test_users: A list of test users.
-        session: The session fixture.
+        session (fixture): The session fixture.
+        test_users (fixture): Fixture to get a test user.
+        test_users (fixuter): Fixture to get a list of test users.
 
     Returns:
         List[Account]: A list of test accounts.
@@ -139,39 +155,58 @@ async def fixture_create_test_accounts(
     yield
 
 
+@pytest.fixture(name="test_account")
+async def fixture_test_account(test_user: models.User, create_test_accounts):
+    """
+    Fixture for retrieving a test account.
+
+    Args:
+        test_user (fixture): The test user.
+        create_test_accounts (fixture): The fixture for creating test accounts.
+
+    Yields:
+        models.Account: The test account.
+
+    """
+
+    account = await repo.filter_by(
+        models.Account,
+        "user_id",
+        test_user.id,
+        load_relationships_list=[models.Account.user],
+    )
+    yield account[0]
+
+
 @pytest.fixture(name="test_accounts")
-async def get_test_account_list(fixture_create_test_accounts):
+async def fixture_get_test_account_list(create_test_accounts):
+    """
+    Fixture for retrieving a list of test accounts.
+
+    Args:
+        create_test_accounts (fixuter): The fixture for creating test accounts.
+
+    Yields:
+        List[models.Account]: A list of test accounts.
+
+    """
+
     yield await repo.get_all(
         models.Account, load_relationships_list=[models.Account.user]
     )
 
 
-@pytest.fixture(name="test_account_transaction_list")
-async def fixture_test_account_transaction_list(
-    fixture_create_transactions, test_account
-):
-
-    yield await repo.filter_by(models.Transaction, "account_id", test_account.id)
-
-
-@pytest.fixture(name="transaction_list")
-async def fixture_get_all_transactions(fixture_create_transactions, test_account):
-
-    yield await repo.get_all(models.Transaction)
-
-
-@pytest.fixture
+@pytest.fixture(name="create_transactions")
 async def fixture_create_transactions(
     test_accounts: List[models.Account],
-    test_account: models.Account,
     session: AsyncSession,
 ):
     """
     Fixture that creates test transactions.
 
     Args:
-        test_accounts: The test accounts fixture.
-        session: The session fixture.
+        test_accounts (fixture): The test accounts fixture.
+        session (fixture): The session fixture.
 
     Returns:
         List[Transaction]: A list of test transactions.
@@ -242,3 +277,35 @@ async def fixture_create_transactions(
     await session.commit()
 
     yield
+
+
+@pytest.fixture(name="test_account_transaction_list")
+async def fixture_test_account_transaction_list(create_transactions, test_account):
+    """
+    Fixture for retrieving a list of transactions associated with a test account.
+
+    Args:
+        create_transactions (fixture): The fixture for creating transactions.
+        test_account (fixture): The test account.
+
+    Yields:
+        List[models.Transaction]: A list of transactions associated with the test account.
+    """
+
+    yield await repo.filter_by(models.Transaction, "account_id", test_account.id)
+
+
+@pytest.fixture(name="transaction_list")
+async def fixture_get_all_transactions(create_transactions):
+    """
+    Fixture for retrieving a list of transactions.
+
+    Args:
+        create_transactions (fixture): The fixture for creating transactions.
+
+    Yields:
+        List[models.Transaction]: A list of transactions.
+
+    """
+
+    yield await repo.get_all(models.Transaction)
