@@ -15,31 +15,21 @@ STATUS_CODE = status.HTTP_201_CREATED
 
 
 @pytest.mark.parametrize(
-    "amount, expected_amount, reference, category_id",
+    "amount, reference, category_id",
     [
-        (10, 10, "Added 10", 1),
-        (20.5, 20.5, "Added 20.5", 3),
-        (-30.5, -30.5, "Substract 30.5", 6),
-        (-40.5, -40.5, "Subsctract 40.5", 6),
+        (10, "Added 10", 1),
+        (20.5, "Added 20.5", 3),
+        (-30.5, "Substract 30.5", 6),
+        (-40.5, "Subsctract 40.5", 6),
     ],
 )
 async def test_create_transaction(
-    amount, expected_amount, reference, category_id, test_account, test_user
+    amount: float | int,
+    reference: str,
+    category_id: int,
+    test_account: models.Account,
+    test_user: models.User,
 ):
-    """
-    Tests the create transaction functionality.
-
-    Args:
-        client_session_wrapper: The client session wrapper fixture.
-        amount: The amount of the transaction.
-        expected_amount: The expected amount of the transaction.
-        reference: The reference of the transaction.
-        category_id: The ID of the category.
-
-    Returns:
-        None
-    """
-
     account_balance = test_account.balance
 
     res = await make_http_request(
@@ -59,7 +49,7 @@ async def test_create_transaction(
     assert res.status_code == status.HTTP_201_CREATED
     assert account_balance + amount == test_account.balance
     assert new_transaction.account_id == test_account.id
-    assert new_transaction.information.amount == expected_amount
+    assert new_transaction.information.amount == amount
     assert isinstance(new_transaction.information.amount, float)
     assert new_transaction.information.reference == reference
 
@@ -77,20 +67,13 @@ async def test_create_transaction(
         (7, 0),
     ],
 )
-@pytest.mark.usefixtures("fixture_create_transactions")
-async def test_updated_transaction(category_id, amount, test_account, test_user):
-    """
-    Test case for updating a transaction.
-
-    Args:
-        client_session_wrapper: The client session wrapper.
-        category_id: The category ID.
-        amount: The amount.
-        test_account: The test account.
-
-    Returns:
-        None
-    """
+@pytest.mark.usefixtures("create_transactions")
+async def test_updated_transaction(
+    category_id: int,
+    amount: int | float,
+    test_account: models.Account,
+    test_user: models.User,
+):
 
     reference = f"Updated Val {amount}"
 
@@ -133,17 +116,7 @@ async def test_delete_transactions(
     test_account_transaction_list: List[models.Transaction],
     test_user: models.User,
 ):
-    """
-    Test case for deleting a transaction.
 
-    Args:
-        client_session_wrapper: The client session wrapper.
-        test_account: The test account.
-        test_account_transaction_list: The list of test account transactions.
-
-    Returns:
-        None
-    """
     for transaction in test_account_transaction_list:
 
         account_balance = test_account.balance
@@ -169,19 +142,10 @@ async def test_delete_transactions(
         assert await repo.get(models.Transaction, transaction_id) is None
 
 
-@pytest.mark.usefixtures("fixture_create_transactions")
-async def test_delete_transactions_fail(test_account: models.Account, test_user):
-    """
-    Test case for failing to delete transactions.
-
-    Args:
-        client_session_wrapper: The client session wrapper.
-        test_account: The test account.
-        test_transactions: The list of test transactions.
-
-    Returns:
-        None
-    """
+@pytest.mark.usefixtures("create_transactions")
+async def test_delete_transactions_fail(
+    test_account: models.Account, test_user: models.User
+):
 
     result = await repo.filter_by(
         models.Account,
@@ -211,42 +175,27 @@ async def test_delete_transactions_fail(test_account: models.Account, test_user)
 
 
 @pytest.mark.parametrize(
-    "amount, expected_offset_amount, reference, category_id",
+    "amount, expected_offset_amount,  category_id",
     [
-        (10, -10, "Added 10", 1),
-        (20.5, -20.5, "Added 20.5", 3),
-        (-30.5, 30.5, "Substract 30.5", 6),
-        (-40.5, 40.5, "Substract 40.5", 6),
-        (5.9999999999, -6, "Added 6", 6),
-        (1.00000000004, -1, "Added 1", 6),
+        (10, -10, 1),
+        (20.5, -20.5, 3),
+        (-30.5, 30.5, 6),
+        (-40.5, 40.5, 6),
+        (5.9999999999, -6, 6),
+        (1.00000000004, -1, 6),
     ],
 )
 async def test_create_offset_transaction(
     test_account: models.Account,
-    test_accounts: List[models.Account],
     test_user: models.User,
-    amount,
-    expected_offset_amount,
-    reference,
+    amount: int | float,
+    expected_offset_amount: int | float,
     category_id,
 ):
-    """
-    Tests the create offset transaction functionality.
-
-    Args:
-        client_session_wrapper: The client session wrapper fixture.
-        amount: The amount of the transaction.
-        expected_offset_amount: The expected amount of the offset transaction.
-        reference: The reference of the transaction.
-        category_id: The ID of the category.
-
-    Returns:
-        None
-    """
 
     account_id = test_account.id
-    offset_account = get_user_offset_account(test_account, test_accounts)
-
+    offset_account = await get_user_offset_account(test_account)
+    reference = f"test_create_offset_transaction - {amount}"
     res = await make_http_request(
         ENDPOINT,
         json={
@@ -286,9 +235,15 @@ async def test_create_offset_transaction_other_account_fail(
     test_user: models.User,
 ):
 
+    offset_account = await get_user_offset_account(test_account)
+
+    offset_account = None
     for offset_account in test_accounts:
         if offset_account.user_id != test_account.user_id:
             break
+
+    if offset_account is None:
+        raise ValueError("No offset account found")
 
     account_balance = test_account.balance
     offset_account_balance = offset_account.balance
@@ -330,34 +285,19 @@ async def test_create_offset_transaction_other_account_fail(
         (7, 0),
     ],
 )
-@pytest.mark.usefixtures("test_accounts")
 async def test_updated_offset_transaction(
     test_account: models.Account,
-    test_accounts: List[models.Account],
-    test_user: models.User,
-    category_id,
-    amount,
+    category_id: int,
+    amount: int | float,
 ):
-    """
-    Tests the updated offset transaction functionality.
 
-    Args:
-        client_session_wrapper: The client session wrapper fixture.
-        category_id: The ID of the category.
-        amount: The amount of the transaction.
-
-    Returns:
-        None
-    """
-
-    offset_account = get_user_offset_account(test_account, test_accounts)
+    offset_account = await get_user_offset_account(test_account)
 
     account_balance = test_account.balance
     offset_account_balance = offset_account.balance
     account_id = test_account.id
     offset_account_id = offset_account.id
 
-    # create base transaction
     transaction_res = await make_http_request(
         ENDPOINT,
         json={
@@ -368,7 +308,7 @@ async def test_updated_offset_transaction(
             "category_id": category_id,
             "offset_account_id": offset_account_id,
         },
-        as_user=test_user,
+        as_user=test_account.user,
     )
 
     transaction_before = schemas.Transaction(**transaction_res.json())
@@ -383,7 +323,7 @@ async def test_updated_offset_transaction(
             "date": str(datetime.datetime.now(datetime.timezone.utc)),
             "category_id": category_id,
         },
-        as_user=test_user,
+        as_user=test_account.user,
     )
 
     assert res.status_code == status.HTTP_200_OK
@@ -417,24 +357,12 @@ async def test_updated_offset_transaction(
 @pytest.mark.usefixtures()
 async def test_delete_offset_transaction(
     test_account: models.Account,
-    test_accounts: List[models.Account],
     test_user: models.User,
-    category_id,
-    amount,
+    category_id: int,
+    amount: int | float,
 ):
-    """
-    Tests the delete offset transaction functionality.
 
-    Args:
-        client_session_wrapper: The client session wrapper fixture.
-        category_id: The ID of the category.
-        amount: The amount of the transaction.
-
-    Returns:
-        None
-    """
-
-    offset_account = get_user_offset_account(test_account, test_accounts)
+    offset_account = await get_user_offset_account(test_account)
 
     account_balance = test_account.balance
     offset_account_balance = offset_account.balance
