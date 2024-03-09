@@ -35,7 +35,7 @@ def has_user_access_to_account(user: models.User, account: models.Account) -> bo
     Returns:
         bool: True if the user has access to the account, False otherwise.
     """
-    return str(user.id) == str(account.user_id)
+    return user.id == account.user_id
 
 
 async def get_account_list_template(
