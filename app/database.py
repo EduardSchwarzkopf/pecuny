@@ -20,6 +20,15 @@ class Database:
         self.session = None
 
     async def init(self):
+        """
+        Initializes the database connection.
+
+        Args:
+            self: The instance of the class.
+
+        Returns:
+            None
+        """
 
         if self.session:
             await self.session.close()
