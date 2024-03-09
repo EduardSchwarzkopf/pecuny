@@ -1,10 +1,9 @@
 import datetime
-from typing import List
 
 from fastapi import Response
 from httpx import AsyncClient
 
-from app import models
+from app import models, repository
 from app.main import app
 from app.oauth2 import create_access_token
 from app.utils.enums import RequestMethod
