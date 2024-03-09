@@ -12,8 +12,8 @@ from app import models, schemas
 from app import transaction_manager as tm
 from app.auth_manager import current_active_user
 from app.routers.dashboard import router as dashboard_router
-from app.services import accounts as service
-from app.services import transactions as transaction_service
+from app.services.accounts import AccountService
+from app.services.transactions import TransactionService
 from app.utils import PageRouter
 from app.utils.account_utils import get_account_list_template
 from app.utils.enums import FeedbackType
@@ -21,6 +21,8 @@ from app.utils.template_utils import add_breadcrumb, render_template, set_feedba
 
 PREFIX = f"{dashboard_router.prefix}/accounts"
 router = PageRouter(prefix=PREFIX, tags=["Accounts"])
+service = AccountService()
+transaction_service = TransactionService()
 
 
 async def handle_account_route(

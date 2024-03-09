@@ -5,9 +5,9 @@ from app import models
 from app import repository as repo
 from app import schemas
 from app.config import settings
-from app.utils.dataclasses_utils import ClientSessionWrapper
+from app.utils.enums import DatabaseFilterOperator, RequestMethod
+from tests.utils import make_http_request
 
-pytestmark = pytest.mark.anyio
 SUCCESS_LOGIN_STATUS_CODE = 204
 ENDPOINT = "/api/auth"
 
@@ -20,34 +20,34 @@ ENDPOINT = "/api/auth"
     ],
 )
 async def test_create_user(
-    client_session_wrapper: ClientSessionWrapper,
-    username,
-    displayname,
-    password,
+    username: str,
+    displayname: str,
+    password: str,
 ):
     """
-    Tests the create user functionality.
+    Test case for creating a user.
 
     Args:
-        session: The session fixture.
-        client: The async client fixture.
-        username (str): The username of the user to create.
-        displayname (str): The display name of the user to create.
-        password (str): The password of the user to create.
+        username (str): The username of the user.
+        displayname (str): The display name of the user.
+        password (str): The password of the user.
 
     Returns:
         None
+
+    Raises:
+        AssertionError: If the test fails.
+
     """
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.client.post(
-            f"{ENDPOINT}/register",
-            json={
-                "email": username,
-                "password": password,
-                "displayname": displayname,
-            },
-        )
+    res = await make_http_request(
+        f"{ENDPOINT}/register",
+        json={
+            "email": username,
+            "password": password,
+            "displayname": displayname,
+        },
+    )
     assert res.status_code == 201
 
     new_user = schemas.UserRead(**res.json())
@@ -59,86 +59,76 @@ async def test_create_user(
     assert new_user.is_verified is False
 
 
-@pytest.mark.usefixtures("test_user")
-async def test_invalid_create_user(
-    client_session_wrapper: ClientSessionWrapper,
-):
+async def test_invalid_create_user(test_user: models.User):
     """
-    Tests the invalid user creation.
+    Test case for creating an invalid user.
 
     Args:
-        session: The session fixture.
-        client: The async client fixture.
-        username (str): The username of the user to create.
-        displayname (str): The display name of the user to create.
-        password (str): The password of the user to create.
+        test_user (fixture): The test user.
 
     Returns:
         None
+
+    Raises:
+        AssertionError: If the test fails.
+
     """
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.client.post(
-            f"{ENDPOINT}/register",
-            json={
-                "email": "hello123@pytest.de",
-                "password": "testpassword",
-                "displayname": "John",
-            },
-        )
+    email = test_user.email
+    res = await make_http_request(
+        f"{ENDPOINT}/register",
+        json={"email": email, "password": "testpassword", "displayname": "John"},
+    )
 
     assert res.status_code == 400
 
 
-@pytest.mark.parametrize(
-    "username, displayname, password",
-    [
-        ("hello123@pytest.de", "John", "password123"),
-        ("hellO123@pytest.de", "John", "password123"),
-        ("HELLO123@pytest.de", "John", "password123"),
-        ("hello123@PyTeSt.De", "John", "password123"),
-        ("hELLO123@pytest.de", "John", "password123"),
-    ],
-)
-async def test_login(
-    client_session_wrapper: ClientSessionWrapper,
-    test_user,
-    username,
-    displayname,
-    password,
-):
+@pytest.mark.usefixtures("test_users")
+async def test_login():
     """
-    Tests successful user login
+    Test case for login.
 
     Args:
-        authorized_client: The authorized client fixture.
-        session: The session fixture.
+        None
 
     Returns:
         None
+
+    Raises:
+        AssertionError: If the test fails.
+
     """
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.client.post(
+    login_user_list = await repo.filter_by(models.User, "email", "hello123@pytest.de")
+    login_user = login_user_list[0]
+
+    for username in [
+        "hello123@pytest.de",
+        "hellO123@pytest.de",
+        "HELLO123@pytest.de",
+        "hello123@PyTeSt.De",
+        "hELLO123@pytest.de",
+    ]:
+
+        res = await make_http_request(
             f"{ENDPOINT}/login",
-            data={
+            {
                 "username": username,
-                "displayname": displayname,
-                "password": password,
+                "password": "password123",
             },
         )
 
-    cookie = res.cookies.get("fastapiusersauth")
-    payload = jwt.decode(
-        cookie,
-        settings.secret_key,
-        algorithms=settings.algorithm,
-        audience="fastapi-users:auth",
-    )
-    user_id = payload["sub"]
+        cookie = res.cookies.get("fastapiusersauth")
+        payload = jwt.decode(
+            cookie,
+            settings.secret_key,
+            algorithms=settings.algorithm,
+            audience="fastapi-users:auth",
+        )
+        user_id = payload["sub"]
 
-    assert user_id == str(test_user.id)
-    assert res.status_code == SUCCESS_LOGIN_STATUS_CODE
+        assert user_id == str(login_user.id)
+        assert res.status_code == SUCCESS_LOGIN_STATUS_CODE
 
 
 @pytest.mark.parametrize(
@@ -154,26 +144,29 @@ async def test_login(
 )
 @pytest.mark.usefixtures("test_user")
 async def test_invalid_login(
-    client_session_wrapper: ClientSessionWrapper,
-    username,
-    password,
-    status_code,
+    username: str,
+    password: str,
+    status_code: int,
 ):
     """
-    Tests failed user login.
+    Test case for invalid login.
 
     Args:
-        authorized_client: The authorized client fixture.
-        session: The session fixture.
+        username (str): The username for the login.
+        password (str): The password for the login.
+        status_code (int): The expected status code of the response.
 
     Returns:
         None
+
+    Raises:
+        AssertionError: If the test fails.
     """
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.client.post(
-            f"{ENDPOINT}/login", data={"username": username, "password": password}
-        )
+    res = await make_http_request(
+        f"{ENDPOINT}/login",
+        {"username": username, "password": password},
+    )
 
     assert res.status_code == status_code
 
@@ -187,40 +180,37 @@ async def test_invalid_login(
         ({"password": "lancelot"}),
     ],
 )
-@pytest.mark.usefixtures("test_user")
-async def test_updated_user(client_session_wrapper: ClientSessionWrapper, values):
+async def test_updated_user(test_user: models.User, values: dict):
     """
-    Tests successful update user parameter.
+    Test case for updating a user.
 
     Args:
-        session: The session fixture.
-        client: The async client fixture.
-        username (str): The username of the user to create.
-        displayname (str): The display name of the user to create.
-        password (str): The password of the user to create.
+        test_user (fixture): The test user.
+        values (dict): The updated values for the user.
 
     Returns:
         None
+
+    Raises:
+        AssertionError: If the test fails.
     """
+    res = await make_http_request(
+        "/api/users/me", json=values, method=RequestMethod.PATCH, as_user=test_user
+    )
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.authorized_client.patch(
-            "/api/users/me", json=values
-        )
+    assert res.status_code == 200
+    user = schemas.UserRead(**res.json())
 
-        assert res.status_code == 200
-        user = schemas.UserRead(**res.json())
+    for key, value in values.items():
+        if key == "password":
+            login_res = await make_http_request(
+                f"{ENDPOINT}/login",
+                {"username": user.email, "password": value},
+            )
+            assert login_res.status_code == SUCCESS_LOGIN_STATUS_CODE
+            continue
 
-        for key, value in values.items():
-            if key == "password":
-                login_res = await client_session_wrapper.authorized_client.post(
-                    f"{ENDPOINT}/login",
-                    data={"username": user.email, "password": value},
-                )
-                assert login_res.status_code == SUCCESS_LOGIN_STATUS_CODE
-                continue
-
-            assert getattr(user, key) == value
+        assert getattr(user, key) == value
 
 
 @pytest.mark.parametrize(
@@ -232,72 +222,83 @@ async def test_updated_user(client_session_wrapper: ClientSessionWrapper, values
         ({"email": "anothermail.com"}),
     ],
 )
-async def test_invalid_updated_user(
-    client_session_wrapper: ClientSessionWrapper, test_user, values
-):
+async def test_invalid_updated_user(test_user: models.User, values: dict):
     """
-    Tests tests invalid update user functionality.
+    Test case for updating a user with invalid values.
 
     Args:
-        authorized_client: The authorized client fixture.
-        session: The session fixture.
+        test_user (fixture): The test user.
+        values (dict): The updated values for the user.
 
     Returns:
         None
+
+    Raises:
+        AssertionError: If the test fails.
+
     """
 
     user_id = str(test_user.id)
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.authorized_client.patch(
-            f"/api/users/{user_id}", json=values
-        )
+    res = await make_http_request(
+        f"/api/users/{user_id}",
+        json=values,
+        method=RequestMethod.PATCH,
+        as_user=test_user,
+    )
 
     assert res.status_code == 403
 
 
-@pytest.mark.usefixtures("client")
-async def test_delete_user(client_session_wrapper: ClientSessionWrapper, test_user):
+async def test_delete_user(
+    test_user: models.User,
+):
     """
-    Tests the create user functionality.
+    Test case for deleting a user.
 
     Args:
-        session: The session fixture.
-        client: The async client fixture.
-        username (str): The username of the user to create.
-        displayname (str): The display name of the user to create.
-        password (str): The password of the user to create.
+        test_user (fixture): The test user.
 
     Returns:
         None
+
+    Raises:
+        AssertionError: If the test fails.
     """
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.authorized_client.delete("/api/users/me")
+    res = await make_http_request(
+        "/api/users/me", method=RequestMethod.DELETE, as_user=test_user
+    )
 
-        assert res.status_code == 204
+    assert res.status_code == 204
 
-        user = await repo.get(models.User, test_user.id)
-
+    user = await repo.get(models.User, test_user.id)
     assert user is None
 
 
-async def test_invalid_delete_user(
-    client_session_wrapper: ClientSessionWrapper,
-):
+async def test_invalid_delete_user(test_user: models.User):
     """
-    Tests invalid user deletion.
+    Test case for deleting a user.
 
     Args:
-        session: The session fixture.
-        client: The async client fixture.
-        username (str): The username of the user to create.
-        displayname (str): The display name of the user to create.
-        password (str): The password of the user to create.
+        test_user (fixture): The test user.
 
     Returns:
         None
-    """
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.authorized_client.delete("/api/users/2")
+    Raises:
+        AssertionError: If the test fails.
+    """
+    other_user_list = await repo.filter_by_multiple(
+        models.User,
+        [
+            ("email", test_user.email, DatabaseFilterOperator.NOT_EQUAL),
+            ("is_verified", True, DatabaseFilterOperator.EQUAL),
+        ],
+    )
+    other_user = other_user_list[-1]
+    res = await make_http_request(
+        url=f"/api/users/{other_user.id}",
+        method=RequestMethod.DELETE,
+        as_user=test_user,
+    )
 
     assert res.status_code == 403

@@ -4,6 +4,7 @@ from fastapi_users import exceptions
 from app import database, models
 from app import repository as repo
 from app.auth_manager import UserManager
+from app.database import db
 from app.logger import get_logger
 from app.schemas import EmailStr, UserCreate, UserUpdate
 from app.utils.dataclasses_utils import CreateUserData
@@ -53,8 +54,9 @@ class UserService:
         """
 
         user_db = database.SQLAlchemyUserDatabase(
-            database.db.session, models.User, models.OAuthAccount
+            db.session, models.User, models.OAuthAccount
         )
+
         return UserManager(user_db)
 
     async def delete_self(self, current_user: models.User) -> bool:

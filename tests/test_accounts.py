@@ -1,29 +1,39 @@
+from typing import Any, List
+
 import pytest
 
+from app import models
+from app import repository as repo
 from app import schemas
-from app.utils.dataclasses_utils import ClientSessionWrapper
+from app.utils.enums import RequestMethod
+from tests.utils import make_http_request
 
 pytestmark = pytest.mark.anyio
 ENDPOINT = "/api/accounts/"
 
+# TODO: Add get account test
 
-async def test_create_account(client_session_wrapper: ClientSessionWrapper):
+
+async def test_create_account(test_user: models.User):
     """
-    Tests the create account functionality.
+    Test case for creating an account.
 
     Args:
-        session: The session fixture.
-        authorized_client: The authorized client fixture.
+        test_user (fixture): The test user.
 
     Returns:
         None
+
+    Raises:
+        AssertionError: If the test fails.
+
     """
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.authorized_client.post(
-            ENDPOINT,
-            json={"label": "test_account", "description": "test", "balance": 500},
-        )
+    res = await make_http_request(
+        ENDPOINT,
+        json={"label": "test_account", "description": "test", "balance": 500},
+        as_user=test_user,
+    )
 
     assert res.status_code == 201
 
@@ -37,143 +47,194 @@ async def test_create_account(client_session_wrapper: ClientSessionWrapper):
 @pytest.mark.parametrize(
     "label, description, balance",
     [
-        ("", None, None),
         ("test", "test", "aaaa"),
-        ("test", "test", "0,3"),
+        ("test", None, "0,3"),
+        ("test", "", False),
     ],
 )
-async def test_invalid_create_account(
-    client_session_wrapper: ClientSessionWrapper, label, description, balance
+async def test_optional_fields_create_account(
+    test_user: models.User, label: str, description: str, balance: int | float
 ):
     """
-    Tests the delete account functionality.
+    Test case for creating an account with optional fields.
 
     Args:
-        authorized_client: The authorized client fixture.
-        account_id (str): The ID of the account to delete.
-        status_code (int): The expected status code.
+        test_user (fixture): The test user.
+        label (str): The label of the account.
+        description (str): The description of the account.
+        balance (int | float): The balance of the account.
 
     Returns:
         None
+
+    Raises:
+        AssertionError: If the test fails.
+
     """
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.authorized_client.post(
-            ENDPOINT,
-            json={"label": label, "description": description, "balance": balance},
-        )
+    res = await make_http_request(
+        ENDPOINT,
+        json={"label": label, "description": description, "balance": balance},
+        as_user=test_user,
+    )
+
+    assert res.status_code == 201
+
+
+@pytest.mark.parametrize(
+    "label",
+    [
+        (""),
+        (None),
+        (True),
+    ],
+)
+async def test_invalid_title_create_account(test_user: models.User, label: Any):
+    """
+    Test case for creating an account with an invalid label.
+
+    Args:
+        test_user (fixture): The test user.
+        label (Any): The label of the account.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
+
+    res = await make_http_request(
+        ENDPOINT,
+        json={"label": label, "description": "test_invalid_title", "balance": 0},
+        as_user=test_user,
+    )
 
     assert res.status_code == 422
 
 
-@pytest.mark.usefixtures("test_account")
-async def test_delete_account(client_session_wrapper: ClientSessionWrapper):
+async def test_delete_account(test_account: models.Account):
     """
-    Tests the update account functionality.
+    Test case for deleting an account.
 
     Args:
-        session: The session fixture.
-        authorized_client: The authorized client fixture.
-        values: The values to update the account with.
+        test_account (fixture): The test account.
 
     Returns:
         None
+
+    Raises:
+        AssertionError: If the test fails.
+
     """
 
-    res = await client_session_wrapper.authorized_client.delete(f"{ENDPOINT}1")
+    res = await make_http_request(
+        f"{ENDPOINT}{test_account.id}",
+        as_user=test_account.user,
+        method=RequestMethod.DELETE,
+    )
 
     assert res.status_code == 204
 
+    account = await repo.get(models.Account, test_account.id)
 
-@pytest.mark.parametrize(
-    "account_id, status_code",
-    [("2", 404), ("3", 404), ("4", 404), ("999999", 404)],
-)
-@pytest.mark.usefixtures("test_account")
+    assert account is None
+
+
 async def test_invalid_delete_account(
-    client_session_wrapper: ClientSessionWrapper, account_id, status_code
+    test_user: models.User, test_accounts: List[models.Account]
 ):
     """
-    Tests the update account functionality.
+    Test case for deleting an account.
 
     Args:
-        session: The session fixture.
-        authorized_client: The authorized client fixture.
-        values: The values to update the account with.
+        test_user (fixture): The test user.
+        test_accounts (fixture): The list of test accounts.
 
     Returns:
         None
+
+    Raises:
+        AssertionError: If the test fails.
+
     """
 
-    res = await client_session_wrapper.authorized_client.delete(
-        f"{ENDPOINT}{account_id}"
-    )
+    status_code = 404
 
-    assert res.status_code == status_code
+    for account in test_accounts:
+
+        if account.user_id == test_user.id:
+            continue
+
+        res = await make_http_request(
+            f"{ENDPOINT}{account.id}", as_user=test_user, method=RequestMethod.DELETE
+        )
+
+        assert res.status_code == status_code
+
+        account_refresh = await repo.get(models.Account, account.id)
+
+        assert account_refresh == account
 
 
 @pytest.mark.parametrize(
     "values",
     [
-        (
-            {
-                "label": "My new Label",
-                "description": "very new description",
-                "balance": 1111.3,
-            }
-        ),
-        (
-            {
-                "label": "11113",
-                "description": "cool story bro '",
-                "balance": 2000,
-            }
-        ),
-        (
-            {
-                "label": "My new Label",
-                "description": "very new description",
-                "balance": -0.333333334,
-            }
-        ),
-        (
-            {
-                "label": "My new Label",
-                "description": "very new description",
-                "balance": -1000000.3,
-            }
-        ),
+        {
+            "label": "My new Label",
+            "description": "very new description",
+            "balance": 1111.3,
+        },
+        {
+            "label": "11113",
+            "description": "cool story bro '",
+            "balance": 2000,
+        },
+        {
+            "label": "My new Label",
+            "description": "very new description",
+            "balance": -0.333333334,
+        },
+        {
+            "label": "My new Label",
+            "description": "very new description",
+            "balance": -1000000.3,
+        },
     ],
 )
-@pytest.mark.usefixtures("test_account")
-async def test_update_account(client_session_wrapper: ClientSessionWrapper, values):
+async def test_update_account(
+    test_account: models.Account, test_user: models.User, values: dict
+):
     """
-    Tests the update account functionality.
+    Test case for updating an account.
 
     Args:
-        session: The session fixture.
-        authorized_client: The authorized client fixture.
-        values: The values to update the account with.
+        test_account (fixture): The test account.
+        test_user (fixture): The test user.
+        values (dict): The updated values for the account.
 
     Returns:
         None
+
+    Raises:
+        AssertionError: If the test fails.
+
     """
+    response = await make_http_request(
+        f"{ENDPOINT}{test_account.id}", json=values, as_user=test_user
+    )
 
-    async with client_session_wrapper.session:
-        res = await client_session_wrapper.authorized_client.put(
-            f"{ENDPOINT}1", json=values
-        )
+    assert response.status_code == 200
+    account = schemas.AccountData(**response.json())
 
-    assert res.status_code == 200
-    account = schemas.AccountData(**res.json())
-
+    db_account = await repo.get(models.Account, account.id)
     for key, value in values.items():
-        if key == "id":
-            continue
-
         account_val = getattr(account, key)
+        db_account_val = getattr(db_account, key)
         print(f"key: {key} | value: {value} | account_val: {account_val}")
-        if isinstance(value, str):
-            assert account_val == value
-        else:
-            assert account_val == round(value, 2)
+        if not isinstance(value, str):
+            value = round(value, 2)
+
+        assert db_account_val == value
+        assert account_val == value

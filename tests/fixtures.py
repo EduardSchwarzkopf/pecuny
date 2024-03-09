@@ -1,292 +1,253 @@
+import asyncio
 import datetime
 from typing import List
 
 import pytest
-from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models
 from app import repository as repo
-from app.oauth2 import create_access_token
+from app import schemas
+from app.services.accounts import AccountService
+from app.services.transactions import TransactionService
 from app.services.users import UserService
-from app.utils.dataclasses_utils import ClientSessionWrapper, CreateUserData
+from app.utils.dataclasses_utils import CreateUserData
+from app.utils.enums import DatabaseFilterOperator
+from tests.utils import get_date_range
+
+# Reference: https://github.com/EduardSchwarzkopf/pecuny/issues/88
+# pylint: disable=unused-argument
 
 
-@pytest.fixture(name="user_service")
-async def fixture_user_service():
-    """
-    Fixture that provides a user service.
-
-    Args:
-        None
-
-    Returns:
-        UserService: An instance of the user service.
-    """
-
-    yield UserService()
-
-
-@pytest.fixture(name="test_user")
-@pytest.mark.usefixtures("session")
-async def fixture_test_user(user_service: UserService):
-    """
-    Fixture that retrieves an existing user or creates a new user.
-
-    Args:
-        user_service: The user service fixture.
-
-    Returns:
-        User: An existing user or a newly created user.
-    """
-    user_list = await repo.get_all(models.User)
-
-    if len(user_list) > 0:
-        return user_list[0]
-
-    return await user_service.create_user(
-        CreateUserData("hello123@pytest.de", "password123", is_verified=True)
-    )
-
-
-@pytest.fixture(name="token")
-async def fixture_token(test_user):
-    """
-    Fixture that generates an access token for a test user.
-
-    Args:
-        test_user: The test user fixture.
-
-    Returns:
-        str: An access token for the test user.
-    """
-
-    yield create_access_token(
-        {
-            "sub": str(test_user.id),
-            "aud": ["fastapi-users:auth"],
-        }
-    )
-
-
-@pytest.fixture(name="authorized_client")
-async def fixture_authorized_client(client: AsyncClient, token):
-    """
-    Fixture that provides an authorized client with a token.
-
-    Args:
-        client: The async client fixture.
-        token: The authentication token.
-
-    Returns:
-        AsyncClient: An authorized client with the provided token.
-    """
-
-    client.cookies = {**client.cookies, "fastapiusersauth": token}
-    yield client
-
-
-@pytest.fixture(name="client_session_wrapper")
-async def fixture_client_session_wrapper_fixture(
-    client: AsyncClient, authorized_client: AsyncClient, session: AsyncSession
-):
-    """
-    Fixture that combines the client and session fixtures into a single object.
-
-    Args:
-        client: The async client fixture.
-        session: The async session fixture.
-
-    Returns:
-        SessionClient: An object containing the client and session.
-    """
-    yield ClientSessionWrapper(client, authorized_client, session)
-
-
-@pytest.mark.usefixtures("session")
-@pytest.fixture(name="test_users")
-async def fixture_test_users(user_service: UserService):
+@pytest.fixture(name="create_test_users", scope="session")
+async def fixture_create_test_users():
     """
     Fixture that creates test users.
 
     Args:
-        user_service: The user service fixture.
+        None
 
-    Returns:
-        List[User]: A list of test users.
+    Yields:
+        None
     """
 
-    users_data = [
-        ["user01@pytest.de", "password123"],
-        ["user02@pytest.de", "password123"],
-        ["user03@pytest.de", "password123"],
-        ["user04@pytest.de", "password123"],
+    password = "password123"
+    create_user_list = [
+        ["user00@pytest.de", password, "User00"],
+        ["user01@pytest.de", password, "User01"],
+        ["user02@pytest.de", password, "User02"],
+        ["user03@pytest.de", password, "User03"],
+        ["hello123@pytest.de", password, "LoginUser"],
     ]
 
+    user_service = UserService()
     user_list = []
-
-    for data in users_data:
-        user = await user_service.create_user(
-            CreateUserData(data[0], data[1], is_verified=True)
+    for user in create_user_list:
+        user_list.append(
+            await user_service.create_user(
+                CreateUserData(
+                    email=user[0],
+                    password=user[1],
+                    displayname=user[2],
+                    is_verified=True,
+                ),
+            )
         )
-        user_list.append(user)
-
-    yield user_list
 
 
-@pytest.fixture(name="test_account")
-async def fixture_test_account(test_user: models.User, session):
+@pytest.fixture(name="test_users")
+async def fixture_test_user_list(create_test_users):
     """
-    Fixture that creates a test account.
+    Fixture for retrieving a list of test users.
 
     Args:
-        test_user: The test user fixture.
-        session: The session fixture.
+        create_test_users (fixture): Fixture to create test users.
 
-    Returns:
-        Account: A test account.
+    Yields:
+        List[models.User]: A list of test users.
     """
+    yield await repo.get_all(models.User)
 
-    account_data = {"label": "test_account", "description": "test", "balance": 5000}
 
-    db_account = models.Account(
-        user=test_user,
-        **account_data,
+@pytest.fixture(name="test_user")
+async def fixture_test_user(create_test_users):
+    """
+    Fixture for retrieving a test user.
+
+    Args:
+        create_test_users (fixture): Fixture to create test users.
+
+    Yields:
+        models.User: The test user.
+
+    """
+    user_list = await repo.filter_by(
+        models.User, "is_verified", True, DatabaseFilterOperator.EQUAL
     )
 
-    session.add(db_account)
-
-    await session.commit()
-
-    yield await repo.get(models.Account, db_account.id)
+    yield user_list[0]
 
 
-@pytest.fixture(name="test_accounts")
-async def fixture_test_accounts(test_users: List[models.User], session):
+@pytest.fixture(name="create_test_accounts")
+async def fixture_create_test_accounts(
+    session: AsyncSession, test_user: models.User, test_users: List[models.User]
+):
     """
     Fixture that creates test accounts.
 
     Args:
-        test_users: A list of test users.
-        session: The session fixture.
+        session (fixture): The session fixture.
+        test_users (fixture): Fixture to get a test user.
+        test_users (fixuter): Fixture to get a list of test users.
 
     Returns:
         List[Account]: A list of test accounts.
     """
 
-    accounts_data = [
+    account_data_list = [
         {
-            "user": test_users[0],
+            "user": test_user,
             "label": "account_00",
             "description": "description_00",
             "balance": 100,
         },
         {
-            "user": test_users[1],
+            "user": test_users[0],
             "label": "account_01",
             "description": "description_01",
             "balance": 200,
         },
         {
-            "user": test_users[2],
+            "user": test_users[1],
             "label": "account_02",
             "description": "description_02",
             "balance": 500,
         },
         {
-            "user": test_users[3],
+            "user": test_users[2],
             "label": "account_03",
             "description": "description_03",
             "balance": 1000,
         },
         {
-            "user": test_users[0],
+            "user": test_user,
             "label": "account_04",
             "description": "description_04",
             "balance": 2000,
         },
     ]
 
-    def create_accounts_model(account):
-        return models.Account(**account)
+    service = AccountService()
 
-    accounts_map = map(create_accounts_model, accounts_data)
-    accounts = list(accounts_map)
+    create_task = [
+        service.create_account(
+            account_data["user"],
+            schemas.Account(
+                label=account_data["label"],
+                description=account_data["description"],
+                balance=account_data["balance"],
+            ),
+        )
+        for account_data in account_data_list
+    ]
 
-    session.add_all(accounts)
+    await asyncio.gather(*create_task)
     await session.commit()
 
-    yield await repo.get_all(models.Account)
+    yield
 
 
-async def get_date_range(date_start, days=5):
+@pytest.fixture(name="test_account")
+async def fixture_test_account(test_user: models.User, create_test_accounts):
     """
-    Returns a list of dates in a range starting from a given date.
+    Fixture for retrieving a test account.
 
     Args:
-        date_start: The starting date.
-        days: The number of days in the range (default is 5).
+        test_user (fixture): The test user.
+        create_test_accounts (fixture): The fixture for creating test accounts.
 
-    Returns:
-        List[datetime.date]: A list of dates in the range.
+    Yields:
+        models.Account: The test account.
+
     """
 
-    return [(date_start - datetime.timedelta(days=idx)) for idx in range(days)]
+    account = await repo.filter_by(
+        models.Account,
+        "user_id",
+        test_user.id,
+        load_relationships_list=[models.Account.user],
+    )
+    yield account[0]
 
 
-@pytest.fixture(name="test_transactions")
-async def fixture_test_transactions(test_accounts, session):
+@pytest.fixture(name="test_accounts")
+async def fixture_get_test_account_list(create_test_accounts):
+    """
+    Fixture for retrieving a list of test accounts.
+
+    Args:
+        create_test_accounts (fixuter): The fixture for creating test accounts.
+
+    Yields:
+        List[models.Account]: A list of test accounts.
+
+    """
+
+    yield await repo.get_all(
+        models.Account, load_relationships_list=[models.Account.user]
+    )
+
+
+@pytest.fixture(name="create_transactions")
+async def fixture_create_transactions(
+    test_accounts: List[models.Account],
+    session: AsyncSession,
+):
     """
     Fixture that creates test transactions.
 
     Args:
-        test_accounts: The test accounts fixture.
-        session: The session fixture.
+        test_accounts (fixture): The test accounts fixture.
+        session (fixture): The session fixture.
 
     Returns:
         List[Transaction]: A list of test transactions.
     """
 
-    dates = await get_date_range(datetime.datetime.now(datetime.timezone.utc))
+    dates = get_date_range(datetime.datetime.now(datetime.timezone.utc))
 
     transaction_data = [
         {
-            "account_id": 1,
             "amount": 200,
             "reference": "transaction_001",
             "date": dates[0],
             "category_id": 1,
         },
         {
-            "account_id": 1,
             "amount": 100,
             "reference": "transaction_002",
             "date": dates[1],
             "category_id": 1,
         },
         {
-            "account_id": 2,
             "amount": 50,
             "reference": "transaction_003",
             "date": dates[3],
             "category_id": 4,
         },
         {
-            "account_id": 3,
             "amount": 100,
             "reference": "transaction_004",
             "date": dates[4],
             "category_id": 8,
         },
         {
-            "account_id": 4,
             "amount": 500,
             "reference": "transaction_005",
             "date": dates[3],
             "category_id": 7,
         },
         {
-            "account_id": 5,
             "amount": 200,
             "reference": "transaction_006",
             "date": dates[2],
@@ -294,31 +255,59 @@ async def fixture_test_transactions(test_accounts, session):
         },
     ]
 
-    transaction_list = []
+    service = TransactionService()
+    create_task = []
 
-    for transaction_info in transaction_data:
-        account_id = transaction_info["account_id"]
-        account_index = next(
-            (i for i, item in enumerate(test_accounts) if item.id == account_id), -1
-        )
-        if account_index == -1:
-            raise ValueError("No Account found with that Id")
-
-        db_transaction_information = models.TransactionInformation()
-        db_transaction_information.add_attributes_from_dict(transaction_info)
-
-        new_balance = (
-            test_accounts[account_index].balance + db_transaction_information.amount
-        )
-
-        update_info = {"balance": new_balance}
-        await repo.update(models.Account, account_id, **update_info)
-
-        transaction_list.append(
-            models.Transaction(
-                information=db_transaction_information, account_id=account_id
-            )
+    for account in test_accounts:
+        create_task.extend(
+            [
+                service.create_transaction(
+                    account.user,
+                    schemas.TransactionInformationCreate(
+                        account_id=account.id,
+                        amount=transaction["amount"],
+                        reference=transaction["reference"],
+                        date=transaction["date"],
+                        category_id=transaction["category_id"],
+                    ),
+                )
+                for transaction in transaction_data
+            ]
         )
 
-    session.add_all(transaction_list)
+    await asyncio.gather(*create_task)
     await session.commit()
+
+    yield
+
+
+@pytest.fixture(name="test_account_transaction_list")
+async def fixture_test_account_transaction_list(create_transactions, test_account):
+    """
+    Fixture for retrieving a list of transactions associated with a test account.
+
+    Args:
+        create_transactions (fixture): The fixture for creating transactions.
+        test_account (fixture): The test account.
+
+    Yields:
+        List[models.Transaction]: A list of transactions associated with the test account.
+    """
+
+    yield await repo.filter_by(models.Transaction, "account_id", test_account.id)
+
+
+@pytest.fixture(name="transaction_list")
+async def fixture_get_all_transactions(create_transactions):
+    """
+    Fixture for retrieving a list of transactions.
+
+    Args:
+        create_transactions (fixture): The fixture for creating transactions.
+
+    Yields:
+        List[models.Transaction]: A list of transactions.
+
+    """
+
+    yield await repo.get_all(models.Transaction)

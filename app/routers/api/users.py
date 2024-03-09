@@ -7,6 +7,7 @@ from app.services.users import UserService
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(prefix="/users", tags=["Users"])
+service = UserService()
 
 
 def get_user_service() -> UserService:
@@ -20,10 +21,8 @@ def get_user_service() -> UserService:
     return UserService()
 
 
-# override fastapi_users functionality
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def api_delete_me(
-    service: UserService = Depends(get_user_service),
     current_user: User = Depends(current_active_user),
 ):
     """
@@ -45,9 +44,7 @@ async def api_delete_me(
     if result:
         return Response(
             status_code=status.HTTP_204_NO_CONTENT,
-            content="Transaction deleted successfully",
+            content="User deleted successfully",
         )
 
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
-    )
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

@@ -1,19 +1,9 @@
 import pytest
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
 from app.data import categories
 from app.database import db
-from app.main import app
 from app.models import Base
-
-engine = create_async_engine(settings.test_db_url)
-async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-
-pytestmark = pytest.mark.anyio
 
 
 async def populate_db(session: AsyncSession):
@@ -30,20 +20,57 @@ async def populate_db(session: AsyncSession):
     section_list = categories.get_section_list()
     category_list = categories.get_category_list()
 
-    def create_section_model(section):
-        return models.TransactionSection(**section)
+    section_list = categories.get_section_list()
+    category_list = categories.get_category_list()
 
-    def create_category_model(category):
-        return models.TransactionCategory(**category)
+    transaction_section_list = [
+        models.TransactionSection(**section) for section in section_list
+    ]
+    transaction_category_list = [
+        models.TransactionCategory(**category) for category in category_list
+    ]
 
-    section = list(map(create_section_model, section_list))
-    category = list(map(create_category_model, category_list))
-
-    session.add_all(section + category)
+    session.add_all(transaction_category_list + transaction_section_list)
     await session.commit()
 
 
-@pytest.fixture(name="session", scope="class")
+@pytest.fixture(scope="session", autouse=True)
+async def fixture_init_db():
+    """
+    Fixture for initializing the database and populating it with test data.
+
+    Yields:
+        None
+    """
+
+    await db.init()
+    async with db.engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+
+    await populate_db(db.session)
+
+    yield
+
+    await db.engine.dispose()
+
+
+async def cleanup_tests():
+    """
+    Performs cleanup tasks for tests.
+
+    Returns:
+        None
+    """
+
+    user_list = await repo.get_all(models.User)
+
+    delete_task = [repo.delete(user) for user in user_list]
+    await asyncio.gather(*delete_task)
+
+
+@pytest.fixture(name="session", autouse=True, scope="session")
+@pytest.mark.usefixtures("fixture_init_db")
 async def fixture_session() -> AsyncSession:  # type: ignore
     """
     Fixture that provides an async session.
@@ -54,31 +81,9 @@ async def fixture_session() -> AsyncSession:  # type: ignore
     Returns:
         AsyncSession: An async session.
     """
+    await cleanup_tests()
 
-    await db.init()
-    async with db.engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
-
-    await populate_db(db.session)
     yield db.session
-
-
-@pytest.fixture(name="client")
-@pytest.mark.usefixtures("module")
-async def fixture_client() -> AsyncClient:  # type: ignore
-    """
-    Fixture that provides an async HTTP client.
-
-    Args:
-        None
-
-    Returns:
-        AsyncClient: An async HTTP client.
-    """
-
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        yield client
 
 
 @pytest.fixture(scope="session", autouse=True)

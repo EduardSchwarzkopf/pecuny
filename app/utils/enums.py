@@ -12,3 +12,19 @@ class FeedbackType(Enum):
     SUCCESS = "success"
     INFO = "info"
     WARNING = "warning"
+
+
+class RequestMethod(Enum):
+    GET = "get"
+    POST = "post"
+    PATCH = "patch"
+    DELETE = "delete"
+
+
+class DatabaseFilterOperator(Enum):
+    EQUAL = "="
+    NOT_EQUAL = "<>"
+    LESS_THAN = "<"
+    LESS_THAN_OR_EQUAL = "<="
+    GREATER_THAN = ">"
+    GREATER_THAN_OR_EQUAL = ">="

@@ -1,57 +1,61 @@
 from datetime import datetime
-from typing import List, Type, TypeVar
+from typing import List, Optional, Tuple, Type, TypeVar
 
+from sqlalchemy import Select, text
 from sqlalchemy import update as sql_update
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 from app.database import db
 from app.models import BaseModel
+from app.utils.enums import DatabaseFilterOperator
 
 from . import models
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
-async def get_all(cls: Type[ModelT]) -> List[ModelT]:
+def load_relationships(query: Select, relationships: InstrumentedAttribute = None):
+    """Apply loading options for specified relationships to a query.
+
+    Args:
+        cls: The model class.
+        query: The SQLAlchemy query object.
+        *relationships: Class-bound attributes representing relationships to load.
+
+    Returns:
+        The modified query with loading options applied.
+    """
+    if relationships:
+        options = [selectinload(rel) for rel in relationships]
+        query = query.options(*options)
+    return query
+
+
+async def get_all(
+    cls: Type, load_relationships_list: Optional[List[InstrumentedAttribute]] = None
+) -> List[ModelT]:
     """Retrieve all instances of the specified model from the database.
 
     Args:
         cls: The type of the model.
+        load_relationships: Optional list of relationships to load.
 
     Returns:
         List[ModelT]: A list of instances of the specified model.
-
-    Raises:
-        None
     """
     q = select(cls)
+    q = load_relationships(q, load_relationships_list)
     result = await db.session.execute(q)
-    result.unique()
-    return result.scalars().all()
+    return result.unique().scalars().all()
 
 
-async def filter_by(cls: Type[ModelT], attribute: str, value: str) -> List[ModelT]:
-    """Filter instances of the specified model by the given attribute and value.
-
-    Args:
-        cls: The type of the model.
-        attribute: The attribute to filter by.
-        value: The value to filter with.
-
-    Returns:
-        List[ModelT]: A list of instances of the specified model that match the filter criteria.
-
-    Raises:
-        None
-    """
-    query = select(cls).where(getattr(cls, attribute) == value)
-    result = await db.session.execute(query)
-    return result.scalars().all()
-
-
-async def get(cls: Type[ModelT], instance_id: int, load_relationships=None) -> ModelT:
+async def get(
+    cls: Type,
+    instance_id: int,
+    load_relationships_list: Optional[List[InstrumentedAttribute]] = None,
+) -> ModelT:
     """Retrieve an instance of the specified model by its ID.
 
     Args:
@@ -61,16 +65,85 @@ async def get(cls: Type[ModelT], instance_id: int, load_relationships=None) -> M
 
     Returns:
         ModelT: The instance of the specified model with the given ID.
+    """
+    q = select(cls).where(cls.id == instance_id)
+    q = load_relationships(q, load_relationships_list)
+    result = await db.session.execute(q)
+    return result.scalars().first()
+
+
+async def filter_by(
+    cls: Type[ModelT],
+    attribute: str,  # TODO: InstrumentedAttribute,
+    value: str,
+    operator: DatabaseFilterOperator = DatabaseFilterOperator.EQUAL,
+    load_relationships_list: Optional[List[str]] = None,
+) -> List[ModelT]:
+    """
+    Filters the records of a given model by a specified attribute and value.
+
+    Args:
+        cls: The model class.
+        attribute: The attribute to filter by.
+        value: The value to filter with.
+        operator: The operator to use for the filter (default: EQUAL).
+
+    Returns:
+        List[ModelT]: The filtered records.
 
     Raises:
         None
     """
-    stmt = select(cls).where(cls.id == instance_id)
-    if load_relationships:
-        options = [selectinload(rel) for rel in load_relationships]
-        stmt = stmt.options(*options)
-    result = await db.session.execute(stmt)
-    return result.scalars().first()
+    # TODO: Update for InstrumentedAttribute
+    # condition = text(f"{attribute.key} {operator.value} :val")
+    condition = text(f"{attribute} {operator.value} :val")
+
+    q = select(cls).where(condition).params(val=value)
+    q = load_relationships(q, load_relationships_list)
+
+    result = await db.session.execute(q)
+
+    return result.unique().scalars().all()
+
+
+async def filter_by_multiple(
+    cls: Type[ModelT],
+    conditions: List[Tuple[str, str, DatabaseFilterOperator]],
+    load_relationships_list: Optional[List[str]] = None,
+) -> List[ModelT]:
+    """
+    Filters the records of a given model by multiple attributes and values.
+
+    Args:
+        cls: The model class.
+        conditions: A list of tuples where each tuple contains an attribute to filter by,
+                    a value to filter with, and an optional operator
+                    (if not provided, EQUAL is used).
+        load_relationships_list: Optional list of relationships to load.
+
+    Returns:
+        List[Model]: The filtered records.
+    """
+
+    # Construct the WHERE clause
+    where_conditions = []
+    params = {}
+    for i, (attribute, value, operator) in enumerate(conditions):
+        param_name = f"val{i}"
+        where_conditions.append(text(f"{attribute} {operator.value} :{param_name}"))
+        params[param_name] = value
+
+    q = select(cls)
+    if where_conditions:
+        for condition in where_conditions:
+            q = q.where(condition)
+    q = q.params(**params)
+
+    q = load_relationships(q, load_relationships_list)
+
+    result = await db.session.execute(q)
+
+    return result.scalars().unique().all()
 
 
 async def get_scheduled_transactions_from_period(
@@ -157,21 +230,6 @@ async def save(obj: Type[ModelT]) -> None:
     db.session.add(obj)
 
 
-async def get_session() -> AsyncSession:
-    """Get the database session.
-
-    Args:
-        None
-
-    Returns:
-        AsyncSession: The database session.
-
-    Raises:
-        None
-    """
-    return db.session
-
-
 async def commit(session) -> None:
     """Commit the changes made in the session to the database.
 
@@ -222,6 +280,14 @@ async def delete(obj: Type[ModelT]) -> None:
     Raises:
         None
     """
+
+    # TODO: Test this
+    # if isinstance(obj, list):
+    #     for object in obj:
+    #         db.session.delete(object)
+    #     return
+
+    # TODO: Await needed?
     await db.session.delete(obj)
 
 

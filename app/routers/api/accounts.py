@@ -7,11 +7,12 @@ from app import schemas
 from app import transaction_manager as tm
 from app.models import User
 from app.routers.api.users import current_active_user
-from app.services import accounts as service
+from app.services.accounts import AccountService
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(prefix="/accounts", tags=["Accounts"])
 ResponseModel = schemas.AccountData
+service = AccountService()
 
 
 @router.get("/", response_model=List[ResponseModel])
@@ -74,7 +75,7 @@ async def api_create_account(
     return account
 
 
-@router.put("/{account_id}", response_model=ResponseModel)
+@router.post("/{account_id}", response_model=ResponseModel)
 async def api_update_account(
     account_id: int,
     account_data: schemas.AccountUpdate,

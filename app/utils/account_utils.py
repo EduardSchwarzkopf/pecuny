@@ -4,8 +4,10 @@ from fastapi import Request
 
 from app import models
 from app.config import settings
-from app.services import accounts as service
+from app.services.accounts import AccountService
 from app.utils.template_utils import render_template
+
+service = AccountService()
 
 
 def calculate_total_balance(account_list: List[models.Account]) -> float:

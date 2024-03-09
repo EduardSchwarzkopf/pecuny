@@ -36,9 +36,6 @@ async def transaction(handler, *args: Any) -> Any:
         )
         result = {}
         await db.session.rollback()
-    finally:
-        await db.engine.dispose()
-        logger.info("Transaction for %s finished, engine disposed", handler.__name__)
 
     return result
 
