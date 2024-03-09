@@ -23,7 +23,7 @@ from app.utils.exceptions import UnauthorizedPageException
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_api_app: FastAPI):
     await db.init()
     yield
     await db.session.close()
