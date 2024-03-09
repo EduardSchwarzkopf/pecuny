@@ -55,6 +55,22 @@ async def test_create_account(test_user: models.User):
 async def test_optional_fields_create_account(
     test_user: models.User, label: str, description: str, balance: int | float
 ):
+    """
+    Test case for creating an account with optional fields.
+
+    Args:
+        test_user (fixture): The test user.
+        label (str): The label of the account.
+        description (str): The description of the account.
+        balance (int | float): The balance of the account.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
 
     res = await make_http_request(
         ENDPOINT,
@@ -74,6 +90,20 @@ async def test_optional_fields_create_account(
     ],
 )
 async def test_invalid_title_create_account(test_user: models.User, label: Any):
+    """
+    Test case for creating an account with an invalid label.
+
+    Args:
+        test_user (fixture): The test user.
+        label (Any): The label of the account.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
 
     res = await make_http_request(
         ENDPOINT,
@@ -85,6 +115,19 @@ async def test_invalid_title_create_account(test_user: models.User, label: Any):
 
 
 async def test_delete_account(test_account: models.Account):
+    """
+    Test case for deleting an account.
+
+    Args:
+        test_account (fixture): The test account.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
 
     res = await make_http_request(
         f"{ENDPOINT}{test_account.id}",
@@ -102,6 +145,20 @@ async def test_delete_account(test_account: models.Account):
 async def test_invalid_delete_account(
     test_user: models.User, test_accounts: List[models.Account]
 ):
+    """
+    Test case for deleting an account.
+
+    Args:
+        test_user (fixture): The test user.
+        test_accounts (fixture): The list of test accounts.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
 
     status_code = 404
 
@@ -149,7 +206,21 @@ async def test_invalid_delete_account(
 async def test_update_account(
     test_account: models.Account, test_user: models.User, values: dict
 ):
+    """
+    Test case for updating an account.
 
+    Args:
+        test_account (fixture): The test account.
+        test_user (fixture): The test user.
+        values (dict): The updated values for the account.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
     response = await make_http_request(
         f"{ENDPOINT}{test_account.id}", json=values, as_user=test_user
     )
