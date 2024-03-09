@@ -152,9 +152,9 @@ async def test_delete_transactions(
     Test case for deleting transactions.
 
     Args:
-        test_account (models.Account): The test account.
-        test_account_transaction_list (List[models.Transaction]): The list of test account transactions.
-        test_user (models.User): The test user.
+        test_account (fixture): The test account.
+        test_account_transaction_list (fixture): The list of test account transactions.
+        test_user (fixture): The test user.
 
     Returns:
         None
