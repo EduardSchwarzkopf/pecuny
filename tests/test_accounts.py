@@ -1,3 +1,5 @@
+from typing import Any, List
+
 import pytest
 
 from app import models
@@ -12,7 +14,7 @@ ENDPOINT = "/api/accounts/"
 # TODO: Add get account test
 
 
-async def test_create_account(test_user):
+async def test_create_account(test_user: models.User):
     """
     Test case for creating an account.
 
@@ -50,18 +52,9 @@ async def test_create_account(test_user):
         ("test", "", False),
     ],
 )
-async def test_optional_fields_create_account(test_user, label, description, balance):
-    """
-    Tests the delete account functionality.
-
-    Args:
-        authorized_client: The authorized client fixture.
-        account_id (str): The ID of the account to delete.
-        status_code (int): The expected status code.
-
-    Returns:
-        None
-    """
+async def test_optional_fields_create_account(
+    test_user: models.User, label: str, description: str, balance: int | float
+):
 
     res = await make_http_request(
         ENDPOINT,
@@ -80,18 +73,7 @@ async def test_optional_fields_create_account(test_user, label, description, bal
         (True),
     ],
 )
-async def test_invalid_title_create_account(test_user, label):
-    """
-    Tests the delete account functionality.
-
-    Args:
-        authorized_client: The authorized client fixture.
-        account_id (str): The ID of the account to delete.
-        status_code (int): The expected status code.
-
-    Returns:
-        None
-    """
+async def test_invalid_title_create_account(test_user: models.User, label: Any):
 
     res = await make_http_request(
         ENDPOINT,
@@ -102,18 +84,7 @@ async def test_invalid_title_create_account(test_user, label):
     assert res.status_code == 422
 
 
-async def test_delete_account(test_account):
-    """
-    Tests the delete account functionality.
-
-    Args:
-        session: The session fixture.
-        authorized_client: The authorized client fixture.
-        values: The values to update the account with.
-
-    Returns:
-        None
-    """
+async def test_delete_account(test_account: models.Account):
 
     res = await make_http_request(
         f"{ENDPOINT}{test_account.id}",
@@ -128,18 +99,9 @@ async def test_delete_account(test_account):
     assert account is None
 
 
-async def test_invalid_delete_account(test_user, test_accounts):
-    """
-    Tests the update account functionality.
-
-    Args:
-        session: The session fixture.
-        authorized_client: The authorized client fixture.
-        values: The values to update the account with.
-
-    Returns:
-        None
-    """
+async def test_invalid_delete_account(
+    test_user: models.User, test_accounts: List[models.Account]
+):
 
     status_code = 404
 
@@ -184,18 +146,9 @@ async def test_invalid_delete_account(test_user, test_accounts):
         },
     ],
 )
-async def test_update_account(test_account, test_user, values):
-    """
-    Tests the update account functionality.
-
-    Args:
-        session: The session fixture.
-        authorized_client: The authorized client fixture.
-        values: The values to update the account with.
-
-    Returns:
-        None
-    """
+async def test_update_account(
+    test_account: models.Account, test_user: models.User, values: dict
+):
 
     response = await make_http_request(
         f"{ENDPOINT}{test_account.id}", json=values, as_user=test_user
