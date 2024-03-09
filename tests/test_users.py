@@ -60,6 +60,20 @@ async def test_create_user(
 
 
 async def test_invalid_create_user(test_user: models.User):
+    """
+    Test case for creating an invalid user.
+
+    Args:
+        test_user (fixture): The test user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
+
     email = test_user.email
     res = await make_http_request(
         f"{ENDPOINT}/register",
