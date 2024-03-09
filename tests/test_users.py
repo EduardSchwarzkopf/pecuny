@@ -52,11 +52,21 @@ async def test_create_user(
 
     new_user = schemas.UserRead(**res.json())
 
+    db_user: models.User = await repo.get(models.User, new_user.id)
+
     assert new_user.email == username
     assert new_user.displayname != ""
     assert new_user.is_active is True
     assert new_user.is_superuser is False
     assert new_user.is_verified is False
+
+    assert db_user.hashed_password != password
+    assert db_user.email == username.lower()
+    assert new_user.email == db_user.email
+    assert new_user.displayname == db_user.displayname
+    assert new_user.is_active is db_user.is_active
+    assert new_user.is_superuser is db_user.is_superuser
+    assert new_user.is_verified is db_user.is_verified
 
 
 async def test_invalid_create_user(test_user: models.User):
