@@ -79,7 +79,7 @@ async def test_invalid_create_user(test_user: models.User):
     assert res.status_code == 400
 
 
-@pytest.mark.usefixtures("fixture_create_test_users")
+@pytest.mark.usefixtures("create_test_users")
 async def test_login():
     """
     Tests successful user login
