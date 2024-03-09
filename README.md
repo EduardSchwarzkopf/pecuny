@@ -12,7 +12,8 @@ This is my learning project for various subjects:
 
 ### Prerequisites
 
-1. python ^3.12 installed
+1. `python ^3.12` installed
+2. `python-dev` package installed
 2. install poetry with: `pip install -r dev-requirements.txt`
 
 ### Install packages
