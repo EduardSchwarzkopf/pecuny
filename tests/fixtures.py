@@ -19,7 +19,7 @@ from tests.utils import get_date_range
 # pylint: disable=unused-argument
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(name="create_test_users", scope="session")
 async def fixture_create_test_users():
     """
     Fixture that creates test users.
@@ -28,7 +28,7 @@ async def fixture_create_test_users():
         None
 
     Yields:
-        List[User]: A list of test users.
+        None
     """
 
     password = "password123"
@@ -54,16 +54,14 @@ async def fixture_create_test_users():
             )
         )
 
-    yield user_list
-
 
 @pytest.fixture(name="test_users")
-async def fixture_test_user_list(fixture_create_test_users):
+async def fixture_test_user_list(create_test_users):
     """
     Fixture for retrieving a list of test users.
 
     Args:
-        None
+        create_test_users (fixture): Fixture to create test users.
 
     Yields:
         List[models.User]: A list of test users.
@@ -72,12 +70,12 @@ async def fixture_test_user_list(fixture_create_test_users):
 
 
 @pytest.fixture(name="test_user")
-async def fixture_test_user(fixture_create_test_users):
+async def fixture_test_user(create_test_users):
     """
     Fixture for retrieving a test user.
 
     Args:
-        test_users (fixture): The list of test users.
+        create_test_users (fixture): Fixture to create test users.
 
     Yields:
         models.User: The test user.
