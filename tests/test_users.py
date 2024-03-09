@@ -95,11 +95,6 @@ async def test_login():
     login_user_list = await repo.filter_by(models.User, "email", "hello123@pytest.de")
     login_user = login_user_list[0]
 
-    # Insert or update test user in the database
-    # This step depends on how your application manages user data
-    # Ensure the username is stored in a consistent case format
-
-    # Test login with different case variations
     for username in [
         "hello123@pytest.de",
         "hellO123@pytest.de",
