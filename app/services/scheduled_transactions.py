@@ -4,6 +4,7 @@ from app import models
 from app import repository as repo
 from app import schemas
 from app.logger import get_logger
+from app.utils.account_utils import has_user_access_to_account
 from app.utils.exceptions import AccessDeniedError
 
 logger = get_logger(__name__)
@@ -81,7 +82,7 @@ async def create_scheduled_transaction(
 
     account = await repo.get(models.Account, transaction_information.account_id)
 
-    if user.id.bytes != account.user_id.bytes:
+    if has_user_access_to_account(user, account) is False:
         return None
 
     offset_account_id = transaction_information.offset_account_id
@@ -92,7 +93,7 @@ async def create_scheduled_transaction(
         if offset_account is None:
             return None
 
-        if user.id.bytes != offset_account.user_id.bytes:
+        if has_user_access_to_account(user, offset_account) is False:
             raise AccessDeniedError(
                 (
                     f"User[id: {user.id}] not allowed to access "

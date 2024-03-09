@@ -5,6 +5,7 @@ from app import models
 from app import repository as repo
 from app import schemas
 from app.logger import get_logger
+from app.utils.account_utils import has_user_access_to_account
 from app.utils.exceptions import AccessDeniedError
 from app.utils.log_messages import ACCOUNT_USER_ID_MISMATCH
 
@@ -113,7 +114,7 @@ class TransactionService:
         logger.info("Creating new transaction for user %s", user.id)
         account = await repo.get(models.Account, transaction_information.account_id)
 
-        if user.id.bytes != account.user_id.bytes:
+        if has_user_access_to_account(user, account) is False:
             logger.warning(ACCOUNT_USER_ID_MISMATCH)
             return None
 
