@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, Type, TypeVar
+from typing import List, Optional, Tuple, Type, TypeVar
 
 from sqlalchemy import Select, text
 from sqlalchemy import update as sql_update
@@ -104,6 +104,45 @@ async def filter_by(
     result = await db.session.execute(q)
 
     return result.unique().scalars().all()
+
+
+async def filter_by_multiple(
+    cls: Type[ModelT],
+    conditions: List[Tuple[str, str, DatabaseFilterOperator]],
+    load_relationships_list: Optional[List[str]] = None,
+) -> List[ModelT]:
+    """
+    Filters the records of a given model by multiple attributes and values.
+
+    Args:
+        cls: The model class.
+        conditions: A list of tuples where each tuple contains an attribute to filter by, a value to filter with, and an optional operator
+                    (if not provided, EQUAL is used).
+        load_relationships_list: Optional list of relationships to load.
+
+    Returns:
+        List[Model]: The filtered records.
+    """
+
+    # Construct the WHERE clause
+    where_conditions = []
+    params = {}
+    for i, (attribute, value, operator) in enumerate(conditions):
+        param_name = f"val{i}"
+        where_conditions.append(text(f"{attribute} {operator.value} :{param_name}"))
+        params[param_name] = value
+
+    q = select(cls)
+    if where_conditions:
+        for condition in where_conditions:
+            q = q.where(condition)
+    q = q.params(**params)
+
+    q = load_relationships(q, load_relationships_list)
+
+    result = await db.session.execute(q)
+
+    return result.scalars().unique().all()
 
 
 async def get_scheduled_transactions_from_period(
