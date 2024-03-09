@@ -36,6 +36,13 @@ async def populate_db(session: AsyncSession):
 
 @pytest.fixture(scope="session", autouse=True)
 async def fixture_init_db():
+    """
+    Fixture for initializing the database and populating it with test data.
+
+    Yields:
+        None
+    """
+
     await db.init()
     async with db.engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -49,6 +56,13 @@ async def fixture_init_db():
 
 
 async def cleanup_tests():
+    """
+    Performs cleanup tasks for tests.
+
+    Returns:
+        None
+    """
+
     user_list = await repo.get_all(models.User)
 
     delete_task = [repo.delete(user) for user in user_list]
@@ -59,7 +73,6 @@ async def cleanup_tests():
 @pytest.mark.usefixtures("fixture_init_db")
 async def fixture_session() -> AsyncSession:  # type: ignore
     """
-    async with session:
     Fixture that provides an async session.
 
     Args:
