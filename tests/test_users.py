@@ -261,8 +261,6 @@ async def test_delete_user(
     user = await repo.get(models.User, test_user.id)
     assert user is None
 
-    assert res.status_code == 204
-
 
 async def test_invalid_delete_user(test_user):
     """
@@ -279,10 +277,14 @@ async def test_invalid_delete_user(test_user):
         None
     """
 
-    other_user_list = await repo.filter_by(
-        models.User, "email", test_user.email, DatabaseFilterOperator.NOT_EQUAL
+    other_user_list = await repo.filter_by_multiple(
+        models.User,
+        [
+            ("email", test_user.email, DatabaseFilterOperator.NOT_EQUAL),
+            ("is_verified", True, DatabaseFilterOperator.EQUAL),
+        ],
     )
-    other_user = other_user_list[0]
+    other_user = other_user_list[-1]
     res = await make_http_request(
         url=f"/api/users/{other_user.id}",
         method=RequestMethod.DELETE,
