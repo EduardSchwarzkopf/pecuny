@@ -15,11 +15,6 @@ from . import models
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
-from typing import List, Optional, Type
-
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
-
 
 def load_relationships(query: Select, relationships: InstrumentedAttribute = None):
     """Apply loading options for specified relationships to a query.
