@@ -73,16 +73,29 @@ async def make_http_request(
     return response
 
 
-def get_user_offset_account(
-    account: models.Account, account_list: List[models.Account]
-) -> models.Account:
+async def get_user_offset_account(account: models.Account) -> models.Account:
+    """
+    Returns the offset account for a given account within a list of accounts.
 
-    for account_element in account_list:
-        if (
-            account_element.user_id == account.user_id
-            and account.id != account_element.id
-        ):
-            return account_element
+    Args:
+        account (models.Account): The account for which to find the offset account.
+        account_list (List[models.Account]): The list of accounts to search within.
+
+    Returns:
+        models.Account or None: The offset account if found, otherwise None.
+    """
+    account_list = await repository.get_all(models.Account)
+    return next(
+        (
+            account_element
+            for account_element in account_list
+            if (
+                account_element.user_id == account.user_id
+                and account.id != account_element.id
+            )
+        ),
+        None,
+    )
 
 
 def get_date_range(date_start, days=5):
