@@ -20,9 +20,9 @@ ENDPOINT = "/api/auth"
     ],
 )
 async def test_create_user(
-    username,
-    displayname,
-    password,
+    username: str,
+    displayname: str,
+    password: str,
 ):
 
     res = await make_http_request(
@@ -102,9 +102,9 @@ async def test_login():
 )
 @pytest.mark.usefixtures("test_user")
 async def test_invalid_login(
-    username,
-    password,
-    status_code,
+    username: str,
+    password: str,
+    status_code: int,
 ):
 
     res = await make_http_request(
@@ -124,7 +124,7 @@ async def test_invalid_login(
         ({"password": "lancelot"}),
     ],
 )
-async def test_updated_user(test_user, values):
+async def test_updated_user(test_user: models.User, values: dict):
 
     res = await make_http_request(
         "/api/users/me", json=values, method=RequestMethod.PATCH, as_user=test_user
@@ -154,7 +154,7 @@ async def test_updated_user(test_user, values):
         ({"email": "anothermail.com"}),
     ],
 )
-async def test_invalid_updated_user(test_user, values):
+async def test_invalid_updated_user(test_user: models.User, values: dict):
 
     user_id = str(test_user.id)
     res = await make_http_request(
@@ -168,7 +168,7 @@ async def test_invalid_updated_user(test_user, values):
 
 
 async def test_delete_user(
-    test_user,
+    test_user: models.User,
 ):
 
     res = await make_http_request(
@@ -181,7 +181,7 @@ async def test_delete_user(
     assert user is None
 
 
-async def test_invalid_delete_user(test_user):
+async def test_invalid_delete_user(test_user: models.User):
 
     other_user_list = await repo.filter_by_multiple(
         models.User,
