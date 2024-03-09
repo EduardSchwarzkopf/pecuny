@@ -24,19 +24,7 @@ async def test_create_user(
     displayname,
     password,
 ):
-    """
-    Tests the create user functionality.
 
-    Args:
-        session: The session fixture.
-        client: The async client fixture.
-        username (str): The username of the user to create.
-        displayname (str): The display name of the user to create.
-        password (str): The password of the user to create.
-
-    Returns:
-        None
-    """
     res = await make_http_request(
         f"{ENDPOINT}/register",
         json={
@@ -57,19 +45,6 @@ async def test_create_user(
 
 
 async def test_invalid_create_user(test_user: models.User):
-    """
-    Tests the invalid user creation.
-
-    Args:
-        session: The session fixture.
-        client: The async client fixture.
-        username (str): The username of the user to create.
-        displayname (str): The display name of the user to create.
-        password (str): The password of the user to create.
-
-    Returns:
-        None
-    """
     email = test_user.email
     res = await make_http_request(
         f"{ENDPOINT}/register",
@@ -81,16 +56,6 @@ async def test_invalid_create_user(test_user: models.User):
 
 @pytest.mark.usefixtures("test_users")
 async def test_login():
-    """
-    Tests successful user login
-
-    Args:
-        authorized_client: The authorized client fixture.
-        session: The session fixture.
-
-    Returns:
-        None
-    """
 
     login_user_list = await repo.filter_by(models.User, "email", "hello123@pytest.de")
     login_user = login_user_list[0]
@@ -141,16 +106,6 @@ async def test_invalid_login(
     password,
     status_code,
 ):
-    """
-    Tests failed user login.
-
-    Args:
-        authorized_client: The authorized client fixture.
-        session: The session fixture.
-
-    Returns:
-        None
-    """
 
     res = await make_http_request(
         f"{ENDPOINT}/login",
@@ -170,19 +125,6 @@ async def test_invalid_login(
     ],
 )
 async def test_updated_user(test_user, values):
-    """
-    Tests successful update user parameter.
-
-    Args:
-        session: The session fixture.
-        client: The async client fixture.
-        username (str): The username of the user to create.
-        displayname (str): The display name of the user to create.
-        password (str): The password of the user to create.
-
-    Returns:
-        None
-    """
 
     res = await make_http_request(
         "/api/users/me", json=values, method=RequestMethod.PATCH, as_user=test_user
@@ -213,16 +155,6 @@ async def test_updated_user(test_user, values):
     ],
 )
 async def test_invalid_updated_user(test_user, values):
-    """
-    Tests tests invalid update user functionality.
-
-    Args:
-        authorized_client: The authorized client fixture.
-        session: The session fixture.
-
-    Returns:
-        None
-    """
 
     user_id = str(test_user.id)
     res = await make_http_request(
@@ -238,19 +170,6 @@ async def test_invalid_updated_user(test_user, values):
 async def test_delete_user(
     test_user,
 ):
-    """
-    Tests the create user functionality.
-
-    Args:
-        session: The session fixture.
-        client: The async client fixture.
-        username (str): The username of the user to create.
-        displayname (str): The display name of the user to create.
-        password (str): The password of the user to create.
-
-    Returns:
-        None
-    """
 
     res = await make_http_request(
         "/api/users/me", method=RequestMethod.DELETE, as_user=test_user
@@ -263,19 +182,6 @@ async def test_delete_user(
 
 
 async def test_invalid_delete_user(test_user):
-    """
-    Tests invalid user deletion.
-
-    Args:
-        session: The session fixture.
-        client: The async client fixture.
-        username (str): The username of the user to create.
-        displayname (str): The display name of the user to create.
-        password (str): The password of the user to create.
-
-    Returns:
-        None
-    """
 
     other_user_list = await repo.filter_by_multiple(
         models.User,
