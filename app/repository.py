@@ -116,7 +116,8 @@ async def filter_by_multiple(
 
     Args:
         cls: The model class.
-        conditions: A list of tuples where each tuple contains an attribute to filter by, a value to filter with, and an optional operator
+        conditions: A list of tuples where each tuple contains an attribute to filter by,
+                    a value to filter with, and an optional operator
                     (if not provided, EQUAL is used).
         load_relationships_list: Optional list of relationships to load.
 
