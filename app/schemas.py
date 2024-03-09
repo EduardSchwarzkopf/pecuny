@@ -34,6 +34,17 @@ class RoundField(float):
 
     @classmethod
     def validate(cls, v, _):
+        """
+        Validates a value by rounding it to two decimal places.
+
+        Args:
+            cls: The class.
+
+        Returns:
+            float or None: The rounded value if it can be rounded to two decimal places,
+            otherwise None.
+        """
+
         try:
             value = round(v, 2)
         except TypeError:
