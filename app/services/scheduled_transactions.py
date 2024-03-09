@@ -82,7 +82,7 @@ async def create_scheduled_transaction(
 
     account = await repo.get(models.Account, transaction_information.account_id)
 
-    if has_user_access_to_account(user, account) is False:
+    if not has_user_access_to_account(user, account):
         return None
 
     offset_account_id = transaction_information.offset_account_id
@@ -93,7 +93,7 @@ async def create_scheduled_transaction(
         if offset_account is None:
             return None
 
-        if has_user_access_to_account(user, offset_account) is False:
+        if not has_user_access_to_account(user, offset_account):
             raise AccessDeniedError(
                 (
                     f"User[id: {user.id}] not allowed to access "

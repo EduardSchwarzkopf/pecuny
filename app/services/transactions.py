@@ -114,7 +114,7 @@ class TransactionService:
         logger.info("Creating new transaction for user %s", user.id)
         account = await repo.get(models.Account, transaction_information.account_id)
 
-        if has_user_access_to_account(user, account) is False:
+        if not has_user_access_to_account(user, account):
             logger.warning(ACCOUNT_USER_ID_MISMATCH)
             return None
 
