@@ -256,6 +256,8 @@ async def test_delete_user(
         "/api/users/me", method=RequestMethod.DELETE, as_user=test_user
     )
 
+    assert res.status_code == 204
+
     user = await repo.get(models.User, test_user.id)
     assert user is None
 
