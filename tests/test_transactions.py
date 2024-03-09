@@ -30,6 +30,23 @@ async def test_create_transaction(
     test_account: models.Account,
     test_user: models.User,
 ):
+    """
+    Test case for creating a transaction.
+
+    Args:
+        amount (float | int): The amount of the transaction.
+        reference (str): The reference of the transaction.
+        category_id (int): The category ID of the transaction.
+        test_account (models.Account): The test account.
+        test_user (models.User): The test user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
     account_balance = test_account.balance
 
     res = await make_http_request(
@@ -74,6 +91,21 @@ async def test_updated_transaction(
     test_account: models.Account,
     test_user: models.User,
 ):
+    """
+    Test case for updating a transaction.
+
+    Args:
+        category_id (int): The category ID of the transaction.
+        amount (int | float): The amount of the transaction.
+        test_account (models.Account): The test account.
+        test_user (models.User): The test user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
 
     reference = f"Updated Val {amount}"
 
@@ -116,6 +148,20 @@ async def test_delete_transactions(
     test_account_transaction_list: List[models.Transaction],
     test_user: models.User,
 ):
+    """
+    Test case for deleting transactions.
+
+    Args:
+        test_account (models.Account): The test account.
+        test_account_transaction_list (List[models.Transaction]): The list of test account transactions.
+        test_user (models.User): The test user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
 
     for transaction in test_account_transaction_list:
 
@@ -146,6 +192,19 @@ async def test_delete_transactions(
 async def test_delete_transactions_fail(
     test_account: models.Account, test_user: models.User
 ):
+    """
+    Test case for failing to delete transactions.
+
+    Args:
+        test_account (models.Account): The test account.
+        test_user (models.User): The test user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
 
     result = await repo.filter_by(
         models.Account,
@@ -192,6 +251,23 @@ async def test_create_offset_transaction(
     expected_offset_amount: int | float,
     category_id,
 ):
+    """
+    Test case for creating an offset transaction.
+
+    Args:
+        test_account (models.Account): The test account.
+        test_user (models.User): The test user.
+        amount (int | float): The amount of the transaction.
+        expected_offset_amount (int | float): The expected amount of the offset transaction.
+        category_id (int): The category ID of the transaction.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
 
     account_id = test_account.id
     offset_account = await get_user_offset_account(test_account)
@@ -234,6 +310,22 @@ async def test_create_offset_transaction_other_account_fail(
     test_accounts: List[models.Account],
     test_user: models.User,
 ):
+    """
+    Test case for failing to create an offset transaction with another account.
+
+    Args:
+        test_account (models.Account): The test account.
+        test_accounts (List[models.Account]): The list of test accounts.
+        test_user (models.User): The test user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+        ValueError: If no offset account is found.
+
+    """
 
     offset_account = await get_user_offset_account(test_account)
 
@@ -290,6 +382,21 @@ async def test_updated_offset_transaction(
     category_id: int,
     amount: int | float,
 ):
+    """
+    Test case for updating an offset transaction.
+
+    Args:
+        test_account (models.Account): The test account.
+        category_id (int): The category ID of the transaction.
+        amount (int | float): The amount of the transaction.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
 
     offset_account = await get_user_offset_account(test_account)
 
@@ -361,6 +468,21 @@ async def test_delete_offset_transaction(
     category_id: int,
     amount: int | float,
 ):
+    """
+    Test case for deleting an offset transaction.
+
+    Args:
+        test_account (models.Account): The test account.
+        test_user (models.User): The test user.
+        category_id (int): The category ID of the transaction.
+        amount (int | float): The amount of the transaction.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
 
     offset_account = await get_user_offset_account(test_account)
 
