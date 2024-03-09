@@ -14,10 +14,8 @@ from app.services.users import UserService
 from app.utils.dataclasses_utils import CreateUserData
 from tests.utils import get_date_range
 
-
-@pytest.fixture(name="test_user")
-async def fixture_test_user(test_users):
-    yield test_users[0]
+# Reference: https://github.com/EduardSchwarzkopf/pecuny/issues/88
+# pylint: disable=unused-argument
 
 
 @pytest.fixture(scope="session", name="create_test_users")
