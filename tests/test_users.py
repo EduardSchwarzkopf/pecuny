@@ -24,6 +24,21 @@ async def test_create_user(
     displayname: str,
     password: str,
 ):
+    """
+    Test case for creating a user.
+
+    Args:
+        username (str): The username of the user.
+        displayname (str): The display name of the user.
+        password (str): The password of the user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
 
     res = await make_http_request(
         f"{ENDPOINT}/register",
@@ -56,6 +71,19 @@ async def test_invalid_create_user(test_user: models.User):
 
 @pytest.mark.usefixtures("test_users")
 async def test_login():
+    """
+    Test case for login.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
 
     login_user_list = await repo.filter_by(models.User, "email", "hello123@pytest.de")
     login_user = login_user_list[0]
@@ -106,6 +134,20 @@ async def test_invalid_login(
     password: str,
     status_code: int,
 ):
+    """
+    Test case for invalid login.
+
+    Args:
+        username (str): The username for the login.
+        password (str): The password for the login.
+        status_code (int): The expected status code of the response.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
 
     res = await make_http_request(
         f"{ENDPOINT}/login",
@@ -125,7 +167,19 @@ async def test_invalid_login(
     ],
 )
 async def test_updated_user(test_user: models.User, values: dict):
+    """
+    Test case for updating a user.
 
+    Args:
+        test_user (fixture): The test user.
+        values (dict): The updated values for the user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
     res = await make_http_request(
         "/api/users/me", json=values, method=RequestMethod.PATCH, as_user=test_user
     )
@@ -155,6 +209,20 @@ async def test_updated_user(test_user: models.User, values: dict):
     ],
 )
 async def test_invalid_updated_user(test_user: models.User, values: dict):
+    """
+    Test case for updating a user with invalid values.
+
+    Args:
+        test_user (fixture): The test user.
+        values (dict): The updated values for the user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
 
     user_id = str(test_user.id)
     res = await make_http_request(
@@ -170,7 +238,18 @@ async def test_invalid_updated_user(test_user: models.User, values: dict):
 async def test_delete_user(
     test_user: models.User,
 ):
+    """
+    Test case for deleting a user.
 
+    Args:
+        test_user (fixture): The test user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
     res = await make_http_request(
         "/api/users/me", method=RequestMethod.DELETE, as_user=test_user
     )
@@ -182,7 +261,18 @@ async def test_delete_user(
 
 
 async def test_invalid_delete_user(test_user: models.User):
+    """
+    Test case for deleting a user.
 
+    Args:
+        test_user (fixture): The test user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
     other_user_list = await repo.filter_by_multiple(
         models.User,
         [
