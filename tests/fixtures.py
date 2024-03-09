@@ -12,13 +12,14 @@ from app.services.accounts import AccountService
 from app.services.transactions import TransactionService
 from app.services.users import UserService
 from app.utils.dataclasses_utils import CreateUserData
+from app.utils.enums import DatabaseFilterOperator
 from tests.utils import get_date_range
 
 # Reference: https://github.com/EduardSchwarzkopf/pecuny/issues/88
 # pylint: disable=unused-argument
 
 
-@pytest.fixture(scope="session", name="create_test_users")
+@pytest.fixture(scope="session")
 async def fixture_create_test_users():
     """
     Fixture that creates test users.
@@ -26,7 +27,7 @@ async def fixture_create_test_users():
     Args:
         None
 
-    Returns:
+    Yields:
         List[User]: A list of test users.
     """
 
@@ -40,21 +41,38 @@ async def fixture_create_test_users():
     ]
 
     user_service = UserService()
+    user_list = []
     for user in create_user_list:
-        await user_service.create_user(
-            CreateUserData(
-                email=user[0],
-                password=user[1],
-                displayname=user[2],
-                is_verified=True,
-            ),
+        user_list.append(
+            await user_service.create_user(
+                CreateUserData(
+                    email=user[0],
+                    password=user[1],
+                    displayname=user[2],
+                    is_verified=True,
+                ),
+            )
         )
 
-    yield
+    yield user_list
+
+
+@pytest.fixture(name="test_users")
+async def fixture_test_user_list(fixture_create_test_users):
+    """
+    Fixture for retrieving a list of test users.
+
+    Args:
+        None
+
+    Yields:
+        List[models.User]: A list of test users.
+    """
+    yield await repo.get_all(models.User)
 
 
 @pytest.fixture(name="test_user")
-async def fixture_test_user(test_users):
+async def fixture_test_user(fixture_create_test_users):
     """
     Fixture for retrieving a test user.
 
@@ -65,23 +83,11 @@ async def fixture_test_user(test_users):
         models.User: The test user.
 
     """
+    user_list = await repo.filter_by(
+        models.User, "is_verified", True, DatabaseFilterOperator.EQUAL
+    )
 
-    yield test_users[0]
-
-
-@pytest.fixture(name="test_users")
-async def fixture_test_user_list(create_test_users):
-    """
-    Fixture for retrieving a list of test users.
-
-    Args:
-        create_test_users (fixture): Fixture to create test users.
-
-    Yields:
-        List[models.User]: A list of test users.
-    """
-
-    yield await repo.get_all(models.User)
+    yield user_list[0]
 
 
 @pytest.fixture(name="create_test_accounts")
