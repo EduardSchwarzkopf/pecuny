@@ -2,11 +2,10 @@ import datetime
 import uuid
 from datetime import datetime as dt
 from decimal import ROUND_05UP
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List, Optional
 
 from fastapi_users import schemas
-from pydantic import BaseModel, EmailStr, Field
-from pydantic.types import constr
+from pydantic import BaseModel, EmailStr, Field, StringConstraints
 from starlette_wtf import StarletteForm
 from wtforms import (
     BooleanField,
@@ -53,6 +52,11 @@ class RoundField(float):
         return value
 
 
+StringContr = Annotated[
+    str, StringConstraints(min_length=3, max_length=36, strip_whitespace=True)
+]
+
+
 class EmailSchema(BaseModel):
     email: List[EmailStr]
     body: Dict[str, Any]
@@ -87,7 +91,7 @@ class TokenData(BaseModel):
 
 
 class AccountUpdate(Base):
-    label: Optional[constr(strip_whitespace=True, min_length=1, max_length=36)]
+    label: Optional[StringContr]
     description: Optional[str]
     balance: Optional[RoundField]
 
@@ -117,7 +121,7 @@ class FrequencyData(MinimalResponse):
 
 class CategoryData(Base):
     id: int
-    label: constr(strip_whitespace=True, min_length=1, max_length=36)
+    label: StringContr
     section: SectionData
 
 
@@ -161,7 +165,7 @@ class ScheduledTransactionData(TransactionBase):
 
 
 class Account(Base):
-    label: constr(strip_whitespace=True, min_length=1, max_length=36)
+    label: StringContr
     description: Optional[str] = None
     balance: Optional[RoundField] = Field(...)
 
