@@ -343,10 +343,17 @@ async def test_create_offset_transaction_other_account_fail(
 
     """
 
-    offset_account = await get_user_offset_account(test_account)
+    offset_account_list = await repo.filter_by(
+        models.Account,
+        "user_id",
+        test_user.id,
+        DatabaseFilterOperator.NOT_EQUAL,
+    )
 
-    if offset_account is None:
+    if offset_account_list is None:
         raise ValueError("No offset account found")
+
+    offset_account = offset_account_list[0]
 
     account_balance = test_account.balance
     offset_account_balance = offset_account.balance
