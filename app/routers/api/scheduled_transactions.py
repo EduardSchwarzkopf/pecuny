@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List
 
 from fastapi import Depends, status
 from fastapi.exceptions import HTTPException
@@ -17,7 +16,7 @@ router = APIRouterExtended(
 ResponseModel = schemas.ScheduledTransactionData
 
 
-@router.get("/", response_model=List[ResponseModel])
+@router.get("/", response_model=list[ResponseModel])
 async def api_get_transactions(
     account_id: int,
     date_start: datetime,
@@ -34,7 +33,7 @@ async def api_get_transactions(
         current_user: The current active user.
 
     Returns:
-        List[response_model]: A list of transaction information.
+        list[response_model]: A list of transaction information.
 
     Raises:
         HTTPException: If the account is not found.

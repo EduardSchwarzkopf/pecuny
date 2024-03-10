@@ -52,7 +52,9 @@ async def test_create_user(
 
     new_user = schemas.UserRead(**res.json())
 
-    db_user: models.User = await repo.get(models.User, new_user.id)
+    db_user = await repo.get(models.User, new_user.id)
+
+    assert db_user is not None
 
     assert new_user.email == username
     assert new_user.displayname != ""
@@ -109,7 +111,9 @@ async def test_login():
 
     """
 
-    login_user_list = await repo.filter_by(models.User, "email", "hello123@pytest.de")
+    login_user_list = await repo.filter_by(
+        models.User, models.User.email, "hello123@pytest.de"
+    )
     login_user = login_user_list[0]
 
     for username in [
@@ -300,8 +304,8 @@ async def test_invalid_delete_user(test_user: models.User):
     other_user_list = await repo.filter_by_multiple(
         models.User,
         [
-            ("email", test_user.email, DatabaseFilterOperator.NOT_EQUAL),
-            ("is_verified", True, DatabaseFilterOperator.EQUAL),
+            (models.User.email, test_user.email, DatabaseFilterOperator.NOT_EQUAL),
+            (models.User.is_verified, True, DatabaseFilterOperator.EQUAL),
         ],
     )
     other_user = other_user_list[-1]

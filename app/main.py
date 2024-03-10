@@ -21,6 +21,8 @@ from app.routes import router_list
 from app.utils import BreadcrumbBuilder
 from app.utils.exceptions import UnauthorizedPageException
 
+logger = get_logger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(_api_app: FastAPI):
@@ -35,32 +37,49 @@ async def lifespan(_api_app: FastAPI):
 
     """
 
-    await db.init()
-    yield
-    await db.session.close()
+    try:
+        await db.init()
+        yield
+    finally:
+        if db.session is not None:
+            await db.session.close()
 
 
-app = FastAPI(lifespan=lifespan)
-logger = get_logger(__name__)
+def get_app() -> FastAPI:
+    """
+    Get the FastAPI application.
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+    Returns:
+        FastAPI: The FastAPI application.
 
-# Allowed Domains to talk to this api
-origins = ["http://127.0.0.1:5173", "http://127.0.0.1"]
+    """
 
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allow_headers=["*"],
-)
+    fastapi = FastAPI(lifespan=lifespan)
 
-app.add_middleware(HeaderLinkMiddleware)
+    fastapi.mount("/static", StaticFiles(directory="static"), name="static")
 
-app.add_middleware(SessionMiddleware, secret_key=settings.session_secret_key)
-app.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.csrf_secret)
+    origins = ["http://127.0.0.1:5173", "http://127.0.0.1"]
+    fastapi.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+        allow_headers=["*"],
+    )
+
+    fastapi.add_middleware(HeaderLinkMiddleware)
+    fastapi.add_middleware(SessionMiddleware, secret_key=settings.session_secret_key)
+    fastapi.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.csrf_secret)
+
+    for route in router_list:
+        fastapi.include_router(
+            route["router"], prefix=route.get("prefix", ""), tags=route.get("tags", [])
+        )
+
+    return fastapi
+
+
+app = get_app()
 
 
 @app.middleware("http")
@@ -178,10 +197,4 @@ async def page_not_found_exception_handler(request: Request, exc: HTTPException)
         "exceptions/404.html",
         {"request": request},
         status_code=exc.status_code,
-    )
-
-
-for route in router_list:
-    app.include_router(
-        route["router"], prefix=route.get("prefix", ""), tags=route.get("tags", [])
     )

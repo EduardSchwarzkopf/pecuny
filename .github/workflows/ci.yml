@@ -24,7 +24,7 @@ env:
   POETRY_VERSION: ${{ inputs.poetry_version || '1.7.1' }}
 
 jobs:
-  lint:
+  code_quality:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -36,9 +36,11 @@ jobs:
         with:
           poetry-version: ${{ env.POETRY_VERSION }}
       - name: Install Dependencies
-        run: poetry install --with linter
-      - name: Run linter
+        run: poetry install --with dev
+      - name: Run pylint
         run: poetry run pylint $(git ls-files '*.py')
+      - name: Run mypy
+        run: poetry run mypy .
 
   test:
     runs-on: ubuntu-22.04

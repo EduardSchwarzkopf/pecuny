@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import Request
 from starlette_wtf import StarletteForm
@@ -92,7 +92,7 @@ def render_form_template(template: str, request: Request, form: StarletteForm):
     return render_template(template, request, {"form": form})
 
 
-def group_categories_by_section(categorie_list: List[schemas.CategoryData]):
+def group_categories_by_section(categorie_list: list[schemas.CategoryData]):
     """Group categories by section.
 
     Args:

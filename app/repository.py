@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, Tuple, Type, TypeVar
+from typing import Any, List, Optional, Tuple, Type, TypeVar, Union
 
 from sqlalchemy import Select, text
 from sqlalchemy import update as sql_update
@@ -16,7 +16,9 @@ from . import models
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
-def load_relationships(query: Select, relationships: InstrumentedAttribute = None):
+def load_relationships(
+    query: Select, relationships: InstrumentedAttribute = None
+) -> Select:
     """Apply loading options for specified relationships to a query.
 
     Args:
@@ -34,8 +36,9 @@ def load_relationships(query: Select, relationships: InstrumentedAttribute = Non
 
 
 async def get_all(
-    cls: Type, load_relationships_list: Optional[List[InstrumentedAttribute]] = None
-) -> List[ModelT]:
+    cls: Type[ModelT],
+    load_relationships_list: Optional[list[InstrumentedAttribute]] = None,
+) -> list[ModelT]:
     """Retrieve all instances of the specified model from the database.
 
     Args:
@@ -43,7 +46,7 @@ async def get_all(
         load_relationships: Optional list of relationships to load.
 
     Returns:
-        List[ModelT]: A list of instances of the specified model.
+        list[ModelT]: A list of instances of the specified model.
     """
     q = select(cls)
     q = load_relationships(q, load_relationships_list)
@@ -52,10 +55,10 @@ async def get_all(
 
 
 async def get(
-    cls: Type,
+    cls: Type[ModelT],
     instance_id: int,
-    load_relationships_list: Optional[List[InstrumentedAttribute]] = None,
-) -> ModelT:
+    load_relationships_list: Optional[list[InstrumentedAttribute]] = None,
+) -> Optional[ModelT]:
     """Retrieve an instance of the specified model by its ID.
 
     Args:
@@ -64,7 +67,9 @@ async def get(
         load_relationships: Optional list of relationships to load.
 
     Returns:
-        ModelT: The instance of the specified model with the given ID.
+        Optional[ModelT]:
+            The instance of the specified model with
+            the given ID, or None if not found.
     """
     q = select(cls).where(cls.id == instance_id)
     q = load_relationships(q, load_relationships_list)
@@ -74,11 +79,11 @@ async def get(
 
 async def filter_by(
     cls: Type[ModelT],
-    attribute: str,  # TODO: InstrumentedAttribute,
+    attribute: InstrumentedAttribute,
     value: str,
     operator: DatabaseFilterOperator = DatabaseFilterOperator.EQUAL,
-    load_relationships_list: Optional[List[str]] = None,
-) -> List[ModelT]:
+    load_relationships_list: Optional[list[str]] = None,
+) -> list[ModelT]:
     """
     Filters the records of a given model by a specified attribute and value.
 
@@ -89,14 +94,12 @@ async def filter_by(
         operator: The operator to use for the filter (default: EQUAL).
 
     Returns:
-        List[ModelT]: The filtered records.
+        list[Type[ModelT]]: The filtered records.
 
     Raises:
         None
     """
-    # TODO: Update for InstrumentedAttribute
-    # condition = text(f"{attribute.key} {operator.value} :val")
-    condition = text(f"{attribute} {operator.value} :val")
+    condition = text(f"{attribute.key} {operator.value} :val")
 
     q = select(cls).where(condition).params(val=value)
     q = load_relationships(q, load_relationships_list)
@@ -108,9 +111,9 @@ async def filter_by(
 
 async def filter_by_multiple(
     cls: Type[ModelT],
-    conditions: List[Tuple[str, str, DatabaseFilterOperator]],
-    load_relationships_list: Optional[List[str]] = None,
-) -> List[ModelT]:
+    conditions: list[Tuple[InstrumentedAttribute, Any, DatabaseFilterOperator]],
+    load_relationships_list: Optional[list[str]] = None,
+) -> list[ModelT]:
     """
     Filters the records of a given model by multiple attributes and values.
 
@@ -122,15 +125,14 @@ async def filter_by_multiple(
         load_relationships_list: Optional list of relationships to load.
 
     Returns:
-        List[Model]: The filtered records.
+        list[Model]: The filtered records.
     """
 
-    # Construct the WHERE clause
     where_conditions = []
     params = {}
     for i, (attribute, value, operator) in enumerate(conditions):
         param_name = f"val{i}"
-        where_conditions.append(text(f"{attribute} {operator.value} :{param_name}"))
+        where_conditions.append(text(f"{attribute.key} {operator.value} :{param_name}"))
         params[param_name] = value
 
     q = select(cls)
@@ -150,7 +152,7 @@ async def get_scheduled_transactions_from_period(
     account_id: int,
     start_date: datetime,
     end_date: datetime,
-) -> List[models.TransactionScheduled]:
+) -> list[models.TransactionScheduled]:
     """Retrieve scheduled transactions for a specific account within a given period.
 
     Args:
@@ -159,7 +161,7 @@ async def get_scheduled_transactions_from_period(
         end_date: The end date of the period.
 
     Returns:
-        List[models.TransactionScheduled]:
+        list[models.TransactionScheduled]:
             A list of scheduled transactions within the specified period.
 
     Raises:
@@ -180,7 +182,7 @@ async def get_scheduled_transactions_from_period(
 
 async def get_transactions_from_period(
     account_id: int, start_date: datetime, end_date: datetime
-) -> List[models.Transaction]:
+) -> list[models.Transaction]:
     """Retrieve transactions for a specific account within a given period.
 
     Args:
@@ -189,7 +191,7 @@ async def get_transactions_from_period(
         end_date: The end date of the period.
 
     Returns:
-        List[models.Transaction]: A list of transactions within the specified period.
+        list[models.Transaction]: A list of transactions within the specified period.
 
     Raises:
         None
@@ -211,7 +213,7 @@ async def get_transactions_from_period(
     return result.scalars().all()
 
 
-async def save(obj: Type[ModelT]) -> None:
+async def save(obj: Union[ModelT, List[ModelT]]) -> None:
     """Save an object or a list of objects to the database.
 
     Args:
@@ -306,7 +308,7 @@ async def refresh(obj: Type[ModelT]) -> None:
     return await db.session.refresh(obj)
 
 
-async def refresh_all(object_list: Type[ModelT]) -> None:
+async def refresh_all(object_list: list[Type[ModelT]]) -> None:
     """Refresh the state of multiple objects from the database.
 
     Args:

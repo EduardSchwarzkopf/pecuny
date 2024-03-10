@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-from typing import List
+from typing import Any
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,14 +13,28 @@ from app.services.transactions import TransactionService
 from app.services.users import UserService
 from app.utils.dataclasses_utils import CreateUserData
 from app.utils.enums import DatabaseFilterOperator
-from tests.utils import get_date_range
 
 # Reference: https://github.com/EduardSchwarzkopf/pecuny/issues/88
 # pylint: disable=unused-argument
 
 
+@pytest.fixture(name="user_service", scope="session")
+async def fixture_user_service(session):
+    """
+    Create a session-scoped user service fixture.
+
+    Args:
+        session: The session object.
+
+    Returns:
+        UserService: The user service fixture.
+
+    """
+    yield UserService()
+
+
 @pytest.fixture(name="create_test_users", scope="session")
-async def fixture_create_test_users():
+async def fixture_create_test_users(user_service: UserService):
     """
     Fixture that creates test users.
 
@@ -40,7 +54,6 @@ async def fixture_create_test_users():
         ["hello123@pytest.de", password, "LoginUser"],
     ]
 
-    user_service = UserService()
     user_list = []
     for user in create_user_list:
         user_list.append(
@@ -64,7 +77,7 @@ async def fixture_test_user_list(create_test_users):
         create_test_users (fixture): Fixture to create test users.
 
     Yields:
-        List[models.User]: A list of test users.
+        list[models.User]: A list of test users.
     """
     yield await repo.get_all(models.User)
 
@@ -82,7 +95,7 @@ async def fixture_test_user(create_test_users):
 
     """
     user_list = await repo.filter_by(
-        models.User, "is_verified", True, DatabaseFilterOperator.EQUAL
+        models.User, models.User.is_verified, True, DatabaseFilterOperator.EQUAL
     )
 
     yield user_list[0]
@@ -90,7 +103,7 @@ async def fixture_test_user(create_test_users):
 
 @pytest.fixture(name="create_test_accounts")
 async def fixture_create_test_accounts(
-    session: AsyncSession, test_user: models.User, test_users: List[models.User]
+    session: AsyncSession, test_user: models.User, test_users: list[models.User]
 ):
     """
     Fixture that creates test accounts.
@@ -101,10 +114,10 @@ async def fixture_create_test_accounts(
         test_users (fixuter): Fixture to get a list of test users.
 
     Returns:
-        List[Account]: A list of test accounts.
+        list[Account]: A list of test accounts.
     """
 
-    account_data_list = [
+    account_data_list: list[dict[str, Any]] = [
         {
             "user": test_user,
             "label": "account_00",
@@ -173,7 +186,7 @@ async def fixture_test_account(test_user: models.User, create_test_accounts):
 
     account = await repo.filter_by(
         models.Account,
-        "user_id",
+        models.Account.user_id,
         test_user.id,
         load_relationships_list=[models.Account.user],
     )
@@ -189,7 +202,7 @@ async def fixture_get_test_account_list(create_test_accounts):
         create_test_accounts (fixuter): The fixture for creating test accounts.
 
     Yields:
-        List[models.Account]: A list of test accounts.
+        list[models.Account]: A list of test accounts.
 
     """
 
@@ -198,9 +211,24 @@ async def fixture_get_test_account_list(create_test_accounts):
     )
 
 
+def get_date_range(date_start, days=5):
+    """
+    Returns a list of dates in a range starting from a given date.
+
+    Args:
+        date_start: The starting date.
+        days: The number of days in the range (default is 5).
+
+    Returns:
+        list[datetime.date]: A list of dates in the range.
+    """
+
+    return [(date_start - datetime.timedelta(days=idx)) for idx in range(days)]
+
+
 @pytest.fixture(name="create_transactions")
 async def fixture_create_transactions(
-    test_accounts: List[models.Account],
+    test_accounts: list[models.Account],
     session: AsyncSession,
 ):
     """
@@ -211,7 +239,7 @@ async def fixture_create_transactions(
         session (fixture): The session fixture.
 
     Returns:
-        List[Transaction]: A list of test transactions.
+        list[Transaction]: A list of test transactions.
     """
 
     dates = get_date_range(datetime.datetime.now(datetime.timezone.utc))
@@ -291,10 +319,12 @@ async def fixture_test_account_transaction_list(create_transactions, test_accoun
         test_account (fixture): The test account.
 
     Yields:
-        List[models.Transaction]: A list of transactions associated with the test account.
+        list[models.Transaction]: A list of transactions associated with the test account.
     """
 
-    yield await repo.filter_by(models.Transaction, "account_id", test_account.id)
+    yield await repo.filter_by(
+        models.Transaction, models.Transaction.account_id, test_account.id
+    )
 
 
 @pytest.fixture(name="transaction_list")
@@ -306,7 +336,7 @@ async def fixture_get_all_transactions(create_transactions):
         create_transactions (fixture): The fixture for creating transactions.
 
     Yields:
-        List[models.Transaction]: A list of transactions.
+        list[models.Transaction]: A list of transactions.
 
     """
 

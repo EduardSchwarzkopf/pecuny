@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import Depends, status
 from fastapi.exceptions import HTTPException
 
@@ -15,7 +13,7 @@ ResponseModel = schemas.AccountData
 service = AccountService()
 
 
-@router.get("/", response_model=List[ResponseModel])
+@router.get("/", response_model=list[ResponseModel])
 async def api_get_accounts(current_user: User = Depends(current_active_user)):
     """
     Retrieves a list of accounts.
@@ -24,7 +22,7 @@ async def api_get_accounts(current_user: User = Depends(current_active_user)):
         current_user: The current active user.
 
     Returns:
-        List[response_model]: A list of account information.
+        list[response_model]: A list of account information.
     """
 
     return await service.get_accounts(current_user)

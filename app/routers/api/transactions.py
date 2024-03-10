@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List
 
 from fastapi import Depends, Response, status
 from fastapi.exceptions import HTTPException
@@ -16,7 +15,7 @@ ResponseModel = schemas.Transaction
 service = TransactionService()
 
 
-@router.get("/", response_model=List[ResponseModel])
+@router.get("/", response_model=list[ResponseModel])
 async def api_get_transactions(
     account_id: int,
     date_start: datetime,
@@ -33,7 +32,7 @@ async def api_get_transactions(
         current_user: The current active user.
 
     Returns:
-        List[ResponseModel]: A list of transaction information.
+        list[ResponseModel]: A list of transaction information.
 
     Raises:
         HTTPException: If the account is not found.

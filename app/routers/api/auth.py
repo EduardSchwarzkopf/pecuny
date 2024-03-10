@@ -25,7 +25,7 @@ async def get_user_service() -> UserService:
     "/register", status_code=status.HTTP_201_CREATED, response_model=schemas.UserRead
 )
 async def api_create_user(
-    user: schemas.UserCreate,
+    user_data: schemas.UserCreate,
     request: Request,
     service: UserService = Depends(get_user_service),
 ):
@@ -42,7 +42,8 @@ async def api_create_user(
     """
 
     user = await service.create_user(
-        CreateUserData(user.email, user.password, user.displayname), request=request
+        CreateUserData(user_data.email, user_data.password, user_data.displayname),
+        request=request,
     )
 
     if user is None:

@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi_users.db import (
     SQLAlchemyBaseOAuthAccountTableUUID,
     SQLAlchemyBaseUserTableUUID,
@@ -7,11 +5,13 @@ from fastapi_users.db import (
 from sqlalchemy import Column, Integer, Numeric, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import Mapped, declarative_base, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 
 class BaseModel(Base):
@@ -50,7 +50,7 @@ class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
     displayname = Column(String(50))
-    oauth_accounts: Mapped[List[OAuthAccount]] = relationship(
+    oauth_accounts: Mapped[list[OAuthAccount]] = relationship(
         "OAuthAccount", lazy="joined"
     )
 

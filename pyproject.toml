@@ -31,10 +31,14 @@ bcrypt = "^4.1.2"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.0.3"
-
-[tool.poetry.group.linter.dependencies]
-pylint = "^3.0.3"
+mypy = "^1.9.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+follow_imports = "skip"
+exclude = "alembic"
