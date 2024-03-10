@@ -1,4 +1,5 @@
 import sys
+from typing import Optional
 
 from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -36,7 +37,7 @@ class Database:
         self.engine = create_async_engine(self.url, future=True)
         self.session = await self.get_session()
 
-    async def get_session(self) -> AsyncSession:
+    async def get_session(self) -> Optional[AsyncSession]:
         """
         Creates and provides a new database session.
 
