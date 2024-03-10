@@ -35,7 +35,7 @@ async def make_http_request(
     url: str,
     data: dict = None,
     json: dict = None,
-    as_user: models.User = None,
+    as_user: Optional[models.User] = None,
     method: RequestMethod = RequestMethod.POST,
 ) -> Response:
     """
