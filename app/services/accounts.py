@@ -1,11 +1,10 @@
-from typing import List, Optional
+from typing import Optional
 
 from app import models
 from app import repository as repo
 from app import schemas
 from app.config import settings
 from app.logger import get_logger
-from app.utils.account_utils import has_user_access_to_account
 
 logger = get_logger(__name__)
 
@@ -47,7 +46,7 @@ class AccountService:
         if account is None:
             return None
 
-        if has_user_access_to_account(current_user, account):
+        if self.has_user_access_to_account(current_user, account):
             logger.info("Found account %s for user: %s", account_id, current_user.id)
             return account
 
@@ -155,3 +154,31 @@ class AccountService:
                 "User %s has reached the maximum allowed accounts limit.", user.id
             )
         return result
+
+    @staticmethod
+    def calculate_total_balance(account_list: list[models.Account]) -> float:
+        """
+        Calculates the total balance of a list of accounts.
+
+        Args:
+            account_list: A list of account objects.
+
+        Returns:
+            float: The total balance of the accounts.
+        """
+
+        return sum(account.balance for account in account_list)
+
+    @staticmethod
+    def has_user_access_to_account(user: models.User, account: models.Account) -> bool:
+        """
+        Check if the user has access to the account.
+
+        Args:
+            user: The user object.
+            account: The account object.
+
+        Returns:
+            bool: True if the user has access to the account, False otherwise.
+        """
+        return user.id == account.user_id

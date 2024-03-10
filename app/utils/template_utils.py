@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import Request
 from starlette_wtf import StarletteForm

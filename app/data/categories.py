@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Union
 
 INCOME_ID = 1
 HOUSING_ID = 2

@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import Depends, status
 from fastapi.exceptions import HTTPException
 

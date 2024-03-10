@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List
 
 from fastapi import Depends, Response, status
 from fastapi.exceptions import HTTPException

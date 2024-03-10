@@ -2,7 +2,7 @@ import datetime
 import uuid
 from datetime import datetime as dt
 from decimal import ROUND_05UP
-from typing import Annotated, Any, Dict, List, Optional
+from typing import Annotated, Any, Optional
 
 from fastapi_users import schemas
 from pydantic import BaseModel, EmailStr, Field, StringConstraints

@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi_users.db import (
     SQLAlchemyBaseOAuthAccountTableUUID,
     SQLAlchemyBaseUserTableUUID,

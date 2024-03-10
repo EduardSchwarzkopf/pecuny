@@ -1,5 +1,4 @@
 import sys
-from typing import Optional
 
 from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -18,6 +17,7 @@ class Database:
         """
         self.url = url
         self.engine = None
+        self.session = None
 
     async def init(self):
         """

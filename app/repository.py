@@ -67,7 +67,9 @@ async def get(
         load_relationships: Optional list of relationships to load.
 
     Returns:
-        Optional[ModelT]: The instance of the specified model with the given ID, or None if not found.
+        Optional[ModelT]:
+            The instance of the specified model with
+            the given ID, or None if not found.
     """
     q = select(cls).where(cls.id == instance_id)
     q = load_relationships(q, load_relationships_list)

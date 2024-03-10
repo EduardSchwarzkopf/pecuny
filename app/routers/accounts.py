@@ -165,10 +165,6 @@ async def page_create_account(
     return RedirectResponse(router.url_path_for("page_list_accounts"), status_code=302)
 
 
-from itertools import groupby
-from typing import Iterable
-
-
 @router.get("/{account_id}")
 async def page_get_account(
     request: Request,

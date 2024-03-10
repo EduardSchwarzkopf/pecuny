@@ -1,5 +1,4 @@
 import datetime
-from typing import List, Optional
 
 import pytest
 from fastapi import status
@@ -325,7 +324,6 @@ async def test_create_offset_transaction(
 
 async def test_create_offset_transaction_other_account_fail(
     test_account: models.Account,
-    test_accounts: list[models.Account],
     test_user: models.User,
 ):
     """

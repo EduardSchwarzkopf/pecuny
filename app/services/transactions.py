@@ -1,11 +1,11 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from app import models
 from app import repository as repo
 from app import schemas
 from app.logger import get_logger
-from app.utils.account_utils import has_user_access_to_account
+from app.services.accounts import AccountService
 from app.utils.exceptions import AccessDeniedError
 from app.utils.log_messages import ACCOUNT_USER_ID_MISMATCH
 
@@ -126,7 +126,7 @@ class TransactionService:
         if account is None:
             return None
 
-        if not has_user_access_to_account(user, account):
+        if not AccountService.has_user_access_to_account(user, account):
             logger.warning(ACCOUNT_USER_ID_MISMATCH)
             return None
 
@@ -247,13 +247,9 @@ class TransactionService:
             current_user.id,
         )
         transaction = await repo.get(models.Transaction, transaction_id)
-
-        if transaction is None:
-            return None
-
         account = await repo.get(models.Account, transaction.account_id)
 
-        if account is None:
+        if account is None or transaction is None:
             return None
 
         if current_user.id != account.user_id:
@@ -270,14 +266,11 @@ class TransactionService:
                 models.Transaction, transaction.offset_transactions_id
             )
 
-            if offset_transaction is None:
-                return None
-
             offset_account = await repo.get(
                 models.Account, offset_transaction.account_id
             )
 
-            if offset_account is None:
+            if offset_account is None or offset_transaction:
                 return None
 
             if offset_account.user_id != current_user.id:
