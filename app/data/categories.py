@@ -14,12 +14,12 @@ FAMILY_ID = 11
 HEALTH_ID = 12
 
 
-def get_category_list() -> List[Dict[str, Union[str, int]]]:
+def get_category_list() -> List[Dict[str, object]]:
     """
     Returns a list of all available expense categories.
 
     Returns:
-        List[Dict[str, Union[str, int]]]:
+        List[Dict[str, object]]:
             A list of dictionaries representing the expense categories.
             Each dictionary contains the label and section_id of a category.
     """
