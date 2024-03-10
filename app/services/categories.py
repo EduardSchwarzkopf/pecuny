@@ -1,16 +1,15 @@
-from typing import List
+from typing import Optional
 
 from app import models
 from app import repository as repo
 from app.logger import get_logger
 
-# Create a custom logger
 logger = get_logger(__name__)
 
 
 async def get_categories(
     current_user: models.User,
-) -> list[models.TransactionCategory]:
+) -> Optional[list[models.TransactionCategory]]:
     """
     Retrieves a list of transaction categories.
 
@@ -27,7 +26,7 @@ async def get_categories(
 
 async def get_category(
     current_user: models.User, category_id: int
-) -> models.TransactionCategory:
+) -> Optional[models.TransactionCategory]:
     """
     Retrieves a transaction category by ID.
 

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import Request
 from fastapi_users import exceptions
 
@@ -74,7 +76,7 @@ class UserService:
         await repo.delete(current_user)
         return True
 
-    async def update_user(self, user: models.User) -> bool:
+    async def update_user(self, user: models.User) -> models.User:
         """
         Updates a user.
 
@@ -91,8 +93,8 @@ class UserService:
     async def create_user(
         self,
         user_data: CreateUserData,
-        request: Request = None,
-    ) -> bool:
+        request: Optional[Request] = None,
+    ) -> Optional[models.User]:
         """
         Creates a new user.
 
@@ -127,7 +129,7 @@ class UserService:
             logger.warning("User with email %s already exists", user_data.email)
             return None
 
-    async def validate_new_user(self, email):
+    async def validate_new_user(self, email) -> None:
         """
         Validates a new user with the given email.
 

@@ -1,3 +1,5 @@
+from typing import Union
+
 import fastapi_users
 from fastapi import APIRouter
 
@@ -10,6 +12,9 @@ from app.routers.api import scheduled_transactions as api_scheduled_transactions
 from app.routers.api import transactions as api_transactions
 from app.routers.api import users as api_users
 from app.schemas import UserRead, UserUpdate
+
+RouterConfig = dict[str, Union[APIRouter, str, list[str]]]
+RouterList = list[RouterConfig]
 
 
 class APIRouterExtended(APIRouter):
@@ -32,7 +37,7 @@ API_PREFIX = "/api"
 auth_tag_list = ["Api", "Auth"]
 user_tag_list = ["Api", "Users"]
 
-router_list = [
+router_list: RouterList = [
     ## Pages
     {"router": index.router},
     {"router": dashboard.router},

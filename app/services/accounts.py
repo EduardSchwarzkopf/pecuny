@@ -1,17 +1,20 @@
-from typing import List
+from typing import List, Optional
 
 from app import models
 from app import repository as repo
 from app import schemas
 from app.config import settings
 from app.logger import get_logger
+from app.utils.account_utils import has_user_access_to_account
 
 logger = get_logger(__name__)
 
 
 class AccountService:
 
-    async def get_accounts(self, current_user: models.User) -> list[models.Account]:
+    async def get_accounts(
+        self, current_user: models.User
+    ) -> Optional[list[models.Account]]:
         """
         Retrieves a list of accounts.
 
@@ -22,14 +25,11 @@ class AccountService:
             list[Account]: A list of account objects.
         """
 
-        logger.info("Getting accounts for user: %s", current_user.id)
-        accounts = await repo.filter_by(models.Account, "user_id", current_user.id)
-        logger.info("Found %s accounts for user: %s", len(accounts), current_user.id)
-        return accounts
+        return await repo.filter_by(models.Account, "user_id", current_user.id)
 
     async def get_account(
         self, current_user: models.User, account_id: int
-    ) -> models.Account:
+    ) -> Optional[models.Account]:
         """
         Retrieves an account by ID.
 
@@ -43,14 +43,14 @@ class AccountService:
 
         logger.info("Getting account %s for user: %s", account_id, current_user.id)
         account = await repo.get(models.Account, account_id)
-        if account and account.user_id == current_user.id:
+
+        if account is None:
+            return None
+
+        if has_user_access_to_account(current_user, account):
             logger.info("Found account %s for user: %s", account_id, current_user.id)
             return account
-        logger.warning(
-            "Account %s not found or does not belong to user: %s",
-            account_id,
-            current_user.id,
-        )
+
         return None
 
     async def create_account(
@@ -75,7 +75,7 @@ class AccountService:
 
     async def update_account(
         self, current_user: models.User, account_id, account: schemas.AccountData
-    ) -> models.Account:
+    ) -> Optional[models.Account]:
         """
         Updates an account.
 
@@ -90,6 +90,10 @@ class AccountService:
 
         logger.info("Updating account %s for user: %s", account_id, current_user.id)
         db_account = await repo.get(models.Account, account_id)
+
+        if db_account is None:
+            return None
+
         if db_account.user_id == current_user.id:
             await repo.update(models.Account, db_account.id, **account.model_dump())
             logger.info("Account %s updated for user:  %s", account, current_user.id)
@@ -101,7 +105,9 @@ class AccountService:
         )
         return None
 
-    async def delete_account(self, current_user: models.User, account_id: int) -> bool:
+    async def delete_account(
+        self, current_user: models.User, account_id: int
+    ) -> Optional[bool]:
         """
         Deletes an account.
 
@@ -139,6 +145,10 @@ class AccountService:
 
         logger.info("Checking if maximum accounts reached for user: %s", user.id)
         account_list = await self.get_accounts(user)
+
+        if account_list is None:
+            return True
+
         result = len(account_list) >= settings.max_allowed_accounts
         if result:
             logger.warning(

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, List, Optional, Tuple, Type, TypeVar
+from typing import Any, List, Optional, Tuple, Type, TypeVar, Union
 
 from sqlalchemy import Select, text
 from sqlalchemy import update as sql_update
@@ -81,7 +81,7 @@ async def filter_by(
     value: str,
     operator: DatabaseFilterOperator = DatabaseFilterOperator.EQUAL,
     load_relationships_list: Optional[list[str]] = None,
-) -> list[Type[ModelT]]:
+) -> list[ModelT]:
     """
     Filters the records of a given model by a specified attribute and value.
 
@@ -214,7 +214,7 @@ async def get_transactions_from_period(
     return result.scalars().all()
 
 
-async def save(obj: Type[ModelT]) -> None:
+async def save(obj: Union[ModelT, List[ModelT]]) -> None:
     """Save an object or a list of objects to the database.
 
     Args:
@@ -309,7 +309,7 @@ async def refresh(obj: Type[ModelT]) -> None:
     return await db.session.refresh(obj)
 
 
-async def refresh_all(object_list: Type[ModelT]) -> None:
+async def refresh_all(object_list: list[Type[ModelT]]) -> None:
     """Refresh the state of multiple objects from the database.
 
     Args:

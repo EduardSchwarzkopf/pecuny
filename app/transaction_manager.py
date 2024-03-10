@@ -20,22 +20,22 @@ async def transaction(handler, *args: Any) -> Any:
     Raises:
         None
     """
-    logger.info("Starting transaction for %s with args %s", handler.__name__, args)
+    logger.info(f"Starting transaction for {handler.__name__} with args {args}")
     try:
         result = await handler(*args)
-        await db.session.commit()
-        if _is_models_object(result):
-            await db.session.refresh(result)
-            logger.info(
-                "Transaction for %s successful, result refreshed", handler.__name__
-            )
+        if db.session:
+            await db.session.commit()
+            if _is_models_object(result):
+                await db.session.refresh(result)
+                logger.info(
+                    f"Transaction for {handler.__name__} successful, result refreshed"
+                )
 
     except Exception as e:
-        logger.error(
-            "Error occurred during transaction for %s: %s", handler.__name__, e
-        )
+        logger.error(f"Error occurred during transaction for {handler.__name__}: {e}")
         result = {}
-        await db.session.rollback()
+        if db.session:
+            await db.session.rollback()
 
     return result
 

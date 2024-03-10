@@ -1,12 +1,9 @@
 from datetime import datetime, timedelta, timezone
 
-from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 
-from app.database import db
-
-from . import models, schemas
+from . import schemas
 from .config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -64,27 +61,3 @@ def verify_access_token(token: str, credentials_exception) -> schemas.TokenData:
         raise credentials_exception from e
 
     return token_data
-
-
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    """
-    Gets the current user based on the provided access token.
-
-    Args:
-        token (str, optional): The access token. Defaults to Depends(oauth2_scheme).
-
-    Returns:
-        User: The current user.
-
-    Raises:
-        HTTPException: If no valid credentials are provided.
-    """
-
-    credentials_exception = HTTPException(
-        status.HTTP_401_UNAUTHORIZED,
-        "No valid credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    token = verify_access_token(token, credentials_exception)
-    return db.session.query(models.User).get(token.id)

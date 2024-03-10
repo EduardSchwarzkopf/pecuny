@@ -165,6 +165,10 @@ async def page_create_account(
     return RedirectResponse(router.url_path_for("page_list_accounts"), status_code=302)
 
 
+from itertools import groupby
+from typing import Iterable
+
+
 @router.get("/{account_id}")
 async def page_get_account(
     request: Request,
@@ -204,7 +208,7 @@ async def page_get_account(
         await transaction_service.get_transaction_list(
             user, account_id, date_start, date_end
         )
-    )
+    ) or []
 
     expenses = 0
     income = 0

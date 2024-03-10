@@ -18,7 +18,6 @@ class Database:
         """
         self.url = url
         self.engine = None
-        self.session = None
 
     async def init(self):
         """
@@ -37,7 +36,7 @@ class Database:
         self.engine = create_async_engine(self.url, future=True)
         self.session = await self.get_session()
 
-    async def get_session(self) -> Optional[AsyncSession]:
+    async def get_session(self) -> AsyncSession:
         """
         Creates and provides a new database session.
 
@@ -48,11 +47,7 @@ class Database:
             self.engine, expire_on_commit=False, class_=AsyncSession
         )
         async with session_factory() as session:
-            try:
-                return session
-            except Exception as e:
-                await session.rollback()
-                raise e
+            return session
 
 
 async def get_user_db():

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from app import models
 from app import repository as repo
@@ -12,7 +13,7 @@ logger = get_logger(__name__)
 
 async def get_transaction_list(
     user: models.User, account_id: int, date_start: datetime, date_end: datetime
-):
+) -> Optional[list[models.TransactionScheduled]]:
     """
     Retrieves a list of transactions within a specified period for a given account.
 
@@ -30,13 +31,21 @@ async def get_transaction_list(
     """
 
     account = await repo.get(models.Account, account_id)
+
+    if account is None:
+        return None
+
     if account.user_id == user.id:
         return await repo.get_scheduled_transactions_from_period(
             account_id, date_start, date_end
         )
 
+    return None
 
-async def get_transaction(user: models.User, transaction_id: int) -> models.Transaction:
+
+async def get_transaction(
+    user: models.User, transaction_id: int
+) -> Optional[models.TransactionScheduled]:
     """
     Retrieves a transaction by ID.
 
@@ -54,18 +63,20 @@ async def get_transaction(user: models.User, transaction_id: int) -> models.Tran
     transaction = await repo.get(models.TransactionScheduled, transaction_id)
 
     if transaction is None:
-        return
+        return None
 
     account = await repo.get(models.Account, transaction.account_id)
 
-    if account.user_id == user.id:
-        return transaction
+    if account is None:
+        return None
+
+    return transaction if account.user_id == user.id else None
 
 
 async def create_scheduled_transaction(
     user: models.User,
     transaction_information: schemas.ScheduledTransactionInformationCreate,
-) -> models.TransactionScheduled:
+) -> Optional[models.TransactionScheduled]:
     """
     Creates a scheduled transaction.
 
@@ -81,6 +92,9 @@ async def create_scheduled_transaction(
     """
 
     account = await repo.get(models.Account, transaction_information.account_id)
+
+    if account is None:
+        return None
 
     if not has_user_access_to_account(user, account):
         return None
@@ -122,7 +136,7 @@ async def create_scheduled_transaction(
 
 async def delete_scheduled_transaction(
     current_user: models.User, transaction_id: int
-) -> bool:
+) -> Optional[bool]:
     """
     Deletes a scheduled transaction.
 
@@ -148,11 +162,11 @@ async def delete_scheduled_transaction(
 
     if transaction is None:
         logger.warning("Scheduled Transaction with ID %s not found.", transaction_id)
-        return
+        return None
 
     account = await repo.get(models.Account, transaction.account_id)
-    if current_user.id != account.user_id:
-        return
+    if account is None or current_user.id != account.user_id:
+        return None
 
     await repo.delete(transaction)
 

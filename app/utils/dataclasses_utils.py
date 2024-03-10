@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from fastapi import Request
 
@@ -7,7 +8,7 @@ from fastapi import Request
 class CreateUserData:
     email: str
     password: str
-    displayname: str = ""
-    is_verified: bool = False
-    is_superuser: bool = False
-    request: Request = None
+    displayname: Optional[str] = ""
+    is_verified: Optional[bool] = False
+    is_superuser: Optional[bool] = False
+    request: Optional[Request] = None

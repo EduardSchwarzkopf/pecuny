@@ -138,6 +138,8 @@ async def test_updated_transaction(
 
     updated_test_account = await repo.get(models.Account, test_account.id)
 
+    assert updated_test_account is not None
+
     difference = transaction_amount_before - amount
 
     assert updated_test_account.balance == round(account_balance - difference, 2)

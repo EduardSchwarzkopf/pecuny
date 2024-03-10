@@ -69,24 +69,26 @@ async def populate_transaction_form_account_choices(
     """
 
     account_list = await service.get_accounts(user)
+
+    if account_list is None:
+        return None
+
     account_list_length = len(account_list)
 
-    account_choices = [(0, "No other accounts found")]
-    if account_list_length == 1:
-        form.offset_account_id.data = 0
-
-    if account_list_length > 1:
-        account_choices = [
+    account_choices = (
+        [(0, first_select_label)]
+        + [
             (account.id, account.label)
             for account in account_list
             if account.id != account_id
         ]
-        account_choices.insert(
-            0,
-            (0, first_select_label),
-        )
+        if account_list_length > 1
+        else [(0, "No other accounts found")]
+    )
 
     form.offset_account_id.choices = account_choices
+    if account_list_length == 1:
+        form.offset_account_id.data = 0
 
 
 async def populate_transaction_form_category_choices(
@@ -103,8 +105,11 @@ async def populate_transaction_form_category_choices(
         None
     """
 
-    category_list = category_service.get_categories(user)
-    form.category_id.choices = group_categories_by_section(await category_list)
+    category_list = await category_service.get_categories(user) or []
+    category_data_list = [
+        schemas.CategoryData(**category) for category in category_list
+    ]
+    form.category_id.choices = group_categories_by_section(category_data_list)
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -265,7 +270,9 @@ async def page_update_transaction_get(
         offset_transaction = await transaction_service.get_transaction(
             user, transaction.offset_transactions_id
         )
-        form.offset_account_id.data = offset_transaction.account_id
+
+        if offset_transaction is not None:
+            form.offset_account_id.data = offset_transaction.account_id
 
     return render_template(
         "pages/dashboard/page_form_transaction.html",

@@ -59,7 +59,7 @@ StringContr = Annotated[
 
 class EmailSchema(BaseModel):
     email: list[EmailStr]
-    body: Dict[str, Any]
+    body: dict[str, Any]
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
