@@ -95,7 +95,7 @@ async def fixture_test_user(create_test_users):
 
     """
     user_list = await repo.filter_by(
-        models.User, "is_verified", True, DatabaseFilterOperator.EQUAL
+        models.User, models.User.is_verified, True, DatabaseFilterOperator.EQUAL
     )
 
     yield user_list[0]
@@ -186,7 +186,7 @@ async def fixture_test_account(test_user: models.User, create_test_accounts):
 
     account = await repo.filter_by(
         models.Account,
-        "user_id",
+        models.Account.user_id,
         test_user.id,
         load_relationships_list=[models.Account.user],
     )
@@ -322,7 +322,9 @@ async def fixture_test_account_transaction_list(create_transactions, test_accoun
         list[models.Transaction]: A list of transactions associated with the test account.
     """
 
-    yield await repo.filter_by(models.Transaction, "account_id", test_account.id)
+    yield await repo.filter_by(
+        models.Transaction, models.Transaction.account_id, test_account.id
+    )
 
 
 @pytest.fixture(name="transaction_list")

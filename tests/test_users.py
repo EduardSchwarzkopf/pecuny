@@ -111,7 +111,9 @@ async def test_login():
 
     """
 
-    login_user_list = await repo.filter_by(models.User, "email", "hello123@pytest.de")
+    login_user_list = await repo.filter_by(
+        models.User, models.User.email, "hello123@pytest.de"
+    )
     login_user = login_user_list[0]
 
     for username in [

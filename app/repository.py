@@ -79,7 +79,7 @@ async def get(
 
 async def filter_by(
     cls: Type[ModelT],
-    attribute: str,  # TODO: InstrumentedAttribute,
+    attribute: InstrumentedAttribute,
     value: str,
     operator: DatabaseFilterOperator = DatabaseFilterOperator.EQUAL,
     load_relationships_list: Optional[list[str]] = None,
@@ -99,9 +99,7 @@ async def filter_by(
     Raises:
         None
     """
-    # TODO: Update for InstrumentedAttribute
-    # condition = text(f"{attribute.key} {operator.value} :val")
-    condition = text(f"{attribute} {operator.value} :val")
+    condition = text(f"{attribute.key} {operator.value} :val")
 
     q = select(cls).where(condition).params(val=value)
     q = load_relationships(q, load_relationships_list)

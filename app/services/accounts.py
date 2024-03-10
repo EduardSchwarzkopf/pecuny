@@ -24,7 +24,9 @@ class AccountService:
             list[Account]: A list of account objects.
         """
 
-        return await repo.filter_by(models.Account, "user_id", current_user.id)
+        return await repo.filter_by(
+            models.Account, models.Account.user_id, current_user.id
+        )
 
     async def get_account(
         self, current_user: models.User, account_id: int

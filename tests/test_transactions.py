@@ -119,7 +119,7 @@ async def test_updated_transaction(
     account_balance = test_account.balance
 
     transaction_list = await repo.filter_by(
-        models.Transaction, "account_id", test_account.id
+        models.Transaction, models.Transaction.account_id, test_account.id
     )
 
     transaction = transaction_list[0]
@@ -215,7 +215,7 @@ async def test_delete_transactions_fail(
 
     result = await repo.filter_by(
         models.Account,
-        "user_id",
+        models.Account.user_id,
         test_account.user_id,
         DatabaseFilterOperator.NOT_EQUAL,
         load_relationships_list=[models.Account.transactions],
@@ -345,7 +345,7 @@ async def test_create_offset_transaction_other_account_fail(
 
     offset_account_list = await repo.filter_by(
         models.Account,
-        "user_id",
+        models.Account.user_id,
         test_user.id,
         DatabaseFilterOperator.NOT_EQUAL,
     )
