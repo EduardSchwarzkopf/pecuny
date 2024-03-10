@@ -1,6 +1,8 @@
 from typing import Any
 
-from app import models
+from sqlalchemy.orm.base import object_mapper
+from sqlalchemy.orm.exc import UnmappedInstanceError
+
 from app.database import db
 from app.logger import get_logger
 
@@ -24,7 +26,7 @@ async def transaction(handler, *args: Any) -> Any:
         result = await handler(*args)
         if db.session:
             await db.session.commit()
-            if _is_models_object(result):
+            if is_model_instance(result):
                 await db.session.refresh(result)
 
     except Exception as e:
@@ -38,16 +40,17 @@ async def transaction(handler, *args: Any) -> Any:
     return result
 
 
-def _is_models_object(db_object):
-    """Check if the given object is a SQLAlchemy model object.
+def is_model_instance(obj):
+    """Check if the given object is a SQLAlchemy model instance.
 
     Args:
-        db_object: The object to check.
+        obj: The object to check.
 
     Returns:
-        bool: True if the object is a SQLAlchemy model object, False otherwise.
-
-    Raises:
-        None
+        bool: True if the object is a SQLAlchemy model instance, False otherwise.
     """
-    return getattr(db_object, "__module__", None) == models.__name__
+    try:
+        object_mapper(obj)
+        return True
+    except UnmappedInstanceError:
+        return False
