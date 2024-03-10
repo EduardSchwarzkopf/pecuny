@@ -7,7 +7,6 @@ from app.services.users import UserService
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(prefix="/users", tags=["Users"])
-service = UserService()
 
 
 def get_user_service() -> UserService:
@@ -39,6 +38,7 @@ async def api_delete_me(
         HTTPException: If the transaction is not found.
     """
 
+    service = UserService()
     result = await tm.transaction(service.delete_self, current_user)
 
     if result:
