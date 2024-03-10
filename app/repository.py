@@ -16,7 +16,9 @@ from . import models
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
-def load_relationships(query: Select, relationships: InstrumentedAttribute = None):
+def load_relationships(
+    query: Select, relationships: InstrumentedAttribute = None
+) -> Select:
     """Apply loading options for specified relationships to a query.
 
     Args:
@@ -34,7 +36,8 @@ def load_relationships(query: Select, relationships: InstrumentedAttribute = Non
 
 
 async def get_all(
-    cls: Type, load_relationships_list: Optional[list[InstrumentedAttribute]] = None
+    cls: Type[ModelT],
+    load_relationships_list: Optional[list[InstrumentedAttribute]] = None,
 ) -> list[ModelT]:
     """Retrieve all instances of the specified model from the database.
 
@@ -52,10 +55,10 @@ async def get_all(
 
 
 async def get(
-    cls: Type,
+    cls: Type[ModelT],
     instance_id: int,
     load_relationships_list: Optional[list[InstrumentedAttribute]] = None,
-) -> Type[ModelT]:
+) -> Optional[ModelT]:
     """Retrieve an instance of the specified model by its ID.
 
     Args:
@@ -64,7 +67,7 @@ async def get(
         load_relationships: Optional list of relationships to load.
 
     Returns:
-        ModelT: The instance of the specified model with the given ID.
+        Optional[ModelT]: The instance of the specified model with the given ID, or None if not found.
     """
     q = select(cls).where(cls.id == instance_id)
     q = load_relationships(q, load_relationships_list)
@@ -110,7 +113,7 @@ async def filter_by_multiple(
     cls: Type[ModelT],
     conditions: list[Tuple[str, str, DatabaseFilterOperator]],
     load_relationships_list: Optional[list[str]] = None,
-) -> list[Type[ModelT]]:
+) -> list[ModelT]:
     """
     Filters the records of a given model by multiple attributes and values.
 
