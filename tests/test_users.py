@@ -54,6 +54,8 @@ async def test_create_user(
 
     db_user: models.User = await repo.get(models.User, new_user.id)
 
+    assert db_user is not None
+
     assert new_user.email == username
     assert new_user.displayname != ""
     assert new_user.is_active is True
