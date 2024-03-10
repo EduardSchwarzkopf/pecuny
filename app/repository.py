@@ -55,7 +55,7 @@ async def get(
     cls: Type,
     instance_id: int,
     load_relationships_list: Optional[List[InstrumentedAttribute]] = None,
-) -> ModelT:
+) -> Type[ModelT]:
     """Retrieve an instance of the specified model by its ID.
 
     Args:
@@ -78,7 +78,7 @@ async def filter_by(
     value: str,
     operator: DatabaseFilterOperator = DatabaseFilterOperator.EQUAL,
     load_relationships_list: Optional[List[str]] = None,
-) -> List[ModelT]:
+) -> List[Type[ModelT]]:
     """
     Filters the records of a given model by a specified attribute and value.
 
@@ -89,7 +89,7 @@ async def filter_by(
         operator: The operator to use for the filter (default: EQUAL).
 
     Returns:
-        List[ModelT]: The filtered records.
+        List[Type[ModelT]]: The filtered records.
 
     Raises:
         None
@@ -110,7 +110,7 @@ async def filter_by_multiple(
     cls: Type[ModelT],
     conditions: List[Tuple[str, str, DatabaseFilterOperator]],
     load_relationships_list: Optional[List[str]] = None,
-) -> List[ModelT]:
+) -> List[Type[ModelT]]:
     """
     Filters the records of a given model by multiple attributes and values.
 
