@@ -40,7 +40,7 @@ jobs:
       - name: Run pylint
         run: poetry run pylint $(git ls-files '*.py')
       - name: Run mypy
-        run: poetry run mypy $(git ls-files '*.py')
+        run: poetry run mypy .
 
   test:
     runs-on: ubuntu-22.04
