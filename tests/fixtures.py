@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-from typing import List
+from typing import Any
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -104,7 +104,7 @@ async def fixture_create_test_accounts(
         list[Account]: A list of test accounts.
     """
 
-    account_data_list = [
+    account_data_list: list[dict[str, Any]] = [
         {
             "user": test_user,
             "label": "account_00",
