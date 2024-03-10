@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Request
 
@@ -27,7 +27,7 @@ class Breadcrumb:
 class BreadcrumbBuilder:
     def __init__(self, request: Request):
         self.request = request
-        self.breadcrumbs = []
+        self.breadcrumbs: List[Breadcrumb] = []
 
     def add(self, title: str, url: Optional[str] = None):
         """Add a breadcrumb to the list of breadcrumbs.
