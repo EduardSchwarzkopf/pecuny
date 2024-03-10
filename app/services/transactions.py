@@ -27,7 +27,7 @@ class TransactionService:
         account_id: int,
         date_start: datetime,
         date_end: datetime,
-    ) -> List[models.Transaction]:
+    ) -> list[models.Transaction]:
         """
         Retrieves a list of transactions within a specified period for a given account.
 
@@ -38,7 +38,7 @@ class TransactionService:
             date_end: The end date of the period.
 
         Returns:
-            List[Transaction]: A list of transactions within the specified period.
+            list[Transaction]: A list of transactions within the specified period.
 
         Raises:
             None

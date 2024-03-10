@@ -27,7 +27,7 @@ class Breadcrumb:
 class BreadcrumbBuilder:
     def __init__(self, request: Request):
         self.request = request
-        self.breadcrumbs: List[Breadcrumb] = []
+        self.breadcrumbs: list[Breadcrumb] = []
 
     def add(self, title: str, url: Optional[str] = None):
         """Add a breadcrumb to the list of breadcrumbs.

@@ -78,7 +78,7 @@ async def get_user_offset_account(account: models.Account) -> models.Account:
 
     Args:
         account (models.Account): The account for which to find the offset account.
-        account_list (List[models.Account]): The list of accounts to search within.
+        account_list (list[models.Account]): The list of accounts to search within.
 
     Returns:
         models.Account or None: The offset account if found, otherwise None.
@@ -106,7 +106,7 @@ def get_date_range(date_start, days=5):
         days: The number of days in the range (default is 5).
 
     Returns:
-        List[datetime.date]: A list of dates in the range.
+        list[datetime.date]: A list of dates in the range.
     """
 
     return [(date_start - datetime.timedelta(days=idx)) for idx in range(days)]

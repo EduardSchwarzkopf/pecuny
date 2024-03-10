@@ -10,7 +10,7 @@ logger = get_logger(__name__)
 
 async def get_categories(
     current_user: models.User,
-) -> List[models.TransactionCategory]:
+) -> list[models.TransactionCategory]:
     """
     Retrieves a list of transaction categories.
 
@@ -18,7 +18,7 @@ async def get_categories(
         current_user: The current active user.
 
     Returns:
-        List[TransactionCategory]: A list of transaction category objects.
+        list[TransactionCategory]: A list of transaction category objects.
     """
 
     logger.info("Getting categories for user %s", current_user.id)

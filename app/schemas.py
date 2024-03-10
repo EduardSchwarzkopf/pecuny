@@ -58,7 +58,7 @@ StringContr = Annotated[
 
 
 class EmailSchema(BaseModel):
-    email: List[EmailStr]
+    email: list[EmailStr]
     body: Dict[str, Any]
 
 

@@ -145,7 +145,7 @@ async def test_updated_transaction(
 
 async def test_delete_transactions(
     test_account: models.Account,
-    test_account_transaction_list: List[models.Transaction],
+    test_account_transaction_list: list[models.Transaction],
     test_user: models.User,
 ):
     """
@@ -307,7 +307,7 @@ async def test_create_offset_transaction(
 
 async def test_create_offset_transaction_other_account_fail(
     test_account: models.Account,
-    test_accounts: List[models.Account],
+    test_accounts: list[models.Account],
     test_user: models.User,
 ):
     """
@@ -315,7 +315,7 @@ async def test_create_offset_transaction_other_account_fail(
 
     Args:
         test_account (models.Account): The test account.
-        test_accounts (List[models.Account]): The list of test accounts.
+        test_accounts (list[models.Account]): The list of test accounts.
         test_user (models.User): The test user.
 
     Returns:

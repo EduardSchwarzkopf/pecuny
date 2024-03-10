@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 class AccountService:
 
-    async def get_accounts(self, current_user: models.User) -> List[models.Account]:
+    async def get_accounts(self, current_user: models.User) -> list[models.Account]:
         """
         Retrieves a list of accounts.
 
@@ -19,7 +19,7 @@ class AccountService:
             current_user: The current active user.
 
         Returns:
-            List[Account]: A list of account objects.
+            list[Account]: A list of account objects.
         """
 
         logger.info("Getting accounts for user: %s", current_user.id)

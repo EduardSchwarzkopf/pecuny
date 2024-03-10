@@ -23,7 +23,7 @@ async def get_transaction_list(
         date_end: The end date of the period.
 
     Returns:
-        List[Transaction]: A list of transactions within the specified period.
+        list[Transaction]: A list of transactions within the specified period.
 
     Raises:
         None

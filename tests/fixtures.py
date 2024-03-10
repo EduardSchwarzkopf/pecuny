@@ -64,7 +64,7 @@ async def fixture_test_user_list(create_test_users):
         create_test_users (fixture): Fixture to create test users.
 
     Yields:
-        List[models.User]: A list of test users.
+        list[models.User]: A list of test users.
     """
     yield await repo.get_all(models.User)
 
@@ -90,7 +90,7 @@ async def fixture_test_user(create_test_users):
 
 @pytest.fixture(name="create_test_accounts")
 async def fixture_create_test_accounts(
-    session: AsyncSession, test_user: models.User, test_users: List[models.User]
+    session: AsyncSession, test_user: models.User, test_users: list[models.User]
 ):
     """
     Fixture that creates test accounts.
@@ -101,7 +101,7 @@ async def fixture_create_test_accounts(
         test_users (fixuter): Fixture to get a list of test users.
 
     Returns:
-        List[Account]: A list of test accounts.
+        list[Account]: A list of test accounts.
     """
 
     account_data_list = [
@@ -189,7 +189,7 @@ async def fixture_get_test_account_list(create_test_accounts):
         create_test_accounts (fixuter): The fixture for creating test accounts.
 
     Yields:
-        List[models.Account]: A list of test accounts.
+        list[models.Account]: A list of test accounts.
 
     """
 
@@ -200,7 +200,7 @@ async def fixture_get_test_account_list(create_test_accounts):
 
 @pytest.fixture(name="create_transactions")
 async def fixture_create_transactions(
-    test_accounts: List[models.Account],
+    test_accounts: list[models.Account],
     session: AsyncSession,
 ):
     """
@@ -211,7 +211,7 @@ async def fixture_create_transactions(
         session (fixture): The session fixture.
 
     Returns:
-        List[Transaction]: A list of test transactions.
+        list[Transaction]: A list of test transactions.
     """
 
     dates = get_date_range(datetime.datetime.now(datetime.timezone.utc))
@@ -291,7 +291,7 @@ async def fixture_test_account_transaction_list(create_transactions, test_accoun
         test_account (fixture): The test account.
 
     Yields:
-        List[models.Transaction]: A list of transactions associated with the test account.
+        list[models.Transaction]: A list of transactions associated with the test account.
     """
 
     yield await repo.filter_by(models.Transaction, "account_id", test_account.id)
@@ -306,7 +306,7 @@ async def fixture_get_all_transactions(create_transactions):
         create_transactions (fixture): The fixture for creating transactions.
 
     Yields:
-        List[models.Transaction]: A list of transactions.
+        list[models.Transaction]: A list of transactions.
 
     """
 

@@ -34,8 +34,8 @@ def load_relationships(query: Select, relationships: InstrumentedAttribute = Non
 
 
 async def get_all(
-    cls: Type, load_relationships_list: Optional[List[InstrumentedAttribute]] = None
-) -> List[ModelT]:
+    cls: Type, load_relationships_list: Optional[list[InstrumentedAttribute]] = None
+) -> list[ModelT]:
     """Retrieve all instances of the specified model from the database.
 
     Args:
@@ -43,7 +43,7 @@ async def get_all(
         load_relationships: Optional list of relationships to load.
 
     Returns:
-        List[ModelT]: A list of instances of the specified model.
+        list[ModelT]: A list of instances of the specified model.
     """
     q = select(cls)
     q = load_relationships(q, load_relationships_list)
@@ -54,7 +54,7 @@ async def get_all(
 async def get(
     cls: Type,
     instance_id: int,
-    load_relationships_list: Optional[List[InstrumentedAttribute]] = None,
+    load_relationships_list: Optional[list[InstrumentedAttribute]] = None,
 ) -> Type[ModelT]:
     """Retrieve an instance of the specified model by its ID.
 
@@ -77,8 +77,8 @@ async def filter_by(
     attribute: str,  # TODO: InstrumentedAttribute,
     value: str,
     operator: DatabaseFilterOperator = DatabaseFilterOperator.EQUAL,
-    load_relationships_list: Optional[List[str]] = None,
-) -> List[Type[ModelT]]:
+    load_relationships_list: Optional[list[str]] = None,
+) -> list[Type[ModelT]]:
     """
     Filters the records of a given model by a specified attribute and value.
 
@@ -89,7 +89,7 @@ async def filter_by(
         operator: The operator to use for the filter (default: EQUAL).
 
     Returns:
-        List[Type[ModelT]]: The filtered records.
+        list[Type[ModelT]]: The filtered records.
 
     Raises:
         None
@@ -108,9 +108,9 @@ async def filter_by(
 
 async def filter_by_multiple(
     cls: Type[ModelT],
-    conditions: List[Tuple[str, str, DatabaseFilterOperator]],
-    load_relationships_list: Optional[List[str]] = None,
-) -> List[Type[ModelT]]:
+    conditions: list[Tuple[str, str, DatabaseFilterOperator]],
+    load_relationships_list: Optional[list[str]] = None,
+) -> list[Type[ModelT]]:
     """
     Filters the records of a given model by multiple attributes and values.
 
@@ -122,7 +122,7 @@ async def filter_by_multiple(
         load_relationships_list: Optional list of relationships to load.
 
     Returns:
-        List[Model]: The filtered records.
+        list[Model]: The filtered records.
     """
 
     # Construct the WHERE clause
@@ -150,7 +150,7 @@ async def get_scheduled_transactions_from_period(
     account_id: int,
     start_date: datetime,
     end_date: datetime,
-) -> List[models.TransactionScheduled]:
+) -> list[models.TransactionScheduled]:
     """Retrieve scheduled transactions for a specific account within a given period.
 
     Args:
@@ -159,7 +159,7 @@ async def get_scheduled_transactions_from_period(
         end_date: The end date of the period.
 
     Returns:
-        List[models.TransactionScheduled]:
+        list[models.TransactionScheduled]:
             A list of scheduled transactions within the specified period.
 
     Raises:
@@ -180,7 +180,7 @@ async def get_scheduled_transactions_from_period(
 
 async def get_transactions_from_period(
     account_id: int, start_date: datetime, end_date: datetime
-) -> List[models.Transaction]:
+) -> list[models.Transaction]:
     """Retrieve transactions for a specific account within a given period.
 
     Args:
@@ -189,7 +189,7 @@ async def get_transactions_from_period(
         end_date: The end date of the period.
 
     Returns:
-        List[models.Transaction]: A list of transactions within the specified period.
+        list[models.Transaction]: A list of transactions within the specified period.
 
     Raises:
         None

@@ -13,7 +13,7 @@ router = APIRouterExtended(prefix="/categories", tags=["Categories"])
 ResponseModel = schemas.CategoryData
 
 
-@router.get("/", response_model=List[ResponseModel])
+@router.get("/", response_model=list[ResponseModel])
 async def api_get_categories(current_user: User = Depends(current_active_user)):
     """
     Retrieves a category by ID.
