@@ -1,7 +1,8 @@
 import sys
+from typing import Optional
 
 from fastapi_users.db import SQLAlchemyUserDatabase
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
@@ -10,44 +11,68 @@ from app.config import settings
 class Database:
     def __init__(self, url: str) -> None:
         """
-        Initializer/Constructor for Database class.
-
-        Parameters:
-        url: str - The URL of the database.
-        """
-        self.url = url
-        self.engine = None
-        self.session = None
-
-    async def init(self):
-        """
-        Initializes the database connection.
+        Initialize the database connection.
 
         Args:
-            self: The instance of the class.
+            url (str): The URL of the database.
 
-        Returns:
+        Raises:
             None
         """
 
-        if self.session:
-            await self.session.close()
+        self.url = url
+        self.engine: Optional[AsyncEngine] = None
+        self._session: Optional[AsyncSession] = None
+
+    async def init(self):
+        """
+        Initialize the database connection.
+
+        Raises:
+            None
+        """
+
+        if self._session is not None:
+            await self._session.close()
 
         self.engine = create_async_engine(self.url, future=True)
-        self.session = await self.get_session()
+        self._session = await self.get_session()
 
     async def get_session(self) -> AsyncSession:
         """
-        Creates and provides a new database session.
+        Get the asynchronous session for the database.
 
         Returns:
-        AsyncSession: A database session
+            AsyncSession: The asynchronous session for the database.
+
+        Raises:
+            RuntimeError: If the engine has not been initialized.
         """
+
+        if self.engine is None:
+            raise RuntimeError("Engine has not been initialized")
+
         session_factory = sessionmaker(
             self.engine, expire_on_commit=False, class_=AsyncSession
         )
-        async with session_factory() as session:
-            return session
+        # Directly return a new session from the session factory
+        return session_factory()
+
+    @property
+    def session(self) -> AsyncSession:
+        """
+        Get the asynchronous session for the database.
+
+        Returns:
+            AsyncSession: The asynchronous session for the database.
+
+        Raises:
+            RuntimeError: If the database session has not been initialized.
+        """
+
+        if self._session is None:
+            raise RuntimeError("Database session has not been initialized.")
+        return self._session
 
 
 async def get_user_db():
