@@ -13,14 +13,28 @@ from app.services.transactions import TransactionService
 from app.services.users import UserService
 from app.utils.dataclasses_utils import CreateUserData
 from app.utils.enums import DatabaseFilterOperator
-from tests.utils import get_date_range
 
 # Reference: https://github.com/EduardSchwarzkopf/pecuny/issues/88
 # pylint: disable=unused-argument
 
 
+@pytest.fixture(name="user_service", scope="session")
+async def fixture_user_service(session):
+    """
+    Create a session-scoped user service fixture.
+
+    Args:
+        session: The session object.
+
+    Returns:
+        UserService: The user service fixture.
+
+    """
+    yield UserService()
+
+
 @pytest.fixture(name="create_test_users", scope="session")
-async def fixture_create_test_users():
+async def fixture_create_test_users(user_service: UserService):
     """
     Fixture that creates test users.
 
@@ -40,7 +54,6 @@ async def fixture_create_test_users():
         ["hello123@pytest.de", password, "LoginUser"],
     ]
 
-    user_service = UserService()
     user_list = []
     for user in create_user_list:
         user_list.append(
@@ -196,6 +209,21 @@ async def fixture_get_test_account_list(create_test_accounts):
     yield await repo.get_all(
         models.Account, load_relationships_list=[models.Account.user]
     )
+
+
+def get_date_range(date_start, days=5):
+    """
+    Returns a list of dates in a range starting from a given date.
+
+    Args:
+        date_start: The starting date.
+        days: The number of days in the range (default is 5).
+
+    Returns:
+        list[datetime.date]: A list of dates in the range.
+    """
+
+    return [(date_start - datetime.timedelta(days=idx)) for idx in range(days)]
 
 
 @pytest.fixture(name="create_transactions")
