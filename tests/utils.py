@@ -1,11 +1,10 @@
-import datetime
 from typing import Optional
 
 from fastapi import Response
 from httpx import AsyncClient
 
 from app import models, repository
-from app.main import app
+from app.main import get_app
 from app.oauth2 import create_access_token
 from app.utils.enums import RequestMethod
 
@@ -53,6 +52,9 @@ async def make_http_request(
     Raises:
         ValueError: If an invalid method is provided.
     """
+
+    app = get_app()
+
     async with AsyncClient(app=app, base_url="http://test") as client:
         if as_user:
             client = authorized_httpx_client(client, as_user)
@@ -96,18 +98,3 @@ async def get_user_offset_account(account: models.Account) -> Optional[models.Ac
         ),
         None,
     )
-
-
-def get_date_range(date_start, days=5):
-    """
-    Returns a list of dates in a range starting from a given date.
-
-    Args:
-        date_start: The starting date.
-        days: The number of days in the range (default is 5).
-
-    Returns:
-        list[datetime.date]: A list of dates in the range.
-    """
-
-    return [(date_start - datetime.timedelta(days=idx)) for idx in range(days)]
