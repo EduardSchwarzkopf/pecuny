@@ -246,11 +246,15 @@ class TransactionService:
             transaction_id,
             current_user.id,
         )
-        transaction = await repo.get(models.Transaction, transaction_id)
-        account = await repo.get(models.Account, transaction.account_id)
-
-        if account is None or transaction is None:
+        transaction = await repo.get(
+            models.Transaction,
+            transaction_id,
+            load_relationships_list=[models.Transaction.account],
+        )
+        if transaction is None:
             return None
+
+        account = transaction.account
 
         if current_user.id != account.user_id:
             logger.warning(ACCOUNT_USER_ID_MISMATCH)
@@ -263,25 +267,22 @@ class TransactionService:
         if transaction.offset_transactions_id:
             logger.info("Handling offset transaction for update.")
             offset_transaction = await repo.get(
-                models.Transaction, transaction.offset_transactions_id
+                models.Transaction,
+                transaction.offset_transactions_id,
+                load_relationships_list=[models.Transaction.account],
             )
-
-            offset_account = await repo.get(
-                models.Account, offset_transaction.account_id
-            )
-
-            if offset_account is None or offset_transaction:
+            if offset_transaction is None:
                 return None
 
-            if offset_account.user_id != current_user.id:
-                logger.warning("User ID does not match the offset account's User ID.")
+            offset_account = offset_transaction.account
+
+            if offset_account is None or offset_account.user_id != current_user.id:
                 return None
 
             offset_account.balance -= amount_updated
             offset_transaction.information.amount = transaction_information.amount * -1
 
         account_values = {"balance": account.balance + amount_updated}
-
         await repo.update(models.Account, account.id, **account_values)
 
         transaction_values = {
@@ -290,7 +291,6 @@ class TransactionService:
             "date": transaction_information.date,
             "category_id": transaction_information.category_id,
         }
-
         await repo.update(
             models.TransactionInformation,
             transaction.information.id,
