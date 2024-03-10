@@ -184,7 +184,7 @@ class CreateAccountForm(StarletteForm):
         "Name",
         validators=[
             DataRequired("Please enter your email address"),
-            Length(max=36),
+            Length(max=36, min=3),
         ],
         render_kw={"placeholder": "e.g. 'Personal Savings'"},
     )
