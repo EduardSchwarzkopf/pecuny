@@ -130,12 +130,11 @@ async def filter_by_multiple(
         list[Model]: The filtered records.
     """
 
-    # Construct the WHERE clause
     where_conditions = []
     params = {}
     for i, (attribute, value, operator) in enumerate(conditions):
         param_name = f"val{i}"
-        where_conditions.append(text(f"{attribute} {operator.value} :{param_name}"))
+        where_conditions.append(text(f"{attribute.key} {operator.value} :{param_name}"))
         params[param_name] = value
 
     q = select(cls)
