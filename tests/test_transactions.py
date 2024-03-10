@@ -519,5 +519,8 @@ async def test_delete_offset_transaction(
     account_refresh = await repo.get(models.Account, test_account.id)
     offset_account_refresh = await repo.get(models.Account, offset_account.id)
 
+    assert account_refresh is not None
+    assert offset_account_refresh is not None
+
     assert offset_account_balance == offset_account_refresh.balance
     assert account_balance == account_refresh.balance
