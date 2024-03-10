@@ -107,7 +107,7 @@ async def populate_transaction_form_category_choices(
 
     category_list = await category_service.get_categories(user) or []
     category_data_list = [
-        schemas.CategoryData(**category) for category in category_list
+        schemas.CategoryData(**category.__dict__) for category in category_list
     ]
     form.category_id.choices = group_categories_by_section(category_data_list)
 
