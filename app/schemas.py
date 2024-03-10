@@ -45,7 +45,7 @@ class RoundField(float):
         """
 
         try:
-            value = round(v, 2)
+            value = round(float(v), 2)
         except TypeError:
             value = None
 
