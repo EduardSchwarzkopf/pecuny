@@ -1,5 +1,5 @@
 import datetime
-from typing import List
+from typing import List, Optional
 
 import pytest
 from fastapi import status
@@ -124,6 +124,7 @@ async def test_updated_transaction(
     )
 
     transaction = transaction_list[0]
+
     transaction_amount_before = transaction.information.amount
 
     res = await make_http_request(
@@ -132,6 +133,8 @@ async def test_updated_transaction(
 
     assert res.status_code == status.HTTP_200_OK
     transaction = schemas.Transaction(**res.json())
+
+    assert transaction is not None
 
     updated_test_account = await repo.get(models.Account, test_account.id)
 
@@ -180,6 +183,9 @@ async def test_delete_transactions(
         assert result is None
 
         account = await repo.get(models.Account, test_account.id)
+
+        assert account is not None
+
         account_balance_after = account.balance
 
         expected_balance = account_balance - amount
@@ -228,6 +234,9 @@ async def test_delete_transactions_fail(
         assert res.status_code == status.HTTP_404_NOT_FOUND
 
         account_refresh = await repo.get(models.Account, account.id)
+
+        assert account_refresh is not None
+
         account_balance_after = account_refresh.balance
 
         assert account_balance_after == account_balance
@@ -271,6 +280,9 @@ async def test_create_offset_transaction(
 
     account_id = test_account.id
     offset_account = await get_user_offset_account(test_account)
+
+    assert offset_account is not None
+
     reference = f"test_create_offset_transaction - {amount}"
     res = await make_http_request(
         ENDPOINT,
@@ -290,7 +302,11 @@ async def test_create_offset_transaction(
     new_transaction = schemas.Transaction(**res.json())
     offset_transactions_id = new_transaction.offset_transactions_id
 
+    assert isinstance(offset_transactions_id, int)
+
     new_offset_transaction = await repo.get(models.Transaction, offset_transactions_id)
+
+    assert new_offset_transaction is not None
 
     assert new_transaction.account_id == account_id
     assert new_offset_transaction.account_id == offset_account.id
@@ -329,11 +345,6 @@ async def test_create_offset_transaction_other_account_fail(
 
     offset_account = await get_user_offset_account(test_account)
 
-    offset_account = None
-    for offset_account in test_accounts:
-        if offset_account.user_id != test_account.user_id:
-            break
-
     if offset_account is None:
         raise ValueError("No offset account found")
 
@@ -359,6 +370,9 @@ async def test_create_offset_transaction_other_account_fail(
 
     account_refreshed = await repo.get(models.Account, account_id)
     offset_account_refreshed = await repo.get(models.Account, offset_account_id)
+
+    assert account_refreshed is not None
+    assert offset_account_refreshed is not None
 
     assert account_balance == account_refreshed.balance
     assert offset_account_balance == offset_account_refreshed.balance
@@ -400,6 +414,8 @@ async def test_updated_offset_transaction(
 
     offset_account = await get_user_offset_account(test_account)
 
+    assert offset_account is not None
+
     account_balance = test_account.balance
     offset_account_balance = offset_account.balance
     account_id = test_account.id
@@ -439,6 +455,9 @@ async def test_updated_offset_transaction(
 
     account_refreshed = await repo.get(models.Account, account_id)
     offset_account_refreshed = await repo.get(models.Account, offset_account_id)
+
+    assert account_refreshed is not None
+    assert offset_account_refreshed is not None
 
     assert account_refreshed.balance == round(account_balance + amount, 2)
     assert offset_account_refreshed.balance == round(offset_account_balance - amount, 2)
@@ -485,6 +504,8 @@ async def test_delete_offset_transaction(
     """
 
     offset_account = await get_user_offset_account(test_account)
+
+    assert offset_account is not None
 
     account_balance = test_account.balance
     offset_account_balance = offset_account.balance

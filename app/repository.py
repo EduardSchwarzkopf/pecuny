@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, Tuple, Type, TypeVar
+from typing import Any, List, Optional, Tuple, Type, TypeVar
 
 from sqlalchemy import Select, text
 from sqlalchemy import update as sql_update
@@ -111,7 +111,7 @@ async def filter_by(
 
 async def filter_by_multiple(
     cls: Type[ModelT],
-    conditions: list[Tuple[str, str, DatabaseFilterOperator]],
+    conditions: list[Tuple[InstrumentedAttribute, Any, DatabaseFilterOperator]],
     load_relationships_list: Optional[list[str]] = None,
 ) -> list[ModelT]:
     """

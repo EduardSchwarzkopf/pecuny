@@ -1,4 +1,5 @@
 import datetime
+from typing import Optional
 
 from fastapi import Response
 from httpx import AsyncClient
@@ -72,7 +73,7 @@ async def make_http_request(
     return response
 
 
-async def get_user_offset_account(account: models.Account) -> models.Account:
+async def get_user_offset_account(account: models.Account) -> Optional[models.Account]:
     """
     Returns the offset account for a given account within a list of accounts.
 

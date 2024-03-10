@@ -300,8 +300,8 @@ async def test_invalid_delete_user(test_user: models.User):
     other_user_list = await repo.filter_by_multiple(
         models.User,
         [
-            ("email", test_user.email, DatabaseFilterOperator.NOT_EQUAL),
-            ("is_verified", True, DatabaseFilterOperator.EQUAL),
+            (models.User.email, test_user.email, DatabaseFilterOperator.NOT_EQUAL),
+            (models.User.is_verified, True, DatabaseFilterOperator.EQUAL),
         ],
     )
     other_user = other_user_list[-1]
