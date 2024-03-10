@@ -21,6 +21,8 @@ from app.routes import router_list
 from app.utils import BreadcrumbBuilder
 from app.utils.exceptions import UnauthorizedPageException
 
+logger = get_logger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(_api_app: FastAPI):
@@ -35,13 +37,15 @@ async def lifespan(_api_app: FastAPI):
 
     """
 
-    await db.init()
-    yield
-    await db.session.close()
+    try:
+        await db.init()
+        yield
+    finally:
+        if db.session is not None:
+            await db.session.close()
 
 
 app = FastAPI(lifespan=lifespan)
-logger = get_logger(__name__)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
