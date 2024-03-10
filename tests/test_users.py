@@ -52,7 +52,7 @@ async def test_create_user(
 
     new_user = schemas.UserRead(**res.json())
 
-    db_user: models.User = await repo.get(models.User, new_user.id)
+    db_user = await repo.get(models.User, new_user.id)
 
     assert db_user is not None
 

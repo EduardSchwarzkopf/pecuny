@@ -33,8 +33,8 @@ def authorized_httpx_client(client: AsyncClient, user: models.User):
 
 async def make_http_request(
     url: str,
-    data: dict = None,
-    json: dict = None,
+    data: Optional[dict] = None,
+    json: Optional[dict] = None,
     as_user: Optional[models.User] = None,
     method: RequestMethod = RequestMethod.POST,
 ) -> Response:
