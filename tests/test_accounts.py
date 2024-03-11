@@ -12,8 +12,6 @@ from tests.utils import make_http_request
 pytestmark = pytest.mark.anyio
 ENDPOINT = "/api/accounts/"
 
-# TODO: Add get account test
-
 
 async def test_create_account(test_user: models.User):
     """
@@ -205,3 +203,31 @@ async def test_update_account(
         else:
             assert db_account_val == value
             assert account_val == value
+
+
+async def test_get_account_response(test_account):
+    """
+    Tests if the transaction amount in the JSON response is a float.
+
+    Args:
+        test_account_transaction_list (fixture): The list of account transactions.
+        test_user (fixture): The test user.
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
+
+    res = await make_http_request(
+        f"{ENDPOINT}{test_account.id}",
+        as_user=test_account.user,
+        method=RequestMethod.GET,
+    )
+
+    json_response = res.json()
+
+    assert json_response["label"] == test_account.label
+    assert json_response["description"] == test_account.description
+    assert json_response["id"] == test_account.id
+    assert isinstance(json_response["balance"], float)
