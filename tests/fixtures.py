@@ -120,7 +120,7 @@ async def fixture_create_test_accounts(
         list[Account]: A list of test accounts.
     """
 
-    account_data_list: list[dict[str, Union[str, int]]] = [
+    account_data_list: list[dict[str, str | int]] = [
         {
             "label": "account_00",
             "description": "description_00",
