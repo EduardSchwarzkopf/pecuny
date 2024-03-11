@@ -563,7 +563,7 @@ async def test_delete_offset_transaction(
     assert account_balance == account_refresh.balance
 
 
-async def test_transaction_amount_is_number(test_account_transaction_list, test_user):
+async def test_transaction_amount_is_number(test_account_transaction_list):
     """
     Tests if the transaction amount in the JSON response is a float.
 
@@ -578,9 +578,13 @@ async def test_transaction_amount_is_number(test_account_transaction_list, test_
     """
 
     transaction = test_account_transaction_list[0]
+    account = await repo.get(models.Account, transaction.account, [models.Account.user])
+
+    assert account is not None
+
     res = await make_http_request(
         f"{ENDPOINT}{transaction.id}",
-        as_user=test_user,
+        as_user=account.user,
         method=RequestMethod.GET,
     )
 
