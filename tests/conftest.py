@@ -70,7 +70,6 @@ async def cleanup_tests():
 
 
 @pytest.fixture(name="session", autouse=True, scope="session")
-@pytest.mark.usefixtures("fixture_init_db")
 async def fixture_session() -> AsyncSession:  # type: ignore
     """
     Fixture that provides an async session.

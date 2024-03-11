@@ -6,6 +6,7 @@ from app import repository as repo
 from app import schemas
 from app.logger import get_logger
 from app.services.accounts import AccountService
+from app.utils.classes import RoundedDecimal
 from app.utils.exceptions import AccessDeniedError
 from app.utils.log_messages import ACCOUNT_USER_ID_MISMATCH
 
@@ -202,9 +203,10 @@ class TransactionService:
             logger.warning("User ID does not match the offset account's User ID.")
             return None
 
-        transaction_information.amount = schemas.RoundField(
+        transaction_information.amount = RoundedDecimal(
             transaction_information.amount * -1
         )
+
         offset_account.balance += transaction_information.amount
 
         db_offset_transaction_information = models.TransactionInformation()

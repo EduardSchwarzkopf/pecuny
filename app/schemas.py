@@ -1,11 +1,11 @@
 import datetime
 import uuid
 from datetime import datetime as dt
-from decimal import ROUND_05UP
+from decimal import Decimal
 from typing import Annotated, Any, Optional
 
 from fastapi_users import schemas
-from pydantic import BaseModel, EmailStr, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 from starlette_wtf import StarletteForm
 from wtforms import (
     BooleanField,
@@ -25,32 +25,7 @@ from wtforms.validators import (
 )
 from wtforms.widgets import Input
 
-
-class RoundField(float):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, v, _):
-        """
-        Validates a value by rounding it to two decimal places.
-
-        Args:
-            cls: The class.
-
-        Returns:
-            float or None: The rounded value if it can be rounded to two decimal places,
-            otherwise None.
-        """
-
-        try:
-            value = round(float(v), 2)
-        except TypeError:
-            value = None
-
-        return value
-
+from app.utils.classes import RoundedDecimal
 
 StringContr = Annotated[
     str, StringConstraints(min_length=3, max_length=36, strip_whitespace=True)
@@ -93,13 +68,24 @@ class TokenData(BaseModel):
 class AccountUpdate(Base):
     label: Optional[StringContr]
     description: Optional[str]
-    balance: Optional[RoundField]
+    balance: Optional[RoundedDecimal] = Field(
+        default=None,
+        example=0.00,
+        description="The account balance rounded to two decimal places.",
+    )
+    model_config = ConfigDict(json_encoders={Decimal: float})
 
 
 class TransactionInformationBase(BaseModel):
-    amount: RoundField = Field(...)
+    amount: RoundedDecimal = Field(
+        ...,
+        description="The transaction amount, rounded to two decimal places.",
+        example=100.00,
+    )
     reference: str
     category_id: int
+
+    model_config = ConfigDict(json_encoders={Decimal: float})
 
 
 class TransactionInformation(TransactionInformationBase):
@@ -167,7 +153,9 @@ class ScheduledTransactionData(TransactionBase):
 class Account(Base):
     label: StringContr
     description: Optional[str] = None
-    balance: Optional[RoundField] = Field(...)
+    balance: Optional[RoundedDecimal] = Field(...)
+
+    model_config = ConfigDict(json_encoders={Decimal: float})
 
 
 class AccountData(Account):
@@ -200,7 +188,6 @@ class CreateAccountForm(StarletteForm):
     balance = DecimalField(
         "Balance",
         render_kw={"placeholder": "e.g. Current amount in savings"},
-        rounding=ROUND_05UP,
     )
 
 
@@ -282,7 +269,6 @@ class CreateTransactionForm(StarletteForm):
         "Amount",
         validators=[InputRequired(), NumberRange(min=0)],
         render_kw={"placeholder": "500"},
-        rounding=ROUND_05UP,
     )
     is_expense = BooleanField("Is this an expense?", default=True)
     category_id = SelectField(
@@ -310,7 +296,8 @@ class CreateTransactionForm(StarletteForm):
 class UpdateTransactionForm(StarletteForm):
     reference = StringField("Reference", validators=[InputRequired(), Length(max=128)])
     amount = DecimalField(
-        "Amount", validators=[InputRequired(), NumberRange(min=0)], rounding=ROUND_05UP
+        "Amount",
+        validators=[InputRequired(), NumberRange(min=0)],
     )
     is_expense = BooleanField("Is this an expense?")
     category_id = SelectField("Category", validators=[InputRequired()], coerce=int)

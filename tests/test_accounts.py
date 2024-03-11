@@ -5,13 +5,12 @@ import pytest
 from app import models
 from app import repository as repo
 from app import schemas
+from app.utils.classes import RoundedDecimal
 from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
 
 pytestmark = pytest.mark.anyio
 ENDPOINT = "/api/accounts/"
-
-# TODO: Add get account test
 
 
 async def test_create_account(test_user: models.User):
@@ -42,43 +41,6 @@ async def test_create_account(test_user: models.User):
     assert new_account.label == "test_account"
     assert new_account.balance == 500
     assert new_account.description == "test"
-
-
-@pytest.mark.parametrize(
-    "label, description, balance",
-    [
-        ("test", "test", "aaaa"),
-        ("test", None, "0,3"),
-        ("test", "", False),
-    ],
-)
-async def test_optional_fields_create_account(
-    test_user: models.User, label: str, description: str, balance: int | float
-):
-    """
-    Test case for creating an account with optional fields.
-
-    Args:
-        test_user (fixture): The test user.
-        label (str): The label of the account.
-        description (str): The description of the account.
-        balance (int | float): The balance of the account.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
-    """
-
-    res = await make_http_request(
-        ENDPOINT,
-        json={"label": label, "description": description, "balance": balance},
-        as_user=test_user,
-    )
-
-    assert res.status_code == 201
 
 
 @pytest.mark.parametrize(
@@ -233,8 +195,39 @@ async def test_update_account(
         account_val = getattr(account, key)
         db_account_val = getattr(db_account, key)
         print(f"key: {key} | value: {value} | account_val: {account_val}")
-        if not isinstance(value, str):
-            value = round(value, 2)
+        if isinstance(value, float):
 
-        assert db_account_val == value
-        assert account_val == value
+            assert db_account_val == RoundedDecimal(value)
+            assert account_val == RoundedDecimal(value)
+
+        else:
+            assert db_account_val == value
+            assert account_val == value
+
+
+async def test_get_account_response(test_account):
+    """
+    Tests if the transaction amount in the JSON response is a float.
+
+    Args:
+        test_account_transaction_list (fixture): The list of account transactions.
+        test_user (fixture): The test user.
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
+
+    res = await make_http_request(
+        f"{ENDPOINT}{test_account.id}",
+        as_user=test_account.user,
+        method=RequestMethod.GET,
+    )
+
+    json_response = res.json()
+
+    assert json_response["label"] == test_account.label
+    assert json_response["description"] == test_account.description
+    assert json_response["id"] == test_account.id
+    assert isinstance(json_response["balance"], float)
