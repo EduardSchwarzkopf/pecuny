@@ -202,9 +202,8 @@ class TransactionService:
             logger.warning("User ID does not match the offset account's User ID.")
             return None
 
-        transaction_information.amount = schemas.RoundField(
-            transaction_information.amount * -1
-        )
+        transaction_information.amount = transaction_information.amount * -1
+
         offset_account.balance += transaction_information.amount
 
         db_offset_transaction_information = models.TransactionInformation()
