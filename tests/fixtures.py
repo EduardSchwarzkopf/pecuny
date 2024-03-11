@@ -1,6 +1,7 @@
 import asyncio
 import datetime
-from typing import Any
+import itertools
+from ctypes import Union
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -67,6 +68,8 @@ async def fixture_create_test_users(user_service: UserService):
             )
         )
 
+    yield user_list
+
 
 @pytest.fixture(name="test_users")
 async def fixture_test_user_list(create_test_users):
@@ -101,9 +104,9 @@ async def fixture_test_user(create_test_users):
     yield user_list[0]
 
 
-@pytest.fixture(name="create_test_accounts")
+@pytest.fixture(name="create_test_accounts", scope="session")
 async def fixture_create_test_accounts(
-    session: AsyncSession, test_user: models.User, test_users: list[models.User]
+    session: AsyncSession, create_test_users: list[models.User]
 ):
     """
     Fixture that creates test accounts.
@@ -117,33 +120,28 @@ async def fixture_create_test_accounts(
         list[Account]: A list of test accounts.
     """
 
-    account_data_list: list[dict[str, Any]] = [
+    account_data_list: list[dict[str, Union[str, int]]] = [
         {
-            "user": test_user,
             "label": "account_00",
             "description": "description_00",
             "balance": 100,
         },
         {
-            "user": test_users[0],
             "label": "account_01",
             "description": "description_01",
             "balance": 200,
         },
         {
-            "user": test_users[1],
             "label": "account_02",
             "description": "description_02",
             "balance": 500,
         },
         {
-            "user": test_users[2],
             "label": "account_03",
             "description": "description_03",
             "balance": 1000,
         },
         {
-            "user": test_user,
             "label": "account_04",
             "description": "description_04",
             "balance": 2000,
