@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+
 class RoundedDecimal(Decimal):
     """
     A subclass of Decimal that rounds all instances to two decimal places upon instantiation.
@@ -15,6 +16,7 @@ class RoundedDecimal(Decimal):
         This behavior might not be immediately obvious to other developers interacting with this class,
         so it's important to document its usage clearly wherever it's used.
     """
+
     def __new__(cls, value):
         rounded_value = Decimal(value).quantize(Decimal("0.00"))
         return Decimal.__new__(cls, rounded_value)
