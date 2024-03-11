@@ -1,7 +1,20 @@
 from decimal import Decimal
 
-
 class RoundedDecimal(Decimal):
+    """
+    A subclass of Decimal that rounds all instances to two decimal places upon instantiation.
+
+    This class is designed to ensure that all decimal values are automatically rounded to two decimal places,
+    making it particularly useful for financial calculations where precision is crucial but only to a certain extent.
+
+    Example:
+        price = RoundedDecimal('3.14159')
+        print(price)  # Output: 3.14
+
+    Note:
+        This behavior might not be immediately obvious to other developers interacting with this class,
+        so it's important to document its usage clearly wherever it's used.
+    """
     def __new__(cls, value):
         rounded_value = Decimal(value).quantize(Decimal("0.00"))
         return Decimal.__new__(cls, rounded_value)
@@ -16,18 +29,24 @@ class RoundedDecimal(Decimal):
     @classmethod
     def validate(cls, v, _):
         """
-        Validates a value by rounding it to two decimal places.
+        Validates and rounds a value to two decimal places.
+
+        This method is particularly useful for Pydantic models or other validation frameworks
+        where custom validation logic is required.
 
         Args:
-            cls: The class.
-            v: The value to be rounded.
+            cls: The class itself, allowing this method to be called on the class rather than an instance.
+            v: The value to be validated and rounded.
 
         Returns:
-            Decimal: The rounded value.
+            RoundedDecimal: The validated and rounded value.
+
+        Raises:
+            TypeError: If the input value cannot be converted to a Decimal.
         """
         try:
             rounded_value = Decimal(v).quantize(Decimal("0.00"))
-        except TypeError:
-            rounded_value = None
+        except TypeError as e:
+            raise TypeError(f"Invalid input for RoundedDecimal: {v}") from e
 
-        return rounded_value
+        return cls(rounded_value)

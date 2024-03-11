@@ -68,12 +68,12 @@ class TokenData(BaseModel):
 class AccountUpdate(Base):
     label: Optional[StringContr]
     description: Optional[str]
-    balance: Optional[RoundedDecimal] = Field(...)
+    balance: Optional[RoundedDecimal] = Field(default=None, example=0.00, description="The account balance rounded to two decimal places.")
     model_config = ConfigDict(json_encoders={Decimal: float})
 
 
 class TransactionInformationBase(BaseModel):
-    amount: RoundedDecimal = Field(...)
+    amount: RoundedDecimal = Field(..., description="The transaction amount, rounded to two decimal places.", example=100.00)
     reference: str
     category_id: int
 
