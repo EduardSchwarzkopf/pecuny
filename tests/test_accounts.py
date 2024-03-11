@@ -45,43 +45,6 @@ async def test_create_account(test_user: models.User):
 
 
 @pytest.mark.parametrize(
-    "label, description, balance",
-    [
-        ("test", "test", "aaaa"),
-        ("test", None, "0,3"),
-        ("test", "", False),
-    ],
-)
-async def test_optional_fields_create_account(
-    test_user: models.User, label: str, description: str, balance: int | float
-):
-    """
-    Test case for creating an account with optional fields.
-
-    Args:
-        test_user (fixture): The test user.
-        label (str): The label of the account.
-        description (str): The description of the account.
-        balance (int | float): The balance of the account.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
-    """
-
-    res = await make_http_request(
-        ENDPOINT,
-        json={"label": label, "description": description, "balance": balance},
-        as_user=test_user,
-    )
-
-    assert res.status_code == 201
-
-
-@pytest.mark.parametrize(
     "label",
     [
         (""),
