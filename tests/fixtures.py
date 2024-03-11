@@ -152,19 +152,20 @@ async def fixture_create_test_accounts(
 
     service = AccountService()
 
-    create_task = [
-        service.create_account(
-            account_data["user"],
+    create_task_list = []
+
+    for user, account_data in itertools.product(create_test_users, account_data_list):
+        task = service.create_account(
+            user,
             schemas.Account(
                 label=account_data["label"],
                 description=account_data["description"],
                 balance=account_data["balance"],
             ),
         )
-        for account_data in account_data_list
-    ]
+        create_task_list.append(task)
+    await asyncio.gather(*create_task_list)
 
-    await asyncio.gather(*create_task)
     await session.commit()
 
     yield
