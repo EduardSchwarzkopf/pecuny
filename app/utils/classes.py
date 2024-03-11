@@ -35,7 +35,9 @@ class RoundedDecimal(Decimal):
         where custom validation logic is required.
 
         Args:
-            cls: The class itself, allowing this method to be called on the class rather than an instance.
+            cls: The class itself, allowing this method to be called on
+            the class rather than an instance.
+
             v: The value to be validated and rounded.
 
         Returns:
