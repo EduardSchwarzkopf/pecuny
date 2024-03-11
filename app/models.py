@@ -2,7 +2,7 @@ from fastapi_users.db import (
     SQLAlchemyBaseOAuthAccountTableUUID,
     SQLAlchemyBaseUserTableUUID,
 )
-from sqlalchemy import Column, Integer, Numeric, String, text
+from sqlalchemy import DECIMAL, Column, Integer, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship
@@ -162,9 +162,7 @@ class Account(BaseModel, UserId):
 
     label = Column(String(36))
     description = Column(String(128))
-    balance = Column(
-        Numeric(10, 2, asdecimal=False, decimal_return_scale=None), default=0
-    )
+    balance = Column(DECIMAL(10, 2), default=0)
     transactions = relationship(
         "Transaction", back_populates="account", cascade="all,delete", lazy=True
     )
@@ -179,9 +177,7 @@ class Account(BaseModel, UserId):
 class TransactionInformation(BaseModel):
     __tablename__ = "transactions_information"
 
-    amount = Column(
-        Numeric(10, 2, asdecimal=False, decimal_return_scale=None), default=0
-    )
+    amount = Column(DECIMAL(10, 2), default=0)
     reference = Column(String(128))
     date = Column(type_=TIMESTAMP(timezone=True), default=text("now()"))
     category = relationship("TransactionCategory", lazy="selectin")
