@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 
 import pytest
 from fastapi import status
@@ -6,6 +7,7 @@ from fastapi import status
 from app import models
 from app import repository as repo
 from app import schemas
+from app.utils.classes import RoundedDecimal
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
 from tests.utils import get_user_offset_account, make_http_request
 
@@ -60,13 +62,15 @@ async def test_create_transaction(
         as_user=test_user,
     )
 
-    new_transaction = schemas.Transaction(**res.json())
+    json_response = res.json()
+    new_transaction = schemas.Transaction(**json_response)
 
     assert res.status_code == status.HTTP_201_CREATED
-    assert account_balance + amount == test_account.balance
+    assert account_balance + Decimal(amount) == test_account.balance
     assert new_transaction.account_id == test_account.id
     assert new_transaction.information.amount == amount
-    assert isinstance(new_transaction.information.amount, float)
+    assert isinstance(json_response["information"]["amount"], float)
+    assert isinstance(new_transaction.information.amount, Decimal)
     assert new_transaction.information.reference == reference
 
 
@@ -131,7 +135,9 @@ async def test_updated_transaction(
     )
 
     assert res.status_code == status.HTTP_200_OK
-    transaction = schemas.Transaction(**res.json())
+
+    json_response = res.json()
+    transaction = schemas.Transaction(**json_response)
 
     assert transaction is not None
 
@@ -139,10 +145,12 @@ async def test_updated_transaction(
 
     assert updated_test_account is not None
 
-    difference = transaction_amount_before - amount
+    amount_d = RoundedDecimal(amount)
+    difference = RoundedDecimal(transaction_amount_before - amount_d)
 
-    assert updated_test_account.balance == round(account_balance - difference, 2)
-    assert transaction.information.amount == round(amount, 2)
+    assert updated_test_account.balance == account_balance - difference
+    assert isinstance(json_response["information"]["amount"], float)
+    assert transaction.information.amount == amount_d
     assert transaction.information.reference == reference
     assert transaction.information.category_id == category_id
 
@@ -300,7 +308,8 @@ async def test_create_offset_transaction(
 
     assert res.status_code == status.HTTP_201_CREATED
 
-    new_transaction = schemas.Transaction(**res.json())
+    json_response = res.json()
+    new_transaction = schemas.Transaction(**json_response)
     offset_transactions_id = new_transaction.offset_transactions_id
 
     assert isinstance(offset_transactions_id, int)
@@ -315,8 +324,9 @@ async def test_create_offset_transaction(
     assert new_transaction.information.amount == round(amount, 2)
     assert new_offset_transaction.information.amount == round(expected_offset_amount, 2)
 
-    assert isinstance(new_transaction.information.amount, float)
-    assert isinstance(new_offset_transaction.information.amount, float)
+    assert isinstance(json_response["information"]["amount"], float)
+    assert isinstance(new_transaction.information.amount, Decimal)
+    assert isinstance(new_offset_transaction.information.amount, Decimal)
 
     assert new_transaction.information.reference == reference
     assert new_offset_transaction.information.reference == reference
@@ -458,7 +468,8 @@ async def test_updated_offset_transaction(
 
     assert res.status_code == status.HTTP_200_OK
 
-    transaction = schemas.Transaction(**res.json())
+    json_response = res.json()
+    transaction = schemas.Transaction(**json_response)
 
     account_refreshed = await repo.get(models.Account, account_id)
     offset_account_refreshed = await repo.get(models.Account, offset_account_id)
@@ -466,10 +477,13 @@ async def test_updated_offset_transaction(
     assert account_refreshed is not None
     assert offset_account_refreshed is not None
 
-    assert account_refreshed.balance == round(account_balance + amount, 2)
-    assert offset_account_refreshed.balance == round(offset_account_balance - amount, 2)
+    assert isinstance(json_response["information"]["amount"], float)
 
-    assert transaction.information.amount == round(amount, 2)
+    amount_d = RoundedDecimal(amount)
+    assert account_refreshed.balance == account_balance + amount_d
+    assert offset_account_refreshed.balance == offset_account_balance - amount_d
+    assert transaction.information.amount == amount_d
+
     assert transaction.information.reference == reference
     assert transaction.information.category_id == category_id
 
