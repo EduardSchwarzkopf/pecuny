@@ -578,7 +578,9 @@ async def test_transaction_amount_is_number(test_account_transaction_list):
     """
 
     transaction = test_account_transaction_list[0]
-    account = await repo.get(models.Account, transaction.account, [models.Account.user])
+    account = await repo.get(
+        models.Account, transaction.account_id, [models.Account.user]
+    )
 
     assert account is not None
 
