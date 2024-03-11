@@ -1,7 +1,6 @@
 import asyncio
 import datetime
 import itertools
-from ctypes import Union
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
