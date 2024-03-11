@@ -407,7 +407,7 @@ async def test_create_offset_transaction_other_account_fail(
 async def test_updated_offset_transaction(
     test_account: models.Account,
     category_id: int,
-    amount: int | float,
+    amount: int | float | RoundedDecimal,
 ):
     """
     Test case for updating an offset transaction.
