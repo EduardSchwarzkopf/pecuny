@@ -145,12 +145,12 @@ async def test_updated_transaction(
 
     assert updated_test_account is not None
 
-    amount_d = RoundedDecimal(amount)
-    difference = RoundedDecimal(transaction_amount_before - amount_d)
+    amount = RoundedDecimal(amount)
+    difference = RoundedDecimal(transaction_amount_before - amount)
 
     assert updated_test_account.balance == account_balance - difference
     assert isinstance(json_response["information"]["amount"], float)
-    assert transaction.information.amount == amount_d
+    assert transaction.information.amount == amount
     assert transaction.information.reference == reference
     assert transaction.information.category_id == category_id
 
@@ -308,8 +308,7 @@ async def test_create_offset_transaction(
 
     assert res.status_code == status.HTTP_201_CREATED
 
-    json_response = res.json()
-    new_transaction = schemas.Transaction(**json_response)
+    new_transaction = schemas.Transaction(**res.json())
     offset_transactions_id = new_transaction.offset_transactions_id
 
     assert isinstance(offset_transactions_id, int)
@@ -324,7 +323,6 @@ async def test_create_offset_transaction(
     assert new_transaction.information.amount == round(amount, 2)
     assert new_offset_transaction.information.amount == round(expected_offset_amount, 2)
 
-    assert isinstance(json_response["information"]["amount"], float)
     assert isinstance(new_transaction.information.amount, Decimal)
     assert isinstance(new_offset_transaction.information.amount, Decimal)
 
@@ -468,8 +466,13 @@ async def test_updated_offset_transaction(
 
     assert res.status_code == status.HTTP_200_OK
 
-    json_response = res.json()
-    transaction = schemas.Transaction(**json_response)
+    transaction = schemas.Transaction(**res.json())
+
+    amount = RoundedDecimal(amount)
+    assert transaction.information.amount == amount
+
+    assert transaction.information.reference == reference
+    assert transaction.information.category_id == category_id
 
     account_refreshed = await repo.get(models.Account, account_id)
     offset_account_refreshed = await repo.get(models.Account, offset_account_id)
@@ -477,15 +480,8 @@ async def test_updated_offset_transaction(
     assert account_refreshed is not None
     assert offset_account_refreshed is not None
 
-    assert isinstance(json_response["information"]["amount"], float)
-
-    amount_d = RoundedDecimal(amount)
-    assert account_refreshed.balance == account_balance + amount_d
-    assert offset_account_refreshed.balance == offset_account_balance - amount_d
-    assert transaction.information.amount == amount_d
-
-    assert transaction.information.reference == reference
-    assert transaction.information.category_id == category_id
+    assert account_refreshed.balance == account_balance + amount
+    assert offset_account_refreshed.balance == offset_account_balance - amount
 
 
 @pytest.mark.parametrize(
@@ -501,7 +497,6 @@ async def test_updated_offset_transaction(
         (7, 05.5),
     ],
 )
-@pytest.mark.usefixtures()
 async def test_delete_offset_transaction(
     test_account: models.Account,
     test_user: models.User,
@@ -566,3 +561,29 @@ async def test_delete_offset_transaction(
 
     assert offset_account_balance == offset_account_refresh.balance
     assert account_balance == account_refresh.balance
+
+
+async def test_transaction_amount_is_number(test_account_transaction_list, test_user):
+    """
+    Tests if the transaction amount in the JSON response is a float.
+
+    Args:
+        test_account_transaction_list (fixture): The list of account transactions.
+        test_user (fixture): The test user.
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
+
+    transaction = test_account_transaction_list[0]
+    res = await make_http_request(
+        f"{ENDPOINT}{transaction.id}",
+        as_user=test_user,
+        method=RequestMethod.GET,
+    )
+
+    json_response = res.json()
+
+    assert isinstance(json_response["information"]["amount"], float)
