@@ -3,18 +3,16 @@ from decimal import Decimal
 
 class RoundedDecimal(Decimal):
     """
-    A subclass of Decimal that rounds all instances to two decimal places upon instantiation.
+    A subclass of Decimal that rounds all instances to
+    two decimal places upon instantiation.
 
-    This class is designed to ensure that all decimal values are automatically rounded to two decimal places,
-    making it particularly useful for financial calculations where precision is crucial but only to a certain extent.
+    This class is designed to ensure that all decimal values are
+    automatically rounded to two decimal places, making it particularly useful
+    for financial calculations where precision is crucial but only to a certain extent.
 
     Example:
         price = RoundedDecimal('3.14159')
         print(price)  # Output: 3.14
-
-    Note:
-        This behavior might not be immediately obvious to other developers interacting with this class,
-        so it's important to document its usage clearly wherever it's used.
     """
 
     def __new__(cls, value):
