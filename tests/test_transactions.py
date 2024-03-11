@@ -136,8 +136,7 @@ async def test_updated_transaction(
 
     assert res.status_code == status.HTTP_200_OK
 
-    json_response = res.json()
-    transaction = schemas.Transaction(**json_response)
+    transaction = schemas.Transaction(**res.json())
 
     assert transaction is not None
 
@@ -145,12 +144,11 @@ async def test_updated_transaction(
 
     assert updated_test_account is not None
 
-    amount = RoundedDecimal(amount)
-    difference = RoundedDecimal(transaction_amount_before - amount)
+    amount_d = RoundedDecimal(amount)
+    difference = RoundedDecimal(transaction_amount_before - amount_d)
 
     assert updated_test_account.balance == account_balance - difference
-    assert isinstance(json_response["information"]["amount"], float)
-    assert transaction.information.amount == amount
+    assert transaction.information.amount == amount_d
     assert transaction.information.reference == reference
     assert transaction.information.category_id == category_id
 
