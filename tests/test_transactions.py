@@ -90,7 +90,7 @@ async def test_create_transaction(
 @pytest.mark.usefixtures("create_transactions")
 async def test_updated_transaction(
     category_id: int,
-    amount: int | float,
+    amount: int | float | RoundedDecimal,
     test_account: models.Account,
     test_user: models.User,
 ):
@@ -144,11 +144,11 @@ async def test_updated_transaction(
 
     assert updated_test_account is not None
 
-    amount_d = RoundedDecimal(amount)
-    difference = RoundedDecimal(transaction_amount_before - amount_d)
+    amount = RoundedDecimal(amount)
+    difference = RoundedDecimal(transaction_amount_before - amount)
 
     assert updated_test_account.balance == account_balance - difference
-    assert transaction.information.amount == amount_d
+    assert transaction.information.amount == amount
     assert transaction.information.reference == reference
     assert transaction.information.category_id == category_id
 
