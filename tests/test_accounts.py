@@ -5,6 +5,7 @@ import pytest
 from app import models
 from app import repository as repo
 from app import schemas
+from app.utils.classes import RoundedDecimal
 from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
 
@@ -196,8 +197,11 @@ async def test_update_account(
         account_val = getattr(account, key)
         db_account_val = getattr(db_account, key)
         print(f"key: {key} | value: {value} | account_val: {account_val}")
-        if not isinstance(value, str):
-            value = round(value, 2)
+        if isinstance(value, float):
 
-        assert db_account_val == value
-        assert account_val == value
+            assert db_account_val == RoundedDecimal(value)
+            assert account_val == RoundedDecimal(value)
+
+        else:
+            assert db_account_val == value
+            assert account_val == value
