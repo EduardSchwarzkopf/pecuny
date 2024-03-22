@@ -1,37 +1,43 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full bg-bgColor">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>{{ title |default("pecuny", true) }}</title>
-    <link href="{{ url_for('static', path='/css/main.css') }}" rel="stylesheet" />
-    <link rel="icon" href="/static/img/logo.svg" sizes="any" type="image/svg+xml">
+    <link
+      href="{{ url_for('static', path='/css/main.css') }}"
+      rel="stylesheet"
+    />
+    <link
+      rel="icon"
+      href="/static/img/logo.svg"
+      sizes="any"
+      type="image/svg+xml"
+    />
+
+    <script src="{{ url_for('static', path='/js/slimselect.min.js') }}"></script>
+    <link href="{{ url_for('static', path='/css/slimselect.css') }}" rel="stylesheet"></link>
 
     {% block style %} {% endblock %}
-</head>
+  </head>
 
-<body class="h-full px-2">
+  <body class="h-full px-2">
     {% if DEBUG %} {{ hot_reload.script(url_for('hot-reload')) | safe }} {%
     endif %}
     <div class="min-h-full">
-        {% block header %} {% endblock %}
+      {% block header %} {% endblock %}
 
-        <main>
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                {% block content_wrapper %}
-                {% block content_header %} {% endblock %}
-                {% block content %} {% endblock %}
-                {% endblock %}
-            </div>
+      <main>
+        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+          {% block content_wrapper %} {% block content_header %} {% endblock %}
+          {% block content %} {% endblock %} {% endblock %}
+        </div>
 
-            {% include 'fragments/feedback.html' %}
-        </main>
+        {% include 'fragments/feedback.html' %}
+      </main>
     </div>
-    <footer class="py-12 md:hidden">
-    </footer>
+    <footer class="py-12 md:hidden"></footer>
     {% block javascript %} {% endblock %}
-</body>
-
+  </body>
 </html>

@@ -39,13 +39,6 @@ leading-tight focus:outline-none focus:border-primary" %}
         )
         }}
 
-        {% if field.type=="SelectField" %}
-        <div class="pointer-events-none absolute opacity-50 inset-y-0 right-0 flex items-center px-5 pt-6">
-            <svg class="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-            </svg>
-        </div>
-        {% endif %}
         {% endif %}
 
 
@@ -79,7 +72,13 @@ leading-tight focus:outline-none focus:border-primary" %}
             {{ submit_button(button_text) }}
         </div>
 
-        <script src="/static/js/errorHandling.js"></script>
+        <script src="/static/js/errorHandling.js"></script>         
+        <script>
+        document.querySelectorAll('form select').forEach(select => {
+        new SlimSelect({ select: select });
+        });
+        </script>
+
     </form>
 </div>
 </div>
@@ -140,8 +139,15 @@ leading-tight focus:outline-none focus:border-primary" %}
             </div>
         </div>
 
-        <script src="/static/js/errorHandling.js"></script>
-    </form>
+    <script src="/static/js/errorHandling.js"></script>
+            
+    <script>
+    document.querySelectorAll('form select').forEach(select => {
+    new SlimSelect({ select: select });
+    });
+    </script>
+
+</form>
 
     {% if transaction_id %}
     {{ modal.delete_object(request.url_for('page_delete_transaction', account_id=account_id,
@@ -165,6 +171,12 @@ leading-tight focus:outline-none focus:border-primary" %}
 
         {{ submit_button('Update' if account_id else 'Add') }}
 </div>
+
+    <script>
+    document.querySelectorAll('form select').forEach(select => {
+    new SlimSelect({ select: select });
+    });
+    </script>
 
 <script src="/static/js/errorHandling.js"></script>
 </form>
