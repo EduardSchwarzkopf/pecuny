@@ -2,7 +2,6 @@
 
 :root {
     --ss-bg-color: #ffffff;
-    --ss-font-color: var(--gray);
     --ss-font-placeholder-color: var(--gray-200);
     --ss-disabled-color: #dcdee2;
     --ss-border-color: var(--gray-200);
@@ -49,7 +48,6 @@
     flex-direction: row;
     position: relative;
     user-select: none;
-    color: var(--ss-font-color);
     min-height: var(--ss-main-height);
     width: 100%;
     cursor: pointer;
@@ -76,9 +74,6 @@
 .ss-main.ss-disabled {
     background-color: var(--ss-disabled-color);
     cursor: not-allowed;
-}
-.ss-main.ss-disabled .ss-values .ss-disabled {
-    color: var(--ss-font-color);
 }
 .ss-main.ss-disabled .ss-values .ss-value .ss-value-delete {
     cursor: not-allowed;
@@ -184,7 +179,6 @@
 }
 .ss-main .ss-deselect svg path {
     fill: none;
-    stroke: var(--ss-font-color);
     stroke-width: 20;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -200,7 +194,6 @@
 }
 .ss-main .ss-arrow path {
     fill: none;
-    stroke: var(--ss-font-color);
     stroke-width: 18;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -294,7 +287,6 @@
 }
 .ss-content .ss-search .ss-addable svg path {
     fill: none;
-    stroke: var(--ss-font-color);
     stroke-width: 18;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -310,7 +302,7 @@
     padding: var(--ss-spacing-l);
 }
 .ss-content .ss-list .ss-searching {
-    color: var(--ss-font-color);
+    
     padding: var(--ss-spacing-l);
 }
 .ss-content .ss-list .ss-optgroup.ss-close .ss-option {
@@ -326,7 +318,7 @@
 .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-label-text {
     flex: 1 1 auto;
     font-weight: bold;
-    color: var(--ss-font-color);
+    
 }
 .ss-content .ss-list .ss-optgroup .ss-optgroup-label:has(.ss-arrow) {
     cursor: pointer;
@@ -400,7 +392,7 @@
 .ss-content .ss-list .ss-option {
     display: flex;
     padding: var(--ss-spacing-m) var(--ss-spacing-l);
-    color: var(--ss-font-color);
+    
     cursor: pointer;
     user-select: none;
 }
@@ -420,7 +412,7 @@
     background-color: var(--ss-disabled-color);
 }
 .ss-content .ss-list .ss-option.ss-disabled:hover {
-    color: var(--ss-font-color);
+    
 }
 .ss-content .ss-list .ss-option .ss-search-highlight {
     background-color: var(--ss-highlight-color);
