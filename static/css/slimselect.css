@@ -411,10 +411,6 @@
     cursor: not-allowed;
     background-color: var(--ss-disabled-color);
 }
-.ss-content .ss-list .ss-option.ss-disabled:hover {
-    
-}
 .ss-content .ss-list .ss-option .ss-search-highlight {
     background-color: var(--ss-highlight-color);
 }
-/*# sourceMappingURL=slimselect.css.map */
