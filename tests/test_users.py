@@ -132,9 +132,10 @@ async def test_login():
             },
         )
 
-        cookie = res.cookies.get(settings.access_token_name)
+        token = res.cookies.get(settings.access_token_name)
+
         payload = jwt.decode(
-            cookie,
+            token,
             settings.access_token_secret_key,
             algorithms=settings.algorithm,
             audience=settings.token_audience,
@@ -143,6 +144,12 @@ async def test_login():
 
         assert user_id == str(login_user.id)
         assert res.status_code == SUCCESS_LOGIN_STATUS_CODE
+
+        response = await make_http_request(
+            "/api/users/me", method=RequestMethod.GET, cookies=res.cookies
+        )
+
+        assert response.status_code == 200
 
 
 @pytest.mark.parametrize(
