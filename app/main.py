@@ -1,18 +1,22 @@
 import os
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
+from datetime import datetime, timezone
 
 import arel
-from fastapi import FastAPI, Request, status
+import jwt
+from fastapi import FastAPI, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from jwt import ExpiredSignatureError
 from starlette.exceptions import HTTPException
 from starlette.middleware.sessions import SessionMiddleware
 from starlette_wtf import CSRFProtectMiddleware
 
-from app import schemas, templates
+from app import models, repository, schemas, templates
+from app.auth_manager import SECURE_COOKIE, get_strategy
 from app.config import settings
 from app.database import db
 from app.logger import get_logger
@@ -99,10 +103,70 @@ async def add_breadcrumbs(request: Request, call_next):
     breadcrumb_builder = BreadcrumbBuilder(request)
     breadcrumb_builder.add("Dashboard", "/dashboard")
 
-    # store the breadcrumb builder in the request state so it can be accessed in the route handlers
-    request.state.breadcrumb_builder = breadcrumb_builder
+    setattr(request.state, "breadcrumb_builder", breadcrumb_builder)
 
     return await call_next(request)
+
+
+@app.middleware("http")
+async def token_refresh_middleware(request: Request, call_next) -> Response:
+    """
+    Middleware to handle token refresh for access and refresh tokens in the HTTP request.
+
+    Args:
+        request: The incoming HTTP request object.
+        call_next: The callback to proceed with the request handling.
+
+    Returns:
+        Response:
+            The HTTP response after handling token refresh
+
+    Raises:
+        HTTPException: If the access token is expired or the refresh token is invalid or expired.
+    """
+
+    access_token = request.cookies.get("access_token")
+    refresh_token = request.cookies.get("refresh_token")
+    algorithm = settings.algorithm
+
+    if access_token:
+        with suppress(ExpiredSignatureError):
+
+            payload = jwt.decode(
+                access_token,
+                settings.access_token_secret_key,
+                algorithms=[algorithm],
+                audience=settings.token_audience,
+            )
+            if payload.get("exp", 0) > datetime.now(timezone.utc).timestamp():
+                return await call_next(request)
+    if refresh_token:
+        with suppress(ExpiredSignatureError):
+            payload = jwt.decode(
+                refresh_token,
+                settings.refresh_token_secret_key,
+                algorithms=[algorithm],
+                audience=settings.token_audience,
+            )
+            user = await repository.get(models.User, payload["sub"])
+
+            if user:
+                strategy = get_strategy()
+                new_access_token = await strategy.write_token(user)
+                request.cookies.update({settings.access_token_name: new_access_token})
+                response: Response = await call_next(request)
+                response.set_cookie(
+                    settings.access_token_name,
+                    new_access_token,
+                    max_age=strategy.lifetime_seconds,
+                    secure=SECURE_COOKIE,
+                )
+                return response
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Access token expired and refresh token is invalid or expired",
+    )
 
 
 if _debug := os.getenv("DEBUG"):
