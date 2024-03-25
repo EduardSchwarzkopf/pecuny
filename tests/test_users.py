@@ -1,5 +1,5 @@
+import jwt
 import pytest
-from jose import jwt
 
 from app import models
 from app import repository as repo
@@ -132,12 +132,12 @@ async def test_login():
             },
         )
 
-        cookie = res.cookies.get("fastapiusersauth")
+        cookie = res.cookies.get(settings.access_token_name)
         payload = jwt.decode(
             cookie,
-            settings.secret_key,
+            settings.access_token_secret_key,
             algorithms=settings.algorithm,
-            audience="fastapi-users:auth",
+            audience=settings.token_audience,
         )
         user_id = payload["sub"]
 
