@@ -1,7 +1,7 @@
 import os
 from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timezone
-from urllib.parse import parse_qs, urlencode
+from urllib.parse import parse_qs
 
 import arel
 import jwt
@@ -11,9 +11,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from httpx import Headers
 from jwt import ExpiredSignatureError
-from starlette.datastructures import MutableHeaders
 from starlette.exceptions import HTTPException
 from starlette.middleware.sessions import SessionMiddleware
 from starlette_wtf import CSRFProtectMiddleware
@@ -99,6 +97,17 @@ async def add_breadcrumbs(request: Request, call_next):
 
 @app.middleware("http")
 async def token_refresh_middleware(request: Request, call_next) -> Response:
+    """
+    Middleware to handle token refresh for access and refresh tokens in the HTTP request.
+
+    Args:
+        request: The incoming HTTP request object.
+        call_next: The callback to proceed with the request handling.
+
+    Returns:
+        Response: The HTTP response after handling token refresh.
+    """
+
     access_token = request.cookies.get(settings.access_token_name)
     refresh_token = request.cookies.get(settings.refresh_token_name)
     algorithm = settings.algorithm
@@ -149,7 +158,7 @@ def update_request_headers_with_new_token(request: Request, new_access_token: st
         cookies = parse_qs(mutable_headers["cookie"])
         cookies[settings.access_token_name] = [new_access_token]
         mutable_headers["cookie"] = "; ".join(f"{k}={v[0]}" for k, v in cookies.items())
-    request._headers = mutable_headers
+    request._headers = mutable_headers  # pylint: disable=protected-access
     request.scope.update(headers=request.headers.raw)
 
 
