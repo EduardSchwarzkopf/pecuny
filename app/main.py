@@ -125,8 +125,8 @@ async def token_refresh_middleware(request: Request, call_next) -> Response:
         HTTPException: If the access token is expired or the refresh token is invalid or expired.
     """
 
-    access_token = request.cookies.get("access_token")
-    refresh_token = request.cookies.get("refresh_token")
+    access_token = request.cookies.get(settings.access_token_name)
+    refresh_token = request.cookies.get(settings.refresh_token_name)
     algorithm = settings.algorithm
 
     if access_token:
