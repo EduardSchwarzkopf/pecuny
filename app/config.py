@@ -1,10 +1,11 @@
+from typing import List
+
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
 load_dotenv()
 
 
-# Set all required env variables here
 class Settings(BaseSettings):
     app_name: str = "pecuny"
     max_allowed_accounts: int = 5
@@ -16,11 +17,18 @@ class Settings(BaseSettings):
     db_port: str
     db_password: str
     db_user: str
-    secret_key: str
+
+    refresh_token_name: str = "refresh_token"
+    access_token_name: str = "access_token"
+    verify_token_secret_key: str
+    access_token_secret_key: str
+    refresh_token_secret_key: str
     session_secret_key: str
     csrf_secret: str
     algorithm: str = "HS256"
+    token_audience: List[str] = ["fastapi-users:auth"]
     access_token_expire_minutes: int = 30
+    refresh_token_expire_minutes: int = 1440
 
     test_db_name: str = "test_db"
     test_db_port: int = 5433

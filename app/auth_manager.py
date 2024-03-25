@@ -1,29 +1,29 @@
 import uuid
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator, List, Optional
 
-from fastapi import Depends, Request
-from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, exceptions
+from fastapi import Depends, Request, Response, status
+from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, exceptions, models
 from fastapi_users.authentication import (
     AuthenticationBackend,
     CookieTransport,
     JWTStrategy,
 )
 from fastapi_users.db import SQLAlchemyUserDatabase
-from fastapi_users.jwt import generate_jwt
+from fastapi_users.jwt import SecretType, generate_jwt
 
 from app.config import settings
 from app.database import get_user_db
 from app.models import User
 from app.services import email
 
-SECRET = settings.secret_key
-TOKEN_EXPIRE = settings.access_token_expire_minutes * 60
+VERIFICATION_SECRET = settings.verify_token_secret_key
+ACCESS_TOKEN_EXPIRE = settings.access_token_expire_minutes * 60
 SECURE_COOKIE = settings.enviroment != "dev"
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
-    reset_password_token_secret = SECRET
-    verification_token_secret = SECRET
+    reset_password_token_secret = VERIFICATION_SECRET
+    verification_token_secret = VERIFICATION_SECRET
 
     async def on_after_register(
         self, user: User, request: Optional[Request] = None
@@ -77,6 +77,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             token_data,
             self.verification_token_secret,
             self.verification_token_lifetime_seconds,
+            settings.algorithm,
         )
 
     async def request_new_token(self, user: User) -> None:
@@ -100,6 +101,111 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         await email.send_new_token(user, self.get_token(user))
 
 
+class CustomJWTStrategy(JWTStrategy[models.UP, models.ID]):
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        access_token_secret: SecretType,
+        refresh_token_secret: SecretType,
+        lifetime_seconds: Optional[int],
+        refresh_lifetime_seconds: Optional[int],
+        token_audience: Optional[List[str]] = None,
+        algorithm: str = "HS256",
+        public_key: Optional[SecretType] = None,
+    ):
+        if token_audience is None:
+            token_audience = settings.token_audience
+
+        super().__init__(
+            secret=access_token_secret,
+            lifetime_seconds=lifetime_seconds,
+            token_audience=token_audience,
+            algorithm=algorithm,
+            public_key=public_key,
+        )
+
+        self.refresh_lifetime_seconds = refresh_lifetime_seconds
+        self.refresh_token_secret = refresh_token_secret
+
+    async def write_refresh_token(self, user: User) -> str:
+        """
+        Generates a JWT refresh token for the given user.
+
+        Args:
+            user: The user object for whom the token is generated.
+
+        Returns:
+            str: The generated JWT refresh token.
+
+        Raises:
+            Any errors raised by the JWT generation process.
+        """
+
+        data = {"sub": str(user.id), "aud": self.token_audience}
+        return generate_jwt(
+            data,
+            self.refresh_token_secret,
+            self.refresh_lifetime_seconds,
+            algorithm=self.algorithm,
+        )
+
+    async def write_token(self, user: models.UP) -> str:
+        """
+        Generates a JWT token for the given user.
+
+        Args:
+            user: The user object for whom the token is generated.
+
+        Returns:
+            str: The generated JWT token.
+
+        Raises:
+            Any errors raised by the JWT generation process.
+        """
+
+        data = {"sub": str(user.id), "aud": self.token_audience}
+        return generate_jwt(
+            data, self.encode_key, self.lifetime_seconds, algorithm=self.algorithm
+        )
+
+
+class CustomAuthenticationBackend(AuthenticationBackend):
+
+    async def login(self, strategy: CustomJWTStrategy, user: User) -> Response:
+        """
+        Logs in a user by generating access and refresh tokens using the provided JWT strategy.
+
+        Args:
+            strategy: The custom JWT strategy used for token generation.
+            user: The user object logging in.
+
+        Returns:
+            Response: The HTTP response containing the tokens as cookies.
+        """
+
+        access_token = await strategy.write_token(user)
+        refresh_token = await strategy.write_refresh_token(user)
+
+        response = Response(
+            status_code=status.HTTP_204_NO_CONTENT,
+        )
+
+        response.set_cookie(
+            settings.access_token_name,
+            access_token,
+            max_age=strategy.lifetime_seconds,
+            secure=SECURE_COOKIE,
+        )
+
+        response.set_cookie(
+            settings.refresh_token_name,
+            refresh_token,
+            max_age=strategy.refresh_lifetime_seconds,
+            secure=SECURE_COOKIE,
+        )
+
+        return response
+
+
 async def get_user_manager(
     user_db: SQLAlchemyUserDatabase = Depends(get_user_db),
 ) -> AsyncGenerator[UserManager, None]:
@@ -120,30 +226,32 @@ async def get_user_manager(
 
 
 cookie_transport = CookieTransport(
-    cookie_max_age=TOKEN_EXPIRE, cookie_secure=SECURE_COOKIE
+    cookie_name="access_token",
+    cookie_max_age=ACCESS_TOKEN_EXPIRE,
+    cookie_secure=SECURE_COOKIE,
 )
 
 
-def get_jwt_strategy() -> JWTStrategy:
+def get_strategy() -> CustomJWTStrategy:
     """
-    Returns a JWTStrategy object configured with a secret and lifetime.
-
-    This function creates and returns a JWTStrategy object, which is configured with
-    a secret key and a token expiration time. These configurations are essential for
-    the secure handling and validation of JWT tokens.
+    Returns a custom JWT strategy with specified secret and token lifetimes.
 
     Returns:
-        JWTStrategy: An instance of JWTStrategy configured with the secret key and
-                      token lifetime.
+        CustomJWTStrategy: The custom JWT strategy object.
     """
 
-    return JWTStrategy(secret=SECRET, lifetime_seconds=TOKEN_EXPIRE)
+    return CustomJWTStrategy(
+        access_token_secret=settings.access_token_secret_key,
+        lifetime_seconds=ACCESS_TOKEN_EXPIRE,
+        refresh_lifetime_seconds=settings.refresh_token_expire_minutes * 60,
+        refresh_token_secret=settings.refresh_token_secret_key,
+    )
 
 
-auth_backend = AuthenticationBackend(
+auth_backend = CustomAuthenticationBackend(
     name="jwt",
     transport=cookie_transport,
-    get_strategy=get_jwt_strategy,
+    get_strategy=get_strategy,
 )
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])

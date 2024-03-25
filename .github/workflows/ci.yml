@@ -77,8 +77,13 @@ jobs:
           DOMAIN: "http://127.0.0.1:8000"
           SECRET_KEY: "test"
           CSRF_SECRET: "test"
-          SESSION_SECRET_KEY: "test"
+          REFRESH_TOKEN_EXPIRE_MINUTES: 1440
           ACCESS_TOKEN_EXPIRE_MINUTES: 30
+          VERIFY_TOKEN_SECRET_KEY: secret1
+          ACCESS_TOKEN_SECRET_KEY: secret2
+          REFRESH_TOKEN_SECRET_KEY: secret3
+          SESSION_SECRET_KEY: secret4
+          ALGORITHM: HS256
           DB_NAME: ${{ env.TEST_DB_NAME }}
           DB_PASSWORD: ${{ env.TEST_DB_PASSWORD }}
           DB_HOST: "127.0.0.1"

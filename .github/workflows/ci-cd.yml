@@ -55,8 +55,12 @@ jobs:
           set -e
           echo 'ENVIRONMENT=${{ vars.ENVIRONMENT }}' >> .env
           echo 'DOMAIN=${{ vars.DOMAIN }}' >> .env
-          echo 'SECRET_KEY=${{ secrets.SECRET_KEY }}' >> .env
-          echo 'CSRF_SECRET=${{ secrets.CSRF_SECRET_KEY }}' >> .env
+          echo 'REFRESH_TOKEN_EXPIRE_MINUTES=${{ vars.REFRESH_TOKEN_EXPIRE_MINUTES }}' >> .env
+          echo 'VERIFY_TOKEN_SECRET_KEY=${{ secret.VERIFY_TOKEN_SECRET_KEY }}' >> .env
+          echo 'ACCESS_TOKEN_SECRET_KEY=${{ secret.ACCESS_TOKEN_SECRET_KEY }}' >> .env
+          echo 'REFRESH_TOKEN_SECRET_KEY=${{ secret.REFRESH_TOKEN_SECRET_KEY }}' >> .env
+          echo 'ALGORITHM=HS256' >> .env
+          echo 'CSRF_SECRET=${{ secrets.CSRF_SECRET }}' >> .env
           echo 'SESSION_SECRET_KEY=${{ secrets.SESSION_SECRET_KEY }}' >> .env
           echo 'ACCESS_TOKEN_EXPIRE_MINUTES=${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }}' >> .env
           echo 'DB_NAME=${{ secrets.DB_NAME }}' >> .env

@@ -1,15 +1,16 @@
 from typing import Optional
 
 from fastapi import Response
-from httpx import AsyncClient
+from httpx import AsyncClient, Cookies
 
 from app import models, repository
-from app.main import get_app
-from app.oauth2 import create_access_token
+from app.auth_manager import get_strategy
+from app.config import settings
+from app.main import app
 from app.utils.enums import RequestMethod
 
 
-def authorized_httpx_client(client: AsyncClient, user: models.User):
+async def authorized_httpx_client(client: AsyncClient, user: models.User):
     """
     Fixture that provides an authorized client with a token.
 
@@ -20,13 +21,14 @@ def authorized_httpx_client(client: AsyncClient, user: models.User):
     Returns:
         AsyncClient: An authorized client with the provided token.
     """
-    token = create_access_token(
-        {
-            "sub": str(user.id),
-            "aud": ["fastapi-users:auth"],
-        }
-    )
-    client.cookies = {**client.cookies, "fastapiusersauth": token}
+
+    strategy = get_strategy()
+    token = strategy.write_token(user)
+
+    client.cookies = {
+        **client.cookies,
+        settings.access_token_name: await token,
+    }
     return client
 
 
@@ -36,6 +38,7 @@ async def make_http_request(
     json: Optional[dict] = None,
     as_user: Optional[models.User] = None,
     method: RequestMethod = RequestMethod.POST,
+    cookies: Optional[Cookies] = None,
 ) -> Response:
     """
     Makes an HTTP request to the specified URL using the given method and JSON data.
@@ -53,11 +56,13 @@ async def make_http_request(
         ValueError: If an invalid method is provided.
     """
 
-    app = get_app()
-
     async with AsyncClient(app=app, base_url="http://test") as client:
+
+        if cookies:
+            client.cookies = {**client.cookies, **cookies}
+
         if as_user:
-            client = authorized_httpx_client(client, as_user)
+            client = await authorized_httpx_client(client, as_user)
 
         if method == RequestMethod.POST:
             response = await client.post(url, json=json, data=data)
