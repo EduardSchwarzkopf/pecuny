@@ -18,8 +18,6 @@ from app.services import email
 
 VERIFICATION_SECRET = settings.verify_token_secret_key
 ACCESS_TOKEN_EXPIRE = settings.access_token_expire_minutes * 60
-REFRESH_TOKEN_EXPIRE = settings.refresh_token_expire_minutes * 60
-REFRESH_TOKEN_SECRET = settings.refresh_token_secret_key
 SECURE_COOKIE = settings.enviroment != "dev"
 
 
@@ -106,7 +104,8 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 class CustomJWTStrategy(JWTStrategy[models.UP, models.ID]):
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        secret: SecretType,
+        access_token_secret: SecretType,
+        refresh_token_secret: SecretType,
         lifetime_seconds: Optional[int],
         refresh_lifetime_seconds: Optional[int],
         token_audience: Optional[List[str]] = None,
@@ -117,7 +116,7 @@ class CustomJWTStrategy(JWTStrategy[models.UP, models.ID]):
             token_audience = settings.token_audience
 
         super().__init__(
-            secret=secret,
+            secret=access_token_secret,
             lifetime_seconds=lifetime_seconds,
             token_audience=token_audience,
             algorithm=algorithm,
@@ -125,6 +124,7 @@ class CustomJWTStrategy(JWTStrategy[models.UP, models.ID]):
         )
 
         self.refresh_lifetime_seconds = refresh_lifetime_seconds
+        self.refresh_token_secret = refresh_token_secret
 
     async def write_refresh_token(self, user: User) -> str:
         """
@@ -143,7 +143,7 @@ class CustomJWTStrategy(JWTStrategy[models.UP, models.ID]):
         data = {"sub": str(user.id), "aud": self.token_audience}
         return generate_jwt(
             data,
-            self.encode_key,
+            self.refresh_token_secret,
             self.refresh_lifetime_seconds,
             algorithm=self.algorithm,
         )
@@ -241,9 +241,10 @@ def get_strategy() -> CustomJWTStrategy:
     """
 
     return CustomJWTStrategy(
-        secret=VERIFICATION_SECRET,
+        access_token_secret=settings.access_token_secret_key,
         lifetime_seconds=ACCESS_TOKEN_EXPIRE,
-        refresh_lifetime_seconds=REFRESH_TOKEN_EXPIRE,
+        refresh_lifetime_seconds=settings.refresh_token_expire_minutes * 60,
+        refresh_token_secret=settings.refresh_token_secret_key,
     )
 
 
