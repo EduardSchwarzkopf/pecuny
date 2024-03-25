@@ -1,12 +1,12 @@
 from typing import Optional
 
 from fastapi import Response
-from httpx import AsyncClient
+from httpx import AsyncClient, Cookies
 
 from app import models, repository
 from app.auth_manager import get_strategy
 from app.config import settings
-from app.main import get_app
+from app.main import app
 from app.utils.enums import RequestMethod
 
 
@@ -38,6 +38,7 @@ async def make_http_request(
     json: Optional[dict] = None,
     as_user: Optional[models.User] = None,
     method: RequestMethod = RequestMethod.POST,
+    cookies: Optional[Cookies] = None,
 ) -> Response:
     """
     Makes an HTTP request to the specified URL using the given method and JSON data.
@@ -55,9 +56,11 @@ async def make_http_request(
         ValueError: If an invalid method is provided.
     """
 
-    app = get_app()
-
     async with AsyncClient(app=app, base_url="http://test") as client:
+
+        if cookies:
+            client.cookies = {**client.cookies, **cookies}
+
         if as_user:
             client = await authorized_httpx_client(client, as_user)
 
