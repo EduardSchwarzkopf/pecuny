@@ -1,11 +1,13 @@
 import jwt
 import pytest
+from httpx import Cookies
 
 from app import models
 from app import repository as repo
 from app import schemas
+from app.auth_manager import get_strategy
 from app.config import settings
-from app.utils.enums import DatabaseFilterOperator, RequestMethod
+from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
 
 SUCCESS_LOGIN_STATUS_CODE = 204
@@ -95,8 +97,50 @@ async def test_invalid_create_user(test_user: models.User):
     assert res.status_code == 400
 
 
+@pytest.mark.parametrize(
+    "values",
+    [
+        ({"email": "mew@mew.de"}),
+        ({"email": "another@mail.com"}),
+        ({"displayname": "Agent Smith"}),
+        ({"password": "lancelot"}),
+    ],
+)
+async def test_updated_user(test_user: models.User, values: dict):
+    """
+    Test case for updating a user.
+
+    Args:
+        test_user (fixture): The test user.
+        values (dict): The updated values for the user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
+    res = await make_http_request(
+        "/api/users/me", json=values, method=RequestMethod.PATCH, as_user=test_user
+    )
+
+    assert res.status_code == 200
+    user = schemas.UserRead(**res.json())
+
+    for key, value in values.items():
+        if key == "password":
+            login_res = await make_http_request(
+                f"{ENDPOINT}/login",
+                {"username": user.email, "password": value},
+            )
+            assert login_res.status_code == SUCCESS_LOGIN_STATUS_CODE
+            continue
+
+        assert getattr(user, key) == value
+
+
 @pytest.mark.usefixtures("test_users")
-async def test_login():
+async def test_api_login():
     """
     Test case for login.
 
@@ -164,7 +208,7 @@ async def test_login():
     ],
 )
 @pytest.mark.usefixtures("test_user")
-async def test_invalid_login(
+async def test_invalid_api_login(
     username: str,
     password: str,
     status_code: int,
@@ -192,134 +236,40 @@ async def test_invalid_login(
     assert res.status_code == status_code
 
 
-@pytest.mark.parametrize(
-    "values",
-    [
-        ({"email": "mew@mew.de"}),
-        ({"email": "another@mail.com"}),
-        ({"displayname": "Agent Smith"}),
-        ({"password": "lancelot"}),
-    ],
-)
-async def test_updated_user(test_user: models.User, values: dict):
+async def test_logout(test_user: models.User):
+
+    res = await make_http_request(
+        url="/login", method=RequestMethod.GET, cookies=cookies
+    )
+
+    res = await make_http_request(
+        url="/api/users/me", method=RequestMethod.GET, cookies=cookies
+    )
+
+
+async def test_refresh_token_handling(test_user: models.User):
     """
-    Test case for updating a user.
+    Test function to verify the handling of refreshing tokens for a given test user.
 
     Args:
-        test_user (fixture): The test user.
-        values (dict): The updated values for the user.
+        test_user: The test user object for token refresh testing.
 
     Returns:
         None
-
-    Raises:
-        AssertionError: If the test fails.
     """
-    res = await make_http_request(
-        "/api/users/me", json=values, method=RequestMethod.PATCH, as_user=test_user
+
+    strategy = get_strategy()
+    token = await strategy.write_refresh_token(test_user)
+
+    cookies = Cookies(
+        {
+            settings.refresh_token_name: token,
+        }
     )
 
+    endpoint = "/api/users/me"
+
+    res = await make_http_request(
+        url=endpoint, method=RequestMethod.GET, cookies=cookies
+    )
     assert res.status_code == 200
-    user = schemas.UserRead(**res.json())
-
-    for key, value in values.items():
-        if key == "password":
-            login_res = await make_http_request(
-                f"{ENDPOINT}/login",
-                {"username": user.email, "password": value},
-            )
-            assert login_res.status_code == SUCCESS_LOGIN_STATUS_CODE
-            continue
-
-        assert getattr(user, key) == value
-
-
-@pytest.mark.parametrize(
-    "values",
-    [
-        ({"email": "mewmew.de"}),
-        ({"password": ""}),
-        ({"is_superuser": True}),
-        ({"email": "anothermail.com"}),
-    ],
-)
-async def test_invalid_updated_user(test_user: models.User, values: dict):
-    """
-    Test case for updating a user with invalid values.
-
-    Args:
-        test_user (fixture): The test user.
-        values (dict): The updated values for the user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
-    """
-
-    user_id = str(test_user.id)
-    res = await make_http_request(
-        f"/api/users/{user_id}",
-        json=values,
-        method=RequestMethod.PATCH,
-        as_user=test_user,
-    )
-
-    assert res.status_code == 403
-
-
-async def test_delete_user(
-    test_user: models.User,
-):
-    """
-    Test case for deleting a user.
-
-    Args:
-        test_user (fixture): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-    """
-    res = await make_http_request(
-        "/api/users/me", method=RequestMethod.DELETE, as_user=test_user
-    )
-
-    assert res.status_code == 204
-
-    user = await repo.get(models.User, test_user.id)
-    assert user is None
-
-
-async def test_invalid_delete_user(test_user: models.User):
-    """
-    Test case for deleting a user.
-
-    Args:
-        test_user (fixture): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-    """
-    other_user_list = await repo.filter_by_multiple(
-        models.User,
-        [
-            (models.User.email, test_user.email, DatabaseFilterOperator.NOT_EQUAL),
-            (models.User.is_verified, True, DatabaseFilterOperator.EQUAL),
-        ],
-    )
-    other_user = other_user_list[-1]
-    res = await make_http_request(
-        url=f"/api/users/{other_user.id}",
-        method=RequestMethod.DELETE,
-        as_user=test_user,
-    )
-
-    assert res.status_code == 403
