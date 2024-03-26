@@ -56,9 +56,9 @@ jobs:
           echo 'ENVIRONMENT=${{ vars.ENVIRONMENT }}' >> .env
           echo 'DOMAIN=${{ vars.DOMAIN }}' >> .env
           echo 'REFRESH_TOKEN_EXPIRE_MINUTES=${{ vars.REFRESH_TOKEN_EXPIRE_MINUTES }}' >> .env
-          echo 'VERIFY_TOKEN_SECRET_KEY=${{ secret.VERIFY_TOKEN_SECRET_KEY }}' >> .env
-          echo 'ACCESS_TOKEN_SECRET_KEY=${{ secret.ACCESS_TOKEN_SECRET_KEY }}' >> .env
-          echo 'REFRESH_TOKEN_SECRET_KEY=${{ secret.REFRESH_TOKEN_SECRET_KEY }}' >> .env
+          echo 'VERIFY_TOKEN_SECRET_KEY=${{ secrets.VERIFY_TOKEN_SECRET_KEY }}' >> .env
+          echo 'ACCESS_TOKEN_SECRET_KEY=${{ secrets.ACCESS_TOKEN_SECRET_KEY }}' >> .env
+          echo 'REFRESH_TOKEN_SECRET_KEY=${{ secrets.REFRESH_TOKEN_SECRET_KEY }}' >> .env
           echo 'ALGORITHM=HS256' >> .env
           echo 'CSRF_SECRET=${{ secrets.CSRF_SECRET }}' >> .env
           echo 'SESSION_SECRET_KEY=${{ secrets.SESSION_SECRET_KEY }}' >> .env
