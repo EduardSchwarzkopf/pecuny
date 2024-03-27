@@ -140,7 +140,7 @@ async def test_updated_user(test_user: models.User, values: dict):
 
 
 @pytest.mark.usefixtures("test_users")
-async def test_api_login():
+async def test_login():
     """
     Test case for login.
 
