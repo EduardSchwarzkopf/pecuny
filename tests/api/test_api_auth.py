@@ -240,6 +240,7 @@ async def test_logout(test_user: models.User):
 
     res = await make_http_request(url="/api/auth/logout", as_user=test_user)
 
+    # TODO: check for other states as well
     assert res.status_code == 204
 
 
