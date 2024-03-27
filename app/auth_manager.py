@@ -1,5 +1,5 @@
 import uuid
-from typing import AsyncGenerator, List, Optional
+from typing import AsyncGenerator, List, Literal, Optional
 
 from fastapi import Depends, Request, Response, status
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, exceptions, models
