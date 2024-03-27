@@ -241,6 +241,7 @@ class CustomJWTStrategy(JWTStrategy[models.UP, models.ID]):
 
 
 class CustomAuthenticationBackend(AuthenticationBackend):
+    transport: CustomCookieTransport
 
     async def login(self, strategy: CustomJWTStrategy, user: User) -> Response:
         """
