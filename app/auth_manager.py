@@ -301,6 +301,7 @@ def get_strategy() -> CustomJWTStrategy:
         lifetime_seconds=ACCESS_TOKEN_EXPIRE,
         refresh_lifetime_seconds=settings.refresh_token_expire_minutes * 60,
         refresh_token_secret=settings.refresh_token_secret_key,
+        refresh_lifetime_seconds=REFRESH_COOKIE_EXPIRE,
     )
 
 
