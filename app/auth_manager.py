@@ -140,7 +140,7 @@ class CustomCookieTransport(CookieTransport):
     ) -> Response:
 
         for name, token, max_age in [
-            (self.cookie_name, access_token, self.cookie_max_age, self.cookie_max_age),
+            (self.cookie_name, access_token, self.cookie_max_age),
             (self.refresh_cookie_name, refresh_token, self.cookie_refresh_max_age),
         ]:
             response.set_cookie(
@@ -299,7 +299,6 @@ def get_strategy() -> CustomJWTStrategy:
     return CustomJWTStrategy(
         access_token_secret=settings.access_token_secret_key,
         lifetime_seconds=ACCESS_TOKEN_EXPIRE,
-        refresh_lifetime_seconds=settings.refresh_token_expire_minutes * 60,
         refresh_token_secret=settings.refresh_token_secret_key,
         refresh_lifetime_seconds=REFRESH_COOKIE_EXPIRE,
     )
