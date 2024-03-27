@@ -1,18 +1,19 @@
 from typing import List, Literal, Optional
 
 from fastapi import Response, status
-from fastapi.security import APIKeyCookie
 from fastapi_users import models
-from fastapi_users.authentication import AuthenticationBackend, JWTStrategy, Transport
+from fastapi_users.authentication import (
+    AuthenticationBackend,
+    CookieTransport,
+    JWTStrategy,
+)
 from fastapi_users.jwt import SecretType, generate_jwt
-from fastapi_users.openapi import OpenAPIResponseType
 
 from app.config import settings
 from app.models import User
 
 
-class TokensCookieTransport(Transport):
-    scheme: APIKeyCookie
+class TokensCookieTransport(CookieTransport):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -26,29 +27,26 @@ class TokensCookieTransport(Transport):
         cookie_httponly: bool = True,
         cookie_samesite: Literal["lax", "strict", "none"] = "lax",
     ):
-        self.cookie_name = cookie_name
-        self.cookie_max_age = cookie_max_age
-        self.cookie_path = cookie_path
-        self.cookie_domain = cookie_domain
-        self.cookie_secure = cookie_secure
-        self.cookie_httponly = cookie_httponly
-        self.cookie_samesite = cookie_samesite
-        self.scheme = APIKeyCookie(name=self.cookie_name, auto_error=False)
+        super().__init__(
+            cookie_name,
+            cookie_max_age,
+            cookie_path,
+            cookie_domain,
+            cookie_secure,
+            cookie_httponly,
+            cookie_samesite,
+        )
 
         self.refresh_cookie_name = cookie_refresh_name
         self.cookie_refresh_max_age = cookie_refresh_max_age
 
-    async def get_login_response(
+    async def get_login_response(  # pylint: disable=arguments-differ
         self, access_token: str, refresh_token: str
     ) -> Response:
         response = Response(status_code=status.HTTP_204_NO_CONTENT)
         return self._set_login_cookie(response, access_token, refresh_token)
 
-    async def get_logout_response(self) -> Response:
-        response = Response(status_code=status.HTTP_204_NO_CONTENT)
-        return self._set_logout_cookie(response)
-
-    def _set_login_cookie(
+    def _set_login_cookie(  # pylint: disable=arguments-differ
         self, response: Response, access_token: str, refresh_token: str
     ) -> Response:
 
@@ -84,14 +82,6 @@ class TokensCookieTransport(Transport):
             )
 
         return response
-
-    @staticmethod
-    def get_openapi_login_responses_success() -> OpenAPIResponseType:
-        return {status.HTTP_204_NO_CONTENT: {"model": None}}
-
-    @staticmethod
-    def get_openapi_logout_responses_success() -> OpenAPIResponseType:
-        return {status.HTTP_204_NO_CONTENT: {"model": None}}
 
 
 class JWTAccessRefreshStrategy(JWTStrategy[models.UP, models.ID]):
