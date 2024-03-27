@@ -258,25 +258,7 @@ class CustomAuthenticationBackend(AuthenticationBackend):
         access_token = await strategy.write_token(user)
         refresh_token = await strategy.write_refresh_token(user)
 
-        response = Response(
-            status_code=status.HTTP_204_NO_CONTENT,
-        )
-
-        response.set_cookie(
-            settings.access_token_name,
-            access_token,
-            max_age=strategy.lifetime_seconds,
-            secure=SECURE_COOKIE,
-        )
-
-        response.set_cookie(
-            settings.refresh_token_name,
-            refresh_token,
-            max_age=strategy.refresh_lifetime_seconds,
-            secure=SECURE_COOKIE,
-        )
-
-        return response
+        return await self.transport.get_login_response(access_token, refresh_token)
 
 
 async def get_user_manager(
