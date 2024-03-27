@@ -176,7 +176,7 @@ def set_tokens_in_response(
         settings.access_token_name,
         new_access_token,
         max_age=strategy.lifetime_seconds,
-        secure=settings,
+        secure=settings.secure_cookie,
     )
 
 
