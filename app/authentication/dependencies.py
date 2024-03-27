@@ -4,7 +4,7 @@ from fastapi import Depends
 from fastapi_users.db import SQLAlchemyUserDatabase
 
 from app.authentication.management import UserManager
-from app.authentication.strategies import CustomJWTStrategy
+from app.authentication.strategies import JWTAccessRefreshStrategy
 from app.config import settings
 from app.database import get_user_db
 
@@ -28,7 +28,7 @@ async def get_user_manager(
     yield UserManager(user_db)
 
 
-def get_strategy() -> CustomJWTStrategy:
+def get_strategy() -> JWTAccessRefreshStrategy:
     """
     Returns a custom JWT strategy with specified secret and token lifetimes.
 
@@ -36,7 +36,7 @@ def get_strategy() -> CustomJWTStrategy:
         CustomJWTStrategy: The custom JWT strategy object.
     """
 
-    return CustomJWTStrategy(
+    return JWTAccessRefreshStrategy(
         access_token_secret=settings.access_token_secret_key,
         lifetime_seconds=settings.access_token_expire_minutes,
         refresh_token_secret=settings.refresh_token_secret_key,

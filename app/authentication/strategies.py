@@ -13,7 +13,7 @@ from app.config import settings
 from app.models import User
 
 
-class CustomCookieTransport(CookieTransport):
+class TokensCookieTransport(CookieTransport):
 
     def __init__(
         self,
@@ -84,7 +84,7 @@ class CustomCookieTransport(CookieTransport):
         return response
 
 
-class CustomJWTStrategy(JWTStrategy[models.UP, models.ID]):
+class JWTAccessRefreshStrategy(JWTStrategy[models.UP, models.ID]):
     def __init__(  # pylint: disable=too-many-arguments
         self,
         access_token_secret: SecretType,
@@ -151,10 +151,10 @@ class CustomJWTStrategy(JWTStrategy[models.UP, models.ID]):
         )
 
 
-class CustomAuthenticationBackend(AuthenticationBackend):
-    transport: CustomCookieTransport
+class JWTAuthBackend(AuthenticationBackend):
+    transport: TokensCookieTransport
 
-    async def login(self, strategy: CustomJWTStrategy, user: User) -> Response:
+    async def login(self, strategy: JWTAccessRefreshStrategy, user: User) -> Response:
         """
         Logs in a user by generating access and refresh tokens using the provided JWT strategy.
 
