@@ -18,6 +18,7 @@ from app.services import email
 
 VERIFICATION_SECRET = settings.verify_token_secret_key
 ACCESS_TOKEN_EXPIRE = settings.access_token_expire_minutes * 60
+REFRESH_COOKIE_EXPIRE = settings.refresh_token_expire_minutes * 60
 SECURE_COOKIE = settings.enviroment != "dev"
 
 
