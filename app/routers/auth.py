@@ -7,13 +7,10 @@ from fastapi_users import exceptions
 from starlette_wtf import csrf_protect
 
 from app import schemas, templates
-from app.auth_manager import (
-    JWTStrategy,
-    UserManager,
-    auth_backend,
-    get_user_manager,
-    optional_current_active_verified_user,
-)
+from app.auth_manager import auth_backend, optional_current_active_verified_user
+from app.authentication.dependencies import get_user_manager
+from app.authentication.management import UserManager
+from app.authentication.strategies import JWTStrategy
 from app.models import User
 from app.routers.dashboard import router as dashboard_router
 from app.services.users import UserService

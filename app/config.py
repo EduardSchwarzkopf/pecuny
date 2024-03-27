@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     token_audience: List[str] = ["fastapi-users:auth"]
     access_token_expire_minutes: int = 30
     refresh_token_expire_minutes: int = 1440
+    secure_cookie: bool = True
 
     test_db_name: str = "test_db"
     test_db_port: int = 5433
@@ -61,3 +62,4 @@ setattr(
 
 settings.access_token_expire_minutes = settings.access_token_expire_minutes * 60
 settings.refresh_token_expire_minutes = settings.refresh_token_expire_minutes * 60
+settings.secure_cookie = settings.enviroment != "dev"

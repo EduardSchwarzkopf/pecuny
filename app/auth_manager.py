@@ -11,7 +11,7 @@ cookie_transport = TokensCookieTransport(
     cookie_name=settings.access_token_name,
     cookie_max_age=settings.access_token_expire_minutes,
     cookie_refresh_max_age=settings.refresh_token_expire_minutes,
-    cookie_secure=settings.enviroment != "dev",
+    cookie_secure=settings.secure_cookie,
 )
 
 auth_backend = JWTAuthBackend(
