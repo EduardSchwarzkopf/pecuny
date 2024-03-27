@@ -65,19 +65,19 @@ async def make_http_request(
             client = await authorized_httpx_client(client, as_user)
 
         if method == RequestMethod.POST:
-            response = await client.post(url, json=json, data=data)
+            response = client.post(url, json=json, data=data)
         elif method == RequestMethod.PATCH:
-            response = await client.patch(url, json=json, data=data)
+            response = client.patch(url, json=json, data=data)
         elif method == RequestMethod.GET:
-            response = await client.get(url)
+            response = client.get(url)
         elif method == RequestMethod.DELETE:
-            response = await client.delete(url)
+            response = client.delete(url)
         else:
             raise ValueError(
                 f"Invalid method: {method}. Expected one of: get, post, patch, delete."
             )
 
-    return response
+        return await response
 
 
 async def get_user_offset_account(account: models.Account) -> Optional[models.Account]:

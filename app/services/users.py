@@ -5,7 +5,7 @@ from fastapi_users import exceptions
 
 from app import database, models
 from app import repository as repo
-from app.auth_manager import UserManager
+from app.authentication.management import UserManager
 from app.database import db
 from app.logger import get_logger
 from app.schemas import EmailStr, UserCreate, UserUpdate

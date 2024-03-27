@@ -55,7 +55,7 @@ class Database:
         session_factory = sessionmaker(
             self.engine, expire_on_commit=False, class_=AsyncSession
         )
-        # Directly return a new session from the session factory
+
         return session_factory()
 
     @property

@@ -17,7 +17,8 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette_wtf import CSRFProtectMiddleware
 
 from app import models, repository, schemas, templates
-from app.auth_manager import SECURE_COOKIE, CustomJWTStrategy, get_strategy
+from app.authentication.dependencies import get_strategy
+from app.authentication.strategies import JWTAccessRefreshStrategy
 from app.config import settings
 from app.database import db
 from app.logger import get_logger
@@ -167,7 +168,7 @@ def set_tokens_in_response(
     refresh_token: str,
     new_access_token: str,
     payload: dict,
-    strategy: CustomJWTStrategy,
+    strategy: JWTAccessRefreshStrategy,
 ):
     """Helper function to set the new tokens in the response."""
     response.set_cookie(settings.refresh_token_name, refresh_token, payload["exp"])
@@ -175,7 +176,7 @@ def set_tokens_in_response(
         settings.access_token_name,
         new_access_token,
         max_age=strategy.lifetime_seconds,
-        secure=SECURE_COOKIE,
+        secure=settings.secure_cookie,
     )
 
 
