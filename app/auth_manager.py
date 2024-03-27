@@ -280,9 +280,10 @@ async def get_user_manager(
     yield UserManager(user_db)
 
 
-cookie_transport = CookieTransport(
-    cookie_name="access_token",
+cookie_transport = CustomCookieTransport(
+    cookie_name=settings.access_token_name,
     cookie_max_age=ACCESS_TOKEN_EXPIRE,
+    cookie_refresh_max_age=REFRESH_COOKIE_EXPIRE,
     cookie_secure=SECURE_COOKIE,
 )
 
