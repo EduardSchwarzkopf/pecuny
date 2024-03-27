@@ -237,6 +237,15 @@ async def test_invalid_api_login(
 
 
 async def test_logout(test_user: models.User):
+    """
+    Test the API endpoint for user logout.
+
+    Args:
+        test_user: The test user object for simulating the logout.
+
+    Returns:
+        None
+    """
 
     res = await make_http_request(url="/api/auth/logout", as_user=test_user)
 
