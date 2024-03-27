@@ -1,0 +1,17 @@
+{% import 'macros/buttons.html' as btn %}
+
+{% extends "layouts/base.html" %}
+{% block content %}
+<div class="grid min-h-full place-items-center px-6 py-24 sm:py-32 lg:px-8">
+    <div class="text-center">
+        <h4 class="text-primary">Oops! Something went wrong here.</h4>
+        <h1 class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">✖⸑✖</h1>
+            <p class="mt-6 text-base leading-7 text-gray-600">We're on it! Please check again later.</p>
+        <div class="mt-10 flex items-center justify-center gap-x-6">
+            <a href="/">
+                {{ btn.button('Back home') }}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

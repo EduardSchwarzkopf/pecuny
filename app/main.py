@@ -189,8 +189,7 @@ if _debug := os.getenv("DEBUG"):
     templates.env.globals["hot_reload"] = hot_reload
 
 
-# Exception Handlers
-@app.exception_handler(401)
+@app.exception_handler(status.HTTP_401_UNAUTHORIZED)
 async def unauthorized_exception_handler(
     request: Request, exc: UnauthorizedPageException
 ):
@@ -250,7 +249,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-@app.exception_handler(404)
+@app.exception_handler(status.HTTP_404_NOT_FOUND)
 async def page_not_found_exception_handler(request: Request, exc: HTTPException):
     """Exception handler for 404 Page Not Found errors.
 
@@ -272,4 +271,33 @@ async def page_not_found_exception_handler(request: Request, exc: HTTPException)
         "exceptions/404.html",
         {"request": request},
         status_code=exc.status_code,
+    )
+
+
+@app.exception_handler(status.HTTP_500_INTERNAL_SERVER_ERROR)
+async def internal_server_error_handler(request: Request, exc: HTTPException):
+    """
+    Handles internal server errors by logging the error details and
+    returning an appropriate response.
+
+    Args:
+        request: The incoming request object.
+        exc: The raised HTTPException.
+
+    Returns:
+        JSONResponse or TemplateResponse: Response based on the request path.
+    """
+
+    error_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    logger.error(
+        "[INTERNAL SERVER ERROR] on path: %s | detail: %s", request.url.path, str(exc)
+    )
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": "Internal server error"}, status_code=error_code)
+
+    return templates.TemplateResponse(
+        "exceptions/500.html",
+        {"request": request},
+        status_code=error_code,
     )
