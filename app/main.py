@@ -274,10 +274,7 @@ async def page_not_found_exception_handler(request: Request, exc: HTTPException)
     )
 
 
-INTERNAL_SERVER_ERROR = status.HTTP_500_INTERNAL_SERVER_ERROR
-
-
-@app.exception_handler(INTERNAL_SERVER_ERROR)
+@app.exception_handler(status.HTTP_500_INTERNAL_SERVER_ERROR)
 async def internal_server_error_handler(request: Request, exc: HTTPException):
     """
     Handles internal server errors by logging the error details and
@@ -291,16 +288,16 @@ async def internal_server_error_handler(request: Request, exc: HTTPException):
         JSONResponse or TemplateResponse: Response based on the request path.
     """
 
+    error_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+
     logger.error(
         "[INTERNAL SERVER ERROR] on path: %s | detail: %s", request.url.path, str(exc)
     )
     if request.url.path.startswith("/api/"):
-        return JSONResponse(
-            {"detail": "Internal server error"}, status_code=INTERNAL_SERVER_ERROR
-        )
+        return JSONResponse({"detail": "Internal server error"}, status_code=error_code)
 
     return templates.TemplateResponse(
         "exceptions/500.html",
         {"request": request},
-        status_code=INTERNAL_SERVER_ERROR,
+        status_code=error_code,
     )
