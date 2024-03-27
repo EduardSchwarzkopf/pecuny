@@ -1,11 +1,6 @@
-import jwt
-import pytest
-from fastapi import Response
 from httpx import Cookies
 
-from app import auth_manager, models
-from app import repository as repo
-from app import schemas
+from app import models
 from app.config import settings
 from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
@@ -32,4 +27,14 @@ async def test_invalid_api_login():
 
 
 async def test_logout(test_user: models.User):
-    pass
+
+    res = await make_http_request(
+        url="/logout", method=RequestMethod.GET, as_user=test_user
+    )
+
+    cookies: Cookies = res.cookies
+    access_token = cookies.get(settings.access_token_name)
+    refresh_token = cookies.get(settings.refresh_token_name)
+
+    assert access_token == '""'
+    assert refresh_token == '""'
