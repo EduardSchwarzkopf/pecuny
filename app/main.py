@@ -280,7 +280,8 @@ INTERNAL_SERVER_ERROR = status.HTTP_500_INTERNAL_SERVER_ERROR
 @app.exception_handler(INTERNAL_SERVER_ERROR)
 async def internal_server_error_handler(request: Request, exc: HTTPException):
     """
-    Handles internal server errors by logging the error details and returning an appropriate response.
+    Handles internal server errors by logging the error details and
+    returning an appropriate response.
 
     Args:
         request: The incoming request object.
@@ -288,9 +289,6 @@ async def internal_server_error_handler(request: Request, exc: HTTPException):
 
     Returns:
         JSONResponse or TemplateResponse: Response based on the request path.
-
-    Examples:
-        Example of handling an internal server error and returning a JSONResponse or TemplateResponse.
     """
 
     logger.error(
