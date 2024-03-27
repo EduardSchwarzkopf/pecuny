@@ -58,3 +58,6 @@ setattr(
     f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@"
     f"{settings.db_host}:{settings.test_db_port}/{settings.test_db_name}",
 )
+
+settings.access_token_expire_minutes = settings.access_token_expire_minutes * 60
+settings.refresh_token_expire_minutes = settings.refresh_token_expire_minutes * 60
