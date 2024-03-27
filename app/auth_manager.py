@@ -102,6 +102,77 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         await email.send_new_token(user, self.get_token(user))
 
 
+class CustomCookieTransport(CookieTransport):
+
+    def __init__(
+        self,
+        cookie_name: str = "access_token",
+        cookie_refresh_name: str = "refresh_token",
+        cookie_max_age: Optional[int] = None,
+        cookie_refresh_max_age: Optional[int] = None,
+        cookie_path: str = "/",
+        cookie_domain: Optional[str] = None,
+        cookie_secure: bool = True,
+        cookie_httponly: bool = True,
+        cookie_samesite: Literal["lax", "strict", "none"] = "lax",
+    ):
+        super().__init__(
+            cookie_name,
+            cookie_max_age,
+            cookie_path,
+            cookie_domain,
+            cookie_secure,
+            cookie_httponly,
+            cookie_samesite,
+        )
+
+        self.refresh_cookie_name = cookie_refresh_name
+        self.cookie_refresh_max_age = cookie_refresh_max_age
+
+    async def get_login_response(
+        self, access_token: str, refresh_token: str
+    ) -> Response:
+        response = Response(status_code=status.HTTP_204_NO_CONTENT)
+        return self._set_login_cookie(response, access_token, refresh_token)
+
+    def _set_login_cookie(
+        self, response: Response, access_token: str, refresh_token: str
+    ) -> Response:
+
+        for name, token, max_age in [
+            (self.cookie_name, access_token, self.cookie_max_age, self.cookie_max_age),
+            (self.refresh_cookie_name, refresh_token, self.cookie_refresh_max_age),
+        ]:
+            response.set_cookie(
+                name,
+                token,
+                max_age=max_age,
+                path=self.cookie_path,
+                domain=self.cookie_domain,
+                secure=self.cookie_secure,
+                httponly=self.cookie_httponly,
+                samesite=self.cookie_samesite,
+            )
+
+        return response
+
+    def _set_logout_cookie(self, response: Response) -> Response:
+
+        for cookie_name in [self.cookie_name, self.refresh_cookie_name]:
+            response.set_cookie(
+                cookie_name,
+                "",
+                max_age=0,
+                path=self.cookie_path,
+                domain=self.cookie_domain,
+                secure=self.cookie_secure,
+                httponly=self.cookie_httponly,
+                samesite=self.cookie_samesite,
+            )
+
+        return response
+
+
 class CustomJWTStrategy(JWTStrategy[models.UP, models.ID]):
     def __init__(  # pylint: disable=too-many-arguments
         self,
