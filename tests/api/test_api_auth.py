@@ -238,13 +238,9 @@ async def test_invalid_api_login(
 
 async def test_logout(test_user: models.User):
 
-    res = await make_http_request(
-        url="/login", method=RequestMethod.GET, cookies=cookies
-    )
+    res = await make_http_request(url="/api/auth/logout", as_user=test_user)
 
-    res = await make_http_request(
-        url="/api/users/me", method=RequestMethod.GET, cookies=cookies
-    )
+    assert res.status_code == 204
 
 
 async def test_refresh_token_handling(test_user: models.User):
