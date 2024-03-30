@@ -69,7 +69,7 @@ class Settings(BaseSettings):
 
         self.access_token_expire_minutes *= 60
         self.refresh_token_expire_minutes *= 60
-        self.secure_cookie = self.environment != "dev"
+        self.secure_cookie = self.environment == "prod"
 
 
 @lru_cache
