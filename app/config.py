@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import List
 
 from dotenv import load_dotenv
@@ -9,7 +10,7 @@ load_dotenv()
 class Settings(BaseSettings):
     app_name: str = "pecuny"
     max_allowed_accounts: int = 5
-    enviroment: str = "dev"
+    environment: str = "dev"
     domain: str
     db_host: str
     db_name: str
@@ -41,25 +42,46 @@ class Settings(BaseSettings):
     mail_port: int = 465
     mail_server: str
 
+    def __init__(self, **values):
+        super().__init__(**values)
+        self.configure_settings()
 
-# TODO: add lru_cache: https://fastapi.tiangolo.com/advanced/settings/ # pylint : disable=fixme
-settings = Settings()
+    def configure_settings(self):
+        """
+        Configures the settings for the application.
 
-setattr(
-    settings,
-    "db_url",
-    f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@"
-    f"{settings.db_host}:{settings.db_port}/{settings.db_name}",
-)
+        Args:
+            self: The instance of the settings to be configured.
+
+        Returns:
+            None
+        """
+
+        self.db_url = (
+            f"postgresql+asyncpg://{self.db_user}:{self.db_password}@"
+            f"{self.db_host}:{self.db_port}/{self.db_name}"
+        )
+
+        self.test_db_url = (
+            f"postgresql+asyncpg://{self.db_user}:{self.db_password}@"
+            f"{self.db_host}:{self.test_db_port}/{self.test_db_name}"
+        )
+
+        self.access_token_expire_minutes *= 60
+        self.refresh_token_expire_minutes *= 60
+        self.secure_cookie = self.environment == "prod"
 
 
-setattr(
-    settings,
-    "test_db_url",
-    f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@"
-    f"{settings.db_host}:{settings.test_db_port}/{settings.test_db_name}",
-)
+@lru_cache
+def get_settings():
+    """
+    Returns the application settings.
 
-settings.access_token_expire_minutes = settings.access_token_expire_minutes * 60
-settings.refresh_token_expire_minutes = settings.refresh_token_expire_minutes * 60
-settings.secure_cookie = settings.enviroment != "dev"
+    Returns:
+        Settings: The application settings.
+    """
+
+    return Settings()
+
+
+settings = get_settings()
