@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import List
 
 from dotenv import load_dotenv
@@ -55,4 +56,9 @@ class Settings(BaseSettings):
         self.secure_cookie = self.environment != "dev"
 
 
-settings = Settings()
+@lru_cache
+def get_settings():
+    return Settings()
+
+
+settings = get_settings()
