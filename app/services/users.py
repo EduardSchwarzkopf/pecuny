@@ -84,7 +84,7 @@ class UserService:
             user: The user object.
 
         Returns:
-            bool: True if the user is successfully updated, False otherwise.
+            bool: User object.
         """
 
         logger.info("Updating user %s", user.id)
