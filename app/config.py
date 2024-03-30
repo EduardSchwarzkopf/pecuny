@@ -47,9 +47,25 @@ class Settings(BaseSettings):
         self.configure_settings()
 
     def configure_settings(self):
-        self.db_url = f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+        """
+        Configures the settings for the application.
 
-        self.test_db_url = f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.test_db_port}/{self.test_db_name}"
+        Args:
+            self: The instance of the settings to be configured.
+
+        Returns:
+            None
+        """
+
+        self.db_url = (
+            f"postgresql+asyncpg://{self.db_user}:{self.db_password}@"
+            f"{self.db_host}:{self.db_port}/{self.db_name}"
+        )
+
+        self.test_db_url = (
+            f"postgresql+asyncpg://{self.db_user}:{self.db_password}@"
+            f"{self.db_host}:{self.test_db_port}/{self.test_db_name}"
+        )
 
         self.access_token_expire_minutes *= 60
         self.refresh_token_expire_minutes *= 60
@@ -58,6 +74,13 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings():
+    """
+    Returns the application settings.
+
+    Returns:
+        Settings: The application settings.
+    """
+
     return Settings()
 
 
