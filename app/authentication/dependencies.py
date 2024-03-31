@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import AsyncGenerator
 
 from fastapi import Depends
@@ -7,8 +8,22 @@ from app.authentication.management import UserManager
 from app.authentication.strategies import JWTAccessRefreshStrategy
 from app.config import settings
 from app.database import get_user_db
+from app.services.users import UserService
 
 
+@lru_cache
+async def get_user_service() -> UserService:
+    """
+    Returns an instance of the UserService class.
+
+    Returns:
+        UserService: An instance of the UserService class.
+    """
+
+    return UserService()
+
+
+@lru_cache
 async def get_user_manager(
     user_db: SQLAlchemyUserDatabase = Depends(get_user_db),
 ) -> AsyncGenerator[UserManager, None]:
@@ -28,6 +43,7 @@ async def get_user_manager(
     yield UserManager(user_db)
 
 
+@lru_cache
 def get_strategy() -> JWTAccessRefreshStrategy:
     """
     Returns a custom JWT strategy with specified secret and token lifetimes.

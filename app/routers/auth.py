@@ -8,7 +8,7 @@ from starlette_wtf import csrf_protect
 
 from app import schemas, templates
 from app.auth_manager import auth_backend, optional_current_active_verified_user
-from app.authentication.dependencies import get_user_manager
+from app.authentication.dependencies import get_user_manager, get_user_service
 from app.authentication.management import UserManager
 from app.authentication.strategies import JWTStrategy
 from app.models import User
@@ -32,17 +32,6 @@ RESET_PASSWORD = "/reset-password"
 TEMPLATE_PREFIX = "pages/auth"
 TEMPLATE_REGISTER = f"{TEMPLATE_PREFIX}/page_register.html"
 TEMPLATE_LOGIN = f"{TEMPLATE_PREFIX}/page_login.html"
-
-
-async def get_user_service() -> UserService:
-    """
-    Returns an instance of the UserService class.
-
-    Returns:
-        UserService: An instance of the UserService class.
-    """
-
-    return UserService()
 
 
 @csrf_protect
