@@ -77,7 +77,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_request_verify(
         self, user: User, token: str, request: Optional[Request] = None
     ):
-        await email.send_email_verification(user, token)
+        await email.send_email_verification(user, token, request)
         print(f"Verification requested for user {user.id}.")
 
     async def request_verify(
@@ -114,7 +114,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             settings.algorithm,
         )
 
-    async def request_new_token(self, user: User) -> None:
+    async def request_new_token(self, user: User, request: Request) -> None:
         """Request a new token for the specified user.
 
         Args:
@@ -132,4 +132,4 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         if user.is_verified:
             raise exceptions.UserAlreadyVerified()
 
-        await email.send_new_token(user, self.get_token(user))
+        await email.send_email_verification(user, self.get_token(user), request)

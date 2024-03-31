@@ -222,9 +222,21 @@ async def unauthorized_exception_handler(
 
 
 @app.exception_handler(status.HTTP_403_FORBIDDEN)
-async def unauthorized_exception_handler(
-    request: Request, exc: UnauthorizedPageException
-):
+async def forbidden_exception_handler(request: Request, exc: UnauthorizedPageException):
+    """
+    Handles exceptions with status code 403 (Forbidden).
+
+    Args:
+        request: The request object associated with the exception.
+        exc: The UnauthorizedPageException instance raised.
+
+    Returns:
+        JSONResponse or RedirectResponse based on the request path.
+
+    Raises:
+        None
+    """
+
     logger.info("[Forbidden] on path: %s", request.url.path)
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)

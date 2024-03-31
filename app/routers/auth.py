@@ -272,7 +272,7 @@ async def send_new_token(
 
     try:
         user = await user_service.user_manager.get_by_email(email)
-        await user_service.user_manager.request_new_token(user)
+        await user_service.user_manager.request_new_token(user, request)
 
     except exceptions.UserInactive:
         set_feedback(request, FeedbackType.ERROR, "Not possible for this user")
