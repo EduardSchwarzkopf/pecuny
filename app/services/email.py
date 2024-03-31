@@ -1,3 +1,4 @@
+from fastapi import Request
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from starlette.responses import JSONResponse
 
@@ -118,7 +119,9 @@ async def send_forgot_password(user: User, token: str) -> JSONResponse:
     )
 
 
-async def send_new_token(user: User, token: str) -> JSONResponse:
+async def send_email_verification(
+    user: User, token: str, request: Request
+) -> JSONResponse:
     """
     Sends a new token email to a user.
 
@@ -135,13 +138,14 @@ async def send_new_token(user: User, token: str) -> JSONResponse:
 
     email = EmailSchema(
         email=[user.email],
-        body={"user": user, "url": settings.domain, "token": token},
+        body={
+            "user": user,
+            "verify_email_url": request.url_for("verify_email"),
+            "new_token_url": request.url_for("get_new_token"),
+            "token": token,
+        },
     )
     log.info("Sending new token email to %s", user.email)
     return await _send(
         email, "Your verification Token!", template_name="emails/new-token.html"
     )
-
-
-async def send_email_verification(user: User, token: str) -> JSONResponse:
-    return await send_new_token(user, token)
