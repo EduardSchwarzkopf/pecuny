@@ -62,6 +62,11 @@ router_list: RouterList = [
     },
     ## Fastapi Users
     {
+        "router": fastapi_users.get_users_router(UserRead, UserUpdate),
+        "prefix": f"{API_PREFIX}/users",
+        "tags": user_tag_list,
+    },
+    {
         "router": fastapi_users.get_auth_router(auth_backend),
         "prefix": f"{API_PREFIX}/auth",
         "tags": auth_tag_list,
