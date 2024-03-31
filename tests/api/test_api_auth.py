@@ -8,6 +8,7 @@ from app import schemas
 from app.auth_manager import get_strategy
 from app.config import settings
 from app.utils.enums import RequestMethod
+from tests.fixtures import UserData
 from tests.utils import make_http_request
 
 SUCCESS_LOGIN_STATUS_CODE = 204
@@ -101,9 +102,15 @@ async def test_invalid_create_user(test_user: models.User):
     "values",
     [
         ({"email": "mew@mew.de"}),
-        ({"email": "another@mail.com"}),
         ({"displayname": "Agent Smith"}),
         ({"password": "lancelot"}),
+        (
+            {
+                "displayname": "Agent Test",
+                "email": "user@example.com",
+                "password": "password123",
+            }
+        ),
     ],
 )
 async def test_updated_user(test_user: models.User, values: dict):
@@ -136,11 +143,14 @@ async def test_updated_user(test_user: models.User, values: dict):
             assert login_res.status_code == SUCCESS_LOGIN_STATUS_CODE
             continue
 
+        if key == "email":
+            db_user: models.User = await repo.get(models.User, test_user.id)
+            assert db_user.is_verified == False
+
         assert getattr(user, key) == value
 
 
-@pytest.mark.usefixtures("test_users")
-async def test_login():
+async def test_login(test_active_user):
     """
     Test case for login.
 
@@ -155,24 +165,19 @@ async def test_login():
 
     """
 
-    login_user_list = await repo.filter_by(
-        models.User, models.User.email, "hello123@pytest.de"
-    )
-    login_user = login_user_list[0]
-
     for username in [
-        "hello123@pytest.de",
-        "hellO123@pytest.de",
-        "HELLO123@pytest.de",
-        "hello123@PyTeSt.De",
-        "hELLO123@pytest.de",
+        "user123@example.com",
+        "useR123@example.com",
+        "USER123@exAMPLE.com",
+        "user123@example.Com",
+        "uSeR123@ExAmPlE.COM",
     ]:
 
         res = await make_http_request(
             f"{ENDPOINT}/login",
             {
                 "username": username,
-                "password": "password123",
+                "password": UserData.password,
             },
         )
 
@@ -186,7 +191,7 @@ async def test_login():
         )
         user_id = payload["sub"]
 
-        assert user_id == str(login_user.id)
+        assert user_id == str(test_active_user.id)
         assert res.status_code == SUCCESS_LOGIN_STATUS_CODE
 
         response = await make_http_request(
