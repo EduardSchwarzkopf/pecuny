@@ -9,7 +9,7 @@ from app.services.users import UserService
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(prefix="/users", tags=["Users"])
-response_model = schemas.UserRead
+ResponseModel = schemas.UserRead
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
