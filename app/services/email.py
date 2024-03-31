@@ -141,3 +141,7 @@ async def send_new_token(user: User, token: str) -> JSONResponse:
     return await _send(
         email, "Your verification Token!", template_name="emails/new-token.html"
     )
+
+
+async def send_email_verification(user: User, token: str) -> JSONResponse:
+    return await send_new_token(user, token)
