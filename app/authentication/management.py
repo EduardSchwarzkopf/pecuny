@@ -23,10 +23,10 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         request: Optional[Request] = None,
     ) -> None:
 
-        if "email" in update_dict:
-            print("send verification email to ", update_dict["email"])
+        if "email" in update_dict and not user.is_verified:
+            await email.send_email_verification(user, self.get_token(user), request)
 
-        pass
+        return
 
     async def on_after_register(
         self, user: User, request: Optional[Request] = None
@@ -46,7 +46,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_request_verify(
         self, user: User, token: str, request: Optional[Request] = None
     ):
-        await email.send_welcome(user, token)
+        await email.send_email_verification(user, token)
         print(f"Verification requested for user {user.id}.")
 
     async def request_verify(
