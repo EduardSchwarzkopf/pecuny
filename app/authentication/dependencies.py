@@ -23,8 +23,7 @@ def get_user_service() -> UserService:
     return UserService()
 
 
-@lru_cache
-def get_user_manager(
+async def get_user_manager(
     user_db: SQLAlchemyUserDatabase = Depends(get_user_db),
 ) -> AsyncGenerator[UserManager, None]:
     """
@@ -40,7 +39,7 @@ def get_user_manager(
         UserInactive: If the user is inactive.
         UserAlreadyVerified: If the user is already verified.
     """
-    return UserManager(user_db)
+    yield UserManager(user_db)
 
 
 @lru_cache
