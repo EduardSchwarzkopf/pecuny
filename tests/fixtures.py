@@ -17,6 +17,13 @@ from app.utils.enums import DatabaseFilterOperator
 # Reference: https://github.com/EduardSchwarzkopf/pecuny/issues/88
 # pylint: disable=unused-argument
 
+UserData = schemas.UserCreate(
+    email="user123@example.com",
+    password="mypassword",
+    displayname="user",
+    is_active=True,
+)
+
 
 @pytest.fixture(name="user_service", scope="session")
 async def fixture_user_service(session):
@@ -101,6 +108,15 @@ async def fixture_test_user(create_test_users):
     )
 
     yield user_list[0]
+
+
+@pytest.fixture(name="test_active_user")
+async def fixture_test_active_user(user_service: UserService):
+    user = await user_service.create_user(UserData)
+
+    yield user
+
+    await user_service.delete_self(user)
 
 
 @pytest.fixture(name="create_test_accounts", scope="session")
