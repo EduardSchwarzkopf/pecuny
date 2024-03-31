@@ -1,9 +1,12 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.data import categories
 from app.database import db
 from app.models import Base
+
+settings.is_testing_environment = True
 
 
 async def populate_db(session: AsyncSession):
@@ -50,8 +53,6 @@ async def fixture_init_db():
 
     await populate_db(db.session)
 
-    yield
-
     await db.engine.dispose()
 
 
@@ -81,6 +82,8 @@ async def fixture_session() -> AsyncSession:  # type: ignore
         AsyncSession: An async session.
     """
     await cleanup_tests()
+
+    env = settings.environment
 
     yield db.session
 

@@ -22,6 +22,23 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         update_dict: Dict[str, Any],
         request: Optional[Request] = None,
     ) -> None:
+        """
+        Executes actions after a user update.
+
+        Args:
+            user: The user object being updated.
+            update_dict: A dictionary containing the fields being updated.
+            request: Optional. The request object associated with the update.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
+
+        if settings.is_testing_environment:
+            return
 
         if "email" in update_dict and not user.is_verified:
             await email.send_email_verification(user, self.get_token(user), request)
@@ -29,9 +46,23 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         return
 
     async def on_after_register(
-        self, user: User, request: Optional[Request] = None
+        self, user: User, _request: Optional[Request] = None
     ) -> None:
-        if user.is_verified or (request and request.url.hostname == "test"):
+        """
+        Executes actions after a user registration.
+
+        Args:
+            user: The user object that has been registered.
+            request: Optional. The request object associated with the registration.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
+
+        if user.is_verified or settings.is_testing_environment:
             return
 
         await email.send_welcome(user, self.get_token(user))
