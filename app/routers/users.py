@@ -83,8 +83,8 @@ async def page_user_settings(
             {"form": form, "action_url": router.url_path_for("page_user_settings")},
         )
 
-    user_data = schemas.UserUpdate(email=user.email, displayname=user.displayname)
+    user_data = schemas.UserUpdate(**form.data)
 
-    await service.update_user(user, user_data)
+    await service.update_user(user, user_data, request)
 
     return get_settings_response(user, request, form)
