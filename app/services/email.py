@@ -58,12 +58,12 @@ async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONRes
     fm = FastMail(conf)
     try:
         await fm.send_message(message, template_name=template_name)
-        log.info("Email has been sent to %s", email.model_dump().get("email"))
+        log.info("Email has been sent to %s", recipients)
         return JSONResponse(status_code=200, content={"message": "email has been sent"})
     except Exception as e:
         log.error(
             "Email could not be sent to %s due to %s",
-            email.model_dump().get("email"),
+            recipients,
             e,
         )
         raise
