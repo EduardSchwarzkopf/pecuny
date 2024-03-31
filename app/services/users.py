@@ -5,6 +5,7 @@ from fastapi_users import exceptions
 
 from app import database, models
 from app import repository as repo
+from app import schemas
 from app.authentication.management import UserManager
 from app.database import db
 from app.logger import get_logger
@@ -76,7 +77,9 @@ class UserService:
         await repo.delete(current_user)
         return True
 
-    async def update_user(self, user: models.User) -> models.User:
+    async def update_user(
+        self, user: models.User, user_data: schemas.UserUpdate
+    ) -> models.User:
         """
         Updates a user.
 
@@ -88,7 +91,7 @@ class UserService:
         """
 
         logger.info("Updating user %s", user.id)
-        return await self.user_manager.update(UserUpdate(), user)
+        return await self.user_manager.update(user_data, user)
 
     async def create_user(
         self,
