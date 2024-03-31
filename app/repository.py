@@ -7,11 +7,10 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 
+from app import models
 from app.database import db
 from app.models import BaseModel
 from app.utils.enums import DatabaseFilterOperator
-
-from . import models
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
