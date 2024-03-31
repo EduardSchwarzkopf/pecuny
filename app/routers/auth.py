@@ -104,10 +104,6 @@ async def login(
         set_feedback(request, FeedbackType.ERROR, "This account is not active")
         return render_form_template(TEMPLATE_LOGIN, request, schemas.LoginForm(request))
 
-    if not user.is_verified:
-        set_feedback(request, FeedbackType.ERROR, "You need to verify your email first")
-        return render_form_template(TEMPLATE_LOGIN, request, schemas.LoginForm(request))
-
     result = await auth_backend.login(strategy, user)
     return RedirectResponse("/", 302, result.headers)
 
