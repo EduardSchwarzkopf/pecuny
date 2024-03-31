@@ -6,7 +6,7 @@ from fastapi.exceptions import HTTPException
 from app import schemas
 from app import transaction_manager as tm
 from app.models import User
-from app.routers.api.users import current_active_user
+from app.routers.api.users import current_active_verified_user
 from app.services import scheduled_transactions as service
 from app.utils import APIRouterExtended
 
@@ -21,7 +21,7 @@ async def api_get_transactions(
     account_id: int,
     date_start: datetime,
     date_end: datetime,
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(current_active_verified_user),
 ):
     """
     Retrieves a list of transactions.
@@ -47,7 +47,7 @@ async def api_get_transactions(
 @router.get("/{transaction_id}", response_model=ResponseModel)
 async def api_get_transaction(
     transaction_id: int,
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(current_active_verified_user),
 ):
     """
     Retrieves a scheduled transaction by ID.
@@ -76,7 +76,7 @@ async def api_get_transaction(
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ResponseModel)
 async def api_create_transaction(
     transaction_information: schemas.ScheduledTransactionInformationCreate,
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(current_active_verified_user),
 ):
     """
     Creates a new scheduled transaction.
