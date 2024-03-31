@@ -9,15 +9,11 @@ from app.utils import APIRouterExtended
 router = APIRouterExtended(prefix="/users", tags=["Users"])
 
 
-def get_user_service() -> UserService:
-    """
-    Returns an instance of the UserService class.
+@router.get("/me", status_code=status.HTTP_200_OK, response_model=schemas.UserRead)
+async def api_get_me(current_user: User = Depends(current_active_user)):
+    return current_user
 
-    Returns:
-        UserService: An instance of the UserService class.
-    """
 
-    return UserService()
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
