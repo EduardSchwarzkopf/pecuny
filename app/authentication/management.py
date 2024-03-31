@@ -34,7 +34,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         if user.is_verified or (request and request.url.hostname == "test"):
             return
 
-        await self.request_verify(user, request)
+        await email.send_welcome(user, self.get_token(user))
         print(f"User {user.id} has registered.")
 
     async def on_after_forgot_password(
