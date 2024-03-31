@@ -1,24 +1,12 @@
 from fastapi import Depends, HTTPException, Request, status
 
 from app import schemas
+from app.authentication.dependencies import get_user_service
 from app.services.users import UserService
 from app.utils import APIRouterExtended
 from app.utils.dataclasses_utils import CreateUserData
 
 router = APIRouterExtended(prefix="/auth", tags=["Auth"])
-
-
-# TODO: Create a single place for this function
-# it can be found on several places now
-async def get_user_service() -> UserService:
-    """
-    Returns an instance of the UserService class.
-
-    Returns:
-        UserService: An instance of the UserService class.
-    """
-
-    return UserService()
 
 
 @router.post(
