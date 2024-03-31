@@ -16,6 +16,13 @@ async def api_get_me(current_user: User = Depends(current_active_user)):
     return current_user
 
 
+@router.post("/me", status_code=status.HTTP_200_OK)
+async def api_update_me(
+    user_data: schemas.UserUpdate,
+    current_user: User = Depends(current_active_user),
+    service: UserService = Depends(get_user_service),
+):
+    return await service.update_user(current_user, user_data)
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
