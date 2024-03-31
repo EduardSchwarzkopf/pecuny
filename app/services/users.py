@@ -78,7 +78,10 @@ class UserService:
         return True
 
     async def update_user(
-        self, user: models.User, user_data: schemas.UserUpdate
+        self,
+        user: models.User,
+        user_data: schemas.UserUpdate,
+        request: Optional[Request] = None,
     ) -> models.User:
         """
         Updates a user.
@@ -91,7 +94,7 @@ class UserService:
         """
 
         logger.info("Updating user %s", user.id)
-        return await self.user_manager.update(user_data, user)
+        return await self.user_manager.update(user_data, user, request=request)
 
     async def create_user(
         self,
