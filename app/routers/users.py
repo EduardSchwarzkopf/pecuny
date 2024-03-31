@@ -15,12 +15,16 @@ router = PageRouter(tags=["Users"], prefix="/users")
 
 
 def get_settings_response(
-    request: Request, form: schemas.UpdateUserForm
+    user: User, request: Request, form: schemas.UpdateUserForm
 ) -> HTMLResponse:
     return render_template(
         "pages/user/page_user_settings.html",
         request,
-        {"form": form, "action_url": router.url_path_for("page_user_settings")},
+        {
+            "is_verified": user.is_verified,
+            "form": form,
+            "action_url": router.url_path_for("page_user_settings"),
+        },
     )
 
 
@@ -46,7 +50,7 @@ async def page_user_settings_form(
     if not user.is_verified:
         set_feedback(request, FeedbackType.ERROR, "You need to verify your email first")
 
-    return get_settings_response(request, form)
+    return get_settings_response(user, request, form)
 
 
 @csrf_protect
@@ -83,4 +87,4 @@ async def page_user_settings(
 
     await service.update_user(user, user_data)
 
-    return get_settings_response(request, form)
+    return get_settings_response(user, request, form)
