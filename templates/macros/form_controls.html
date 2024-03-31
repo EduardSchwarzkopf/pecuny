@@ -81,7 +81,6 @@ leading-tight focus:outline-none focus:border-primary" %}
 
     </form>
 </div>
-</div>
 {% endmacro %}
 
 {% macro auth_form(title, form, action_url, button_text="Submit", show_password_policy=false) %}
@@ -139,15 +138,9 @@ leading-tight focus:outline-none focus:border-primary" %}
             </div>
         </div>
 
-    <script src="/static/js/errorHandling.js"></script>
-            
-    <script>
-    document.querySelectorAll('form select').forEach(select => {
-    new SlimSelect({ select: select });
-    });
-    </script>
+        {% include 'fragments/forms/handler.html' %}
 
-</form>
+    </form>
 
     {% if transaction_id %}
     {{ modal.delete_object(request.url_for('page_delete_transaction', account_id=account_id,
@@ -170,16 +163,9 @@ leading-tight focus:outline-none focus:border-primary" %}
         {% endfor %}
 
         {{ submit_button('Update' if account_id else 'Add') }}
+    </form>
+    {% include 'fragments/forms/handler.html' %}
 </div>
-
-    <script>
-    document.querySelectorAll('form select').forEach(select => {
-    new SlimSelect({ select: select });
-    });
-    </script>
-
-<script src="/static/js/errorHandling.js"></script>
-</form>
 
 {% if account_id %}
 
@@ -206,5 +192,4 @@ leading-tight focus:outline-none focus:border-primary" %}
     </div>
 </div>
 {% endif %}
-</div>
 {% endmacro %}
