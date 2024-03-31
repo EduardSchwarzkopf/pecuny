@@ -25,7 +25,7 @@ router = PageRouter()
 LOGIN = "/login"
 REGISTER = "/register"
 VERIFY = "/verify"
-NEW_TOKEN = "/get-new-token"
+NEW_TOKEN = "/get-verify-token"
 FORGOT_PASSWORD = "/forgot-password"
 RESET_PASSWORD = "/reset-password"
 
@@ -237,14 +237,14 @@ async def get_new_token(
     """
 
     return render_form_template(
-        f"{TEMPLATE_PREFIX}/page_get_new_token.html",
+        f"{TEMPLATE_PREFIX}/page_get_verify_token.html",
         request,
         schemas.GetNewTokenForm(request),
     )
 
 
 @csrf_protect
-@router.post("/send-new-token")
+@router.post("/send-verify-token")
 async def send_new_token(
     request: Request,
     user_service: UserService = Depends(get_user_service),
@@ -265,7 +265,7 @@ async def send_new_token(
 
     if not await form.validate_on_submit():
         return render_form_template(
-            f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, form
+            f"{TEMPLATE_PREFIX}/page_get_verify_token.html", request, form
         )
 
     email = form.email.data
@@ -277,17 +277,17 @@ async def send_new_token(
     except exceptions.UserInactive:
         set_feedback(request, FeedbackType.ERROR, "Not possible for this user")
         return render_form_template(
-            f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, form
+            f"{TEMPLATE_PREFIX}/page_get_verify_token.html", request, form
         )
     except exceptions.UserAlreadyVerified:
         set_feedback(request, FeedbackType.ERROR, "Not possible for this user")
         return render_form_template(
-            f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, form
+            f"{TEMPLATE_PREFIX}/page_get_verify_token.html", request, form
         )
     except exceptions.UserNotExists:
         set_feedback(request, FeedbackType.ERROR, "Not possible for this user")
         return render_form_template(
-            f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, form
+            f"{TEMPLATE_PREFIX}/page_get_verify_token.html", request, form
         )
 
     return RedirectResponse(f"{LOGIN}?msg=new_token_sent", 302)
