@@ -1,8 +1,8 @@
-from fastapi import Depends, HTTPException, Request, Response, status
+from fastapi import Depends, HTTPException, Response, status
 
 from app import schemas
 from app import transaction_manager as tm
-from app.auth_manager import current_active_user, current_active_verified_user
+from app.auth_manager import current_active_verified_user
 from app.authentication.dependencies import get_user_service
 from app.models import User
 from app.services.users import UserService
