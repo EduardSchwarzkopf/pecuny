@@ -18,6 +18,18 @@ router = PageRouter(tags=["Users"], prefix="/users")
 def get_settings_response(
     user: User, request: Request, form: schemas.UpdateUserForm
 ) -> HTMLResponse:
+    """
+    Generates an HTML response for the user settings page.
+
+    Args:
+        user: The user object for which the settings page is being generated.
+        request: The request object associated with the page request.
+        form: The UpdateUserForm schema for updating user settings.
+
+    Returns:
+        HTMLResponse: The HTML response for the user settings page.
+    """
+
     return render_template(
         "pages/user/page_user_settings.html",
         request,

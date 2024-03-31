@@ -83,8 +83,6 @@ async def fixture_session() -> AsyncSession:  # type: ignore
     """
     await cleanup_tests()
 
-    env = settings.environment
-
     yield db.session
 
 

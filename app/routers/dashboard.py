@@ -10,9 +10,7 @@ router = PageRouter(tags=["Dashboard"], prefix="/dashboard")
 
 @router.get("/")
 async def page_dashboard(
-    user: User = Depends(
-        current_active_verified_user
-    ),  # pylint: disable=unused-argument
+    _user: User = Depends(current_active_verified_user),
 ):
     """
     Redirects to the dashboard page.

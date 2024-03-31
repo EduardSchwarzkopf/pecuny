@@ -9,7 +9,7 @@ from app import schemas
 from app.authentication.management import UserManager
 from app.database import db
 from app.logger import get_logger
-from app.schemas import EmailStr, UserCreate, UserUpdate
+from app.schemas import EmailStr, UserCreate
 from app.utils.dataclasses_utils import CreateUserData
 from app.utils.displayname_generator import generate_displayname
 from app.utils.enums import EmailVerificationStatus
