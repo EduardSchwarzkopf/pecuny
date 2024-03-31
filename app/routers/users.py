@@ -1,5 +1,6 @@
 from fastapi import Depends, Request
 from fastapi.responses import HTMLResponse
+from fastapi_users.exceptions import UserAlreadyExists
 from starlette_wtf import csrf_protect
 
 from app import schemas
@@ -84,7 +85,10 @@ async def page_user_settings(
         )
 
     user_data = schemas.UserUpdate(**form.data)
-
-    await service.update_user(user, user_data, request)
+    try:
+        await service.update_user(user, user_data, request)
+    except UserAlreadyExists:
+        form.email.data = user.email
+        set_feedback(request, FeedbackType.ERROR, "Email already exists")
 
     return get_settings_response(user, request, form)
