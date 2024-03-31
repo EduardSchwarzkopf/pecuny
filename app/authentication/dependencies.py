@@ -12,7 +12,7 @@ from app.services.users import UserService
 
 
 @lru_cache
-async def get_user_service() -> UserService:
+def get_user_service() -> UserService:
     """
     Returns an instance of the UserService class.
 
@@ -24,7 +24,7 @@ async def get_user_service() -> UserService:
 
 
 @lru_cache
-async def get_user_manager(
+def get_user_manager(
     user_db: SQLAlchemyUserDatabase = Depends(get_user_db),
 ) -> AsyncGenerator[UserManager, None]:
     """
@@ -40,7 +40,7 @@ async def get_user_manager(
         UserInactive: If the user is inactive.
         UserAlreadyVerified: If the user is already verified.
     """
-    yield UserManager(user_db)
+    return UserManager(user_db)
 
 
 @lru_cache
