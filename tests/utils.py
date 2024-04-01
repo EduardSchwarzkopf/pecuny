@@ -7,7 +7,7 @@ from app import models, repository
 from app.auth_manager import get_strategy
 from app.config import settings
 from app.main import app
-from app.utils.enums import RequestMethod
+from app.utils.enums import DatabaseFilterOperator, RequestMethod
 
 
 async def authorized_httpx_client(client: AsyncClient, user: models.User):
@@ -103,3 +103,22 @@ async def get_user_offset_account(account: models.Account) -> Optional[models.Ac
         ),
         None,
     )
+
+
+async def get_other_user(user: models.User) -> Optional[models.User]:
+    other_user_list = await repository.filter_by_multiple(
+        models.User,
+        [
+            (
+                models.User.email,
+                user.email,
+                DatabaseFilterOperator.NOT_EQUAL,
+            ),
+            (models.User.is_verified, True, DatabaseFilterOperator.EQUAL),
+        ],
+    )
+
+    try:
+        return other_user_list[-1]
+    except IndexError:
+        return None
