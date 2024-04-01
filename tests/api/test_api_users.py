@@ -1,4 +1,5 @@
 import pytest
+from starlette.status import HTTP_204_NO_CONTENT, HTTP_403_FORBIDDEN
 
 from app import models
 from app import repository as repo
@@ -39,7 +40,7 @@ async def test_invalid_updated_user(test_user: models.User, values: dict):
         as_user=test_user,
     )
 
-    assert res.status_code == 403
+    assert res.status_code == HTTP_403_FORBIDDEN
 
 
 async def test_delete_user(
@@ -61,7 +62,7 @@ async def test_delete_user(
         "/api/users/me", method=RequestMethod.DELETE, as_user=test_user
     )
 
-    assert res.status_code == 204
+    assert res.status_code == HTTP_204_NO_CONTENT
 
     user = await repo.get(models.User, test_user.id)
     assert user is None
@@ -94,4 +95,4 @@ async def test_invalid_delete_user(test_user: models.User):
         as_user=test_user,
     )
 
-    assert res.status_code == 403
+    assert res.status_code == HTTP_403_FORBIDDEN
