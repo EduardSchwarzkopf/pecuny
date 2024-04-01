@@ -23,12 +23,12 @@ from tests.utils import make_http_request
         ),
     ],
 )
-async def test_updated_user(test_user: models.User, values: dict):
+async def test_updated_user(test_active_verified_user: models.User, values: dict):
     """
     Test case for updating a user.
 
     Args:
-        test_user (fixture): The test user.
+        test_active_verified_user (fixture): The test user.
         values (dict): The updated values for the user.
 
     Returns:
@@ -38,7 +38,10 @@ async def test_updated_user(test_user: models.User, values: dict):
         AssertionError: If the test fails.
     """
     res = await make_http_request(
-        "/api/users/me", json=values, method=RequestMethod.PATCH, as_user=test_user
+        "/api/users/me",
+        json=values,
+        method=RequestMethod.PATCH,
+        as_user=test_active_verified_user,
     )
 
     assert res.status_code == HTTP_200_OK
@@ -54,7 +57,9 @@ async def test_updated_user(test_user: models.User, values: dict):
             continue
 
         if key == "email":
-            db_user: models.User = await repo.get(models.User, test_user.id)
+            db_user: models.User = await repo.get(
+                models.User, test_active_verified_user.id
+            )
             assert db_user.is_verified == False
 
         assert getattr(user, key) == value
