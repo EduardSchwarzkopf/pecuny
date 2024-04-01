@@ -224,7 +224,7 @@ async def test_update_email(
     assert user.is_active is True
     assert user.is_verified is False
 
-    token = user_service.user_manager.get_token(user)
+    token = user_service.user_manager.get_token(active_verified_user)
 
     verify_response = await make_http_request(
         "/api/auth/verify",
