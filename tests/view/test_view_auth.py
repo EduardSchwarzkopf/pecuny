@@ -35,17 +35,37 @@ async def test_view_register():
     assert password_field["type"] == "password"
 
 
+async def test_view_login():
+
+    url = "/login"
+    res = await make_http_request(url=url, method=RequestMethod.GET)
+
+    assert res.status_code == HTTP_200_OK
+
+    text = res.text
+    soup = BeautifulSoup(text)
+
+    form = soup.find("form")
+    base_form_test(form, url)
+
+    assert len(form.find_all("input")) == 3
+
+    username_field = form.find("input", id="username")
+
+    assert username_field["onkeyup"] == "hideError(this)"
+
+    password_field = form.find("input", id="password")
+
+    assert password_field["onkeyup"] == "hideError(this)"
+    assert password_field["type"] == "password"
+
+
 # async def test_invalid_create_user():
 #     pass
 
 
 # async def test_updated_user():
 #     pass
-
-
-# async def test_login():
-#     pass
-
 
 # async def test_invalid_api_login():
 #     pass
