@@ -139,7 +139,7 @@ async def test_updated_transaction(
         f"{ENDPOINT}{transaction.id}", json=json, as_user=test_user
     )
 
-    assert res.HTTP_201_CREATED == HTTP_200_OK
+    assert res.status_code == HTTP_200_OK
 
     transaction = schemas.Transaction(**res.json())
 
@@ -189,7 +189,7 @@ async def test_delete_transactions(
             method=RequestMethod.DELETE,
             as_user=test_user,
         )
-        assert res.HTTP_201_CREATED == HTTP_204_NO_CONTENT
+        assert res.status_code == HTTP_204_NO_CONTENT
         result = await repo.get(models.Transaction, transaction_id)
 
         assert result is None
@@ -243,7 +243,7 @@ async def test_delete_transactions_fail(
             as_user=test_user,
         )
 
-        assert res.HTTP_201_CREATED == HTTP_404_NOT_FOUND
+        assert res.status_code == HTTP_404_NOT_FOUND
 
         account_refresh = await repo.get(models.Account, account.id)
 
@@ -309,7 +309,7 @@ async def test_create_offset_transaction(
         as_user=test_user,
     )
 
-    assert res.HTTP_201_CREATED == HTTP_201_CREATED
+    assert res.status_code == HTTP_201_CREATED
 
     new_transaction = schemas.Transaction(**res.json())
     offset_transactions_id = new_transaction.offset_transactions_id
@@ -384,7 +384,7 @@ async def test_create_offset_transaction_other_account_fail(
         as_user=test_user,
     )
 
-    assert res.HTTP_201_CREATED == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTP_401_UNAUTHORIZED
 
     account_refreshed = await repo.get(models.Account, account_id)
     offset_account_refreshed = await repo.get(models.Account, offset_account_id)
@@ -467,7 +467,7 @@ async def test_updated_offset_transaction(
         as_user=test_account.user,
     )
 
-    assert res.HTTP_201_CREATED == HTTP_200_OK
+    assert res.status_code == HTTP_200_OK
 
     transaction = schemas.Transaction(**res.json())
 
@@ -553,8 +553,8 @@ async def test_delete_offset_transaction(
         method=RequestMethod.GET,
     )
 
-    assert res.HTTP_201_CREATED == HTTP_204_NO_CONTENT
-    assert offset_transaction_res.HTTP_201_CREATED == HTTP_404_NOT_FOUND
+    assert res.status_code == HTTP_204_NO_CONTENT
+    assert offset_transaction_res.status_code == HTTP_404_NOT_FOUND
 
     account_refresh = await repo.get(models.Account, test_account.id)
     offset_account_refresh = await repo.get(models.Account, offset_account.id)
