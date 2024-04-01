@@ -1,3 +1,5 @@
+from typing import Optional
+
 from bs4 import BeautifulSoup, Tag
 from httpx import QueryParams
 from starlette.status import HTTP_200_OK
@@ -10,12 +12,28 @@ from tests.utils import make_http_request
 async def view_base_test(
     url: str,
     expected_inputs: int,
-    action_url: str = None,
-    email_id: str = None,
-    password_id: str = None,
-    username_id: str = None,
-    params: QueryParams = None,
+    action_url: Optional[str] = None,
+    email_id: Optional[str] = None,
+    password_id: Optional[str] = None,
+    username_id: Optional[str] = None,
+    params: Optional[QueryParams] = None,
 ) -> Tag:
+    """
+    Performs base testing for a view by checking form inputs and attributes.
+
+    Args:
+        url: The URL of the view to test.
+        expected_inputs: The expected number of input fields in the form.
+        action_url: Optional. The action URL of the form.
+        email_id: Optional. The ID of the email input field.
+        password_id: Optional. The ID of the password input field.
+        username_id: Optional. The ID of the username input field.
+        params: Optional. Query parameters for the request.
+
+    Returns:
+        Tag: The form tag of the view.
+    """
+
     res = await make_http_request(url=url, method=RequestMethod.GET, params=params)
     assert res.status_code == HTTP_200_OK
 
@@ -47,24 +65,59 @@ async def view_base_test(
 
 
 async def test_view_register():
+    """
+    Test case for the registration view.
+
+    Returns:
+        None
+    """
+
     await view_base_test("/register", 3, email_id="email", password_id="password")
 
 
 async def test_view_login():
+    """
+    Test case for the login view.
+
+    Returns:
+        None
+    """
+
     await view_base_test("/login", 3, email_id="username", password_id="password")
 
 
 async def test_view_forgot_password():
+    """
+    Test case for the forgot password view.
+
+    Returns:
+        None
+    """
+
     await view_base_test("/forgot-password", 2, email_id="email")
 
 
 async def test_view_get_verify_token():
+    """
+    Test case for the view to get a verification token.
+
+    Returns:
+        None
+    """
+
     await view_base_test(
         "/get-verify-token", 2, action_url="send-verify-token", email_id="email"
     )
 
 
 async def test_view_reset_password():
+    """
+    Test case for the reset password view.
+
+    Returns:
+        None
+    """
+
     token_value = "test"
 
     form = await view_base_test(
