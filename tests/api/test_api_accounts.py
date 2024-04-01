@@ -16,7 +16,6 @@ from app.utils.classes import RoundedDecimal
 from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
 
-pytestmark = pytest.mark.anyio
 ENDPOINT = "/api/accounts/"
 
 
