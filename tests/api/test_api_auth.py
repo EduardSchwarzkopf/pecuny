@@ -104,58 +104,6 @@ async def test_invalid_create_user(test_user: models.User):
     assert res.status_code == HTTP_400_BAD_REQUEST
 
 
-@pytest.mark.parametrize(
-    "values",
-    [
-        ({"email": "mew@mew.de"}),
-        ({"displayname": "Agent Smith"}),
-        ({"password": "lancelot"}),
-        (
-            {
-                "displayname": "Agent Test",
-                "email": "user@example.com",
-                "password": "password123",
-            }
-        ),
-    ],
-)
-async def test_updated_user(test_user: models.User, values: dict):
-    """
-    Test case for updating a user.
-
-    Args:
-        test_user (fixture): The test user.
-        values (dict): The updated values for the user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-    """
-    res = await make_http_request(
-        "/api/users/me", json=values, method=RequestMethod.PATCH, as_user=test_user
-    )
-
-    assert res.status_code == HTTP_200_OK
-    user = schemas.UserRead(**res.json())
-
-    for key, value in values.items():
-        if key == "password":
-            login_res = await make_http_request(
-                f"{ENDPOINT}/login",
-                {"username": user.email, "password": value},
-            )
-            assert login_res.status_code == HTTP_204_NO_CONTENT
-            continue
-
-        if key == "email":
-            db_user: models.User = await repo.get(models.User, test_user.id)
-            assert db_user.is_verified == False
-
-        assert getattr(user, key) == value
-
-
 async def test_login_active_user(test_active_user):
     """
     Test case for login.

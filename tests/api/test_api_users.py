@@ -1,10 +1,63 @@
 import pytest
-from starlette.status import HTTP_204_NO_CONTENT, HTTP_403_FORBIDDEN
+from starlette.status import HTTP_200_OK, HTTP_204_NO_CONTENT, HTTP_403_FORBIDDEN
 
 from app import models
 from app import repository as repo
+from app import schemas
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
 from tests.utils import make_http_request
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        ({"email": "mew@mew.de"}),
+        ({"displayname": "Agent Smith"}),
+        ({"password": "lancelot"}),
+        (
+            {
+                "displayname": "Agent Test",
+                "email": "user@example.com",
+                "password": "password123",
+            }
+        ),
+    ],
+)
+async def test_updated_user(test_user: models.User, values: dict):
+    """
+    Test case for updating a user.
+
+    Args:
+        test_user (fixture): The test user.
+        values (dict): The updated values for the user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
+    res = await make_http_request(
+        "/api/users/me", json=values, method=RequestMethod.PATCH, as_user=test_user
+    )
+
+    assert res.status_code == HTTP_200_OK
+    user = schemas.UserRead(**res.json())
+
+    for key, value in values.items():
+        if key == "password":
+            login_res = await make_http_request(
+                "/api/auth/login",
+                {"username": user.email, "password": value},
+            )
+            assert login_res.status_code == HTTP_204_NO_CONTENT
+            continue
+
+        if key == "email":
+            db_user: models.User = await repo.get(models.User, test_user.id)
+            assert db_user.is_verified == False
+
+        assert getattr(user, key) == value
 
 
 @pytest.mark.parametrize(
