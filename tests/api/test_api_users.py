@@ -4,8 +4,8 @@ from starlette.status import HTTP_200_OK, HTTP_204_NO_CONTENT, HTTP_403_FORBIDDE
 from app import models
 from app import repository as repo
 from app import schemas
-from app.utils.enums import DatabaseFilterOperator, RequestMethod
-from tests.utils import get_other_user, make_http_request
+from app.utils.enums import RequestMethod
+from tests.utils import make_http_request
 
 values = [
     ({"email": "mew@mew.de"}),
