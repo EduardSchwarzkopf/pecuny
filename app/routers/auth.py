@@ -8,7 +8,7 @@ from starlette_wtf import csrf_protect
 
 from app import schemas, templates
 from app.auth_manager import auth_backend, optional_current_active_verified_user
-from app.authentication.dependencies import get_user_manager
+from app.authentication.dependencies import get_user_manager, get_user_service
 from app.authentication.management import UserManager
 from app.authentication.strategies import JWTStrategy
 from app.models import User
@@ -25,24 +25,13 @@ router = PageRouter()
 LOGIN = "/login"
 REGISTER = "/register"
 VERIFY = "/verify"
-NEW_TOKEN = "/get-new-token"
+NEW_TOKEN = "/get-verify-token"
 FORGOT_PASSWORD = "/forgot-password"
 RESET_PASSWORD = "/reset-password"
 
 TEMPLATE_PREFIX = "pages/auth"
 TEMPLATE_REGISTER = f"{TEMPLATE_PREFIX}/page_register.html"
 TEMPLATE_LOGIN = f"{TEMPLATE_PREFIX}/page_login.html"
-
-
-async def get_user_service() -> UserService:
-    """
-    Returns an instance of the UserService class.
-
-    Returns:
-        UserService: An instance of the UserService class.
-    """
-
-    return UserService()
 
 
 @csrf_protect
@@ -113,10 +102,6 @@ async def login(
 
     if not user.is_active:
         set_feedback(request, FeedbackType.ERROR, "This account is not active")
-        return render_form_template(TEMPLATE_LOGIN, request, schemas.LoginForm(request))
-
-    if not user.is_verified:
-        set_feedback(request, FeedbackType.ERROR, "You need to verify your email first")
         return render_form_template(TEMPLATE_LOGIN, request, schemas.LoginForm(request))
 
     result = await auth_backend.login(strategy, user)
@@ -252,14 +237,14 @@ async def get_new_token(
     """
 
     return render_form_template(
-        f"{TEMPLATE_PREFIX}/page_get_new_token.html",
+        f"{TEMPLATE_PREFIX}/page_get_verify_token.html",
         request,
         schemas.GetNewTokenForm(request),
     )
 
 
 @csrf_protect
-@router.post("/send-new-token")
+@router.post("/send-verify-token")
 async def send_new_token(
     request: Request,
     user_service: UserService = Depends(get_user_service),
@@ -280,29 +265,29 @@ async def send_new_token(
 
     if not await form.validate_on_submit():
         return render_form_template(
-            f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, form
+            f"{TEMPLATE_PREFIX}/page_get_verify_token.html", request, form
         )
 
     email = form.email.data
 
     try:
         user = await user_service.user_manager.get_by_email(email)
-        await user_service.user_manager.request_new_token(user)
+        await user_service.user_manager.request_new_token(user, request)
 
     except exceptions.UserInactive:
         set_feedback(request, FeedbackType.ERROR, "Not possible for this user")
         return render_form_template(
-            f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, form
+            f"{TEMPLATE_PREFIX}/page_get_verify_token.html", request, form
         )
     except exceptions.UserAlreadyVerified:
         set_feedback(request, FeedbackType.ERROR, "Not possible for this user")
         return render_form_template(
-            f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, form
+            f"{TEMPLATE_PREFIX}/page_get_verify_token.html", request, form
         )
     except exceptions.UserNotExists:
         set_feedback(request, FeedbackType.ERROR, "Not possible for this user")
         return render_form_template(
-            f"{TEMPLATE_PREFIX}/page_get_new_token.html", request, form
+            f"{TEMPLATE_PREFIX}/page_get_verify_token.html", request, form
         )
 
     return RedirectResponse(f"{LOGIN}?msg=new_token_sent", 302)

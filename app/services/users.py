@@ -5,10 +5,11 @@ from fastapi_users import exceptions
 
 from app import database, models
 from app import repository as repo
+from app import schemas
 from app.authentication.management import UserManager
 from app.database import db
 from app.logger import get_logger
-from app.schemas import EmailStr, UserCreate, UserUpdate
+from app.schemas import EmailStr, UserCreate
 from app.utils.dataclasses_utils import CreateUserData
 from app.utils.displayname_generator import generate_displayname
 from app.utils.enums import EmailVerificationStatus
@@ -76,7 +77,12 @@ class UserService:
         await repo.delete(current_user)
         return True
 
-    async def update_user(self, user: models.User) -> models.User:
+    async def update_user(
+        self,
+        user: models.User,
+        user_data: schemas.UserUpdate,
+        request: Optional[Request] = None,
+    ) -> models.User:
         """
         Updates a user.
 
@@ -84,11 +90,11 @@ class UserService:
             user: The user object.
 
         Returns:
-            bool: True if the user is successfully updated, False otherwise.
+            bool: User object.
         """
 
         logger.info("Updating user %s", user.id)
-        return await self.user_manager.update(UserUpdate(), user)
+        return await self.user_manager.update(user_data, user, request=request)
 
     async def create_user(
         self,
@@ -122,6 +128,7 @@ class UserService:
                     password=user_data.password,
                     is_superuser=user_data.is_superuser,
                     is_verified=user_data.is_verified,
+                    is_active=user_data.is_active,
                 ),
                 request=request,
             )

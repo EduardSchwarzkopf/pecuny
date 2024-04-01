@@ -7,7 +7,7 @@
 </p>
 
 <p>
-    <a href="{{url}}/verify?token={{token}}">Verify My Email</a>
+    <a href="{{ verify_email_url }}?token={{token}}">Verify My Email</a>
 </p>
 
 <p>
@@ -16,7 +16,7 @@
 </p>
 
 <p>
-    Token expired again? <a href="{{url}}/get-new-token">Request new token.</a>
+    Token expired again? <a href="{{ new_token_url }}">Request new token.</a>
 </p>
 
 {% endblock %}

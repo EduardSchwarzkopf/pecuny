@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import Response
-from httpx import AsyncClient, Cookies
+from httpx import AsyncClient, Cookies, QueryParams
 
 from app import models, repository
 from app.auth_manager import get_strategy
@@ -39,6 +39,7 @@ async def make_http_request(
     as_user: Optional[models.User] = None,
     method: RequestMethod = RequestMethod.POST,
     cookies: Optional[Cookies] = None,
+    params: Optional[QueryParams] = None,
 ) -> Response:
     """
     Makes an HTTP request to the specified URL using the given method and JSON data.
@@ -69,7 +70,7 @@ async def make_http_request(
         elif method == RequestMethod.PATCH:
             response = client.patch(url, json=json, data=data)
         elif method == RequestMethod.GET:
-            response = client.get(url)
+            response = client.get(url, params=params)
         elif method == RequestMethod.DELETE:
             response = client.delete(url)
         else:

@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     app_name: str = "pecuny"
     max_allowed_accounts: int = 5
     environment: str = "dev"
+    is_testing_environment: bool = False
     domain: str
     db_host: str
     db_name: str

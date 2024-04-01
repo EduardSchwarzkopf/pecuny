@@ -9,7 +9,7 @@ from fastapi import FastAPI, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from jwt import ExpiredSignatureError
 from starlette.exceptions import HTTPException
@@ -23,6 +23,7 @@ from app.config import settings
 from app.database import db
 from app.logger import get_logger
 from app.middleware import HeaderLinkMiddleware
+from app.routers.users import router as user_router
 from app.routes import router_list
 from app.utils import BreadcrumbBuilder
 from app.utils.exceptions import UnauthorizedPageException
@@ -218,6 +219,31 @@ async def unauthorized_exception_handler(
         },
         status_code=exc.status_code,
     )
+
+
+@app.exception_handler(status.HTTP_403_FORBIDDEN)
+async def forbidden_exception_handler(request: Request, exc: UnauthorizedPageException):
+    """
+    Handles exceptions with status code 403 (Forbidden).
+
+    Args:
+        request: The request object associated with the exception.
+        exc: The UnauthorizedPageException instance raised.
+
+    Returns:
+        JSONResponse or RedirectResponse based on the request path.
+
+    Raises:
+        None
+    """
+
+    logger.info("[Forbidden] on path: %s", request.url.path)
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+
+    url = user_router.url_path_for("page_user_settings")
+
+    return RedirectResponse(url)
 
 
 @app.exception_handler(RequestValidationError)

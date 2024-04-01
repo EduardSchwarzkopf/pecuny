@@ -6,7 +6,7 @@ from starlette_wtf import csrf_protect
 
 from app import models, schemas
 from app import transaction_manager as tm
-from app.auth_manager import current_active_user
+from app.auth_manager import current_active_verified_user
 from app.routers.accounts import handle_account_route
 from app.routers.accounts import router as account_router
 from app.services import categories as category_service
@@ -115,7 +115,7 @@ async def populate_transaction_form_category_choices(
 @router.get("/", response_class=HTMLResponse)
 async def page_list_accounts(
     request: Request,
-    user: models.User = Depends(current_active_user),
+    user: models.User = Depends(current_active_verified_user),
 ):
     """
     Renders the list accounts page.
@@ -138,7 +138,7 @@ async def page_list_accounts(
 async def page_create_transaction_form(
     request: Request,
     account_id: int,
-    user: models.User = Depends(current_active_user),
+    user: models.User = Depends(current_active_verified_user),
 ):
     """
     Renders the create transaction form page.
@@ -173,7 +173,7 @@ async def page_create_transaction_form(
 async def page_create_transaction(
     request: Request,
     account_id: int,
-    user: models.User = Depends(current_active_user),
+    user: models.User = Depends(current_active_verified_user),
 ):
     """
     Handles the creation of a transaction.
@@ -230,7 +230,7 @@ async def page_update_transaction_get(
     request: Request,
     account_id: int,
     transaction_id: int,
-    user: models.User = Depends(current_active_user),
+    user: models.User = Depends(current_active_verified_user),
 ):
     """
     Renders the transaction update form page.
@@ -295,7 +295,7 @@ async def page_update_transaction_post(
     request: Request,
     account_id: int,
     transaction_id: int,
-    user: models.User = Depends(current_active_user),
+    user: models.User = Depends(current_active_verified_user),
 ):
     """
     Handles the update of a transaction.
@@ -368,7 +368,7 @@ async def page_update_transaction_post(
 async def page_delete_transaction(
     account_id: int,
     transaction_id: int,
-    user: models.User = Depends(current_active_user),
+    user: models.User = Depends(current_active_verified_user),
 ):
     """
     Handles the deletion of a transaction.

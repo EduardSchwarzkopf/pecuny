@@ -4,7 +4,7 @@ from fastapi.exceptions import HTTPException
 from app import schemas
 from app import transaction_manager as tm
 from app.models import User
-from app.routers.api.users import current_active_user
+from app.routers.api.users import current_active_verified_user
 from app.services.accounts import AccountService
 from app.utils import APIRouterExtended
 
@@ -14,7 +14,7 @@ service = AccountService()
 
 
 @router.get("/", response_model=list[ResponseModel])
-async def api_get_accounts(current_user: User = Depends(current_active_user)):
+async def api_get_accounts(current_user: User = Depends(current_active_verified_user)):
     """
     Retrieves a list of accounts.
 
@@ -30,7 +30,7 @@ async def api_get_accounts(current_user: User = Depends(current_active_user)):
 
 @router.get("/{account_id}", response_model=ResponseModel)
 async def api_get_account(
-    account_id: int, current_user: User = Depends(current_active_user)
+    account_id: int, current_user: User = Depends(current_active_verified_user)
 ):
     """
     Retrieves an account by ID.
@@ -56,7 +56,7 @@ async def api_get_account(
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ResponseModel)
 async def api_create_account(
-    account: schemas.Account, current_user: User = Depends(current_active_user)
+    account: schemas.Account, current_user: User = Depends(current_active_verified_user)
 ):
     """
     Creates a new account.
@@ -77,7 +77,7 @@ async def api_create_account(
 async def api_update_account(
     account_id: int,
     account_data: schemas.AccountUpdate,
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(current_active_verified_user),
 ):
     """
     Updates an account.
@@ -98,7 +98,7 @@ async def api_update_account(
 
 @router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def api_delete_account(
-    account_id: int, current_user: User = Depends(current_active_user)
+    account_id: int, current_user: User = Depends(current_active_verified_user)
 ):
     """
     Deletes an account.

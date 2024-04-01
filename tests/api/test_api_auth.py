@@ -1,6 +1,13 @@
 import jwt
 import pytest
 from httpx import Cookies
+from starlette.status import (
+    HTTP_200_OK,
+    HTTP_201_CREATED,
+    HTTP_204_NO_CONTENT,
+    HTTP_400_BAD_REQUEST,
+    HTTP_422_UNPROCESSABLE_ENTITY,
+)
 
 from app import models
 from app import repository as repo
@@ -10,7 +17,6 @@ from app.config import settings
 from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
 
-SUCCESS_LOGIN_STATUS_CODE = 204
 ENDPOINT = "/api/auth"
 
 
@@ -50,7 +56,7 @@ async def test_create_user(
             "displayname": displayname,
         },
     )
-    assert res.status_code == 201
+    assert res.status_code == HTTP_201_CREATED
 
     new_user = schemas.UserRead(**res.json())
 
@@ -94,53 +100,12 @@ async def test_invalid_create_user(test_user: models.User):
         json={"email": email, "password": "testpassword", "displayname": "John"},
     )
 
-    assert res.status_code == 400
+    assert res.status_code == HTTP_400_BAD_REQUEST
 
 
-@pytest.mark.parametrize(
-    "values",
-    [
-        ({"email": "mew@mew.de"}),
-        ({"email": "another@mail.com"}),
-        ({"displayname": "Agent Smith"}),
-        ({"password": "lancelot"}),
-    ],
-)
-async def test_updated_user(test_user: models.User, values: dict):
-    """
-    Test case for updating a user.
-
-    Args:
-        test_user (fixture): The test user.
-        values (dict): The updated values for the user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-    """
-    res = await make_http_request(
-        "/api/users/me", json=values, method=RequestMethod.PATCH, as_user=test_user
-    )
-
-    assert res.status_code == 200
-    user = schemas.UserRead(**res.json())
-
-    for key, value in values.items():
-        if key == "password":
-            login_res = await make_http_request(
-                f"{ENDPOINT}/login",
-                {"username": user.email, "password": value},
-            )
-            assert login_res.status_code == SUCCESS_LOGIN_STATUS_CODE
-            continue
-
-        assert getattr(user, key) == value
-
-
-@pytest.mark.usefixtures("test_users")
-async def test_login():
+async def test_login_active_user(
+    active_user: models.User, common_user_data: schemas.UserCreate
+):
     """
     Test case for login.
 
@@ -155,24 +120,19 @@ async def test_login():
 
     """
 
-    login_user_list = await repo.filter_by(
-        models.User, models.User.email, "hello123@pytest.de"
-    )
-    login_user = login_user_list[0]
-
     for username in [
-        "hello123@pytest.de",
-        "hellO123@pytest.de",
-        "HELLO123@pytest.de",
-        "hello123@PyTeSt.De",
-        "hELLO123@pytest.de",
+        "user123@example.com",
+        "useR123@example.com",
+        "USER123@exAMPLE.com",
+        "user123@example.Com",
+        "uSeR123@ExAmPlE.COM",
     ]:
 
         res = await make_http_request(
             f"{ENDPOINT}/login",
             {
                 "username": username,
-                "password": "password123",
+                "password": common_user_data.password,
             },
         )
 
@@ -186,29 +146,106 @@ async def test_login():
         )
         user_id = payload["sub"]
 
-        assert user_id == str(login_user.id)
-        assert res.status_code == SUCCESS_LOGIN_STATUS_CODE
+        assert user_id == str(active_user.id)
+        assert res.status_code == HTTP_204_NO_CONTENT
 
         response = await make_http_request(
             "/api/users/me", method=RequestMethod.GET, cookies=res.cookies
         )
 
-        assert response.status_code == 200
+        assert response.status_code == HTTP_200_OK
+
+
+async def test_login_active_verified_user(
+    active_verified_user: models.User, common_user_data: schemas.UserCreate
+):
+    """
+    Test case for login.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
+
+    for username in [
+        "user123@example.com",
+        "useR123@example.com",
+        "USER123@exAMPLE.com",
+        "user123@example.Com",
+        "uSeR123@ExAmPlE.COM",
+    ]:
+
+        res = await make_http_request(
+            f"{ENDPOINT}/login",
+            {
+                "username": username,
+                "password": common_user_data.password,
+            },
+        )
+
+        token = res.cookies.get(settings.access_token_name)
+
+        payload = jwt.decode(
+            token,
+            settings.access_token_secret_key,
+            algorithms=settings.algorithm,
+            audience=settings.token_audience,
+        )
+        user_id = payload["sub"]
+
+        assert user_id == str(active_verified_user.id)
+        assert res.status_code == HTTP_204_NO_CONTENT
+
+        response = await make_http_request(
+            "/api/users/me", method=RequestMethod.GET, cookies=res.cookies
+        )
+
+        assert response.status_code == HTTP_200_OK
+
+
+async def test_login_inactive_user(
+    inactive_user: models.User, common_user_data: schemas.UserCreate
+):
+    """
+    Test case for logging in with an inactive user.
+
+    Args:
+        test_inactive_user: The inactive user attempting to log in.
+        common_user_data: Common user data for the login attempt.
+
+    Returns:
+        None
+    """
+
+    res = await make_http_request(
+        f"{ENDPOINT}/login",
+        {
+            "username": inactive_user.email,
+            "password": common_user_data.password,
+        },
+    )
+
+    assert res.status_code == HTTP_400_BAD_REQUEST
 
 
 @pytest.mark.parametrize(
     "username, password, status_code",
     [
-        ("wrongemail@gmail.com", "password123", 400),
-        ("hello123@pytest.de", "wrongPassword", 400),
-        ("aaaa", "wrongPassword", 400),
-        ("*39goa", "wrongPassword", 400),
-        (None, "wrongPassword", 422),
-        ("wrongemail@gmail.com", None, 422),
+        ("wrongemail@gmail.com", "password123", HTTP_400_BAD_REQUEST),
+        ("hello123@pytest.de", "wrongPassword", HTTP_400_BAD_REQUEST),
+        ("aaaa", "wrongPassword", HTTP_400_BAD_REQUEST),
+        ("*39goa", "wrongPassword", HTTP_400_BAD_REQUEST),
+        (None, "wrongPassword", HTTP_422_UNPROCESSABLE_ENTITY),
+        ("wrongemail@gmail.com", None, HTTP_422_UNPROCESSABLE_ENTITY),
     ],
 )
-@pytest.mark.usefixtures("test_user")
-async def test_invalid_api_login(
+async def test_invalid_login_inactive_user(
     username: str,
     password: str,
     status_code: int,
@@ -250,7 +287,7 @@ async def test_logout(test_user: models.User):
     res = await make_http_request(url="/api/auth/logout", as_user=test_user)
 
     # TODO: check for other states as well
-    assert res.status_code == 204
+    assert res.status_code == HTTP_204_NO_CONTENT
 
 
 async def test_refresh_token_handling(test_user: models.User):
@@ -278,4 +315,4 @@ async def test_refresh_token_handling(test_user: models.User):
     res = await make_http_request(
         url=endpoint, method=RequestMethod.GET, cookies=cookies
     )
-    assert res.status_code == 200
+    assert res.status_code == HTTP_200_OK

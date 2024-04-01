@@ -10,7 +10,7 @@ from starlette_wtf import csrf_protect
 
 from app import models, schemas
 from app import transaction_manager as tm
-from app.auth_manager import current_active_user
+from app.auth_manager import current_active_verified_user
 from app.routers.dashboard import router as dashboard_router
 from app.services.accounts import AccountService
 from app.services.transactions import TransactionService
@@ -59,7 +59,7 @@ async def handle_account_route(
 @router.get("/", response_class=HTMLResponse)
 async def page_list_accounts(
     request: Request,
-    user: models.User = Depends(current_active_user),
+    user: models.User = Depends(current_active_verified_user),
 ):
     """
     Renders the list accounts page.
@@ -102,7 +102,7 @@ async def max_accounts_reached(user: models.User, request: Request) -> RedirectR
 @router.get("/add", response_class=HTMLResponse)
 async def page_create_account_form(
     request: Request,
-    user: models.User = Depends(current_active_user),
+    user: models.User = Depends(current_active_verified_user),
 ):
     """
     Renders the create account form page.
@@ -130,7 +130,7 @@ async def page_create_account_form(
 @csrf_protect
 @router.post("/add")
 async def page_create_account(
-    request: Request, user: models.User = Depends(current_active_user)
+    request: Request, user: models.User = Depends(current_active_verified_user)
 ):
     """
     Creates a new account.
@@ -169,7 +169,7 @@ async def page_create_account(
 async def page_get_account(
     request: Request,
     account_id: int,
-    user: models.User = Depends(current_active_user),
+    user: models.User = Depends(current_active_verified_user),
     date_start: datetime = Cookie(None),
     date_end: datetime = Cookie(None),
 ):
@@ -244,7 +244,9 @@ async def page_get_account(
 
 @router.get("/{account_id}/edit")
 async def page_update_account_form(
-    request: Request, account_id: int, user: models.User = Depends(current_active_user)
+    request: Request,
+    account_id: int,
+    user: models.User = Depends(current_active_verified_user),
 ):
     """
     Renders the update account form page.
@@ -280,7 +282,7 @@ async def page_update_account_form(
 async def page_delete_account(
     request: Request,
     account_id: int,
-    user: models.User = Depends(current_active_user),
+    user: models.User = Depends(current_active_verified_user),
 ):
     """
     Handles the deletion of an account.
@@ -309,7 +311,7 @@ async def page_delete_account(
 async def page_update_account(
     request: Request,
     account_id: int,
-    user: models.User = Depends(current_active_user),
+    user: models.User = Depends(current_active_verified_user),
 ):
     """
     Handles the update of an account.

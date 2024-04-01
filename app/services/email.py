@@ -1,3 +1,4 @@
+from fastapi import Request
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from starlette.responses import JSONResponse
 
@@ -58,12 +59,12 @@ async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONRes
     fm = FastMail(conf)
     try:
         await fm.send_message(message, template_name=template_name)
-        log.info("Email has been sent to %s", email.model_dump().get("email"))
+        log.info("Email has been sent to %s", recipients)
         return JSONResponse(status_code=200, content={"message": "email has been sent"})
     except Exception as e:
         log.error(
             "Email could not be sent to %s due to %s",
-            email.model_dump().get("email"),
+            recipients,
             e,
         )
         raise
@@ -118,7 +119,9 @@ async def send_forgot_password(user: User, token: str) -> JSONResponse:
     )
 
 
-async def send_new_token(user: User, token: str) -> JSONResponse:
+async def send_email_verification(
+    user: User, token: str, request: Request
+) -> JSONResponse:
     """
     Sends a new token email to a user.
 
@@ -135,7 +138,12 @@ async def send_new_token(user: User, token: str) -> JSONResponse:
 
     email = EmailSchema(
         email=[user.email],
-        body={"user": user, "url": settings.domain, "token": token},
+        body={
+            "user": user,
+            "verify_email_url": request.url_for("verify_email"),
+            "new_token_url": request.url_for("get_new_token"),
+            "token": token,
+        },
     )
     log.info("Sending new token email to %s", user.email)
     return await _send(

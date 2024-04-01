@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import Optional
 
 from fastapi import Request
+from fastapi.responses import HTMLResponse
 from starlette_wtf import StarletteForm
 
 from app import schemas, templates
@@ -53,7 +54,7 @@ def get_default_context(request: Request) -> dict:
 
 def render_template(
     template: str, request: Request, context_extra: Optional[dict] = None
-):  # sourcery skip: default-mutable-arg
+) -> HTMLResponse:
     """Render a template with the provided context.
 
     Args:
