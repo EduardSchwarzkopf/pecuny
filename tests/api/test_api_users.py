@@ -95,7 +95,7 @@ async def test_update_active_user_self(test_active_user: models.User, values: di
 
 
 @pytest.mark.parametrize("values", values)
-async def test_invalid_update_inactive_user(
+async def test_invalid_update_inactive_user_self(
     test_inactive_user: models.User, values: dict
 ) -> None:
 
@@ -145,7 +145,7 @@ async def test_invalid_updated_user(
     assert res.status_code == HTTP_403_FORBIDDEN
 
 
-async def test_delete_user(
+async def test_delete_self(
     test_active_verified_user: models.User,
 ):
     """
