@@ -5,43 +5,29 @@ from app import models
 from app import repository as repo
 from app import schemas
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
-from tests.utils import make_http_request
+from tests.utils import get_other_user, make_http_request
+
+values = [
+    ({"email": "mew@mew.de"}),
+    ({"displayname": "Agent Smith"}),
+    ({"password": "lancelot"}),
+    (
+        {
+            "displayname": "Agent Test",
+            "email": "user@example.com",
+            "password": "password123",
+        }
+    ),
+]
 
 
-@pytest.mark.parametrize(
-    "values",
-    [
-        ({"email": "mew@mew.de"}),
-        ({"displayname": "Agent Smith"}),
-        ({"password": "lancelot"}),
-        (
-            {
-                "displayname": "Agent Test",
-                "email": "user@example.com",
-                "password": "password123",
-            }
-        ),
-    ],
-)
-async def test_updated_user(test_active_verified_user: models.User, values: dict):
-    """
-    Test case for updating a user.
+async def update_user_test(test_user: models.User, values: dict) -> None:
 
-    Args:
-        test_active_verified_user (fixture): The test user.
-        values (dict): The updated values for the user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-    """
     res = await make_http_request(
         "/api/users/me",
         json=values,
         method=RequestMethod.PATCH,
-        as_user=test_active_verified_user,
+        as_user=test_user,
     )
 
     assert res.status_code == HTTP_200_OK
@@ -57,12 +43,50 @@ async def test_updated_user(test_active_verified_user: models.User, values: dict
             continue
 
         if key == "email":
-            db_user: models.User = await repo.get(
-                models.User, test_active_verified_user.id
-            )
+            db_user: models.User = await repo.get(models.User, test_user.id)
             assert db_user.is_verified == False
 
         assert getattr(user, key) == value
+
+
+@pytest.mark.parametrize("values", values)
+async def test_update_active_verified_user(
+    test_active_verified_user: models.User, values: dict
+):
+    """
+    Test case for updating a user.
+
+    Args:
+        test_active_verified_user (fixture): The test user.
+        values (dict): The updated values for the user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
+
+    update_user_test(test_active_verified_user, values)
+
+
+@pytest.mark.parametrize("values", values)
+async def test_update_active_user(test_active_user: models.User, values: dict):
+    """
+    Test case for updating a user.
+
+    Args:
+        test_active_verified_user (fixture): The test user.
+        values (dict): The updated values for the user.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+    """
+
+    update_user_test(test_active_user, values)
 
 
 @pytest.mark.parametrize(
@@ -128,6 +152,7 @@ async def test_delete_user(
     assert user is None
 
 
+@pytest.mark.usefixtures("create_test_users")
 async def test_invalid_delete_other_user(test_active_verified_user: models.User):
     """
     Test case for deleting a user.
@@ -141,18 +166,8 @@ async def test_invalid_delete_other_user(test_active_verified_user: models.User)
     Raises:
         AssertionError: If the test fails.
     """
-    other_user_list = await repo.filter_by_multiple(
-        models.User,
-        [
-            (
-                models.User.email,
-                test_active_verified_user.email,
-                DatabaseFilterOperator.NOT_EQUAL,
-            ),
-            (models.User.is_verified, True, DatabaseFilterOperator.EQUAL),
-        ],
-    )
-    other_user = other_user_list[-1]
+
+    other_user = await get_other_user(test_active_verified_user)
     res = await make_http_request(
         url=f"/api/users/{other_user.id}",
         method=RequestMethod.DELETE,
