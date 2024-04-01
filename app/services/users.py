@@ -128,6 +128,7 @@ class UserService:
                     password=user_data.password,
                     is_superuser=user_data.is_superuser,
                     is_verified=user_data.is_verified,
+                    is_active=user_data.is_active,
                 ),
                 request=request,
             )
