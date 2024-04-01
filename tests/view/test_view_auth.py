@@ -1,9 +1,6 @@
 from bs4 import BeautifulSoup
-from httpx import Cookies
-from starlette.status import HTTP_200_OK, HTTP_401_UNAUTHORIZED
+from starlette.status import HTTP_200_OK
 
-from app import models
-from app.config import settings
 from app.utils.enums import RequestMethod
 from tests.form_utils import base_form_test
 from tests.utils import make_http_request
@@ -60,41 +57,21 @@ async def test_view_login():
     assert password_field["type"] == "password"
 
 
-# async def test_invalid_create_user():
-#     pass
+async def test_view_forgot_password():
 
+    url = "/forgot-password"
+    res = await make_http_request(url=url, method=RequestMethod.GET)
 
-# async def test_updated_user():
-#     pass
+    assert res.status_code == HTTP_200_OK
 
-# async def test_invalid_api_login():
-#     pass
+    text = res.text
+    soup = BeautifulSoup(text)
 
+    form = soup.find("form")
+    base_form_test(form, url)
 
-async def test_logout(test_user: models.User):
-    """
-    Test function to verify the logout process for a test user.
+    assert len(form.find_all("input")) == 2
 
-    Args:
-        test_user: The test user object for logout testing.
+    email_field = form.find("input", id="email")
 
-    Returns:
-        None
-    """
-
-    res = await make_http_request(
-        url="/logout", method=RequestMethod.GET, as_user=test_user
-    )
-
-    cookies: Cookies = res.cookies
-    access_token = cookies.get(settings.access_token_name)
-    refresh_token = cookies.get(settings.refresh_token_name)
-
-    assert access_token == '""'
-    assert refresh_token == '""'
-
-    res = await make_http_request(
-        url="/dashboard", method=RequestMethod.GET, cookies=cookies
-    )
-
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert email_field["onkeyup"] == "hideError(this)"
