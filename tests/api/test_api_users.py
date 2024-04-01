@@ -1,5 +1,10 @@
 import pytest
-from starlette.status import HTTP_200_OK, HTTP_204_NO_CONTENT, HTTP_403_FORBIDDEN
+from starlette.status import (
+    HTTP_200_OK,
+    HTTP_204_NO_CONTENT,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_403_FORBIDDEN,
+)
 
 from app import models
 from app import repository as repo
@@ -50,7 +55,7 @@ async def update_user_test(test_user: models.User, values: dict) -> None:
 
 
 @pytest.mark.parametrize("values", values)
-async def test_update_active_verified_user(
+async def test_update_active_verified_user_self(
     test_active_verified_user: models.User, values: dict
 ):
     """
@@ -71,7 +76,7 @@ async def test_update_active_verified_user(
 
 
 @pytest.mark.parametrize("values", values)
-async def test_update_active_user(test_active_user: models.User, values: dict):
+async def test_update_active_user_self(test_active_user: models.User, values: dict):
     """
     Test case for updating a user.
 
@@ -87,6 +92,21 @@ async def test_update_active_user(test_active_user: models.User, values: dict):
     """
 
     update_user_test(test_active_user, values)
+
+
+@pytest.mark.parametrize("values", values)
+async def test_invalid_update_inactive_user(
+    test_inactive_user: models.User, values: dict
+) -> None:
+
+    res = await make_http_request(
+        "/api/users/me",
+        json=values,
+        method=RequestMethod.PATCH,
+        as_user=test_inactive_user,
+    )
+
+    assert res.status_code == HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.parametrize(
