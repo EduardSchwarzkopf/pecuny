@@ -131,7 +131,7 @@ async def fixture_test_active_verified_user(user_service: UserService):
 
 
 @pytest.fixture(name="test_inactive_user")
-async def fixture_test_active_verified_user(user_service: UserService):
+async def fixture_test_inactive_user(user_service: UserService):
     user_data = UserData
     user_data.is_active = False
     user = await user_service.create_user(user_data)
