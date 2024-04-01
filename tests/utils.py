@@ -7,7 +7,7 @@ from app import models, repository
 from app.auth_manager import get_strategy
 from app.config import settings
 from app.main import app
-from app.utils.enums import DatabaseFilterOperator, RequestMethod
+from app.utils.enums import RequestMethod
 
 
 async def authorized_httpx_client(client: AsyncClient, user: models.User):

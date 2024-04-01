@@ -1,4 +1,4 @@
-from typing import Any, Coroutine, Optional
+from typing import Optional
 
 import pytest
 from starlette.status import (
@@ -15,7 +15,7 @@ from app.services.users import UserService
 from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
 
-values = [
+value_list = [
     ({"email": "mew@mew.de"}),
     ({"displayname": "Agent Smith"}),
     ({"password": "lancelot"}),
@@ -32,6 +32,17 @@ values = [
 async def update_user_test(
     test_user: models.User, values: dict, user_service: UserService
 ) -> None:
+    """
+    Test case for updating a user's information.
+
+    Args:
+        test_user: The user whose information is being updated.
+        values: Dictionary of values to update the user with.
+        user_service: The UserService instance for managing users.
+
+    Returns:
+        None
+    """
 
     res = await make_http_request(
         "/api/users/me",
@@ -54,12 +65,12 @@ async def update_user_test(
 
         if key == "email":
             db_user: models.User = await user_service.user_manager.get(test_user.id)
-            assert db_user.is_verified == False
+            assert db_user.is_verified is False
 
         assert getattr(user, key) == value
 
 
-@pytest.mark.parametrize("values", values)
+@pytest.mark.parametrize("values", value_list)
 async def test_update_active_verified_user_self(
     user_service: UserService, active_verified_user: models.User, values: dict
 ):
@@ -80,7 +91,7 @@ async def test_update_active_verified_user_self(
     await update_user_test(active_verified_user, values, user_service)
 
 
-@pytest.mark.parametrize("values", values)
+@pytest.mark.parametrize("values", value_list)
 async def test_update_active_user_self(
     user_service: UserService, active_user: models.User, values: dict
 ):
@@ -101,10 +112,20 @@ async def test_update_active_user_self(
     await update_user_test(active_user, values, user_service)
 
 
-@pytest.mark.parametrize("values", values)
+@pytest.mark.parametrize("values", value_list)
 async def test_invalid_update_inactive_user_self(
     inactive_user: models.User, values: dict
 ) -> None:
+    """
+    Test case for attempting to update an inactive user's own information.
+
+    Args:
+        inactive_user: The inactive user attempting to update their own information.
+        values: Dictionary of values for the update attempt.
+
+    Returns:
+        None
+    """
 
     res = await make_http_request(
         "/api/users/me",
@@ -249,7 +270,7 @@ async def test_update_email(
         json={"token": token},
     )
 
-    verify_response.status_code == HTTP_200_OK
+    verify_response.status_code == HTTP_200_OK  # pylint: disable=pointless-statement
 
     verified_user = await manager.get(active_verified_user.id)
 

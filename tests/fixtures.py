@@ -20,6 +20,13 @@ from app.utils.enums import DatabaseFilterOperator
 
 @pytest.fixture(name="common_user_data", scope="session")
 def fixture_common_user_data():
+    """
+    Fixture for common user data used in tests.
+
+    Returns:
+        UserCreate: A UserCreate instance with common user data.
+    """
+
     return schemas.UserCreate(
         email="user123@example.com",
         password="mypassword",
@@ -115,6 +122,20 @@ async def fixture_test_user(create_test_users):
 async def create_and_yield_user(
     user_service: UserService, user_data: schemas.UserCreate
 ):
+    """
+    Creates a user using the provided user data and yields the user object.
+
+    Args:
+        user_service: The UserService instance for user management.
+        user_data: The UserCreate schema containing user data.
+
+    Yields:
+        User: The created user object.
+
+    Raises:
+        None
+    """
+
     user = await user_service.create_user(user_data)
     yield user
 
@@ -126,6 +147,17 @@ async def create_and_yield_user(
 async def fixture_active_user(
     user_service: UserService, common_user_data: schemas.UserCreate
 ):
+    """
+    Fixture for providing an active user for testing.
+
+    Args:
+        user_service: The UserService instance for user management.
+        common_user_data: The common user data for creating the active user.
+
+    Yields:
+        User: The active user object for testing.
+    """
+
     common_user_data.is_active = True
     async for user in create_and_yield_user(user_service, common_user_data):
         yield user
@@ -135,6 +167,17 @@ async def fixture_active_user(
 async def fixture_active_verified_user(
     user_service: UserService, common_user_data: schemas.UserCreate
 ):
+    """
+    Fixture for providing an active and verified user for testing.
+
+    Args:
+        user_service: The UserService instance for user management.
+        common_user_data: The common user data for creating the active and verified user.
+
+    Yields:
+        User: The active and verified user object for testing.
+    """
+
     common_user_data.is_verified = True
     common_user_data.is_active = True
     async for user in create_and_yield_user(user_service, common_user_data):
@@ -145,6 +188,17 @@ async def fixture_active_verified_user(
 async def fixture_inactive_user(
     user_service: UserService, common_user_data: schemas.UserCreate
 ):
+    """
+    Fixture for providing an inactive user for testing.
+
+    Args:
+        user_service: The UserService instance for user management.
+        common_user_data: The common user data for creating the inactive user.
+
+    Yields:
+        User: The inactive user object for testing.
+    """
+
     common_user_data.is_active = False
     async for user in create_and_yield_user(user_service, common_user_data):
         yield user

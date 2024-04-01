@@ -212,6 +212,16 @@ async def test_login_active_verified_user(
 async def test_login_inactive_user(
     test_inactive_user: models.User, common_user_data: schemas.UserCreate
 ):
+    """
+    Test case for logging in with an inactive user.
+
+    Args:
+        test_inactive_user: The inactive user attempting to log in.
+        common_user_data: Common user data for the login attempt.
+
+    Returns:
+        None
+    """
 
     res = await make_http_request(
         f"{ENDPOINT}/login",
