@@ -175,3 +175,13 @@ async def test_invalid_delete_other_user(
     )
 
     assert res.status_code == HTTP_403_FORBIDDEN
+
+    refresh_user: models.User = await repo.get(models.User, test_user.id)
+
+    assert refresh_user is not None
+
+    assert test_user.displayname == refresh_user.displayname
+    assert test_user.email == refresh_user.email
+    assert refresh_user.is_active is True
+    assert refresh_user.is_verified is True
+    assert refresh_user.is_superuser is False
