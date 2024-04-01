@@ -16,12 +16,14 @@ from tests.utils import make_http_request
         ({"email": "anothermail.com"}),
     ],
 )
-async def test_invalid_updated_user(test_user: models.User, values: dict):
+async def test_invalid_updated_user(
+    test_active_verified_user: models.User, values: dict
+):
     """
     Test case for updating a user with invalid values.
 
     Args:
-        test_user (fixture): The test user.
+        test_active_verified_user (fixture): The test user.
         values (dict): The updated values for the user.
 
     Returns:
@@ -32,19 +34,19 @@ async def test_invalid_updated_user(test_user: models.User, values: dict):
 
     """
 
-    user_id = str(test_user.id)
+    user_id = str(test_active_verified_user.id)
     res = await make_http_request(
         f"/api/users/{user_id}",
         json=values,
         method=RequestMethod.PATCH,
-        as_user=test_user,
+        as_user=test_active_verified_user,
     )
 
     assert res.status_code == HTTP_403_FORBIDDEN
 
 
 async def test_delete_user(
-    test_user: models.User,
+    test_active_verified_user: models.User,
 ):
     """
     Test case for deleting a user.
@@ -59,16 +61,16 @@ async def test_delete_user(
         AssertionError: If the test fails.
     """
     res = await make_http_request(
-        "/api/users/me", method=RequestMethod.DELETE, as_user=test_user
+        "/api/users/me", method=RequestMethod.DELETE, as_user=test_active_verified_user
     )
 
     assert res.status_code == HTTP_204_NO_CONTENT
 
-    user = await repo.get(models.User, test_user.id)
+    user = await repo.get(models.User, test_active_verified_user.id)
     assert user is None
 
 
-async def test_invalid_delete_user(test_user: models.User):
+async def test_invalid_delete_other_user(test_active_verified_user: models.User):
     """
     Test case for deleting a user.
 
@@ -84,7 +86,11 @@ async def test_invalid_delete_user(test_user: models.User):
     other_user_list = await repo.filter_by_multiple(
         models.User,
         [
-            (models.User.email, test_user.email, DatabaseFilterOperator.NOT_EQUAL),
+            (
+                models.User.email,
+                test_active_verified_user.email,
+                DatabaseFilterOperator.NOT_EQUAL,
+            ),
             (models.User.is_verified, True, DatabaseFilterOperator.EQUAL),
         ],
     )
@@ -92,7 +98,7 @@ async def test_invalid_delete_user(test_user: models.User):
     res = await make_http_request(
         url=f"/api/users/{other_user.id}",
         method=RequestMethod.DELETE,
-        as_user=test_user,
+        as_user=test_active_verified_user,
     )
 
     assert res.status_code == HTTP_403_FORBIDDEN
