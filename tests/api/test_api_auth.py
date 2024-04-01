@@ -209,7 +209,7 @@ async def test_login_active_verified_user(
         assert response.status_code == HTTP_200_OK
 
 
-async def test_login_active_verified_user(
+async def test_login_inactive_user(
     test_inactive_user: models.User, common_user_data: schemas.UserCreate
 ):
 

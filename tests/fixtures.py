@@ -117,7 +117,9 @@ async def create_and_yield_user(
 ):
     user = await user_service.create_user(user_data)
     yield user
-    await user_service.delete_self(user)
+
+    if user:
+        await user_service.delete_self(user)
 
 
 @pytest.fixture(name="active_user")

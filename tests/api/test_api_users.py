@@ -1,3 +1,5 @@
+from typing import Any, Coroutine, Optional
+
 import pytest
 from starlette.status import (
     HTTP_200_OK,
@@ -27,7 +29,9 @@ values = [
 ]
 
 
-async def update_user_test(test_user: models.User, values: dict) -> None:
+async def update_user_test(
+    test_user: models.User, values: dict, user_service: UserService
+) -> None:
 
     res = await make_http_request(
         "/api/users/me",
@@ -49,7 +53,7 @@ async def update_user_test(test_user: models.User, values: dict) -> None:
             continue
 
         if key == "email":
-            db_user: models.User = await repo.get(models.User, test_user.id)
+            db_user: models.User = await user_service.user_manager.get(test_user.id)
             assert db_user.is_verified == False
 
         assert getattr(user, key) == value
@@ -57,7 +61,7 @@ async def update_user_test(test_user: models.User, values: dict) -> None:
 
 @pytest.mark.parametrize("values", values)
 async def test_update_active_verified_user_self(
-    active_verified_user: models.User, values: dict
+    user_service: UserService, active_verified_user: models.User, values: dict
 ):
     """
     Test case for updating a user.
@@ -73,11 +77,13 @@ async def test_update_active_verified_user_self(
         AssertionError: If the test fails.
     """
 
-    update_user_test(active_verified_user, values)
+    await update_user_test(active_verified_user, values, user_service)
 
 
 @pytest.mark.parametrize("values", values)
-async def test_update_active_user_self(active_user: models.User, values: dict):
+async def test_update_active_user_self(
+    user_service: UserService, active_user: models.User, values: dict
+):
     """
     Test case for updating a user.
 
@@ -92,7 +98,7 @@ async def test_update_active_user_self(active_user: models.User, values: dict):
         AssertionError: If the test fails.
     """
 
-    update_user_test(active_user, values)
+    await update_user_test(active_user, values, user_service)
 
 
 @pytest.mark.parametrize("values", values)
@@ -194,7 +200,7 @@ async def test_invalid_delete_other_user(
 
     assert res.status_code == HTTP_403_FORBIDDEN
 
-    refresh_user: models.User = await repo.get(models.User, test_user.id)
+    refresh_user: Optional[models.User] = await repo.get(models.User, test_user.id)
 
     assert refresh_user is not None
 
@@ -208,6 +214,16 @@ async def test_invalid_delete_other_user(
 async def test_update_email(
     active_verified_user: models.User, user_service: UserService
 ):
+    """
+    Test case for updating the email of a user.
+
+    Args:
+        active_verified_user: The active and verified user whose email is being updated.
+        user_service: The UserService instance for managing users.
+
+    Returns:
+        None
+    """
 
     res = await make_http_request(
         "/api/users/me",
