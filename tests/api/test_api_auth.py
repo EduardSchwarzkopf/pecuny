@@ -18,7 +18,6 @@ from app.utils.enums import RequestMethod
 from tests.fixtures import UserData
 from tests.utils import make_http_request
 
-SUCCESS_LOGIN_STATUS_CODE = HTTP_204_NO_CONTENT
 ENDPOINT = "/api/auth"
 
 
@@ -147,7 +146,7 @@ async def test_updated_user(test_user: models.User, values: dict):
                 f"{ENDPOINT}/login",
                 {"username": user.email, "password": value},
             )
-            assert login_res.status_code == SUCCESS_LOGIN_STATUS_CODE
+            assert login_res.status_code == HTTP_204_NO_CONTENT
             continue
 
         if key == "email":
@@ -199,7 +198,7 @@ async def test_login_active_user(test_active_user):
         user_id = payload["sub"]
 
         assert user_id == str(test_active_user.id)
-        assert res.status_code == SUCCESS_LOGIN_STATUS_CODE
+        assert res.status_code == HTTP_204_NO_CONTENT
 
         response = await make_http_request(
             "/api/users/me", method=RequestMethod.GET, cookies=res.cookies
@@ -250,7 +249,7 @@ async def test_login_active_verified_user(test_active_verified_user):
         user_id = payload["sub"]
 
         assert user_id == str(test_active_verified_user.id)
-        assert res.status_code == SUCCESS_LOGIN_STATUS_CODE
+        assert res.status_code == HTTP_204_NO_CONTENT
 
         response = await make_http_request(
             "/api/users/me", method=RequestMethod.GET, cookies=res.cookies
