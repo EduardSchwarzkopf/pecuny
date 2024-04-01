@@ -56,13 +56,13 @@ async def update_user_test(test_user: models.User, values: dict) -> None:
 
 @pytest.mark.parametrize("values", values)
 async def test_update_active_verified_user_self(
-    test_active_verified_user: models.User, values: dict
+    active_verified_user: models.User, values: dict
 ):
     """
     Test case for updating a user.
 
     Args:
-        test_active_verified_user (fixture): The test user.
+        active_verified_user (fixture): The test user.
         values (dict): The updated values for the user.
 
     Returns:
@@ -72,16 +72,16 @@ async def test_update_active_verified_user_self(
         AssertionError: If the test fails.
     """
 
-    update_user_test(test_active_verified_user, values)
+    update_user_test(active_verified_user, values)
 
 
 @pytest.mark.parametrize("values", values)
-async def test_update_active_user_self(test_active_user: models.User, values: dict):
+async def test_update_active_user_self(active_user: models.User, values: dict):
     """
     Test case for updating a user.
 
     Args:
-        test_active_verified_user (fixture): The test user.
+        active_verified_user (fixture): The test user.
         values (dict): The updated values for the user.
 
     Returns:
@@ -91,19 +91,19 @@ async def test_update_active_user_self(test_active_user: models.User, values: di
         AssertionError: If the test fails.
     """
 
-    update_user_test(test_active_user, values)
+    update_user_test(active_user, values)
 
 
 @pytest.mark.parametrize("values", values)
 async def test_invalid_update_inactive_user_self(
-    test_inactive_user: models.User, values: dict
+    inactive_user: models.User, values: dict
 ) -> None:
 
     res = await make_http_request(
         "/api/users/me",
         json=values,
         method=RequestMethod.PATCH,
-        as_user=test_inactive_user,
+        as_user=inactive_user,
     )
 
     assert res.status_code == HTTP_401_UNAUTHORIZED
@@ -119,13 +119,13 @@ async def test_invalid_update_inactive_user_self(
     ],
 )
 async def test_invalid_updated_user(
-    test_active_verified_user: models.User, test_user: models.User, values: dict
+    active_verified_user: models.User, test_user: models.User, values: dict
 ):
     """
     Test case for attempting to update a user with invalid values.
 
     Args:
-        test_active_verified_user:
+        active_verified_user:
             The active and verified user performing the update operation.
         test_user: The user to be updated.
         values: Dictionary of invalid values to update the user with.
@@ -139,20 +139,20 @@ async def test_invalid_updated_user(
         f"/api/users/{user_id}",
         json=values,
         method=RequestMethod.PATCH,
-        as_user=test_active_verified_user,
+        as_user=active_verified_user,
     )
 
     assert res.status_code == HTTP_403_FORBIDDEN
 
 
 async def test_delete_self(
-    test_active_verified_user: models.User,
+    active_verified_user: models.User,
 ):
     """
     Test case for deleting a user.
 
     Args:
-        test_active_verified_user (fixture): The test user.
+        active_verified_user (fixture): The test user.
 
     Returns:
         None
@@ -161,23 +161,23 @@ async def test_delete_self(
         AssertionError: If the test fails.
     """
     res = await make_http_request(
-        "/api/users/me", method=RequestMethod.DELETE, as_user=test_active_verified_user
+        "/api/users/me", method=RequestMethod.DELETE, as_user=active_verified_user
     )
 
     assert res.status_code == HTTP_204_NO_CONTENT
 
-    user = await repo.get(models.User, test_active_verified_user.id)
+    user = await repo.get(models.User, active_verified_user.id)
     assert user is None
 
 
 async def test_invalid_delete_other_user(
-    test_active_verified_user: models.User, test_user: models.User
+    active_verified_user: models.User, test_user: models.User
 ):
     """
     Test case for attempting to delete another user without sufficient permissions.
 
     Args:
-        test_active_verified_user (fixture):
+        active_verified_user (fixture):
             The active and verified user performing the delete operation.
         test_user (fixture): The user to be deleted.
 
@@ -188,7 +188,7 @@ async def test_invalid_delete_other_user(
     res = await make_http_request(
         url=f"/api/users/{test_user.id}",
         method=RequestMethod.DELETE,
-        as_user=test_active_verified_user,
+        as_user=active_verified_user,
     )
 
     assert res.status_code == HTTP_403_FORBIDDEN

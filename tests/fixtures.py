@@ -17,12 +17,14 @@ from app.utils.enums import DatabaseFilterOperator
 # Reference: https://github.com/EduardSchwarzkopf/pecuny/issues/88
 # pylint: disable=unused-argument
 
-UserData = schemas.UserCreate(
-    email="user123@example.com",
-    password="mypassword",
-    displayname="user",
-    is_active=True,
-)
+
+@pytest.fixture(name="common_user_data", scope="session")
+def fixture_common_user_data():
+    return schemas.UserCreate(
+        email="user123@example.com",
+        password="mypassword",
+        displayname="user",
+    )
 
 
 @pytest.fixture(name="user_service", scope="session")
@@ -110,35 +112,40 @@ async def fixture_test_user(create_test_users):
     yield user_list[0]
 
 
-@pytest.fixture(name="test_active_user")
-async def fixture_test_active_user(user_service: UserService):
-    user = await user_service.create_user(UserData)
-
-    yield user
-
-    await user_service.delete_self(user)
-
-
-@pytest.fixture(name="test_active_verified_user")
-async def fixture_test_active_verified_user(user_service: UserService):
-    user_data = UserData
-    user_data.is_verified = True
+async def create_and_yield_user(
+    user_service: UserService, user_data: schemas.UserCreate
+):
     user = await user_service.create_user(user_data)
-
     yield user
-
     await user_service.delete_self(user)
 
 
-@pytest.fixture(name="test_inactive_user")
-async def fixture_test_inactive_user(user_service: UserService):
-    user_data = UserData
-    user_data.is_active = False
-    user = await user_service.create_user(user_data)
+@pytest.fixture(name="active_user")
+async def fixture_active_user(
+    user_service: UserService, common_user_data: schemas.UserCreate
+):
+    common_user_data.is_active = True
+    async for user in create_and_yield_user(user_service, common_user_data):
+        yield user
 
-    yield user
 
-    await user_service.delete_self(user)
+@pytest.fixture(name="active_verified_user")
+async def fixture_active_verified_user(
+    user_service: UserService, common_user_data: schemas.UserCreate
+):
+    common_user_data.is_verified = True
+    common_user_data.is_active = True
+    async for user in create_and_yield_user(user_service, common_user_data):
+        yield user
+
+
+@pytest.fixture(name="inactive_user")
+async def fixture_inactive_user(
+    user_service: UserService, common_user_data: schemas.UserCreate
+):
+    common_user_data.is_active = False
+    async for user in create_and_yield_user(user_service, common_user_data):
+        yield user
 
 
 @pytest.fixture(name="create_test_accounts", scope="session")

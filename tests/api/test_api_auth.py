@@ -15,7 +15,6 @@ from app import schemas
 from app.auth_manager import get_strategy
 from app.config import settings
 from app.utils.enums import RequestMethod
-from tests.fixtures import UserData
 from tests.utils import make_http_request
 
 ENDPOINT = "/api/auth"
@@ -104,7 +103,9 @@ async def test_invalid_create_user(test_user: models.User):
     assert res.status_code == HTTP_400_BAD_REQUEST
 
 
-async def test_login_active_user(test_active_user):
+async def test_login_active_user(
+    test_active_user: models.User, common_user_data: schemas.UserCreate
+):
     """
     Test case for login.
 
@@ -131,7 +132,7 @@ async def test_login_active_user(test_active_user):
             f"{ENDPOINT}/login",
             {
                 "username": username,
-                "password": UserData.password,
+                "password": common_user_data.password,
             },
         )
 
@@ -155,7 +156,9 @@ async def test_login_active_user(test_active_user):
         assert response.status_code == HTTP_200_OK
 
 
-async def test_login_active_verified_user(test_active_verified_user):
+async def test_login_active_verified_user(
+    test_active_verified_user: models.User, common_user_data: schemas.UserCreate
+):
     """
     Test case for login.
 
@@ -182,7 +185,7 @@ async def test_login_active_verified_user(test_active_verified_user):
             f"{ENDPOINT}/login",
             {
                 "username": username,
-                "password": UserData.password,
+                "password": common_user_data.password,
             },
         )
 
@@ -206,13 +209,15 @@ async def test_login_active_verified_user(test_active_verified_user):
         assert response.status_code == HTTP_200_OK
 
 
-async def test_login_active_verified_user(test_inactive_user: models.User):
+async def test_login_active_verified_user(
+    test_inactive_user: models.User, common_user_data: schemas.UserCreate
+):
 
     res = await make_http_request(
         f"{ENDPOINT}/login",
         {
             "username": test_inactive_user.email,
-            "password": UserData.password,
+            "password": common_user_data.password,
         },
     )
 
