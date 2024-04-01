@@ -70,7 +70,7 @@ async def test_create_transaction(
     json_response = res.json()
     new_transaction = schemas.Transaction(**json_response)
 
-    assert res.HTTP_201_CREATED == HTTP_201_CREATED
+    assert res.status_code == HTTP_201_CREATED
     assert account_balance + Decimal(amount) == test_account.balance
     assert new_transaction.account_id == test_account.id
     assert new_transaction.information.amount == amount
