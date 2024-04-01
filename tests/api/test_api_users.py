@@ -99,24 +99,22 @@ async def test_update_active_user(test_active_user: models.User, values: dict):
     ],
 )
 async def test_invalid_updated_user(
-    test_active_verified_user: models.User, values: dict
+    test_active_verified_user: models.User, test_user: models.User, values: dict
 ):
     """
-    Test case for updating a user with invalid values.
+    Test case for attempting to update a user with invalid values.
 
     Args:
-        test_active_verified_user (fixture): The test user.
-        values (dict): The updated values for the user.
+        test_active_verified_user:
+            The active and verified user performing the update operation.
+        test_user: The user to be updated.
+        values: Dictionary of invalid values to update the user with.
 
     Returns:
         None
-
-    Raises:
-        AssertionError: If the test fails.
-
     """
 
-    user_id = str(test_active_verified_user.id)
+    user_id = str(test_user.id)
     res = await make_http_request(
         f"/api/users/{user_id}",
         json=values,
@@ -134,7 +132,7 @@ async def test_delete_user(
     Test case for deleting a user.
 
     Args:
-        test_user (fixture): The test user.
+        test_active_verified_user (fixture): The test user.
 
     Returns:
         None
@@ -156,16 +154,15 @@ async def test_invalid_delete_other_user(
     test_active_verified_user: models.User, test_user: models.User
 ):
     """
-    Test case for deleting a user.
+    Test case for attempting to delete another user without sufficient permissions.
 
     Args:
-        test_user (fixture): The test user.
+        test_active_verified_user (fixture):
+            The active and verified user performing the delete operation.
+        test_user (fixture): The user to be deleted.
 
     Returns:
         None
-
-    Raises:
-        AssertionError: If the test fails.
     """
 
     res = await make_http_request(
