@@ -1,4 +1,5 @@
 from httpx import Cookies
+from starlette.status import HTTP_401_UNAUTHORIZED
 
 from app import models
 from app.config import settings
@@ -46,3 +47,9 @@ async def test_logout(test_user: models.User):
 
     assert access_token == '""'
     assert refresh_token == '""'
+
+    res = await make_http_request(
+        url="/dashboard", method=RequestMethod.GET, cookies=cookies
+    )
+
+    assert res.status_code == HTTP_401_UNAUTHORIZED
