@@ -2,7 +2,13 @@ import datetime
 from decimal import Decimal
 
 import pytest
-from fastapi import status
+from starlette.status import (
+    HTTP_200_OK,
+    HTTP_201_CREATED,
+    HTTP_204_NO_CONTENT,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_404_NOT_FOUND,
+)
 
 from app import models
 from app import repository as repo
@@ -12,7 +18,6 @@ from app.utils.enums import DatabaseFilterOperator, RequestMethod
 from tests.utils import get_user_offset_account, make_http_request
 
 ENDPOINT = "/api/transactions/"
-STATUS_CODE = status.HTTP_201_CREATED
 
 
 @pytest.mark.parametrize(
@@ -65,7 +70,7 @@ async def test_create_transaction(
     json_response = res.json()
     new_transaction = schemas.Transaction(**json_response)
 
-    assert res.status_code == status.HTTP_201_CREATED
+    assert res.HTTP_201_CREATED == HTTP_201_CREATED
     assert account_balance + Decimal(amount) == test_account.balance
     assert new_transaction.account_id == test_account.id
     assert new_transaction.information.amount == amount
@@ -134,7 +139,7 @@ async def test_updated_transaction(
         f"{ENDPOINT}{transaction.id}", json=json, as_user=test_user
     )
 
-    assert res.status_code == status.HTTP_200_OK
+    assert res.HTTP_201_CREATED == HTTP_200_OK
 
     transaction = schemas.Transaction(**res.json())
 
@@ -184,7 +189,7 @@ async def test_delete_transactions(
             method=RequestMethod.DELETE,
             as_user=test_user,
         )
-        assert res.status_code == status.HTTP_204_NO_CONTENT
+        assert res.HTTP_201_CREATED == HTTP_204_NO_CONTENT
         result = await repo.get(models.Transaction, transaction_id)
 
         assert result is None
@@ -238,7 +243,7 @@ async def test_delete_transactions_fail(
             as_user=test_user,
         )
 
-        assert res.status_code == status.HTTP_404_NOT_FOUND
+        assert res.HTTP_201_CREATED == HTTP_404_NOT_FOUND
 
         account_refresh = await repo.get(models.Account, account.id)
 
@@ -304,7 +309,7 @@ async def test_create_offset_transaction(
         as_user=test_user,
     )
 
-    assert res.status_code == status.HTTP_201_CREATED
+    assert res.HTTP_201_CREATED == HTTP_201_CREATED
 
     new_transaction = schemas.Transaction(**res.json())
     offset_transactions_id = new_transaction.offset_transactions_id
@@ -379,7 +384,7 @@ async def test_create_offset_transaction_other_account_fail(
         as_user=test_user,
     )
 
-    assert res.status_code == status.HTTP_401_UNAUTHORIZED
+    assert res.HTTP_201_CREATED == HTTP_401_UNAUTHORIZED
 
     account_refreshed = await repo.get(models.Account, account_id)
     offset_account_refreshed = await repo.get(models.Account, offset_account_id)
@@ -462,7 +467,7 @@ async def test_updated_offset_transaction(
         as_user=test_account.user,
     )
 
-    assert res.status_code == status.HTTP_200_OK
+    assert res.HTTP_201_CREATED == HTTP_200_OK
 
     transaction = schemas.Transaction(**res.json())
 
@@ -548,8 +553,8 @@ async def test_delete_offset_transaction(
         method=RequestMethod.GET,
     )
 
-    assert res.status_code == status.HTTP_204_NO_CONTENT
-    assert offset_transaction_res.status_code == status.HTTP_404_NOT_FOUND
+    assert res.HTTP_201_CREATED == HTTP_204_NO_CONTENT
+    assert offset_transaction_res.HTTP_201_CREATED == HTTP_404_NOT_FOUND
 
     account_refresh = await repo.get(models.Account, test_account.id)
     offset_account_refresh = await repo.get(models.Account, offset_account.id)
