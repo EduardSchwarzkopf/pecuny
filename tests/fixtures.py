@@ -130,6 +130,17 @@ async def fixture_test_active_verified_user(user_service: UserService):
     await user_service.delete_self(user)
 
 
+@pytest.fixture(name="test_inactive_user")
+async def fixture_test_active_verified_user(user_service: UserService):
+    user_data = UserData
+    user_data.is_active = False
+    user = await user_service.create_user(user_data)
+
+    yield user
+
+    await user_service.delete_self(user)
+
+
 @pytest.fixture(name="create_test_accounts", scope="session")
 async def fixture_create_test_accounts(
     session: AsyncSession, create_test_users: list[models.User]
