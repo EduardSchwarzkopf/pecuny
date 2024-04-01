@@ -5,6 +5,7 @@ from starlette.status import HTTP_200_OK, HTTP_401_UNAUTHORIZED
 from app import models
 from app.config import settings
 from app.utils.enums import RequestMethod
+from tests.form_utils import base_form_test
 from tests.utils import make_http_request
 
 
@@ -19,14 +20,9 @@ async def test_view_register():
     soup = BeautifulSoup(text)
 
     form = soup.find("form")
-    assert form["method"] == "POST"
-    assert url in form["action"]
+    base_form_test(form, url)
 
-    csrf_field = form.find("input", id="csrf_token")
-    csrf_attr = csrf_field.attrs
-    assert csrf_attr["type"] == "hidden"
-    assert csrf_attr["name"] == "csrf_token"
-    assert bool(csrf_attr["value"].strip())
+    assert len(form.find_all("input")) == 3
 
     email_field = form.find("input", id="email")
 
