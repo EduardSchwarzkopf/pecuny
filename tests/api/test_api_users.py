@@ -9,6 +9,7 @@ from starlette.status import (
 from app import models
 from app import repository as repo
 from app import schemas
+from app.services.users import UserService
 from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
 
@@ -202,3 +203,39 @@ async def test_invalid_delete_other_user(
     assert refresh_user.is_active is True
     assert refresh_user.is_verified is True
     assert refresh_user.is_superuser is False
+
+
+async def test_update_email(
+    active_verified_user: models.User, user_service: UserService
+):
+
+    res = await make_http_request(
+        "/api/users/me",
+        json={"email": "newmail@example.com"},
+        method=RequestMethod.PATCH,
+        as_user=active_verified_user,
+    )
+
+    assert res.status_code == HTTP_200_OK
+
+    manager = user_service.user_manager
+    user = await manager.get(active_verified_user.id)
+
+    assert user.is_active is True
+    assert user.is_verified is False
+
+    token = user_service.user_manager.get_token(user)
+
+    verify_response = await make_http_request(
+        "/api/auth/verify",
+        method=RequestMethod.POST,
+        as_user=active_verified_user,
+        json={"token": token},
+    )
+
+    verify_response.status_code == HTTP_200_OK
+
+    verified_user = await manager.get(active_verified_user.id)
+
+    assert verified_user.is_active is True
+    assert verified_user.is_verified is True
