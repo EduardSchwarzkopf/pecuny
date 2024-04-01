@@ -104,7 +104,7 @@ async def test_invalid_create_user(test_user: models.User):
 
 
 async def test_login_active_user(
-    test_active_user: models.User, common_user_data: schemas.UserCreate
+    active_user: models.User, common_user_data: schemas.UserCreate
 ):
     """
     Test case for login.
@@ -146,7 +146,7 @@ async def test_login_active_user(
         )
         user_id = payload["sub"]
 
-        assert user_id == str(test_active_user.id)
+        assert user_id == str(active_user.id)
         assert res.status_code == HTTP_204_NO_CONTENT
 
         response = await make_http_request(
@@ -157,7 +157,7 @@ async def test_login_active_user(
 
 
 async def test_login_active_verified_user(
-    test_active_verified_user: models.User, common_user_data: schemas.UserCreate
+    active_verified_user: models.User, common_user_data: schemas.UserCreate
 ):
     """
     Test case for login.
@@ -210,7 +210,7 @@ async def test_login_active_verified_user(
 
 
 async def test_login_inactive_user(
-    test_inactive_user: models.User, common_user_data: schemas.UserCreate
+    inactive_user: models.User, common_user_data: schemas.UserCreate
 ):
     """
     Test case for logging in with an inactive user.
@@ -226,7 +226,7 @@ async def test_login_inactive_user(
     res = await make_http_request(
         f"{ENDPOINT}/login",
         {
-            "username": test_inactive_user.email,
+            "username": inactive_user.email,
             "password": common_user_data.password,
         },
     )
