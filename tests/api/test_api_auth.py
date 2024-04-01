@@ -150,7 +150,7 @@ async def test_updated_user(test_user: models.User, values: dict):
         assert getattr(user, key) == value
 
 
-async def test_login(test_active_user):
+async def test_login_active_user(test_active_user):
     """
     Test case for login.
 
@@ -192,6 +192,57 @@ async def test_login(test_active_user):
         user_id = payload["sub"]
 
         assert user_id == str(test_active_user.id)
+        assert res.status_code == SUCCESS_LOGIN_STATUS_CODE
+
+        response = await make_http_request(
+            "/api/users/me", method=RequestMethod.GET, cookies=res.cookies
+        )
+
+        assert response.status_code == 200
+
+
+async def test_login_active_verified_user(test_active_verified_user):
+    """
+    Test case for login.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If the test fails.
+
+    """
+
+    for username in [
+        "user123@example.com",
+        "useR123@example.com",
+        "USER123@exAMPLE.com",
+        "user123@example.Com",
+        "uSeR123@ExAmPlE.COM",
+    ]:
+
+        res = await make_http_request(
+            f"{ENDPOINT}/login",
+            {
+                "username": username,
+                "password": UserData.password,
+            },
+        )
+
+        token = res.cookies.get(settings.access_token_name)
+
+        payload = jwt.decode(
+            token,
+            settings.access_token_secret_key,
+            algorithms=settings.algorithm,
+            audience=settings.token_audience,
+        )
+        user_id = payload["sub"]
+
+        assert user_id == str(test_active_verified_user.id)
         assert res.status_code == SUCCESS_LOGIN_STATUS_CODE
 
         response = await make_http_request(
