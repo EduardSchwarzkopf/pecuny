@@ -199,7 +199,7 @@ async def test_login_active_verified_user(
         )
         user_id = payload["sub"]
 
-        assert user_id == str(test_active_verified_user.id)
+        assert user_id == str(active_verified_user.id)
         assert res.status_code == HTTP_204_NO_CONTENT
 
         response = await make_http_request(
