@@ -30,7 +30,7 @@ async def test_flow_logout(test_user: models.User):
     assert refresh_token == '""'
 
     res = await make_http_request(
-        url="/dashboard", method=RequestMethod.GET, cookies=cookies
+        url="/dashboard/", method=RequestMethod.GET, cookies=cookies
     )
 
     assert res.status_code == HTTP_401_UNAUTHORIZED
