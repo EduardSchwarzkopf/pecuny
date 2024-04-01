@@ -152,8 +152,9 @@ async def test_delete_user(
     assert user is None
 
 
-@pytest.mark.usefixtures("create_test_users")
-async def test_invalid_delete_other_user(test_active_verified_user: models.User):
+async def test_invalid_delete_other_user(
+    test_active_verified_user: models.User, test_user: models.User
+):
     """
     Test case for deleting a user.
 
@@ -167,9 +168,8 @@ async def test_invalid_delete_other_user(test_active_verified_user: models.User)
         AssertionError: If the test fails.
     """
 
-    other_user = await get_other_user(test_active_verified_user)
     res = await make_http_request(
-        url=f"/api/users/{other_user.id}",
+        url=f"/api/users/{test_user.id}",
         method=RequestMethod.DELETE,
         as_user=test_active_verified_user,
     )
