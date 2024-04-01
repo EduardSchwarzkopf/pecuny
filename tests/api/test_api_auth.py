@@ -1,5 +1,6 @@
 import jwt
 import pytest
+from fastapi import status
 from httpx import Cookies
 
 from app import models
@@ -11,7 +12,7 @@ from app.utils.enums import RequestMethod
 from tests.fixtures import UserData
 from tests.utils import make_http_request
 
-SUCCESS_LOGIN_STATUS_CODE = 204
+SUCCESS_LOGIN_STATUS_CODE = status.HTTP_204_NO_CONTENT
 ENDPOINT = "/api/auth"
 
 
@@ -252,6 +253,19 @@ async def test_login_active_verified_user(test_active_verified_user):
         assert response.status_code == 200
 
 
+async def test_login_active_verified_user(test_inactive_user: models.User):
+
+    res = await make_http_request(
+        f"{ENDPOINT}/login",
+        {
+            "username": test_inactive_user.email,
+            "password": UserData.password,
+        },
+    )
+
+    assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+
 @pytest.mark.parametrize(
     "username, password, status_code",
     [
@@ -263,8 +277,7 @@ async def test_login_active_verified_user(test_active_verified_user):
         ("wrongemail@gmail.com", None, 422),
     ],
 )
-@pytest.mark.usefixtures("test_user")
-async def test_invalid_api_login(
+async def test_invalid_login_inactive_user(
     username: str,
     password: str,
     status_code: int,
