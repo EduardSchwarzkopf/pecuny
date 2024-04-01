@@ -94,3 +94,31 @@ async def test_view_forgot_password():
     email_field = form.find("input", id="email")
 
     assert email_field["onkeyup"] == "hideError(this)"
+
+
+async def test_view_reset_password():
+
+    url = "/reset-password"
+    token_value = "test"
+    res = await make_http_request(
+        url=url, method=RequestMethod.GET, params={"token": token_value}
+    )
+
+    assert res.status_code == HTTP_200_OK
+
+    text = res.text
+    soup = BeautifulSoup(text)
+
+    form = soup.find("form")
+    base_form_test(form, url)
+
+    assert len(form.find_all("input")) == 3
+
+    password_field = form.find("input", id="password")
+
+    assert password_field["type"] == "password"
+
+    token_field = form.find("input", id="token")
+
+    assert token_field["value"] == token_value
+    assert token_field["type"] == "hidden"
