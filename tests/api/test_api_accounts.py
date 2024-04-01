@@ -1,6 +1,13 @@
 from typing import Any, List
 
 import pytest
+from starlette.status import (
+    HTTP_200_OK,
+    HTTP_201_CREATED,
+    HTTP_204_NO_CONTENT,
+    HTTP_404_NOT_FOUND,
+    HTTP_422_UNPROCESSABLE_ENTITY,
+)
 
 from app import models
 from app import repository as repo
@@ -34,7 +41,7 @@ async def test_create_account(test_user: models.User):
         as_user=test_user,
     )
 
-    assert res.status_code == 201
+    assert res.status_code == HTTP_201_CREATED
 
     new_account = schemas.Account(**res.json())
 
@@ -73,7 +80,7 @@ async def test_invalid_title_create_account(test_user: models.User, label: Any):
         as_user=test_user,
     )
 
-    assert res.status_code == 422
+    assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY
 
 
 async def test_delete_account(test_account: models.Account):
@@ -97,7 +104,7 @@ async def test_delete_account(test_account: models.Account):
         method=RequestMethod.DELETE,
     )
 
-    assert res.status_code == 204
+    assert res.status_code == HTTP_204_NO_CONTENT
 
     account = await repo.get(models.Account, test_account.id)
 
@@ -122,8 +129,6 @@ async def test_invalid_delete_account(
 
     """
 
-    status_code = 404
-
     for account in test_accounts:
 
         if account.user_id == test_user.id:
@@ -133,7 +138,7 @@ async def test_invalid_delete_account(
             f"{ENDPOINT}{account.id}", as_user=test_user, method=RequestMethod.DELETE
         )
 
-        assert res.status_code == status_code
+        assert res.status_code == HTTP_404_NOT_FOUND
 
         account_refresh = await repo.get(models.Account, account.id)
 
@@ -187,7 +192,7 @@ async def test_update_account(
         f"{ENDPOINT}{test_account.id}", json=values, as_user=test_user
     )
 
-    assert response.status_code == 200
+    assert response.status_code == HTTP_200_OK
     account = schemas.AccountData(**response.json())
 
     db_account = await repo.get(models.Account, account.id)
