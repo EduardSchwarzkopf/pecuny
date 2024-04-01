@@ -75,3 +75,22 @@ async def test_view_forgot_password():
     email_field = form.find("input", id="email")
 
     assert email_field["onkeyup"] == "hideError(this)"
+
+
+async def test_view_forgot_password():
+
+    res = await make_http_request(url="/get-verify-token", method=RequestMethod.GET)
+
+    assert res.status_code == HTTP_200_OK
+
+    text = res.text
+    soup = BeautifulSoup(text)
+
+    form = soup.find("form")
+    base_form_test(form, "send-verify-token")
+
+    assert len(form.find_all("input")) == 2
+
+    email_field = form.find("input", id="email")
+
+    assert email_field["onkeyup"] == "hideError(this)"
