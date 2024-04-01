@@ -103,22 +103,3 @@ async def get_user_offset_account(account: models.Account) -> Optional[models.Ac
         ),
         None,
     )
-
-
-async def get_other_user(user: models.User) -> Optional[models.User]:
-    other_user_list = await repository.filter_by_multiple(
-        models.User,
-        [
-            (
-                models.User.email,
-                user.email,
-                DatabaseFilterOperator.NOT_EQUAL,
-            ),
-            (models.User.is_verified, True, DatabaseFilterOperator.EQUAL),
-        ],
-    )
-
-    try:
-        return other_user_list[-1]
-    except IndexError:
-        return None
