@@ -32,6 +32,7 @@ bcrypt = "^4.1.2"
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.0.3"
 mypy = "^1.9.0"
+beautifulsoup4 = "^4.12.3"
 
 [build-system]
 requires = ["poetry-core"]
