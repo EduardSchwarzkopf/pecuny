@@ -1,5 +1,6 @@
+import asyncio
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from app import models
 from app import repository as repo
@@ -355,5 +356,29 @@ class TransactionService:
 
         account.balance -= amount
         await repo.delete(transaction)
+
+        return True
+
+    async def import_transactions(
+        self,
+        user: models.User,
+        transaction_data_list: List[schemas.TransactionInformationCreate],
+    ) -> bool:
+        """
+        Imports transactions.
+
+        Args:
+            user: The user object.
+            transaction_data_list: A list of transaction data.
+
+        Returns:
+            bool: True if the transactions are successfully imported, False otherwise.
+        """
+
+        create_task = [
+            self.create_transaction(user, transaction_data)
+            for transaction_data in transaction_data_list
+        ]
+        await asyncio.gather(*create_task)
 
         return True
