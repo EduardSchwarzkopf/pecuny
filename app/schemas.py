@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 import uuid
 from datetime import datetime as dt
@@ -5,7 +6,14 @@ from decimal import Decimal
 from typing import Annotated, Any, Optional
 
 from fastapi_users import schemas
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    StringConstraints,
+    validator,
+)
 from starlette_wtf import StarletteForm
 from wtforms import (
     BooleanField,
@@ -91,6 +99,15 @@ class TransactionInformationBase(BaseModel):
 class TransactionInformation(TransactionInformationBase):
     date: dt
 
+    @validator("date", pre=True)
+    def parse_date(cls, v):
+        date_formats = ["%d.%m.%Y", "%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d"]
+
+        for fmt in date_formats:
+            with contextlib.suppress(ValueError):
+                return datetime.datetime.strptime(v, fmt)
+        raise ValueError(f"Date format not recognized: {v}")
+
 
 class MinimalResponse(Base):
     id: int
@@ -113,7 +130,11 @@ class CategoryData(Base):
 
 class TransactionInformationCreate(TransactionInformation):
     account_id: int
-    offset_account_id: Optional[int] = None
+    offset_account_id: Optional[int] = Field(None, description="The offset account ID.")
+
+    @validator("offset_account_id", pre=True)
+    def parse_offset_account_id(cls, v):
+        return None if v == "" else int(v)
 
 
 class TransactionInformtionUpdate(TransactionInformationCreate):
