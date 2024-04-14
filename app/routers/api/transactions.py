@@ -1,6 +1,8 @@
+import csv
 from datetime import datetime
+from io import StringIO
 
-from fastapi import Depends, Response, status
+from fastapi import Depends, File, Response, UploadFile, status
 from fastapi.exceptions import HTTPException
 
 from app import schemas
@@ -103,6 +105,30 @@ async def api_create_transaction(
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, detail="Transaction not created"
     )
+
+
+@router.post("/import")
+async def create_items(
+    current_user: User = Depends(current_active_verified_user),
+    file: UploadFile = File(...),
+):
+
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Invalid file type")
+    contents = await file.read()
+
+    if not contents:
+        raise HTTPException(status_code=400, detail="File is empty")
+
+    contents_str = contents.decode()
+    csv_file = StringIO(contents_str)
+
+    reader = csv.DictReader(csv_file, delimiter=";")
+
+    transaction_list = [schemas.TransactionInformationCreate(**row) for row in reader]
+
+    await tm.transaction(service.import_transactions, current_user, transaction_list)
+    return {"message": "Items processed successfully"}
 
 
 @router.post("/{transaction_id}", response_model=ResponseModel)
