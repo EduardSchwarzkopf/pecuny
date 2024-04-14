@@ -15,7 +15,9 @@ class RoundedDecimal(Decimal):
         print(price)  # Output: 3.14
     """
 
-    def __new__(cls, value):
+    def __new__(cls, value: str | float | int | Decimal):
+        if isinstance(value, str):
+            value = value.replace(",", "")
         rounded_value = Decimal(value).quantize(Decimal("0.00"))
         return Decimal.__new__(cls, rounded_value)
 
@@ -27,7 +29,7 @@ class RoundedDecimal(Decimal):
         yield cls.validate
 
     @classmethod
-    def validate(cls, v, _):
+    def validate(cls, v: str | float | int | Decimal, _):
         """
         Validates and rounds a value to two decimal places.
 
@@ -47,6 +49,8 @@ class RoundedDecimal(Decimal):
             TypeError: If the input value cannot be converted to a Decimal.
         """
         try:
+            if isinstance(v, str):
+                v = v.replace(",", "")
             rounded_value = Decimal(v).quantize(Decimal("0.00"))
         except TypeError as e:
             raise TypeError(f"Invalid input for RoundedDecimal: {v}") from e
