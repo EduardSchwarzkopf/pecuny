@@ -152,6 +152,8 @@ async def token_refresh_middleware(request: Request, call_next) -> Response:
 
         return response
 
+    return await call_next(request)
+
 
 def update_request_headers_with_new_token(request: Request, new_access_token: str):
     """Helper function to update the request headers with the new access token."""
