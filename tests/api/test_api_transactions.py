@@ -603,6 +603,17 @@ async def test_transaction_amount_is_number(test_account_transaction_list):
 async def test_import_transaction(
     test_account: models.Account, test_user: models.User, tmp_path: Path
 ):
+    """
+    Test case for importing transactions into an account.
+
+    Args:
+        test_account: The account to import transactions into.
+        test_user: The user performing the import.
+        tmp_path: Path to a temporary directory for file operations.
+
+    Returns:
+        None
+    """
 
     account_id = test_account.id
     transactions = [

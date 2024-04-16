@@ -1,4 +1,5 @@
-from typing import IO, Dict, Optional, Tuple
+from io import BufferedReader
+from typing import Optional
 
 from fastapi import Response
 from httpx import AsyncClient, Cookies, QueryParams
@@ -32,7 +33,7 @@ async def authorized_httpx_client(client: AsyncClient, user: models.User):
     return client
 
 
-async def make_http_request(
+async def make_http_request(  # pylint: disable=too-many-arguments
     url: str,
     data: Optional[dict] = None,
     json: Optional[dict] = None,
@@ -40,7 +41,7 @@ async def make_http_request(
     method: RequestMethod = RequestMethod.POST,
     cookies: Optional[Cookies] = None,
     params: Optional[QueryParams] = None,
-    files: Optional[Dict[str, Tuple[str, IO[bytes], str]]] = None,
+    files: Optional[dict[str, tuple[str, BufferedReader, str]]] = None,
 ) -> Response:
     """
     Makes an HTTP request to the specified URL using the given method and JSON data.

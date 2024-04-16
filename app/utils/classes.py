@@ -81,7 +81,10 @@ class TransactionCSV:
         """
         csv_content = "date;account_id;offset_account_id;reference;amount;category_id\n"
         for transaction in self.transactions:
-            csv_content += f"{transaction[0]};{transaction[1]};{transaction[2]};{transaction[3]};{transaction[4]};{transaction[5]}\n"
+            csv_content += (
+                f"{transaction[0]};{transaction[1]};{transaction[2]};"
+                f"{transaction[3]};{transaction[4]};{transaction[5]}\n"
+            )
         return csv_content
 
     def save_to_file(self, file_path: str):
@@ -91,5 +94,5 @@ class TransactionCSV:
         Args:
             file_path (str): The path to the file where the CSV content will be saved.
         """
-        with open(file_path, "w") as file:
+        with open(file_path, "w", encoding="utf-8") as file:
             file.write(self.generate_csv_content())

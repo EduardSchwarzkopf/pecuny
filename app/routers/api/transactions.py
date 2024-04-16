@@ -114,6 +114,19 @@ async def create_items(
     current_user: User = Depends(current_active_verified_user),
     file: UploadFile = File(...),
 ):
+    """
+    Handles the creation of items from a CSV file upload.
+
+    Args:
+        current_user: The current authenticated and verified user.
+        file: The uploaded CSV file.
+
+    Returns:
+        Response: HTTP response indicating the success of the import operation.
+    Raises:
+        HTTPException: If the file type is invalid, file is empty,
+        decoding error occurs, validation fails, or import fails.
+    """
 
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Invalid file type")
@@ -144,7 +157,7 @@ async def create_items(
             raise HTTPException(status_code=400, detail=msg) from e
 
     result = await tm.transaction(service.import_transactions, current_user, transaction_list)
-    
+
     if result in (None, False):
         raise HTTPException(status_code=400, detail="Import failed")
 

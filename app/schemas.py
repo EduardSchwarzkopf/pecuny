@@ -12,7 +12,7 @@ from pydantic import (
     EmailStr,
     Field,
     StringConstraints,
-    validator,
+    field_validator,
 )
 from starlette_wtf import StarletteForm
 from wtforms import (
@@ -99,8 +99,21 @@ class TransactionInformationBase(BaseModel):
 class TransactionInformation(TransactionInformationBase):
     date: dt
 
-    @validator("date", pre=True)
-    def parse_date(cls, v):
+    @field_validator("date", pre=True)
+    def parse_date(cls, v) -> dt:  # pylint: disable=no-self-argument
+        """
+        Validates and parses a date string into a datetime object.
+
+        Args:
+            cls: The class.
+            v: The date string to parse.
+
+        Returns:
+            datetime: The parsed datetime object.
+
+        Raises:
+            ValueError: If the date format is not recognized.
+        """
 
         if isinstance(v, dt):
             return v
@@ -157,8 +170,19 @@ class TransactionInformationCreate(TransactionInformation):
     account_id: int
     offset_account_id: Optional[int] = Field(None, description="The offset account ID.")
 
-    @validator("offset_account_id", pre=True)
-    def parse_offset_account_id(cls, v):
+    @field_validator("offset_account_id", pre=True)
+    def parse_offset_account_id(cls, v):  # pylint: disable=no-self-argument
+        """
+        Validates and parses an offset account ID.
+
+        Args:
+            cls: The class.
+            v: The offset account ID to parse.
+
+        Returns:
+            int or None: The parsed offset account ID or None if the input is an empty string.
+        """
+
         return None if v == "" else int(v)
 
 
