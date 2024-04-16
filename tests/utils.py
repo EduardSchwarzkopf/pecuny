@@ -1,3 +1,4 @@
+from io import BufferedReader
 from typing import Optional
 
 from fastapi import Response
@@ -32,7 +33,7 @@ async def authorized_httpx_client(client: AsyncClient, user: models.User):
     return client
 
 
-async def make_http_request(
+async def make_http_request(  # pylint: disable=too-many-arguments
     url: str,
     data: Optional[dict] = None,
     json: Optional[dict] = None,
@@ -40,15 +41,19 @@ async def make_http_request(
     method: RequestMethod = RequestMethod.POST,
     cookies: Optional[Cookies] = None,
     params: Optional[QueryParams] = None,
+    files: Optional[dict[str, tuple[str, BufferedReader, str]]] = None,
 ) -> Response:
     """
     Makes an HTTP request to the specified URL using the given method and JSON data.
 
     Args:
-        client_session_wrapper: The client session wrapper object.
-        method: The HTTP method to use for the request.
         url: The URL to make the request to.
-        json_data: The JSON data to include in the request body. Defaults to None.
+        json: The JSON data to include in the request body. Defaults to None.
+        as_user: The user to authorize the request as. Defaults to None.
+        method: The HTTP method to use for the request.
+        cookies: Cookies to include in the request. Defaults to None.
+        params: Query parameters to include in the request. Defaults to None.
+        files: Files to upload with the request. Defaults to None.
 
     Returns:
         Response: The response object.
@@ -66,9 +71,9 @@ async def make_http_request(
             client = await authorized_httpx_client(client, as_user)
 
         if method == RequestMethod.POST:
-            response = client.post(url, json=json, data=data)
+            response = client.post(url, json=json, data=data, files=files)
         elif method == RequestMethod.PATCH:
-            response = client.patch(url, json=json, data=data)
+            response = client.patch(url, json=json, data=data, files=files)
         elif method == RequestMethod.GET:
             response = client.get(url, params=params)
         elif method == RequestMethod.DELETE:

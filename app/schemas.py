@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 import uuid
 from datetime import datetime as dt
@@ -5,7 +6,14 @@ from decimal import Decimal
 from typing import Annotated, Any, Optional
 
 from fastapi_users import schemas
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    StringConstraints,
+    field_validator,
+)
 from starlette_wtf import StarletteForm
 from wtforms import (
     BooleanField,
@@ -91,6 +99,53 @@ class TransactionInformationBase(BaseModel):
 class TransactionInformation(TransactionInformationBase):
     date: dt
 
+    @field_validator("date", mode="before")
+    def parse_date(cls, v) -> dt:  # pylint: disable=no-self-argument
+        """
+        Validates and parses a date string into a datetime object.
+
+        Args:
+            cls: The class.
+            v: The date string to parse.
+
+        Returns:192gg
+            datetime: The parsed datetime object.
+
+        Raises:
+            ValueError: If the date format is not recognized.
+        """
+
+        if isinstance(v, dt):
+            return v
+
+        with contextlib.suppress(ValueError):
+            try:
+                # Direct support for 'Z' and no timezone information
+                return datetime.datetime.fromisoformat(v)
+            except ValueError:
+                # Handling timezone offsets formatted as +HH:MM or -HH:MM
+                if v[-3] in ["+", "-"]:
+                    with contextlib.suppress(ValueError):
+                        # Remove the colon from the timezone part
+                        no_colon = v[:-3] + v[-3:].replace(":", "")
+                        ddt = dt.fromisoformat(no_colon)
+                        # Adjust if necessary based on the last part of the string for timezone
+                        timezone_delta = datetime.timedelta(
+                            hours=int(v[-3:-1]), minutes=int(v[-2:]) * int(v[-3] + "1")
+                        )
+                        return (
+                            ddt - timezone_delta
+                            if v[-3] == "+"
+                            else ddt + timezone_delta
+                        )
+        # If ISO 8601 parsing fails, try predefined formats
+        date_formats = ["%d.%m.%Y", "%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d"]
+        for fmt in date_formats:
+            with contextlib.suppress(ValueError):
+                return datetime.datetime.strptime(v, fmt)
+
+        raise ValueError(f"Date format not recognized: {v}")
+
 
 class MinimalResponse(Base):
     id: int
@@ -113,7 +168,22 @@ class CategoryData(Base):
 
 class TransactionInformationCreate(TransactionInformation):
     account_id: int
-    offset_account_id: Optional[int] = None
+    offset_account_id: Optional[int] = Field(None, description="The offset account ID.")
+
+    @field_validator("offset_account_id", mode="before")
+    def parse_offset_account_id(cls, v):  # pylint: disable=no-self-argument
+        """
+        Validates and parses an offset account ID.
+
+        Args:
+            cls: The class.
+            v: The offset account ID to parse.
+
+        Returns:
+            int or None: The parsed offset account ID or None if the input is an empty string.
+        """
+
+        return None if v == "" else int(v)
 
 
 class TransactionInformtionUpdate(TransactionInformationCreate):

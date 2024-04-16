@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import List, Tuple
 
 
 class RoundedDecimal(Decimal):
@@ -15,7 +16,9 @@ class RoundedDecimal(Decimal):
         print(price)  # Output: 3.14
     """
 
-    def __new__(cls, value):
+    def __new__(cls, value: str | float | int | Decimal):
+        if isinstance(value, str):
+            value = value.replace(",", "")
         rounded_value = Decimal(value).quantize(Decimal("0.00"))
         return Decimal.__new__(cls, rounded_value)
 
@@ -27,7 +30,7 @@ class RoundedDecimal(Decimal):
         yield cls.validate
 
     @classmethod
-    def validate(cls, v, _):
+    def validate(cls, v: str | float | int | Decimal, _):
         """
         Validates and rounds a value to two decimal places.
 
@@ -47,8 +50,49 @@ class RoundedDecimal(Decimal):
             TypeError: If the input value cannot be converted to a Decimal.
         """
         try:
+            if isinstance(v, str):
+                v = v.replace(",", "")
             rounded_value = Decimal(v).quantize(Decimal("0.00"))
         except TypeError as e:
             raise TypeError(f"Invalid input for RoundedDecimal: {v}") from e
 
         return cls(rounded_value)
+
+
+class TransactionCSV:
+    def __init__(self, transactions: List[Tuple[str, int, str, str, float, int]]):
+        self.transactions = transactions
+
+    def calculate_total_amount(self) -> RoundedDecimal:
+        """
+        Calculate the sum of all transaction amounts.
+
+        Returns:
+            RoundedDecimal: The total amount of all transactions.
+        """
+        return RoundedDecimal(sum(transaction[4] for transaction in self.transactions))
+
+    def generate_csv_content(self) -> str:
+        """
+        Generate the CSV content from the transactions.
+
+        Returns:
+            str: The CSV content as a string.
+        """
+        csv_content = "date;account_id;offset_account_id;reference;amount;category_id\n"
+        for transaction in self.transactions:
+            csv_content += (
+                f"{transaction[0]};{transaction[1]};{transaction[2]};"
+                f"{transaction[3]};{transaction[4]};{transaction[5]}\n"
+            )
+        return csv_content
+
+    def save_to_file(self, file_path: str):
+        """
+        Save the CSV content to a file.
+
+        Args:
+            file_path (str): The path to the file where the CSV content will be saved.
+        """
+        with open(file_path, "w", encoding="utf-8") as file:
+            file.write(self.generate_csv_content())

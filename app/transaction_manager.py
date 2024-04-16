@@ -33,7 +33,7 @@ async def transaction(handler, *args: Any) -> Any:
         logger.error(
             "Error occurred during transaction for %s: %s", handler.__name__, e
         )
-        result = {}
+        result = None
         if db.session:
             await db.session.rollback()
 
