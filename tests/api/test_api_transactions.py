@@ -1,5 +1,6 @@
 import datetime
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 from starlette.status import (
@@ -13,7 +14,7 @@ from starlette.status import (
 from app import models
 from app import repository as repo
 from app import schemas
-from app.utils.classes import RoundedDecimal
+from app.utils.classes import RoundedDecimal, TransactionCSV
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
 from tests.utils import get_user_offset_account, make_http_request
 
@@ -54,6 +55,7 @@ async def test_create_transaction(
 
     """
     account_balance = test_account.balance
+    date = str(datetime.datetime.now(datetime.timezone.utc))
 
     res = await make_http_request(
         ENDPOINT,
@@ -61,7 +63,7 @@ async def test_create_transaction(
             "account_id": test_account.id,
             "amount": amount,
             "reference": reference,
-            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "date": date,
             "category_id": category_id,
         },
         as_user=test_user,
@@ -596,3 +598,38 @@ async def test_transaction_amount_is_number(test_account_transaction_list):
     json_response = res.json()
 
     assert isinstance(json_response["information"]["amount"], float)
+
+
+async def test_import_transaction(
+    test_account: models.Account, test_user: models.User, tmp_path: Path
+):
+
+    account_id = test_account.id
+    transactions = [
+        ("08.03.2024", account_id, "", "VISA OPENAI", -0.23, 1),
+        ("08.03.2024", account_id, "", "VISA OPENAI", -11.69, 1),
+        ("07.03.2024", account_id, "", "Restaurant", -11.95, 1),
+        ("07.03.2024", account_id, "", "ROSSMANN", -44.51, 1),
+    ]
+
+    csv_obj = TransactionCSV(transactions)
+    total_amount = csv_obj.calculate_total_amount()
+
+    csv_content = csv_obj.generate_csv_content()
+    csv_file: Path = tmp_path / "transactions.csv"
+    csv_file.write_text(csv_content)
+
+    account_balance = test_account.balance
+
+    with open(csv_file, "rb") as f:
+        files = {"file": (csv_file.name, f, "text/csv")}
+        response = await make_http_request(
+            url=f"{ENDPOINT}import", files=files, as_user=test_user
+        )
+
+    assert response.status_code == HTTP_201_CREATED
+    account_refresh = await repo.get(models.Account, test_account.id)
+
+    assert account_refresh is not None
+    new_balance = account_balance + total_amount
+    assert new_balance == account_refresh.balance
