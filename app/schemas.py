@@ -101,11 +101,36 @@ class TransactionInformation(TransactionInformationBase):
 
     @validator("date", pre=True)
     def parse_date(cls, v):
-        date_formats = ["%d.%m.%Y", "%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d"]
 
+        if isinstance(v, dt):
+            return v
+
+        with contextlib.suppress(ValueError):
+            try:
+                # Direct support for 'Z' and no timezone information
+                return datetime.datetime.fromisoformat(v)
+            except ValueError:
+                # Handling timezone offsets formatted as +HH:MM or -HH:MM
+                if v[-3] in ["+", "-"]:
+                    with contextlib.suppress(ValueError):
+                        # Remove the colon from the timezone part
+                        no_colon = v[:-3] + v[-3:].replace(":", "")
+                        ddt = dt.fromisoformat(no_colon)
+                        # Adjust if necessary based on the last part of the string for timezone
+                        timezone_delta = datetime.timedelta(
+                            hours=int(v[-3:-1]), minutes=int(v[-2:]) * int(v[-3] + "1")
+                        )
+                        return (
+                            ddt - timezone_delta
+                            if v[-3] == "+"
+                            else ddt + timezone_delta
+                        )
+        # If ISO 8601 parsing fails, try predefined formats
+        date_formats = ["%d.%m.%Y", "%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d"]
         for fmt in date_formats:
             with contextlib.suppress(ValueError):
                 return datetime.datetime.strptime(v, fmt)
+
         raise ValueError(f"Date format not recognized: {v}")
 
 
