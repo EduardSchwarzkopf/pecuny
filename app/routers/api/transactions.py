@@ -1,4 +1,5 @@
 import csv
+import decimal
 from datetime import datetime
 from io import StringIO
 
@@ -129,17 +130,26 @@ async def create_items(
 
     reader = csv.DictReader(csv_file, delimiter=";")
 
-    try:
-        transaction_list = [
-            schemas.TransactionInformationCreate(**row) for row in reader
-        ]
-    except ValidationError as e:
-        first_error = e.errors()[0]
-        custom_error_message = f"{first_error['loc'][0]}: {first_error['msg']}"
-        raise HTTPException(status_code=400, detail=custom_error_message) from e
+    transaction_list = []
+    for row in reader:
 
-    await tm.transaction(service.import_transactions, current_user, transaction_list)
-    return Response(status_code=201, content="Transactions imported successfully")
+        try:
+            transaction_list.append(schemas.TransactionInformationCreate(**row))
+        except ValidationError as e:
+            first_error = e.errors()[0]
+            custom_error_message = f"{first_error['loc'][0]}: {first_error['msg']}"
+            raise HTTPException(status_code=400, detail=custom_error_message) from e
+        except decimal.InvalidOperation as e:
+            msg = f"Invalid value on line {reader.line_num} on value {row["amount"]}"
+            raise HTTPException(status_code=400, detail=msg) from e
+
+    result = await tm.transaction(service.import_transactions, current_user, transaction_list)
+    
+    if result in (None, False):
+        raise HTTPException(status_code=400, detail="Import failed")
+
+
+    return Response(status_code=status.HTTP_201_CREATED)
 
 
 @router.post("/{transaction_id}", response_model=ResponseModel)
