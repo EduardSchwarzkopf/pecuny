@@ -63,14 +63,14 @@ class TransactionCSV:
     def __init__(self, transactions: List[Tuple[str, int, str, str, float, int]]):
         self.transactions = transactions
 
-    def calculate_total_amount(self) -> float:
+    def calculate_total_amount(self) -> RoundedDecimal:
         """
         Calculate the sum of all transaction amounts.
 
         Returns:
-            float: The total amount of all transactions.
+            RoundedDecimal: The total amount of all transactions.
         """
-        return sum(transaction[4] for transaction in self.transactions)
+        return RoundedDecimal(sum(transaction[4] for transaction in self.transactions))
 
     def generate_csv_content(self) -> str:
         """
