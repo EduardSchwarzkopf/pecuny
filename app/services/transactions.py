@@ -2,6 +2,8 @@ import asyncio
 from datetime import datetime
 from typing import List, Optional
 
+from sqlalchemy.exc import IntegrityError, PendingRollbackError
+
 from app import models
 from app import repository as repo
 from app import schemas
@@ -379,6 +381,11 @@ class TransactionService:
             self.create_transaction(user, transaction_data)
             for transaction_data in transaction_data_list
         ]
-        await asyncio.gather(*create_task)
+        try:
+            await asyncio.gather(*create_task)
+        except IntegrityError:
+            pass
+        except PendingRollbackError:
+            return False
 
         return True
