@@ -99,7 +99,7 @@ class TransactionInformationBase(BaseModel):
 class TransactionInformation(TransactionInformationBase):
     date: dt
 
-    @field_validator("date", pre=True)
+    @field_validator("date", mode="before")
     def parse_date(cls, v) -> dt:  # pylint: disable=no-self-argument
         """
         Validates and parses a date string into a datetime object.
@@ -108,7 +108,7 @@ class TransactionInformation(TransactionInformationBase):
             cls: The class.
             v: The date string to parse.
 
-        Returns:
+        Returns:192gg
             datetime: The parsed datetime object.
 
         Raises:
@@ -170,7 +170,7 @@ class TransactionInformationCreate(TransactionInformation):
     account_id: int
     offset_account_id: Optional[int] = Field(None, description="The offset account ID.")
 
-    @field_validator("offset_account_id", pre=True)
+    @field_validator("offset_account_id", mode="before")
     def parse_offset_account_id(cls, v):  # pylint: disable=no-self-argument
         """
         Validates and parses an offset account ID.
