@@ -4,6 +4,7 @@ from io import StringIO
 
 from fastapi import Depends, File, Response, UploadFile, status
 from fastapi.exceptions import HTTPException
+from pydantic import ValidationError
 
 from app import schemas
 from app import transaction_manager as tm
@@ -120,15 +121,25 @@ async def create_items(
     if not contents:
         raise HTTPException(status_code=400, detail="File is empty")
 
-    contents_str = contents.decode()
-    csv_file = StringIO(contents_str)
+    try:
+        contents_str = contents.decode()
+        csv_file = StringIO(contents_str)
+    except UnicodeDecodeError as e:
+        raise HTTPException(status_code=400, detail=e.reason) from e
 
     reader = csv.DictReader(csv_file, delimiter=";")
 
-    transaction_list = [schemas.TransactionInformationCreate(**row) for row in reader]
+    try:
+        transaction_list = [
+            schemas.TransactionInformationCreate(**row) for row in reader
+        ]
+    except ValidationError as e:
+        first_error = e.errors()[0]
+        custom_error_message = f"{first_error['loc'][0]}: {first_error['msg']}"
+        raise HTTPException(status_code=400, detail=custom_error_message) from e
 
     await tm.transaction(service.import_transactions, current_user, transaction_list)
-    return {"message": "Items processed successfully"}
+    return Response(status_code=201, content="Transactions imported successfully")
 
 
 @router.post("/{transaction_id}", response_model=ResponseModel)
