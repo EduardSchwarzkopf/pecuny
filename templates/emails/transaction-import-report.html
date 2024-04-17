@@ -1,0 +1,34 @@
+{% extends 'layouts/email.html' %}
+{% block content %}
+<h1>Hey {{user.displayname}}</h1>
+
+<p>Your import is ready. Here is your report:</p>
+
+<div>
+    <p>📊 Total Transactions Attempted: {{ total_transactions }}</p>
+    <p>✅ Successful Imports: {{ successful_imports }}</p>
+    <p>❌ Failed Imports: {{ failed_imports }}</p>
+</div>
+
+{% if failed_imports > 0 %}
+    <hr>
+    <div>
+        <h3>These imports could not be imported:</h3>
+        {% for transaction in failed_transaction_list %}
+            <div>
+                <p>Transaction Details:</p>
+                <div>
+                    {% for key, value in transaction.items() %}
+                        <strong>{{ key }}:</strong> {{ value }}<br/>
+                    {% endfor %}
+                </div>
+                <hr>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div>
+        <h3>🎉 All transactions were successfully imported!</h3>
+    </div>
+{% endif %}
+{% endblock %}
