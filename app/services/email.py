@@ -2,6 +2,7 @@ from fastapi import Request
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from starlette.responses import JSONResponse
 
+from app import schemas
 from app.config import settings
 from app.logger import get_logger
 from app.models import User
@@ -148,4 +149,42 @@ async def send_email_verification(
     log.info("Sending new token email to %s", user.email)
     return await _send(
         email, "Your verification Token!", template_name="emails/new-token.html"
+    )
+
+
+async def send_transaction_import_report(
+    user: User,
+    total_transactions,
+    failed_transaction_list=list[schemas.TransactionInformationCreate],
+):
+    """
+    Sends a transaction import report email to a user.
+
+    Args:
+        user: The user object.
+        total_transactions: The total number of transactions.
+        failed_transactions_list: The list of failed transactions.
+
+    Returns:
+        JSONResponse: A JSON response indicating the status of the email sending.
+
+    Raises:
+        None
+    """
+    failed_transactions_count = len(failed_transaction_list)
+    email = EmailSchema(
+        email=[user.email],
+        body={
+            "user": user,
+            "failed_transaction_list": failed_transaction_list,
+            "total_transactions": total_transactions,
+            "successful_imports": total_transactions - failed_transactions_count,
+            "failed_imports": failed_transactions_count,
+        },
+    )
+    log.info("Sending transaction import report email to %s", user.email)
+    return await _send(
+        email,
+        "Your transaction import report!",
+        template_name="emails/transaction-import-report.html",
     )

@@ -3,13 +3,15 @@ import decimal
 from datetime import datetime
 from io import StringIO
 
-from fastapi import Depends, File, Response, UploadFile, status
+from fastapi import (BackgroundTasks, Depends, File, Response, UploadFile,
+                     status)
 from fastapi.exceptions import HTTPException
 from pydantic import ValidationError
 
 from app import schemas
 from app import transaction_manager as tm
 from app.models import User
+from app.routers.api.background_tasks import import_transactions
 from app.routers.api.users import current_active_verified_user
 from app.services.transactions import TransactionService
 from app.utils import APIRouterExtended
@@ -111,6 +113,7 @@ async def api_create_transaction(
 
 @router.post("/import")
 async def create_items(
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(current_active_verified_user),
     file: UploadFile = File(...),
 ):
@@ -156,13 +159,9 @@ async def create_items(
             msg = f"Invalid value on line {reader.line_num} on value {row["amount"]}"
             raise HTTPException(status_code=400, detail=msg) from e
 
-    result = await tm.transaction(service.import_transactions, current_user, transaction_list)
+    background_tasks.add_task(import_transactions, current_user, transaction_list)
 
-    if result in (None, False):
-        raise HTTPException(status_code=400, detail="Import failed")
-
-
-    return Response(status_code=status.HTTP_201_CREATED)
+    return Response(status_code=status.HTTP_202_ACCEPTED)
 
 
 @router.post("/{transaction_id}", response_model=ResponseModel)

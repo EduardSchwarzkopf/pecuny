@@ -6,6 +6,7 @@ import pytest
 from starlette.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
+    HTTP_202_ACCEPTED,
     HTTP_204_NO_CONTENT,
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
@@ -638,7 +639,7 @@ async def test_import_transaction(
             url=f"{ENDPOINT}import", files=files, as_user=test_user
         )
 
-    assert response.status_code == HTTP_201_CREATED
+    assert response.status_code == HTTP_202_ACCEPTED
     account_refresh = await repo.get(models.Account, test_account.id)
 
     assert account_refresh is not None
