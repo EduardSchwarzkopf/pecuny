@@ -3,6 +3,7 @@ from typing import List
 from sqlalchemy.exc import IntegrityError, PendingRollbackError
 
 from app import models, schemas
+from app.config import settings
 from app.database import db
 from app.logger import get_logger
 from app.services.email import send_transaction_import_report
@@ -38,6 +39,9 @@ async def import_transactions(
         except (IntegrityError, PendingRollbackError, Exception) as e:
             logger.warning(e)
             failed_transaction_list.append(transaction_data)
+
+    if settings.is_testing_environment:
+        return
 
     await send_transaction_import_report(
         user, len(transaction_data_list), failed_transaction_list
