@@ -1,3 +1,4 @@
+import datetime
 from io import BufferedReader
 from typing import Optional
 
@@ -24,11 +25,11 @@ async def authorized_httpx_client(client: AsyncClient, user: models.User):
     """
 
     strategy = get_strategy()
-    token = strategy.write_token(user)
+    token = await strategy.write_token(user)
 
     client.cookies = {
         **client.cookies,
-        settings.access_token_name: await token,
+        settings.access_token_name: token,
     }
     return client
 
@@ -109,3 +110,13 @@ async def get_user_offset_account(account: models.Account) -> Optional[models.Ac
         ),
         None,
     )
+
+
+def get_iso_timestring() -> str:
+    """
+    Returns the current time in ISO 8601 format.
+
+    Returns:
+        str: The current time in ISO 8601 format.
+    """
+    return datetime.datetime.now().isoformat()

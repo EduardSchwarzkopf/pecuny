@@ -1,6 +1,8 @@
-import datetime
+from datetime import datetime as dt
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
+from typing import List
 
 import pytest
 from starlette.status import (
@@ -8,6 +10,7 @@ from starlette.status import (
     HTTP_201_CREATED,
     HTTP_202_ACCEPTED,
     HTTP_204_NO_CONTENT,
+    HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
 )
@@ -17,7 +20,7 @@ from app import repository as repo
 from app import schemas
 from app.utils.classes import RoundedDecimal, TransactionCSV
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
-from tests.utils import get_user_offset_account, make_http_request
+from tests.utils import get_iso_timestring, get_user_offset_account, make_http_request
 
 ENDPOINT = "/api/transactions/"
 
@@ -56,7 +59,6 @@ async def test_create_transaction(
 
     """
     account_balance = test_account.balance
-    date = str(datetime.datetime.now(datetime.timezone.utc))
 
     res = await make_http_request(
         ENDPOINT,
@@ -64,7 +66,7 @@ async def test_create_transaction(
             "account_id": test_account.id,
             "amount": amount,
             "reference": reference,
-            "date": date,
+            "date": get_iso_timestring(),
             "category_id": category_id,
         },
         as_user=test_user,
@@ -124,7 +126,7 @@ async def test_updated_transaction(
         "account_id": test_account.id,
         "amount": amount,
         "reference": f"Updated Val {amount}",
-        "date": str(datetime.datetime.now(datetime.timezone.utc)),
+        "date": get_iso_timestring(),
         "category_id": category_id,
     }
 
@@ -305,7 +307,7 @@ async def test_create_offset_transaction(
             "account_id": account_id,
             "amount": amount,
             "reference": reference,
-            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "date": get_iso_timestring(),
             "category_id": category_id,
             "offset_account_id": offset_account.id,
         },
@@ -380,7 +382,7 @@ async def test_create_offset_transaction_other_account_fail(
             "account_id": account_id,
             "amount": 42,
             "reference": "Not allowed",
-            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "date": get_iso_timestring(),
             "category_id": 1,
             "offset_account_id": offset_account_id,
         },
@@ -448,7 +450,7 @@ async def test_updated_offset_transaction(
             "account_id": account_id,
             "amount": 5,
             "reference": "creation",
-            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "date": get_iso_timestring(),
             "category_id": category_id,
             "offset_account_id": offset_account_id,
         },
@@ -464,7 +466,7 @@ async def test_updated_offset_transaction(
             "account_id": account_id,
             "amount": amount,
             "reference": reference,
-            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "date": get_iso_timestring(),
             "category_id": category_id,
         },
         as_user=test_account.user,
@@ -538,7 +540,7 @@ async def test_delete_offset_transaction(
             "account_id": test_account.id,
             "amount": amount,
             "reference": "creation",
-            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "date": get_iso_timestring(),
             "category_id": category_id,
             "offset_account_id": offset_account.id,
         },
@@ -645,3 +647,111 @@ async def test_import_transaction(
     assert account_refresh is not None
     new_balance = account_balance + total_amount
     assert new_balance == account_refresh.balance
+
+
+@pytest.mark.parametrize(
+    "transaction_data",
+    [
+        (["banane", 1, "", "Test", -0.23, 1]),
+        (["08.03.2024", "", "", "Test", -0.23, 1]),
+        (["08.03.2024", 1, "", "Test", "FAIL", 1]),
+    ],
+)
+async def test_invalid_import_transaction_file(
+    test_user: models.User,
+    test_account: models.Account,
+    tmp_path: Path,
+    transaction_data: List,
+):
+    """
+    Test case for importing transactions into an account.
+
+    Args:
+        test_account: The account to import transactions into.
+        test_user: The user performing the import.
+        tmp_path: Path to a temporary directory for file operations.
+
+    Returns:
+        None
+    """
+
+    if transaction_data[1] == 1:
+        transaction_data[1] = test_account.id
+
+    csv_data = [tuple(transaction_data)]
+    csv_obj = TransactionCSV(csv_data)
+
+    csv_content = csv_obj.generate_csv_content()
+    csv_file: Path = tmp_path / "transactions.csv"
+    csv_file.write_text(csv_content)
+
+    with open(csv_file, "rb") as f:
+        files = {"file": (csv_file.name, f, "text/csv")}
+        response = await make_http_request(
+            url=f"{ENDPOINT}import", files=files, as_user=test_user
+        )
+
+    assert response.status_code == HTTP_400_BAD_REQUEST
+
+
+async def test_import_transaction_fail(
+    test_user: models.User,
+    test_account: models.Account,
+    tmp_path: Path,
+):
+    """
+    Test case for importing transactions into an account.
+
+    Args:
+        test_account: The account to import transactions into.
+        test_user: The user performing the import.
+        tmp_path: Path to a temporary directory for file operations.
+
+    Returns:
+        None
+    """
+
+    account_id = test_account.id
+    user_id = test_user.id
+    non_existing_id = 999999
+    date = "08.03.2024"
+
+    csv_obj = TransactionCSV(
+        [
+            (date, account_id, "", "Test", 100, non_existing_id),
+            (date, non_existing_id, "", "Test", 100, 1),
+        ]
+    )
+
+    csv_file: Path = tmp_path / "transactions.csv"
+    csv_file.write_text(csv_obj.generate_csv_content())
+
+    with open(csv_file, "rb") as f:
+        response = await make_http_request(
+            url=f"{ENDPOINT}import",
+            files={"file": (csv_file.name, f, "text/csv")},
+            as_user=test_user,
+        )
+
+    assert response.status_code == HTTP_202_ACCEPTED
+
+    input_date = dt.strptime(date, "%d.%m.%Y")
+
+    start_of_day = input_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_of_day = start_of_day + timedelta(days=1) - timedelta(seconds=1)
+
+    user = await repo.get(models.User, user_id)
+    response = await make_http_request(
+        url=f"{ENDPOINT}",
+        as_user=user,
+        method=RequestMethod.GET,
+        params={
+            "account_id": account_id,
+            "date_start": start_of_day.isoformat(),
+            "date_end": end_of_day.isoformat(),
+        },
+    )
+
+    assert response.status_code == HTTP_200_OK
+
+    assert len(response.json()) == 0

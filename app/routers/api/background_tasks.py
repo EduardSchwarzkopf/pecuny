@@ -1,10 +1,7 @@
 from typing import List
 
-from sqlalchemy.exc import IntegrityError, PendingRollbackError
-
-from app import models, schemas
+from app import models, schemas, transaction_manager
 from app.config import settings
-from app.database import db
 from app.logger import get_logger
 from app.services.email import send_transaction_import_report
 from app.services.transactions import TransactionService
@@ -31,18 +28,14 @@ async def import_transactions(
     failed_transaction_list = []
 
     for transaction_data in transaction_data_list:
-        try:
-            async with db.session as session:
-                await transaction_service.create_transaction(user, transaction_data)
-                await session.commit()
+        transaction = await transaction_manager.transaction(
+            transaction_service.create_transaction, user, transaction_data
+        )
 
-        except (IntegrityError, PendingRollbackError, Exception) as e:
-            logger.warning(e)
+        if transaction is None:
             failed_transaction_list.append(transaction_data)
 
-    if settings.is_testing_environment:
-        return
-
-    await send_transaction_import_report(
-        user, len(transaction_data_list), failed_transaction_list
-    )
+    if not settings.is_testing_environment:
+        await send_transaction_import_report(
+            user, len(transaction_data_list), failed_transaction_list
+        )

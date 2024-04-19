@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List, Tuple
+from typing import Sequence, Tuple
 
 
 class RoundedDecimal(Decimal):
@@ -60,7 +60,7 @@ class RoundedDecimal(Decimal):
 
 
 class TransactionCSV:
-    def __init__(self, transactions: List[Tuple[str, int, str, str, float, int]]):
+    def __init__(self, transactions: Sequence[Tuple[str, int, str, str, float, int]]):
         self.transactions = transactions
 
     def calculate_total_amount(self) -> RoundedDecimal:
