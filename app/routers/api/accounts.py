@@ -171,7 +171,12 @@ async def create_items(
     for row in reader:
 
         try:
-            transaction_list.append(schemas.TransactionInformationCreate(account_id=account_id,**row))
+            transaction_list.append(
+                schemas.TransactionInformationCreate(
+                    account_id=account_id,
+                    **row
+                )
+            )
         except ValidationError as e:
             first_error = e.errors()[0]
             custom_error_message = f"{first_error['loc'][0]}: {first_error['msg']}"

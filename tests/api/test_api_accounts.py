@@ -1,4 +1,3 @@
-import time
 from datetime import datetime as dt
 from datetime import timedelta
 from pathlib import Path
@@ -375,9 +374,6 @@ async def test_import_transaction_fail(
             (date, "", "Test", 100, 1),
         ]
     )
-
-    csv_file: Path = tmp_path / "transactions.csv"
-    csv_file.write_text(csv_obj.generate_csv_content())
 
     user = await repo.get(models.User, user_id)
     with open(csv_file, "rb") as f:

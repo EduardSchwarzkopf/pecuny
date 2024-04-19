@@ -2,7 +2,6 @@ from datetime import datetime
 
 from fastapi import Depends, Response, status
 from fastapi.exceptions import HTTPException
-from pydantic import ValidationError
 
 from app import schemas
 from app import transaction_manager as tm

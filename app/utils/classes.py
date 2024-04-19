@@ -60,7 +60,7 @@ class RoundedDecimal(Decimal):
 
 
 class TransactionCSV:
-    def __init__(self, transactions: Sequence[Tuple[str, int, str, str, float, int]]):
+    def __init__(self, transactions: Sequence[Tuple[str, str, str, float, int]]):
         self.transactions = transactions
 
     def calculate_total_amount(self) -> RoundedDecimal:
