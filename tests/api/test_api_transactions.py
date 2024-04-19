@@ -1,8 +1,9 @@
+from ctypes import Union
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, Sequence, Tuple
 
 import pytest
 from starlette.status import (
@@ -661,7 +662,7 @@ async def test_invalid_import_transaction_file(
     test_user: models.User,
     test_account: models.Account,
     tmp_path: Path,
-    transaction_data: List[Tuple[Union[str, int, float], ...]],
+    transaction_data: List,
 ):
     """
     Test case for importing transactions into an account.
@@ -678,7 +679,8 @@ async def test_invalid_import_transaction_file(
     if transaction_data[1] == 1:
         transaction_data[1] = test_account.id
 
-    csv_obj = TransactionCSV(transaction_data)
+    csv_data = [tuple(transaction_data)]
+    csv_obj = TransactionCSV(csv_data)
 
     csv_content = csv_obj.generate_csv_content()
     csv_file: Path = tmp_path / "transactions.csv"
