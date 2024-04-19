@@ -1,9 +1,8 @@
-from ctypes import Union
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import List, Sequence, Tuple
+from typing import List
 
 import pytest
 from starlette.status import (
@@ -717,21 +716,21 @@ async def test_import_transaction_fail(
     non_existing_id = 999999
     date = "08.03.2024"
 
-    transaction_data_list = [
-        (date, account_id, "", "Test", 100, non_existing_id),
-        (date, non_existing_id, "", "Test", 100, 1),
-    ]
+    csv_obj = TransactionCSV(
+        [
+            (date, account_id, "", "Test", 100, non_existing_id),
+            (date, non_existing_id, "", "Test", 100, 1),
+        ]
+    )
 
-    csv_obj = TransactionCSV(transaction_data_list)
-
-    csv_content = csv_obj.generate_csv_content()
     csv_file: Path = tmp_path / "transactions.csv"
-    csv_file.write_text(csv_content)
+    csv_file.write_text(csv_obj.generate_csv_content())
 
     with open(csv_file, "rb") as f:
-        files = {"file": (csv_file.name, f, "text/csv")}
         response = await make_http_request(
-            url=f"{ENDPOINT}import", files=files, as_user=test_user
+            url=f"{ENDPOINT}import",
+            files={"file": (csv_file.name, f, "text/csv")},
+            as_user=test_user,
         )
 
     assert response.status_code == HTTP_202_ACCEPTED
@@ -741,9 +740,6 @@ async def test_import_transaction_fail(
     start_of_day = input_date.replace(hour=0, minute=0, second=0, microsecond=0)
     end_of_day = start_of_day + timedelta(days=1) - timedelta(seconds=1)
 
-    start_date = start_of_day.isoformat()
-    end_date = end_of_day.isoformat()
-
     user = await repo.get(models.User, user_id)
     response = await make_http_request(
         url=f"{ENDPOINT}",
@@ -751,8 +747,8 @@ async def test_import_transaction_fail(
         method=RequestMethod.GET,
         params={
             "account_id": account_id,
-            "date_start": start_date,
-            "date_end": end_date,
+            "date_start": start_of_day.isoformat(),
+            "date_end": end_of_day.isoformat(),
         },
     )
 
