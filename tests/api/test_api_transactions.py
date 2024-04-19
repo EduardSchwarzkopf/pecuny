@@ -1,6 +1,8 @@
-import datetime
+from datetime import datetime as dt
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
+from typing import List, Tuple, Union
 
 import pytest
 from starlette.status import (
@@ -8,6 +10,7 @@ from starlette.status import (
     HTTP_201_CREATED,
     HTTP_202_ACCEPTED,
     HTTP_204_NO_CONTENT,
+    HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
 )
@@ -17,7 +20,7 @@ from app import repository as repo
 from app import schemas
 from app.utils.classes import RoundedDecimal, TransactionCSV
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
-from tests.utils import get_user_offset_account, make_http_request
+from tests.utils import get_iso_timestring, get_user_offset_account, make_http_request
 
 ENDPOINT = "/api/transactions/"
 
@@ -56,7 +59,6 @@ async def test_create_transaction(
 
     """
     account_balance = test_account.balance
-    date = str(datetime.datetime.now(datetime.timezone.utc))
 
     res = await make_http_request(
         ENDPOINT,
@@ -64,7 +66,7 @@ async def test_create_transaction(
             "account_id": test_account.id,
             "amount": amount,
             "reference": reference,
-            "date": date,
+            "date": get_iso_timestring(),
             "category_id": category_id,
         },
         as_user=test_user,
@@ -124,7 +126,7 @@ async def test_updated_transaction(
         "account_id": test_account.id,
         "amount": amount,
         "reference": f"Updated Val {amount}",
-        "date": str(datetime.datetime.now(datetime.timezone.utc)),
+        "date": get_iso_timestring(),
         "category_id": category_id,
     }
 
@@ -305,7 +307,7 @@ async def test_create_offset_transaction(
             "account_id": account_id,
             "amount": amount,
             "reference": reference,
-            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "date": get_iso_timestring(),
             "category_id": category_id,
             "offset_account_id": offset_account.id,
         },
@@ -380,7 +382,7 @@ async def test_create_offset_transaction_other_account_fail(
             "account_id": account_id,
             "amount": 42,
             "reference": "Not allowed",
-            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "date": get_iso_timestring(),
             "category_id": 1,
             "offset_account_id": offset_account_id,
         },
@@ -448,7 +450,7 @@ async def test_updated_offset_transaction(
             "account_id": account_id,
             "amount": 5,
             "reference": "creation",
-            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "date": get_iso_timestring(),
             "category_id": category_id,
             "offset_account_id": offset_account_id,
         },
@@ -464,7 +466,7 @@ async def test_updated_offset_transaction(
             "account_id": account_id,
             "amount": amount,
             "reference": reference,
-            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "date": get_iso_timestring(),
             "category_id": category_id,
         },
         as_user=test_account.user,
@@ -538,7 +540,7 @@ async def test_delete_offset_transaction(
             "account_id": test_account.id,
             "amount": amount,
             "reference": "creation",
-            "date": str(datetime.datetime.now(datetime.timezone.utc)),
+            "date": get_iso_timestring(),
             "category_id": category_id,
             "offset_account_id": offset_account.id,
         },
