@@ -1,9 +1,16 @@
-from fastapi import Depends, status
+import csv
+import decimal
+from io import StringIO
+
+from fastapi import (BackgroundTasks, Depends, File, Response, UploadFile,
+                     status)
 from fastapi.exceptions import HTTPException
+from pydantic import ValidationError
 
 from app import schemas
 from app import transaction_manager as tm
 from app.models import User
+from app.routers.api.background_tasks import import_transactions
 from app.routers.api.users import current_active_verified_user
 from app.services.accounts import AccountService
 from app.utils import APIRouterExtended
@@ -122,3 +129,57 @@ async def api_delete_account(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
         )
+
+
+@router.post("/{account_id}/import")
+async def create_items(
+    account_id: int,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(current_active_verified_user),
+    file: UploadFile = File(...),
+):
+    """
+    Handles the creation of items from a CSV file upload.
+
+    Args:
+        current_user: The current authenticated and verified user.
+        file: The uploaded CSV file.
+
+    Returns:
+        Response: HTTP response indicating the success of the import operation.
+    Raises:
+        HTTPException: If the file type is invalid, file is empty,
+        decoding error occurs, validation fails, or import fails.
+    """
+
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Invalid file type")
+    contents = await file.read()
+
+    if not contents:
+        raise HTTPException(status_code=400, detail="File is empty")
+
+    try:
+        contents_str = contents.decode()
+        csv_file = StringIO(contents_str)
+    except UnicodeDecodeError as e:
+        raise HTTPException(status_code=400, detail=e.reason) from e
+
+    reader = csv.DictReader(csv_file, delimiter=";")
+
+    transaction_list = []
+    for row in reader:
+
+        try:
+            transaction_list.append(schemas.TransactionInformationCreate(account_id=account_id,**row))
+        except ValidationError as e:
+            first_error = e.errors()[0]
+            custom_error_message = f"{first_error['loc'][0]}: {first_error['msg']}"
+            raise HTTPException(status_code=400, detail=custom_error_message) from e
+        except decimal.InvalidOperation as e:
+            msg = f"Invalid value on line {reader.line_num} on value {row["amount"]}"
+            raise HTTPException(status_code=400, detail=msg) from e
+
+    background_tasks.add_task(import_transactions, current_user, transaction_list)
+
+    return Response(status_code=status.HTTP_202_ACCEPTED)

@@ -70,7 +70,7 @@ class TransactionCSV:
         Returns:
             RoundedDecimal: The total amount of all transactions.
         """
-        return RoundedDecimal(sum(transaction[4] for transaction in self.transactions))
+        return RoundedDecimal(sum(transaction[3] for transaction in self.transactions))
 
     def generate_csv_content(self) -> str:
         """
@@ -79,11 +79,11 @@ class TransactionCSV:
         Returns:
             str: The CSV content as a string.
         """
-        csv_content = "date;account_id;offset_account_id;reference;amount;category_id\n"
+        csv_content = "date;offset_account_id;reference;amount;category_id\n"
         for transaction in self.transactions:
             csv_content += (
                 f"{transaction[0]};{transaction[1]};{transaction[2]};"
-                f"{transaction[3]};{transaction[4]};{transaction[5]}\n"
+                f"{transaction[3]};{transaction[4]}\n"
             )
         return csv_content
 
