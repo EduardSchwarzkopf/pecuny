@@ -1113,6 +1113,18 @@ input {
   border-top-width: 1px;
 }
 
+.border-b-0 {
+  border-bottom-width: 0px;
+}
+
+.border-r-0 {
+  border-right-width: 0px;
+}
+
+.border-t-0 {
+  border-top-width: 0px;
+}
+
 .border-none {
   border-style: none;
 }
@@ -1131,6 +1143,10 @@ input {
 
 .border-gray-700 {
   border-color: var(--gray-700);
+}
+
+.border-gray {
+  border-color: var(--gray);
 }
 
 .border-l-gray {
