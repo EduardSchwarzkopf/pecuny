@@ -28,7 +28,6 @@ class Repository:
         """Apply loading options for specified relationships to a query.
 
         Args:
-            cls: The model class.
             query: The SQLAlchemy query object.
             *relationships: Class-bound attributes representing relationships to load.
 
