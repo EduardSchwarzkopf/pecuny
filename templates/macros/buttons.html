@@ -1,14 +1,14 @@
 {% set btnStyle = 'w-full md:w-auto flex justify-center transition rounded-lg py-2 px-4 text-sm font-semibold
-leading-6 text-white shadow-sm hover:bg-transparent border focus-visible:outline
+leading-6 shadow-sm hover:bg-transparent border focus-visible:outline
 focus-visible:outline-2
 focus-visible:outline-offset-2 disabled:opacity-50' %}
 
 {% macro button(text, type='button', id='', classname='', variant='primary') -%}
 {% set styles = {
-'primary': 'bg-primary hover:text-primary hover:border-primary focus-visible:outline-primary',
-'success': 'bg-success hover:text-success hover:border-success focus-visible:outline-success',
-'danger': 'bg-danger hover:text-danger hover:border-danger focus-visible:outline-danger',
-'info': 'bg-info hover:text-info hover:border-info focus-visible:outline-info',
+'primary': 'text-white bg-primary hover:text-primary hover:border-primary focus-visible:outline-primary',
+'success': 'text-white bg-success hover:text-success hover:border-success focus-visible:outline-success',
+'danger': 'text-white bg-danger hover:text-danger hover:border-danger focus-visible:outline-danger',
+'info': 'text-white bg-info hover:text-info hover:border-info focus-visible:outline-info',
 'secondary': 'bg-white text-gray fill-gray border border-gray-200 hover:text-primary hover:border-gray
 focus-visible:outline-gray',
 } %}
