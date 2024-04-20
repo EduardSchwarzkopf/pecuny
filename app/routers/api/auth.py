@@ -1,7 +1,6 @@
 from fastapi import Depends, HTTPException, Request, status
 
 from app import schemas
-from app.authentication.dependencies import get_user_service
 from app.services.users import UserService
 from app.utils import APIRouterExtended
 from app.utils.dataclasses_utils import CreateUserData
@@ -15,7 +14,7 @@ router = APIRouterExtended(prefix="/auth", tags=["Auth"])
 async def api_create_user(
     user_data: schemas.UserCreate,
     request: Request,
-    service: UserService = Depends(get_user_service),
+    service: UserService = Depends(UserService.get_instance),
 ):
     """
     Creates a new user.

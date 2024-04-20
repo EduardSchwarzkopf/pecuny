@@ -5,9 +5,8 @@ import itertools
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app import models
-from app import repository as repo
-from app import schemas
+from app import models, schemas
+from app.repository import Repository
 from app.services.accounts import AccountService
 from app.services.transactions import TransactionService
 from app.services.users import UserService
@@ -87,7 +86,7 @@ async def fixture_create_test_users(user_service: UserService):
 
 
 @pytest.fixture(name="test_users")
-async def fixture_test_user_list(create_test_users):
+async def fixture_test_user_list(create_test_users, repository: Repository):
     """
     Fixture for retrieving a list of test users.
 
@@ -97,11 +96,11 @@ async def fixture_test_user_list(create_test_users):
     Yields:
         list[models.User]: A list of test users.
     """
-    yield await repo.get_all(models.User)
+    yield await repository.get_all(models.User)
 
 
 @pytest.fixture(name="test_user")
-async def fixture_test_user(create_test_users):
+async def fixture_test_user(create_test_users, repository: Repository):
     """
     Fixture for retrieving a test user.
 
@@ -112,7 +111,7 @@ async def fixture_test_user(create_test_users):
         models.User: The test user.
 
     """
-    user_list = await repo.filter_by(
+    user_list = await repository.filter_by(
         models.User, models.User.is_verified, True, DatabaseFilterOperator.EQUAL
     )
 
@@ -270,7 +269,9 @@ async def fixture_create_test_accounts(
 
 
 @pytest.fixture(name="test_account")
-async def fixture_test_account(test_user: models.User, create_test_accounts):
+async def fixture_test_account(
+    test_user: models.User, create_test_accounts, repository: Repository
+):
     """
     Fixture for retrieving a test account.
 
@@ -283,7 +284,7 @@ async def fixture_test_account(test_user: models.User, create_test_accounts):
 
     """
 
-    account = await repo.filter_by(
+    account = await repository.filter_by(
         models.Account,
         models.Account.user_id,
         test_user.id,
@@ -293,7 +294,7 @@ async def fixture_test_account(test_user: models.User, create_test_accounts):
 
 
 @pytest.fixture(name="test_accounts")
-async def fixture_get_test_account_list(create_test_accounts):
+async def fixture_get_test_account_list(create_test_accounts, repository: Repository):
     """
     Fixture for retrieving a list of test accounts.
 
@@ -305,7 +306,7 @@ async def fixture_get_test_account_list(create_test_accounts):
 
     """
 
-    yield await repo.get_all(
+    yield await repository.get_all(
         models.Account, load_relationships_list=[models.Account.user]
     )
 
@@ -409,7 +410,9 @@ async def fixture_create_transactions(
 
 
 @pytest.fixture(name="test_account_transaction_list")
-async def fixture_test_account_transaction_list(create_transactions, test_account):
+async def fixture_test_account_transaction_list(
+    create_transactions, test_account, repository: Repository
+):
     """
     Fixture for retrieving a list of transactions associated with a test account.
 
@@ -421,13 +424,13 @@ async def fixture_test_account_transaction_list(create_transactions, test_accoun
         list[models.Transaction]: A list of transactions associated with the test account.
     """
 
-    yield await repo.filter_by(
+    yield await repository.filter_by(
         models.Transaction, models.Transaction.account_id, test_account.id
     )
 
 
 @pytest.fixture(name="transaction_list")
-async def fixture_get_all_transactions(create_transactions):
+async def fixture_get_all_transactions(create_transactions, repository: Repository):
     """
     Fixture for retrieving a list of transactions.
 
@@ -439,4 +442,4 @@ async def fixture_get_all_transactions(create_transactions):
 
     """
 
-    yield await repo.get_all(models.Transaction)
+    yield await repository.get_all(models.Transaction)

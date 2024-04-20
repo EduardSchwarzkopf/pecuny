@@ -9,11 +9,10 @@ from starlette.status import (
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
-from app import models
-from app import repository as repo
-from app import schemas
+from app import models, schemas
 from app.auth_manager import get_strategy
 from app.config import settings
+from app.repository import Repository
 from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
 
@@ -31,6 +30,7 @@ async def test_create_user(
     username: str,
     displayname: str,
     password: str,
+    repository: Repository,
 ):
     """
     Test case for creating a user.
@@ -60,7 +60,7 @@ async def test_create_user(
 
     new_user = schemas.UserRead(**res.json())
 
-    db_user = await repo.get(models.User, new_user.id)
+    db_user = await repository.get(models.User, new_user.id)
 
     assert db_user is not None
 

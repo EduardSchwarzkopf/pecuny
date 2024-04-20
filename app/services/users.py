@@ -3,13 +3,13 @@ from typing import Optional
 from fastapi import Request
 from fastapi_users import exceptions
 
-from app import database, models
-from app import repository as repo
-from app import schemas
+from app import database, models, schemas
 from app.authentication.management import UserManager
 from app.database import db
 from app.logger import get_logger
+from app.repository import Repository
 from app.schemas import EmailStr, UserCreate
+from app.services.base import BaseService
 from app.utils.dataclasses_utils import CreateUserData
 from app.utils.displayname_generator import generate_displayname
 from app.utils.enums import EmailVerificationStatus
@@ -18,7 +18,7 @@ from app.utils.exceptions import UserAlreadyExistsException, UserNotFoundExcepti
 logger = get_logger(__name__)
 
 
-class UserService:
+class UserService(BaseService):
     """
     Provides user-related services.
 
@@ -32,7 +32,7 @@ class UserService:
     - reset_password: Resets a user's password.
     """
 
-    def __init__(self):
+    def __init__(self, repository: Optional[Repository] = None):
         """
         Initializes the UserService.
 
@@ -43,6 +43,7 @@ class UserService:
             None
         """
 
+        super().__init__(repository)
         self.user_manager = self._get_user_manager()
 
     def _get_user_manager(self):
@@ -74,7 +75,8 @@ class UserService:
         """
 
         logger.info("Deleting user %s", current_user.id)
-        await repo.delete(current_user)
+        await self.repository.delete(current_user)
+
         return True
 
     async def update_user(

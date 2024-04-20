@@ -5,10 +5,11 @@ from typing import Optional
 from fastapi import Response
 from httpx import AsyncClient, Cookies, QueryParams
 
-from app import models, repository
+from app import models
 from app.auth_manager import get_strategy
 from app.config import settings
 from app.main import app
+from app.repository import Repository
 from app.utils.enums import RequestMethod
 
 
@@ -98,6 +99,7 @@ async def get_user_offset_account(account: models.Account) -> Optional[models.Ac
     Returns:
         models.Account or None: The offset account if found, otherwise None.
     """
+    repository = Repository()
     account_list = await repository.get_all(models.Account)
     return next(
         (

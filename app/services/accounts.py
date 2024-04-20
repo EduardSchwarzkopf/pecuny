@@ -1,15 +1,14 @@
 from typing import Optional
 
-from app import models
-from app import repository as repo
-from app import schemas
+from app import models, schemas
 from app.config import settings
 from app.logger import get_logger
+from app.services.base import BaseService
 
 logger = get_logger(__name__)
 
 
-class AccountService:
+class AccountService(BaseService):
 
     async def get_accounts(
         self, current_user: models.User
@@ -24,7 +23,7 @@ class AccountService:
             list[Account]: A list of account objects.
         """
 
-        return await repo.filter_by(
+        return await self.repository.filter_by(
             models.Account, models.Account.user_id, current_user.id
         )
 
@@ -43,7 +42,7 @@ class AccountService:
         """
 
         logger.info("Getting account %s for user: %s", account_id, current_user.id)
-        account = await repo.get(models.Account, account_id)
+        account = await self.repository.get(models.Account, account_id)
 
         if account is None:
             return None
@@ -70,7 +69,7 @@ class AccountService:
 
         logger.info("Creating new account for user: %s", user.id)
         db_account = models.Account(user=user, **account.model_dump())
-        await repo.save(db_account)
+        await self.repository.save(db_account)
         logger.info("Account created for user: %s", user.id)
         return db_account
 
@@ -90,13 +89,15 @@ class AccountService:
         """
 
         logger.info("Updating account %s for user: %s", account_id, current_user.id)
-        db_account = await repo.get(models.Account, account_id)
+        db_account = await self.repository.get(models.Account, account_id)
 
         if db_account is None:
             return None
 
         if db_account.user_id == current_user.id:
-            await repo.update(models.Account, db_account.id, **account.model_dump())
+            await self.repository.update(
+                models.Account, db_account.id, **account.model_dump()
+            )
             logger.info("Account %s updated for user:  %s", account, current_user.id)
             return db_account
         logger.warning(
@@ -121,9 +122,9 @@ class AccountService:
         """
 
         logger.info("Deleting account %s for user: %s", account_id, current_user.id)
-        account = await repo.get(models.Account, account_id)
+        account = await self.repository.get(models.Account, account_id)
         if account and account.user_id == current_user.id:
-            await repo.delete(account)
+            await self.repository.delete(account)
             logger.info("Account %s deleted for user: %s", account_id, current_user.id)
             return True
         logger.warning(

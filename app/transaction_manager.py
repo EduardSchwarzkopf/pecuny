@@ -1,5 +1,6 @@
-from typing import Any
+from typing import Any, Optional
 
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.base import object_mapper
 from sqlalchemy.orm.exc import UnmappedInstanceError
 
@@ -9,7 +10,9 @@ from app.logger import get_logger
 logger = get_logger(__name__)
 
 
-async def transaction(handler, *args: Any) -> Any:
+async def transaction(
+    handler, *args: Any, session: Optional[AsyncSession] = None
+) -> Any:
     """Execute a transaction for the specified handler function.
 
     Args:
@@ -23,19 +26,22 @@ async def transaction(handler, *args: Any) -> Any:
         None
     """
     try:
+        if session is None:
+            session = db.session
+
         result = await handler(*args)
-        if db.session:
-            await db.session.commit()
+        if session:
+            await session.commit()
             if is_model_instance(result):
-                await db.session.refresh(result)
+                await session.refresh(result)
 
     except Exception as e:
         logger.error(
             "Error occurred during transaction for %s: %s", handler.__name__, e
         )
         result = None
-        if db.session:
-            await db.session.rollback()
+        if session:
+            await session.rollback()
 
     return result
 

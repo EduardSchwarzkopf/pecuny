@@ -1,24 +1,17 @@
-import csv
-import decimal
 from datetime import datetime
-from io import StringIO
 
-from fastapi import (BackgroundTasks, Depends, File, Response, UploadFile,
-                     status)
+from fastapi import Depends, Response, status
 from fastapi.exceptions import HTTPException
-from pydantic import ValidationError
 
 from app import schemas
 from app import transaction_manager as tm
 from app.models import User
-from app.routers.api.background_tasks import import_transactions
 from app.routers.api.users import current_active_verified_user
 from app.services.transactions import TransactionService
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(prefix="/transactions", tags=["Transactions"])
 ResponseModel = schemas.Transaction
-service = TransactionService()
 
 
 @router.get("/", response_model=list[ResponseModel])
@@ -27,6 +20,7 @@ async def api_get_transactions(
     date_start: datetime,
     date_end: datetime,
     current_user: User = Depends(current_active_verified_user),
+    service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Retrieves a list of transactions.
@@ -53,6 +47,7 @@ async def api_get_transactions(
 async def api_get_transaction(
     transaction_id: int,
     current_user: User = Depends(current_active_verified_user),
+    service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Retrieves a transaction by ID.
@@ -84,6 +79,7 @@ async def api_get_transaction(
 async def api_create_transaction(
     transaction_information: schemas.TransactionInformationCreate,
     current_user: User = Depends(current_active_verified_user),
+    service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Creates a new transaction.
@@ -111,64 +107,12 @@ async def api_create_transaction(
     )
 
 
-@router.post("/import")
-async def create_items(
-    background_tasks: BackgroundTasks,
-    current_user: User = Depends(current_active_verified_user),
-    file: UploadFile = File(...),
-):
-    """
-    Handles the creation of items from a CSV file upload.
-
-    Args:
-        current_user: The current authenticated and verified user.
-        file: The uploaded CSV file.
-
-    Returns:
-        Response: HTTP response indicating the success of the import operation.
-    Raises:
-        HTTPException: If the file type is invalid, file is empty,
-        decoding error occurs, validation fails, or import fails.
-    """
-
-    if not file.filename.endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Invalid file type")
-    contents = await file.read()
-
-    if not contents:
-        raise HTTPException(status_code=400, detail="File is empty")
-
-    try:
-        contents_str = contents.decode()
-        csv_file = StringIO(contents_str)
-    except UnicodeDecodeError as e:
-        raise HTTPException(status_code=400, detail=e.reason) from e
-
-    reader = csv.DictReader(csv_file, delimiter=";")
-
-    transaction_list = []
-    for row in reader:
-
-        try:
-            transaction_list.append(schemas.TransactionInformationCreate(**row))
-        except ValidationError as e:
-            first_error = e.errors()[0]
-            custom_error_message = f"{first_error['loc'][0]}: {first_error['msg']}"
-            raise HTTPException(status_code=400, detail=custom_error_message) from e
-        except decimal.InvalidOperation as e:
-            msg = f"Invalid value on line {reader.line_num} on value {row["amount"]}"
-            raise HTTPException(status_code=400, detail=msg) from e
-
-    background_tasks.add_task(import_transactions, current_user, transaction_list)
-
-    return Response(status_code=status.HTTP_202_ACCEPTED)
-
-
 @router.post("/{transaction_id}", response_model=ResponseModel)
 async def api_update_transaction(
     transaction_id: int,
     transaction_information: schemas.TransactionInformtionUpdate,
     current_user: User = Depends(current_active_verified_user),
+    service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Updates a transaction.
@@ -202,7 +146,9 @@ async def api_update_transaction(
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def api_delete_transaction(
-    transaction_id: int, current_user: User = Depends(current_active_verified_user)
+    transaction_id: int,
+    current_user: User = Depends(current_active_verified_user),
+    service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Deletes a transaction.

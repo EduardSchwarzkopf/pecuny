@@ -9,8 +9,8 @@ from app import transaction_manager as tm
 from app.auth_manager import current_active_verified_user
 from app.routers.accounts import handle_account_route
 from app.routers.accounts import router as account_router
-from app.services import categories as category_service
 from app.services.accounts import AccountService
+from app.services.categories import CategoryService
 from app.services.transactions import TransactionService
 from app.utils import PageRouter
 from app.utils.account_utils import get_account_list_template
@@ -19,9 +19,6 @@ from app.utils.template_utils import group_categories_by_section, render_templat
 PREFIX = account_router.prefix + "/{account_id}/transactions"
 
 router = PageRouter(prefix=PREFIX, tags=["Transactions"])
-
-service = AccountService()
-transaction_service = TransactionService()
 
 
 async def populate_transaction_form_choices(
@@ -67,7 +64,7 @@ async def populate_transaction_form_account_choices(
     Returns:
         None
     """
-
+    service = AccountService()
     account_list = await service.get_accounts(user)
 
     if account_list is None:
@@ -104,7 +101,7 @@ async def populate_transaction_form_category_choices(
     Returns:
         None
     """
-
+    category_service = CategoryService()
     category_list = await category_service.get_categories(user) or []
     category_data_list = [
         schemas.CategoryData(**category.__dict__) for category in category_list
@@ -174,6 +171,7 @@ async def page_create_transaction(
     request: Request,
     account_id: int,
     user: models.User = Depends(current_active_verified_user),
+    transaction_service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Handles the creation of a transaction.
@@ -231,6 +229,7 @@ async def page_update_transaction_get(
     account_id: int,
     transaction_id: int,
     user: models.User = Depends(current_active_verified_user),
+    transaction_service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Renders the transaction update form page.
@@ -296,6 +295,7 @@ async def page_update_transaction_post(
     account_id: int,
     transaction_id: int,
     user: models.User = Depends(current_active_verified_user),
+    transaction_service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Handles the update of a transaction.
@@ -369,6 +369,7 @@ async def page_delete_transaction(
     account_id: int,
     transaction_id: int,
     user: models.User = Depends(current_active_verified_user),
+    transaction_service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Handles the deletion of a transaction.

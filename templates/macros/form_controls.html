@@ -17,19 +17,23 @@ leading-tight focus:outline-none focus:border-primary" %}
                 {{ field.label(class=label_classname) }}
             </div>
             {% if not field.flags.required and field.type != "BooleanField" %}
-            <div class="ml-2">(optional)</div>
+                <div class="ml-2">(optional)</div>
             {% endif %}
         </div>
-
+        
         {% if field.type == "BooleanField" %}
 
         <label class="relative inline-flex items-center cursor-pointer">
             {{field(class="sr-only peer")}}
-            <div
-                class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-primary-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all  peer-checked:bg-primary-600">
-            </div>
+                <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-primary-300 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
         </label>
-
+        {% elif field.type == "FileField" %}
+            {{
+            field(class="block w-full rounded-lg text-sm border border-gray-300 focus:outline-none",
+            onkeyup="hideError(this)",
+            **extra_params
+            )
+            }}          
         {% else %}
 
         {{
@@ -59,8 +63,8 @@ leading-tight focus:outline-none focus:border-primary" %}
 {% endmacro %}
 
 {% macro form(title, form, action_url, button_text="Submit") %}
-<div>
-    <form class="space-y-6" action="{{ action_url }}" method="POST">
+<div class="container mx-auto py-8">
+    <form class="space-y-4 w-full mx-auto bg-white p-8 rounded-lg shadow-md " action="{{ action_url }}" method="POST">
         {{ form.csrf_token }}
         {% for field in form %}
         {% if field.type not in ("CSRFTokenField") %}
@@ -83,14 +87,39 @@ leading-tight focus:outline-none focus:border-primary" %}
 </div>
 {% endmacro %}
 
+{% macro single_file_upload_form(title, form, action_url, button_text="Submit") %}
+<div class="container mx-auto py-8">
+    <form class="space-y-4 w-full mx-auto bg-white p-8 rounded-lg shadow-md " action="{{ action_url }}" method="POST" enctype="multipart/form-data">
+        {{ form.csrf_token }}
+        {% for field in form %}
+        {% if field.type not in ("CSRFTokenField") %}
+        {{ input_field(field) }}
+        {% endif %}
+        {% endfor %}
+
+        <div class="py-2">
+            {{ submit_button(button_text) }}
+        </div>
+
+        <script src="/static/js/errorHandling.js"></script>         
+        <script>
+        document.querySelectorAll('form select').forEach(select => {
+        new SlimSelect({ select: select });
+        });
+        </script>
+
+    </form>
+</div>
+{% endmacro %}
+
 {% macro auth_form(title, form, action_url, button_text="Submit", show_password_policy=false) %}
-<div class="p-8 lg:p-12 bg-white border rounded-lg shadow w-full mb-6">
-    <div class="">
+<div class="container mx-auto py-8 bg-white rounded-lg shadow-md">
+    <div>
         {{ icon.logo("mx-auto h-16 w-auto") }}
     </div>
 
-    <div class="mt-6">
-        <form class="space-y-6 w-full" action="{{ action_url }}" method="POST">
+<div>
+    <form class="space-y-4 w-full mx-auto p-8  " action="{{ action_url }}" method="POST">
             {{ form.csrf_token }}
             {% for field in form %}
             {% if field.type not in ("CSRFTokenField") %}
@@ -117,8 +146,8 @@ leading-tight focus:outline-none focus:border-primary" %}
 {% endmacro %}
 
 {% macro transaction_form(request, form, action_url, account_id, transaction_id=false) %}
-<div>
-    <form class="space-y-6" action="{{ action_url }}" method="POST">
+<div class="container mx-auto py-8">
+    <form class="space-y-4 w-full mx-auto bg-white p-8 rounded-lg shadow-md " action="{{ action_url }}" method="POST">
         {{ form.csrf_token }}
         {% for field in form %}
         {% if field.type not in ("CSRFTokenField") %}
@@ -150,10 +179,10 @@ leading-tight focus:outline-none focus:border-primary" %}
 </div>
 {% endmacro %}
 
-
 {% macro account_form(request, form, action_url, account_id=false) %}
-<div>
-    <form class="space-y-6" action="{{ action_url }}" method="POST">
+{# TODO: request param is not in use #}
+<div class="container mx-auto py-8">
+    <form class="space-y-4 w-full mx-auto bg-white p-8 rounded-lg shadow-md " action="{{ action_url }}" method="POST">
         {{ form.csrf_token }}
         {# TODO: DRY #}
         {% for field in form %}
@@ -171,7 +200,7 @@ leading-tight focus:outline-none focus:border-primary" %}
 
 {% set delete_title = 'Delete ' ~ form.data['label'] ~ '?' %}
 
-<div class="mt-6">
+<div class="container mx-auto py-8">
     <h3>Danger Zone</h3>
     <div
         class="border border-danger p-6 color-danger flex flex-col items-center md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full rounded">

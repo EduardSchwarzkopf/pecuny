@@ -1,24 +1,17 @@
-from datetime import datetime as dt
-from datetime import timedelta
 from decimal import Decimal
-from pathlib import Path
-from typing import List
 
 import pytest
 from starlette.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
-    HTTP_202_ACCEPTED,
     HTTP_204_NO_CONTENT,
-    HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
 )
 
-from app import models
-from app import repository as repo
-from app import schemas
-from app.utils.classes import RoundedDecimal, TransactionCSV
+from app import models, schemas
+from app.repository import Repository
+from app.utils.classes import RoundedDecimal
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
 from tests.utils import get_iso_timestring, get_user_offset_account, make_http_request
 
@@ -103,6 +96,7 @@ async def test_updated_transaction(
     amount: int | float | RoundedDecimal,
     test_account: models.Account,
     test_user: models.User,
+    repository: Repository,
 ):
     """
     Test case for updating a transaction.
@@ -132,7 +126,7 @@ async def test_updated_transaction(
 
     account_balance = test_account.balance
 
-    transaction_list = await repo.filter_by(
+    transaction_list = await repository.filter_by(
         models.Transaction, models.Transaction.account_id, test_account.id
     )
 
@@ -150,7 +144,7 @@ async def test_updated_transaction(
 
     assert transaction is not None
 
-    updated_test_account = await repo.get(models.Account, test_account.id)
+    updated_test_account = await repository.get(models.Account, test_account.id)
 
     assert updated_test_account is not None
 
@@ -167,6 +161,7 @@ async def test_delete_transactions(
     test_account: models.Account,
     test_account_transaction_list: list[models.Transaction],
     test_user: models.User,
+    repository: Repository,
 ):
     """
     Test case for deleting transactions.
@@ -195,11 +190,11 @@ async def test_delete_transactions(
             as_user=test_user,
         )
         assert res.status_code == HTTP_204_NO_CONTENT
-        result = await repo.get(models.Transaction, transaction_id)
+        result = await repository.get(models.Transaction, transaction_id)
 
         assert result is None
 
-        account = await repo.get(models.Account, test_account.id)
+        account = await repository.get(models.Account, test_account.id)
 
         assert account is not None
 
@@ -208,12 +203,12 @@ async def test_delete_transactions(
         expected_balance = account_balance - amount
         assert account_balance_after == expected_balance
 
-        assert await repo.get(models.Transaction, transaction_id) is None
+        assert await repository.get(models.Transaction, transaction_id) is None
 
 
 @pytest.mark.usefixtures("create_transactions")
 async def test_delete_transactions_fail(
-    test_account: models.Account, test_user: models.User
+    test_account: models.Account, test_user: models.User, repository: Repository
 ):
     """
     Test case for failing to delete transactions.
@@ -229,7 +224,7 @@ async def test_delete_transactions_fail(
         AssertionError: If the test fails.
     """
 
-    result = await repo.filter_by(
+    result = await repository.filter_by(
         models.Account,
         models.Account.user_id,
         test_account.user_id,
@@ -250,7 +245,7 @@ async def test_delete_transactions_fail(
 
         assert res.status_code == HTTP_404_NOT_FOUND
 
-        account_refresh = await repo.get(models.Account, account.id)
+        account_refresh = await repository.get(models.Account, account.id)
 
         assert account_refresh is not None
 
@@ -276,6 +271,7 @@ async def test_create_offset_transaction(
     amount: int | float,
     expected_offset_amount: int | float,
     category_id,
+    repository: Repository,
 ):
     """
     Test case for creating an offset transaction.
@@ -321,7 +317,9 @@ async def test_create_offset_transaction(
 
     assert isinstance(offset_transactions_id, int)
 
-    new_offset_transaction = await repo.get(models.Transaction, offset_transactions_id)
+    new_offset_transaction = await repository.get(
+        models.Transaction, offset_transactions_id
+    )
 
     assert new_offset_transaction is not None
 
@@ -339,8 +337,7 @@ async def test_create_offset_transaction(
 
 
 async def test_create_offset_transaction_other_account_fail(
-    test_account: models.Account,
-    test_user: models.User,
+    test_account: models.Account, test_user: models.User, repository: Repository
 ):
     """
     Test case for failing to create an offset transaction with another account.
@@ -359,7 +356,7 @@ async def test_create_offset_transaction_other_account_fail(
 
     """
 
-    offset_account_list = await repo.filter_by(
+    offset_account_list = await repository.filter_by(
         models.Account,
         models.Account.user_id,
         test_user.id,
@@ -391,8 +388,8 @@ async def test_create_offset_transaction_other_account_fail(
 
     assert res.status_code == HTTP_401_UNAUTHORIZED
 
-    account_refreshed = await repo.get(models.Account, account_id)
-    offset_account_refreshed = await repo.get(models.Account, offset_account_id)
+    account_refreshed = await repository.get(models.Account, account_id)
+    offset_account_refreshed = await repository.get(models.Account, offset_account_id)
 
     assert account_refreshed is not None
     assert offset_account_refreshed is not None
@@ -418,6 +415,7 @@ async def test_updated_offset_transaction(
     test_account: models.Account,
     category_id: int,
     amount: int | float | RoundedDecimal,
+    repository: Repository,
 ):
     """
     Test case for updating an offset transaction.
@@ -482,8 +480,8 @@ async def test_updated_offset_transaction(
     assert transaction.information.reference == reference
     assert transaction.information.category_id == category_id
 
-    account_refreshed = await repo.get(models.Account, account_id)
-    offset_account_refreshed = await repo.get(models.Account, offset_account_id)
+    account_refreshed = await repository.get(models.Account, account_id)
+    offset_account_refreshed = await repository.get(models.Account, offset_account_id)
 
     assert account_refreshed is not None
     assert offset_account_refreshed is not None
@@ -510,6 +508,7 @@ async def test_delete_offset_transaction(
     test_user: models.User,
     category_id: int,
     amount: int | float,
+    repository: Repository,
 ):
     """
     Test case for deleting an offset transaction.
@@ -561,8 +560,8 @@ async def test_delete_offset_transaction(
     assert res.status_code == HTTP_204_NO_CONTENT
     assert offset_transaction_res.status_code == HTTP_404_NOT_FOUND
 
-    account_refresh = await repo.get(models.Account, test_account.id)
-    offset_account_refresh = await repo.get(models.Account, offset_account.id)
+    account_refresh = await repository.get(models.Account, test_account.id)
+    offset_account_refresh = await repository.get(models.Account, offset_account.id)
 
     assert account_refresh is not None
     assert offset_account_refresh is not None
@@ -571,7 +570,9 @@ async def test_delete_offset_transaction(
     assert account_balance == account_refresh.balance
 
 
-async def test_transaction_amount_is_number(test_account_transaction_list):
+async def test_transaction_amount_is_number(
+    test_account_transaction_list: list[models.Transaction], repository: Repository
+):
     """
     Tests if the transaction amount in the JSON response is a float.
 
@@ -586,7 +587,7 @@ async def test_transaction_amount_is_number(test_account_transaction_list):
     """
 
     transaction = test_account_transaction_list[0]
-    account = await repo.get(
+    account = await repository.get(
         models.Account, transaction.account_id, [models.Account.user]
     )
 
@@ -601,157 +602,3 @@ async def test_transaction_amount_is_number(test_account_transaction_list):
     json_response = res.json()
 
     assert isinstance(json_response["information"]["amount"], float)
-
-
-async def test_import_transaction(
-    test_account: models.Account, test_user: models.User, tmp_path: Path
-):
-    """
-    Test case for importing transactions into an account.
-
-    Args:
-        test_account: The account to import transactions into.
-        test_user: The user performing the import.
-        tmp_path: Path to a temporary directory for file operations.
-
-    Returns:
-        None
-    """
-
-    account_id = test_account.id
-    transactions = [
-        ("08.03.2024", account_id, "", "VISA OPENAI", -0.23, 1),
-        ("08.03.2024", account_id, "", "VISA OPENAI", -11.69, 1),
-        ("07.03.2024", account_id, "", "Restaurant", -11.95, 1),
-        ("07.03.2024", account_id, "", "ROSSMANN", -44.51, 1),
-    ]
-
-    csv_obj = TransactionCSV(transactions)
-    total_amount = csv_obj.calculate_total_amount()
-
-    csv_content = csv_obj.generate_csv_content()
-    csv_file: Path = tmp_path / "transactions.csv"
-    csv_file.write_text(csv_content)
-
-    account_balance = test_account.balance
-
-    with open(csv_file, "rb") as f:
-        files = {"file": (csv_file.name, f, "text/csv")}
-        response = await make_http_request(
-            url=f"{ENDPOINT}import", files=files, as_user=test_user
-        )
-
-    assert response.status_code == HTTP_202_ACCEPTED
-    account_refresh = await repo.get(models.Account, test_account.id)
-
-    assert account_refresh is not None
-    new_balance = account_balance + total_amount
-    assert new_balance == account_refresh.balance
-
-
-@pytest.mark.parametrize(
-    "transaction_data",
-    [
-        (["banane", 1, "", "Test", -0.23, 1]),
-        (["08.03.2024", "", "", "Test", -0.23, 1]),
-        (["08.03.2024", 1, "", "Test", "FAIL", 1]),
-    ],
-)
-async def test_invalid_import_transaction_file(
-    test_user: models.User,
-    test_account: models.Account,
-    tmp_path: Path,
-    transaction_data: List,
-):
-    """
-    Test case for importing transactions into an account.
-
-    Args:
-        test_account: The account to import transactions into.
-        test_user: The user performing the import.
-        tmp_path: Path to a temporary directory for file operations.
-
-    Returns:
-        None
-    """
-
-    if transaction_data[1] == 1:
-        transaction_data[1] = test_account.id
-
-    csv_data = [tuple(transaction_data)]
-    csv_obj = TransactionCSV(csv_data)
-
-    csv_content = csv_obj.generate_csv_content()
-    csv_file: Path = tmp_path / "transactions.csv"
-    csv_file.write_text(csv_content)
-
-    with open(csv_file, "rb") as f:
-        files = {"file": (csv_file.name, f, "text/csv")}
-        response = await make_http_request(
-            url=f"{ENDPOINT}import", files=files, as_user=test_user
-        )
-
-    assert response.status_code == HTTP_400_BAD_REQUEST
-
-
-async def test_import_transaction_fail(
-    test_user: models.User,
-    test_account: models.Account,
-    tmp_path: Path,
-):
-    """
-    Test case for importing transactions into an account.
-
-    Args:
-        test_account: The account to import transactions into.
-        test_user: The user performing the import.
-        tmp_path: Path to a temporary directory for file operations.
-
-    Returns:
-        None
-    """
-
-    account_id = test_account.id
-    user_id = test_user.id
-    non_existing_id = 999999
-    date = "08.03.2024"
-
-    csv_obj = TransactionCSV(
-        [
-            (date, account_id, "", "Test", 100, non_existing_id),
-            (date, non_existing_id, "", "Test", 100, 1),
-        ]
-    )
-
-    csv_file: Path = tmp_path / "transactions.csv"
-    csv_file.write_text(csv_obj.generate_csv_content())
-
-    with open(csv_file, "rb") as f:
-        response = await make_http_request(
-            url=f"{ENDPOINT}import",
-            files={"file": (csv_file.name, f, "text/csv")},
-            as_user=test_user,
-        )
-
-    assert response.status_code == HTTP_202_ACCEPTED
-
-    input_date = dt.strptime(date, "%d.%m.%Y")
-
-    start_of_day = input_date.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_of_day = start_of_day + timedelta(days=1) - timedelta(seconds=1)
-
-    user = await repo.get(models.User, user_id)
-    response = await make_http_request(
-        url=f"{ENDPOINT}",
-        as_user=user,
-        method=RequestMethod.GET,
-        params={
-            "account_id": account_id,
-            "date_start": start_of_day.isoformat(),
-            "date_end": end_of_day.isoformat(),
-        },
-    )
-
-    assert response.status_code == HTTP_200_OK
-
-    assert len(response.json()) == 0

@@ -3,7 +3,6 @@ from fastapi import Depends, HTTPException, Response, status
 from app import schemas
 from app import transaction_manager as tm
 from app.auth_manager import current_active_verified_user
-from app.authentication.dependencies import get_user_service
 from app.models import User
 from app.services.users import UserService
 from app.utils import APIRouterExtended
@@ -15,7 +14,7 @@ ResponseModel = schemas.UserRead
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def api_delete_me(
     current_user: User = Depends(current_active_verified_user),
-    service: UserService = Depends(get_user_service),
+    service: UserService = Depends(UserService.get_instance),
 ):
     """
     Deletes the current user.

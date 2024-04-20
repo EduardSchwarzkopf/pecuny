@@ -517,6 +517,14 @@ input {
   border-width: 1px;
 }
 
+input[type="file"]::file-selector-button {
+  background-color: var(--gray);
+}
+
+input[type="file"]::file-selector-button:hover {
+  background-color: var(--gray-600);
+}
+
 *, ::before, ::after {
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;
@@ -1047,12 +1055,6 @@ input {
   margin-bottom: calc(1rem * var(--tw-space-y-reverse));
 }
 
-.space-y-6 > :not([hidden]) ~ :not([hidden]) {
-  --tw-space-y-reverse: 0;
-  margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
-  margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
-}
-
 .overflow-hidden {
   overflow: hidden;
 }
@@ -1081,12 +1083,24 @@ input {
   border-width: 2px;
 }
 
+.border-b-0 {
+  border-bottom-width: 0px;
+}
+
 .border-l-2 {
   border-left-width: 2px;
 }
 
+.border-r-0 {
+  border-right-width: 0px;
+}
+
 .border-t {
   border-top-width: 1px;
+}
+
+.border-t-0 {
+  border-top-width: 0px;
 }
 
 .border-danger {
@@ -1095,6 +1109,10 @@ input {
 
 .border-gray-200 {
   border-color: var(--gray-200);
+}
+
+.border-gray-300 {
+  border-color: var(--gray-300);
 }
 
 .border-gray-700 {
@@ -1577,9 +1595,9 @@ input {
   position: absolute;
 }
 
-.after\:left-\[2px\]::after {
+.after\:start-\[2px\]::after {
   content: var(--tw-content);
-  left: 2px;
+  inset-inline-start: 2px;
 }
 
 .after\:top-0::after {
@@ -1788,8 +1806,8 @@ input {
   opacity: 0.5;
 }
 
-.peer:checked ~ .peer-checked\:bg-primary-600 {
-  background-color: var(--primary-600);
+.peer:checked ~ .peer-checked\:bg-primary {
+  background-color: var(--primary);
 }
 
 .peer:checked ~ .peer-checked\:after\:translate-x-full::after {
@@ -1976,14 +1994,16 @@ input {
     max-width: 36rem;
   }
 
-  .lg\:p-12 {
-    padding: 3rem;
-  }
-
   .lg\:px-8 {
     padding-left: 2rem;
     padding-right: 2rem;
   }
+}
+
+.peer:checked ~ .rtl\:peer-checked\:after\:-translate-x-full:where([dir="rtl"], [dir="rtl"] *)::after {
+  content: var(--tw-content);
+  --tw-translate-x: -100%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
 @media (prefers-color-scheme: dark) {

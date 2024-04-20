@@ -5,8 +5,6 @@ from app.config import settings
 from app.services.accounts import AccountService
 from app.utils.template_utils import render_template
 
-service = AccountService()
-
 
 async def get_account_list_template(
     user: models.User, template_name: str, request: Request
@@ -26,6 +24,7 @@ async def get_account_list_template(
         None
     """
 
+    service = AccountService()
     account_list = await service.get_accounts(user) or []
     total_balance = service.calculate_total_balance(account_list)
 

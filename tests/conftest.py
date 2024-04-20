@@ -5,6 +5,7 @@ from app.config import settings
 from app.data import categories
 from app.database import db
 from app.models import Base
+from app.repository import Repository
 
 settings.is_testing_environment = True
 
@@ -56,7 +57,7 @@ async def fixture_init_db():
     await db.engine.dispose()
 
 
-async def cleanup_tests():
+async def cleanup_tests(session: AsyncSession):
     """
     Performs cleanup tasks for tests.
 
@@ -64,6 +65,7 @@ async def cleanup_tests():
         None
     """
 
+    repo = Repository(session)
     user_list = await repo.get_all(models.User)
 
     delete_task = [repo.delete(user) for user in user_list]
@@ -81,9 +83,10 @@ async def fixture_session() -> AsyncSession:  # type: ignore
     Returns:
         AsyncSession: An async session.
     """
-    await cleanup_tests()
+    session = db.session
+    await cleanup_tests(session)
 
-    yield db.session
+    yield session
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -99,6 +102,21 @@ def anyio_backend():
     """
 
     return "asyncio"
+
+
+@pytest.fixture(name="repository")
+def get_repository(session):
+    """
+    Fixture to provide a repository instance for testing.
+
+    Args:
+        session: The SQLAlchemy session object.
+
+    Returns:
+        Repository: An instance of the Repository class.
+    """
+
+    yield Repository(session)
 
 
 from .fixtures import *  # pylint: disable=wildcard-import,unused-wildcard-import,wrong-import-position

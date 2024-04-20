@@ -2,7 +2,7 @@ import calendar
 from datetime import datetime
 from itertools import groupby
 
-from fastapi import Cookie, Depends, Request
+from fastapi import BackgroundTasks, Cookie, Depends, File, Request, UploadFile
 from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette import status
@@ -17,16 +17,15 @@ from app.services.transactions import TransactionService
 from app.utils import PageRouter
 from app.utils.account_utils import get_account_list_template
 from app.utils.enums import FeedbackType
+from app.utils.file_utils import process_csv_file
 from app.utils.template_utils import add_breadcrumb, render_template, set_feedback
 
 PREFIX = f"{dashboard_router.prefix}/accounts"
 router = PageRouter(prefix=PREFIX, tags=["Accounts"])
-service = AccountService()
-transaction_service = TransactionService()
 
 
 async def handle_account_route(
-    request, user: models.User, account_id: int, create_link=True
+    request: Request, user: models.User, account_id: int, create_link=True
 ) -> models.Account:
     """
     Handles the account route.
@@ -44,6 +43,7 @@ async def handle_account_route(
         HTTPException: If the account is not found.
     """
 
+    service = AccountService()
     account = await service.get_account(user, account_id)
 
     if account is None:
@@ -77,7 +77,9 @@ async def page_list_accounts(
     )
 
 
-async def max_accounts_reached(user: models.User, request: Request) -> RedirectResponse:
+async def max_accounts_reached(
+    user: models.User, request: Request, service: AccountService
+) -> RedirectResponse:
     """
     Checks if the maximum number of accounts has been reached for a user.
 
@@ -103,6 +105,7 @@ async def max_accounts_reached(user: models.User, request: Request) -> RedirectR
 async def page_create_account_form(
     request: Request,
     user: models.User = Depends(current_active_verified_user),
+    service: AccountService = Depends(AccountService.get_instance),
 ):
     """
     Renders the create account form page.
@@ -115,7 +118,7 @@ async def page_create_account_form(
         TemplateResponse: The rendered create account form page.
     """
 
-    if response := await max_accounts_reached(user, request):
+    if response := await max_accounts_reached(user, request, service):
         return response
 
     form = schemas.CreateAccountForm(request)
@@ -130,7 +133,9 @@ async def page_create_account_form(
 @csrf_protect
 @router.post("/add")
 async def page_create_account(
-    request: Request, user: models.User = Depends(current_active_verified_user)
+    request: Request,
+    user: models.User = Depends(current_active_verified_user),
+    service: AccountService = Depends(AccountService.get_instance),
 ):
     """
     Creates a new account.
@@ -143,7 +148,7 @@ async def page_create_account(
         RedirectResponse: A redirect response to the list accounts page.
     """
 
-    if response := await max_accounts_reached(user, request):
+    if response := await max_accounts_reached(user, request, service):
         return response
 
     form = await schemas.CreateAccountForm.from_formdata(request)
@@ -172,6 +177,7 @@ async def page_get_account(
     user: models.User = Depends(current_active_verified_user),
     date_start: datetime = Cookie(None),
     date_end: datetime = Cookie(None),
+    transaction_service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Renders the account details page.
@@ -218,10 +224,8 @@ async def page_get_account(
 
         total += transaction.information.amount
 
-    # Sort the transactions by date.
     transaction_list.sort(key=lambda x: x.information.date, reverse=True)
 
-    # Group the transactions by date.
     transaction_list_grouped = [
         {"date": date, "transactions": list(transactions)}
         for date, transactions in groupby(
@@ -283,6 +287,7 @@ async def page_delete_account(
     request: Request,
     account_id: int,
     user: models.User = Depends(current_active_verified_user),
+    service: AccountService = Depends(AccountService.get_instance),
 ):
     """
     Handles the deletion of an account.
@@ -312,6 +317,7 @@ async def page_update_account(
     request: Request,
     account_id: int,
     user: models.User = Depends(current_active_verified_user),
+    service: AccountService = Depends(AccountService.get_instance),
 ):
     """
     Handles the update of an account.
@@ -348,6 +354,81 @@ async def page_update_account(
 
     if not response:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
+
+    return RedirectResponse(
+        router.url_path_for("page_get_account", account_id=account_id), status_code=302
+    )
+
+
+@router.get("/{account_id}/import")
+async def page_import_transactions_get(
+    request: Request,
+    account_id: int,
+    user: models.User = Depends(current_active_verified_user),
+):
+    """
+    Handles GET requests to import transactions for a specific account.
+
+    Args:
+        request: The incoming request object.
+        account_id: The ID of the account for which transactions are being imported.
+        _user: The current active and verified user.
+
+    Returns:
+        The rendered template for importing transactions with the form and action URL.
+    """
+
+    form = schemas.ImportTransactionsForm(request)
+
+    await handle_account_route(request, user, account_id)
+
+    return render_template(
+        "pages/dashboard/page_form_import_transactions.html",
+        request,
+        {
+            "form": form,
+            "action_url": router.url_path_for(
+                "page_import_transactions_post", account_id=account_id
+            ),
+        },
+    )
+
+
+@router.post("/{account_id}/import")
+async def page_import_transactions_post(
+    request: Request,
+    account_id: int,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    current_user: models.User = Depends(current_active_verified_user),
+):
+    """
+    Handles the creation of items from a CSV file upload.
+
+    Args:
+        current_user: The current authenticated and verified user.
+        file: The uploaded CSV file.
+
+    Returns:
+        Response: HTTP response indicating the success of the import operation.
+    Raises:
+        HTTPException: If the file type is invalid, file is empty,
+        decoding error occurs, validation fails, or import fails.
+    """
+
+    form = await schemas.ImportTransactionsForm.from_formdata(request)
+
+    if not await form.validate_on_submit():
+        return render_template(
+            "pages/dashboard/page_import_transactions.html",
+            request,
+            {
+                "form": form,
+                "action_url": router.url_path_for("page_import_transactions_post"),
+            },
+        )
+
+    await process_csv_file(account_id, file, current_user, background_tasks)
 
     return RedirectResponse(
         router.url_path_for("page_get_account", account_id=account_id), status_code=302

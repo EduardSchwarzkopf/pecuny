@@ -4,3 +4,6 @@ max-args = 7
 
 [MESSAGES CONTROL]
 disable=missing-module-docstring,missing-class-docstring,too-few-public-methods,broad-exception-caught,fixme
+
+[DESIGN]
+max-locals = 20

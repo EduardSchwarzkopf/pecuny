@@ -4,7 +4,7 @@ from fastapi.exceptions import HTTPException
 from app import schemas
 from app.models import User
 from app.routers.api.users import current_active_verified_user
-from app.services import categories as service
+from app.services.categories import CategoryService
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(prefix="/categories", tags=["Categories"])
@@ -14,6 +14,7 @@ ResponseModel = schemas.CategoryData
 @router.get("/", response_model=list[ResponseModel])
 async def api_get_categories(
     current_user: User = Depends(current_active_verified_user),
+    service: CategoryService = Depends(CategoryService.get_instance),
 ):
     """
     Retrieves a category by ID.
@@ -34,7 +35,9 @@ async def api_get_categories(
 
 @router.get("/{category_id}", response_model=ResponseModel)
 async def api_get_category(
-    category_id: int, current_user: User = Depends(current_active_verified_user)
+    category_id: int,
+    current_user: User = Depends(current_active_verified_user),
+    service: CategoryService = Depends(CategoryService.get_instance),
 ):
     """
     Retrieves a category by ID.
