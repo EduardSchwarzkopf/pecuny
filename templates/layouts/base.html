@@ -6,6 +6,10 @@
 
     <title>{{ title |default("pecuny", true) }}</title>
     <link
+      href="{{ url_for('static', path='/css/flowbite-1.4.4.min.css') }}"
+      rel="stylesheet"
+    />
+    <link
       href="{{ url_for('static', path='/css/main.css') }}"
       rel="stylesheet"
     />

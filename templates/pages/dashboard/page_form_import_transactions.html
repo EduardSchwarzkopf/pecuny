@@ -3,5 +3,5 @@
 {% import 'macros/form_controls.html' as form_ctrl %}
 
 {% block content %}
-{{ form_ctrl.upload_form("Import", form, action_url) }}
+{{ form_ctrl.single_file_upload_form("Import", form, action_url) }}
 {% endblock %}
