@@ -18,7 +18,11 @@ ModelT = TypeVar("ModelT", bound=BaseModel)
 
 class Repository:
 
-    def __init__(self, session: Optional[AsyncSession] = db.session):
+    def __init__(self, session: Optional[AsyncSession] = None):
+
+        if session is None:
+            session = db.session
+
         self.session = session
 
     def _load_relationships(
