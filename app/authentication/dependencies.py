@@ -8,19 +8,6 @@ from app.authentication.management import UserManager
 from app.authentication.strategies import JWTAccessRefreshStrategy
 from app.config import settings
 from app.database import get_user_db
-from app.services.users import UserService
-
-
-@lru_cache
-def get_user_service() -> UserService:
-    """
-    Returns an instance of the UserService class.
-
-    Returns:
-        UserService: An instance of the UserService class.
-    """
-
-    return UserService()
 
 
 async def get_user_manager(
