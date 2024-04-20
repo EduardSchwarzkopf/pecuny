@@ -45,4 +45,9 @@ add your styles here and run:
     input {
         @apply border
     }
+
+    input[type="file"]::file-selector-button {
+        @apply bg-gray-500 hover:bg-gray-600
+
+    }
 }
