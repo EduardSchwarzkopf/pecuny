@@ -364,7 +364,7 @@ async def page_update_account(
 async def page_import_transactions_get(
     request: Request,
     account_id: int,
-    _user: models.User = Depends(current_active_verified_user),
+    user: models.User = Depends(current_active_verified_user),
 ):
     """
     Handles GET requests to import transactions for a specific account.
@@ -379,6 +379,8 @@ async def page_import_transactions_get(
     """
 
     form = schemas.ImportTransactionsForm(request)
+
+    await handle_account_route(request, user, account_id)
 
     return render_template(
         "pages/dashboard/page_form_import_transactions.html",
