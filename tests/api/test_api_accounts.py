@@ -262,6 +262,7 @@ async def test_import_transaction(
         None
     """
 
+    account_id = test_account.id
     transactions = [
         ("08.03.2024", "", "VISA OPENAI", -0.23, 1),
         ("08.03.2024", "", "VISA OPENAI", -11.69, 1),
@@ -281,12 +282,14 @@ async def test_import_transaction(
     with open(csv_file, "rb") as f:
         files = {"file": (csv_file.name, f, "text/csv")}
         response = await make_http_request(
-            url=f"{ENDPOINT}{test_account.id}/import", files=files, as_user=test_user
+            url=f"{ENDPOINT}{account_id}/import", files=files, as_user=test_user
         )
 
     assert response.status_code == HTTP_202_ACCEPTED
-    account_refresh = await repository.get(models.Account, test_account.id)
 
+    # because the import is done in another session we also need a new one
+    repository.session.expire_all()
+    account_refresh = await repository.get(models.Account, account_id)
     assert account_refresh is not None
     new_balance = account_balance + total_amount
     assert new_balance == account_refresh.balance
@@ -396,6 +399,7 @@ async def test_import_transaction_fail(
     start_of_day = input_date.replace(hour=0, minute=0, second=0, microsecond=0)
     end_of_day = start_of_day + timedelta(days=1) - timedelta(seconds=1)
 
+    repository.session.expire_all()
     user = await repository.get(models.User, user_id)
     response = await make_http_request(
         url="/api/transactions/",
