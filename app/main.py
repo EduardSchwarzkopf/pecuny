@@ -16,14 +16,14 @@ from starlette.exceptions import HTTPException
 from starlette.middleware.sessions import SessionMiddleware
 from starlette_wtf import CSRFProtectMiddleware
 
-from app import models, repository, schemas, templates
+from app import models, schemas, templates
 from app.authentication.dependencies import get_strategy
 from app.authentication.strategies import JWTAccessRefreshStrategy
 from app.config import settings
 from app.database import db
 from app.logger import get_logger
 from app.middleware import HeaderLinkMiddleware
-from app.routers.users import router as user_router
+from app.repository import Repository
 from app.routes import router_list
 from app.utils import BreadcrumbBuilder
 from app.utils.exceptions import UnauthorizedPageException
@@ -135,6 +135,7 @@ async def token_refresh_middleware(request: Request, call_next) -> Response:
             algorithms=[algorithm],
             audience=settings.token_audience,
         )
+        repository = Repository()
         user = await repository.get(models.User, payload["sub"])
 
         if user is None:
@@ -243,7 +244,7 @@ async def forbidden_exception_handler(request: Request, exc: UnauthorizedPageExc
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
-    url = user_router.url_path_for("page_user_settings")
+    url = app.router.url_path_for("page_user_settings")
 
     return RedirectResponse(url)
 
