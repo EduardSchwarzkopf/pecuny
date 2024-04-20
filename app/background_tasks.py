@@ -2,7 +2,9 @@ from typing import List
 
 from app import models, schemas, transaction_manager
 from app.config import settings
+from app.database import db
 from app.logger import get_logger
+from app.repository import Repository
 from app.services.email import send_transaction_import_report
 from app.services.transactions import TransactionService
 
@@ -24,12 +26,17 @@ async def import_transactions(
         None
     """
 
-    transaction_service = TransactionService()
+    session = await db.get_session()
+    repo = Repository(session)
+    transaction_service = TransactionService(repo)
     failed_transaction_list = []
 
     for transaction_data in transaction_data_list:
         transaction = await transaction_manager.transaction(
-            transaction_service.create_transaction, user, transaction_data
+            transaction_service.create_transaction,
+            user,
+            transaction_data,
+            session=session,
         )
 
         if transaction is None:
