@@ -83,6 +83,31 @@ leading-tight focus:outline-none focus:border-primary" %}
 </div>
 {% endmacro %}
 
+{% macro upload_form(title, form, action_url, button_text="Submit") %}
+<div>
+    <form class="space-y-6" action="{{ action_url }}" method="POST" enctype="multipart/form-data">
+        {{ form.csrf_token }}
+        {% for field in form %}
+        {% if field.type not in ("CSRFTokenField") %}
+        {{ input_field(field) }}
+        {% endif %}
+        {% endfor %}
+
+        <div class="p-2">
+            {{ submit_button(button_text) }}
+        </div>
+
+        <script src="/static/js/errorHandling.js"></script>         
+        <script>
+        document.querySelectorAll('form select').forEach(select => {
+        new SlimSelect({ select: select });
+        });
+        </script>
+
+    </form>
+</div>
+{% endmacro %}
+
 {% macro auth_form(title, form, action_url, button_text="Submit", show_password_policy=false) %}
 <div class="p-8 lg:p-12 bg-white border rounded-lg shadow w-full mb-6">
     <div class="">
@@ -150,8 +175,8 @@ leading-tight focus:outline-none focus:border-primary" %}
 </div>
 {% endmacro %}
 
-
 {% macro account_form(request, form, action_url, account_id=false) %}
+{# TODO: request param is not in use #}
 <div>
     <form class="space-y-6" action="{{ action_url }}" method="POST">
         {{ form.csrf_token }}
