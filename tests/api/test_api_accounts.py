@@ -14,9 +14,8 @@ from starlette.status import (
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
-from app import models
-from app import repository as repo
-from app import schemas
+from app import models, schemas
+from app.repository import Repository
 from app.utils.classes import RoundedDecimal, TransactionCSV
 from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
@@ -87,7 +86,7 @@ async def test_invalid_title_create_account(test_user: models.User, label: Any):
     assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY
 
 
-async def test_delete_account(test_account: models.Account):
+async def test_delete_account(test_account: models.Account, repository: Repository):
     """
     Test case for deleting an account.
 
@@ -110,13 +109,13 @@ async def test_delete_account(test_account: models.Account):
 
     assert res.status_code == HTTP_204_NO_CONTENT
 
-    account = await repo.get(models.Account, test_account.id)
+    account = await repository.get(models.Account, test_account.id)
 
     assert account is None
 
 
 async def test_invalid_delete_account(
-    test_user: models.User, test_accounts: List[models.Account]
+    test_user: models.User, test_accounts: List[models.Account], repository: Repository
 ):
     """
     Test case for deleting an account.
@@ -144,7 +143,7 @@ async def test_invalid_delete_account(
 
         assert res.status_code == HTTP_404_NOT_FOUND
 
-        account_refresh = await repo.get(models.Account, account.id)
+        account_refresh = await repository.get(models.Account, account.id)
 
         assert account_refresh == account
 
@@ -175,7 +174,10 @@ async def test_invalid_delete_account(
     ],
 )
 async def test_update_account(
-    test_account: models.Account, test_user: models.User, values: dict
+    test_account: models.Account,
+    test_user: models.User,
+    values: dict,
+    repository: Repository,
 ):
     """
     Test case for updating an account.
@@ -199,7 +201,7 @@ async def test_update_account(
     assert response.status_code == HTTP_200_OK
     account = schemas.AccountData(**response.json())
 
-    db_account = await repo.get(models.Account, account.id)
+    db_account = await repository.get(models.Account, account.id)
     for key, value in values.items():
         account_val = getattr(account, key)
         db_account_val = getattr(db_account, key)
@@ -243,7 +245,10 @@ async def test_get_account_response(test_account):
 
 
 async def test_import_transaction(
-    test_account: models.Account, test_user: models.User, tmp_path: Path
+    test_account: models.Account,
+    test_user: models.User,
+    tmp_path: Path,
+    repository: Repository,
 ):
     """
     Test case for importing transactions into an account.
@@ -280,7 +285,7 @@ async def test_import_transaction(
         )
 
     assert response.status_code == HTTP_202_ACCEPTED
-    account_refresh = await repo.get(models.Account, test_account.id)
+    account_refresh = await repository.get(models.Account, test_account.id)
 
     assert account_refresh is not None
     new_balance = account_balance + total_amount
@@ -333,6 +338,7 @@ async def test_import_transaction_fail(
     test_user: models.User,
     test_account: models.Account,
     tmp_path: Path,
+    repository: Repository,
 ):
     """
     Test case for importing transactions into an account.
@@ -375,7 +381,7 @@ async def test_import_transaction_fail(
         ]
     )
 
-    user = await repo.get(models.User, user_id)
+    user = await repository.get(models.User, user_id)
     with open(csv_file, "rb") as f:
         response = await make_http_request(
             url=f"{ENDPOINT}{non_existing_id}/import",
@@ -390,7 +396,7 @@ async def test_import_transaction_fail(
     start_of_day = input_date.replace(hour=0, minute=0, second=0, microsecond=0)
     end_of_day = start_of_day + timedelta(days=1) - timedelta(seconds=1)
 
-    user = await repo.get(models.User, user_id)
+    user = await repository.get(models.User, user_id)
     response = await make_http_request(
         url="/api/transactions/",
         as_user=user,

@@ -8,9 +8,8 @@ from starlette.status import (
     HTTP_403_FORBIDDEN,
 )
 
-from app import models
-from app import repository as repo
-from app import schemas
+from app import models, schemas
+from app.repository import Repository
 from app.services.users import UserService
 from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
@@ -173,9 +172,7 @@ async def test_invalid_updated_user(
     assert res.status_code == HTTP_403_FORBIDDEN
 
 
-async def test_delete_self(
-    active_verified_user: models.User,
-):
+async def test_delete_self(active_verified_user: models.User, repository: Repository):
     """
     Test case for deleting a user.
 
@@ -194,12 +191,12 @@ async def test_delete_self(
 
     assert res.status_code == HTTP_204_NO_CONTENT
 
-    user = await repo.get(models.User, active_verified_user.id)
+    user = await repository.get(models.User, active_verified_user.id)
     assert user is None
 
 
 async def test_invalid_delete_other_user(
-    active_verified_user: models.User, test_user: models.User
+    active_verified_user: models.User, test_user: models.User, repository: Repository
 ):
     """
     Test case for attempting to delete another user without sufficient permissions.
@@ -221,7 +218,9 @@ async def test_invalid_delete_other_user(
 
     assert res.status_code == HTTP_403_FORBIDDEN
 
-    refresh_user: Optional[models.User] = await repo.get(models.User, test_user.id)
+    refresh_user: Optional[models.User] = await repository.get(
+        models.User, test_user.id
+    )
 
     assert refresh_user is not None
 

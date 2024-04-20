@@ -9,9 +9,8 @@ from starlette.status import (
     HTTP_404_NOT_FOUND,
 )
 
-from app import models
-from app import repository as repo
-from app import schemas
+from app import models, schemas
+from app.repository import Repository
 from app.utils.classes import RoundedDecimal
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
 from tests.utils import get_iso_timestring, get_user_offset_account, make_http_request
@@ -97,6 +96,7 @@ async def test_updated_transaction(
     amount: int | float | RoundedDecimal,
     test_account: models.Account,
     test_user: models.User,
+    repository: Repository,
 ):
     """
     Test case for updating a transaction.
@@ -126,7 +126,7 @@ async def test_updated_transaction(
 
     account_balance = test_account.balance
 
-    transaction_list = await repo.filter_by(
+    transaction_list = await repository.filter_by(
         models.Transaction, models.Transaction.account_id, test_account.id
     )
 
@@ -144,7 +144,7 @@ async def test_updated_transaction(
 
     assert transaction is not None
 
-    updated_test_account = await repo.get(models.Account, test_account.id)
+    updated_test_account = await repository.get(models.Account, test_account.id)
 
     assert updated_test_account is not None
 
@@ -161,6 +161,7 @@ async def test_delete_transactions(
     test_account: models.Account,
     test_account_transaction_list: list[models.Transaction],
     test_user: models.User,
+    repository: Repository,
 ):
     """
     Test case for deleting transactions.
@@ -189,11 +190,11 @@ async def test_delete_transactions(
             as_user=test_user,
         )
         assert res.status_code == HTTP_204_NO_CONTENT
-        result = await repo.get(models.Transaction, transaction_id)
+        result = await repository.get(models.Transaction, transaction_id)
 
         assert result is None
 
-        account = await repo.get(models.Account, test_account.id)
+        account = await repository.get(models.Account, test_account.id)
 
         assert account is not None
 
@@ -202,12 +203,12 @@ async def test_delete_transactions(
         expected_balance = account_balance - amount
         assert account_balance_after == expected_balance
 
-        assert await repo.get(models.Transaction, transaction_id) is None
+        assert await repository.get(models.Transaction, transaction_id) is None
 
 
 @pytest.mark.usefixtures("create_transactions")
 async def test_delete_transactions_fail(
-    test_account: models.Account, test_user: models.User
+    test_account: models.Account, test_user: models.User, repository: Repository
 ):
     """
     Test case for failing to delete transactions.
@@ -223,7 +224,7 @@ async def test_delete_transactions_fail(
         AssertionError: If the test fails.
     """
 
-    result = await repo.filter_by(
+    result = await repository.filter_by(
         models.Account,
         models.Account.user_id,
         test_account.user_id,
@@ -244,7 +245,7 @@ async def test_delete_transactions_fail(
 
         assert res.status_code == HTTP_404_NOT_FOUND
 
-        account_refresh = await repo.get(models.Account, account.id)
+        account_refresh = await repository.get(models.Account, account.id)
 
         assert account_refresh is not None
 
@@ -270,6 +271,7 @@ async def test_create_offset_transaction(
     amount: int | float,
     expected_offset_amount: int | float,
     category_id,
+    repository: Repository,
 ):
     """
     Test case for creating an offset transaction.
@@ -315,7 +317,9 @@ async def test_create_offset_transaction(
 
     assert isinstance(offset_transactions_id, int)
 
-    new_offset_transaction = await repo.get(models.Transaction, offset_transactions_id)
+    new_offset_transaction = await repository.get(
+        models.Transaction, offset_transactions_id
+    )
 
     assert new_offset_transaction is not None
 
@@ -333,8 +337,7 @@ async def test_create_offset_transaction(
 
 
 async def test_create_offset_transaction_other_account_fail(
-    test_account: models.Account,
-    test_user: models.User,
+    test_account: models.Account, test_user: models.User, repository: Repository
 ):
     """
     Test case for failing to create an offset transaction with another account.
@@ -353,7 +356,7 @@ async def test_create_offset_transaction_other_account_fail(
 
     """
 
-    offset_account_list = await repo.filter_by(
+    offset_account_list = await repository.filter_by(
         models.Account,
         models.Account.user_id,
         test_user.id,
@@ -385,8 +388,8 @@ async def test_create_offset_transaction_other_account_fail(
 
     assert res.status_code == HTTP_401_UNAUTHORIZED
 
-    account_refreshed = await repo.get(models.Account, account_id)
-    offset_account_refreshed = await repo.get(models.Account, offset_account_id)
+    account_refreshed = await repository.get(models.Account, account_id)
+    offset_account_refreshed = await repository.get(models.Account, offset_account_id)
 
     assert account_refreshed is not None
     assert offset_account_refreshed is not None
@@ -412,6 +415,7 @@ async def test_updated_offset_transaction(
     test_account: models.Account,
     category_id: int,
     amount: int | float | RoundedDecimal,
+    repository: Repository,
 ):
     """
     Test case for updating an offset transaction.
@@ -476,8 +480,8 @@ async def test_updated_offset_transaction(
     assert transaction.information.reference == reference
     assert transaction.information.category_id == category_id
 
-    account_refreshed = await repo.get(models.Account, account_id)
-    offset_account_refreshed = await repo.get(models.Account, offset_account_id)
+    account_refreshed = await repository.get(models.Account, account_id)
+    offset_account_refreshed = await repository.get(models.Account, offset_account_id)
 
     assert account_refreshed is not None
     assert offset_account_refreshed is not None
@@ -504,6 +508,7 @@ async def test_delete_offset_transaction(
     test_user: models.User,
     category_id: int,
     amount: int | float,
+    repository: Repository,
 ):
     """
     Test case for deleting an offset transaction.
@@ -555,8 +560,8 @@ async def test_delete_offset_transaction(
     assert res.status_code == HTTP_204_NO_CONTENT
     assert offset_transaction_res.status_code == HTTP_404_NOT_FOUND
 
-    account_refresh = await repo.get(models.Account, test_account.id)
-    offset_account_refresh = await repo.get(models.Account, offset_account.id)
+    account_refresh = await repository.get(models.Account, test_account.id)
+    offset_account_refresh = await repository.get(models.Account, offset_account.id)
 
     assert account_refresh is not None
     assert offset_account_refresh is not None
@@ -565,7 +570,9 @@ async def test_delete_offset_transaction(
     assert account_balance == account_refresh.balance
 
 
-async def test_transaction_amount_is_number(test_account_transaction_list):
+async def test_transaction_amount_is_number(
+    test_account_transaction_list: list[models.Transaction], repository: Repository
+):
     """
     Tests if the transaction amount in the JSON response is a float.
 
@@ -580,7 +587,7 @@ async def test_transaction_amount_is_number(test_account_transaction_list):
     """
 
     transaction = test_account_transaction_list[0]
-    account = await repo.get(
+    account = await repository.get(
         models.Account, transaction.account_id, [models.Account.user]
     )
 
