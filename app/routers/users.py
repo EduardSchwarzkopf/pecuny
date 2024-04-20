@@ -5,7 +5,6 @@ from starlette_wtf import csrf_protect
 
 from app import schemas
 from app.auth_manager import current_active_user
-from app.authentication.dependencies import get_user_service
 from app.models import User
 from app.services.users import UserService
 from app.utils import PageRouter
@@ -71,7 +70,7 @@ async def page_user_settings_form(
 async def page_user_settings(
     request: Request,
     user: User = Depends(current_active_user),
-    service: UserService = Depends(get_user_service),
+    service: UserService = Depends(UserService),
 ):
     """
     Handles the user settings form submission.
