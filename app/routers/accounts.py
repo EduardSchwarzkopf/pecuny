@@ -27,12 +27,10 @@ from app.utils.template_utils import (add_breadcrumb, render_template,
 
 PREFIX = f"{dashboard_router.prefix}/accounts"
 router = PageRouter(prefix=PREFIX, tags=["Accounts"])
-service = AccountService()
-transaction_service = TransactionService()
 
 
 async def handle_account_route(
-    request, user: models.User, account_id: int, create_link=True
+    request: Request, user: models.User, account_id: int, create_link=True
 ) -> models.Account:
     """
     Handles the account route.
@@ -50,6 +48,7 @@ async def handle_account_route(
         HTTPException: If the account is not found.
     """
 
+    service = AccountService()
     account = await service.get_account(user, account_id)
 
     if account is None:
@@ -83,7 +82,7 @@ async def page_list_accounts(
     )
 
 
-async def max_accounts_reached(user: models.User, request: Request) -> RedirectResponse:
+async def max_accounts_reached(user: models.User, request: Request, service: AccountService) -> RedirectResponse:
     """
     Checks if the maximum number of accounts has been reached for a user.
 
@@ -109,6 +108,7 @@ async def max_accounts_reached(user: models.User, request: Request) -> RedirectR
 async def page_create_account_form(
     request: Request,
     user: models.User = Depends(current_active_verified_user),
+    service: AccountService = Depends(AccountService.get_instance),
 ):
     """
     Renders the create account form page.
@@ -121,7 +121,7 @@ async def page_create_account_form(
         TemplateResponse: The rendered create account form page.
     """
 
-    if response := await max_accounts_reached(user, request):
+    if response := await max_accounts_reached(user, request, service):
         return response
 
     form = schemas.CreateAccountForm(request)
@@ -136,7 +136,7 @@ async def page_create_account_form(
 @csrf_protect
 @router.post("/add")
 async def page_create_account(
-    request: Request, user: models.User = Depends(current_active_verified_user)
+    request: Request, user: models.User = Depends(current_active_verified_user), service: AccountService = Depends(AccountService.get_instance)
 ):
     """
     Creates a new account.
@@ -149,7 +149,7 @@ async def page_create_account(
         RedirectResponse: A redirect response to the list accounts page.
     """
 
-    if response := await max_accounts_reached(user, request):
+    if response := await max_accounts_reached(user, request, service):
         return response
 
     form = await schemas.CreateAccountForm.from_formdata(request)
@@ -178,6 +178,7 @@ async def page_get_account(
     user: models.User = Depends(current_active_verified_user),
     date_start: datetime = Cookie(None),
     date_end: datetime = Cookie(None),
+    transaction_service: TransactionService = Depends(TransactionService.get_instance)
 ):
     """
     Renders the account details page.
@@ -289,6 +290,7 @@ async def page_delete_account(
     request: Request,
     account_id: int,
     user: models.User = Depends(current_active_verified_user),
+    service: AccountService = Depends(AccountService.get_instance)
 ):
     """
     Handles the deletion of an account.
@@ -318,6 +320,7 @@ async def page_update_account(
     request: Request,
     account_id: int,
     user: models.User = Depends(current_active_verified_user),
+    service: AccountService = Depends(AccountService.get_instance)
 ):
     """
     Handles the update of an account.
