@@ -1,23 +1,29 @@
 import calendar
+import csv
+import decimal
 from datetime import datetime
+from io import StringIO
 from itertools import groupby
 
-from fastapi import Cookie, Depends, Request
+from fastapi import BackgroundTasks, Cookie, Depends, File, Request, UploadFile
 from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
+from pydantic import ValidationError
 from starlette import status
 from starlette_wtf import csrf_protect
 
 from app import models, schemas
 from app import transaction_manager as tm
 from app.auth_manager import current_active_verified_user
+from app.background_tasks import import_transactions
 from app.routers.dashboard import router as dashboard_router
 from app.services.accounts import AccountService
 from app.services.transactions import TransactionService
 from app.utils import PageRouter
 from app.utils.account_utils import get_account_list_template
 from app.utils.enums import FeedbackType
-from app.utils.template_utils import add_breadcrumb, render_template, set_feedback
+from app.utils.template_utils import (add_breadcrumb, render_template,
+                                      set_feedback)
 
 PREFIX = f"{dashboard_router.prefix}/accounts"
 router = PageRouter(prefix=PREFIX, tags=["Accounts"])
@@ -352,3 +358,94 @@ async def page_update_account(
     return RedirectResponse(
         router.url_path_for("page_get_account", account_id=account_id), status_code=302
     )
+
+@router.get("/{account_id}/import")
+async def page_import_transactions_get(
+    request: Request,
+    account_id: int,
+    _user: models.User = Depends(current_active_verified_user),
+):
+
+
+    form = schemas.ImportTransactionsForm(request)
+
+    return render_template(
+        "pages/dashboard/page_form_import_transactions.html",
+        request,
+        {
+            "form": form,
+            "action_url": router.url_path_for(
+                "page_import_transactions_post", account_id=account_id
+            ),
+        },
+    )
+
+
+@router.post("/{account_id}/import")
+async def page_import_transactions_post(
+    request: Request,
+    account_id: int,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    current_user: models.User = Depends(current_active_verified_user),
+):
+    """
+    Handles the creation of items from a CSV file upload.
+
+    Args:
+        current_user: The current authenticated and verified user.
+        file: The uploaded CSV file.
+
+    Returns:
+        Response: HTTP response indicating the success of the import operation.
+    Raises:
+        HTTPException: If the file type is invalid, file is empty,
+        decoding error occurs, validation fails, or import fails.
+    """
+
+    form = await schemas.ImportTransactionsForm.from_formdata(request)
+
+    if not await form.validate_on_submit():
+        return render_template(
+            "pages/dashboard/page_import_transactions.html",
+            request,
+            {"form": form, "action_url": router.url_path_for("page_import_transactions_post")},
+        )
+
+
+    contents = await file.read()
+    if not contents:
+        raise HTTPException(status_code=400, detail="File is empty")
+
+    try:
+        contents_str = contents.decode()
+        csv_file = StringIO(contents_str)
+    except UnicodeDecodeError as e:
+        raise HTTPException(status_code=400, detail=e.reason) from e
+
+    reader = csv.DictReader(csv_file, delimiter=";")
+
+    transaction_list = []
+    for row in reader:
+
+        try:
+            transaction_list.append(
+                schemas.TransactionInformationCreate(
+                    account_id=account_id,
+                    **row
+                )
+            )
+        except ValidationError as e:
+            first_error = e.errors()[0]
+            custom_error_message = f"{first_error['loc'][0]}: {first_error['msg']}"
+            raise HTTPException(status_code=400, detail=custom_error_message) from e
+        except decimal.InvalidOperation as e:
+            msg = f"Invalid value on line {reader.line_num} on value {row["amount"]}"
+            raise HTTPException(status_code=400, detail=msg) from e
+
+    
+    background_tasks.add_task(import_transactions, current_user, transaction_list)
+
+    return RedirectResponse(
+        router.url_path_for("page_get_account", account_id=account_id), status_code=302)
+
