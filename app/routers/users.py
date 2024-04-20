@@ -70,7 +70,7 @@ async def page_user_settings_form(
 async def page_user_settings(
     request: Request,
     user: User = Depends(current_active_user),
-    service: UserService = Depends(UserService),
+    service: UserService = Depends(UserService.get_instance),
 ):
     """
     Handles the user settings form submission.
