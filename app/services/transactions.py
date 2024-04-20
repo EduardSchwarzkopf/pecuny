@@ -122,7 +122,6 @@ class TransactionService(BaseService):
             return None
 
         if not AccountService.has_user_access_to_account(user, account):
-            logger.warning(ACCOUNT_USER_ID_MISMATCH)
             return None
 
         db_transaction_information = models.TransactionInformation()

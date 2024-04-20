@@ -89,7 +89,7 @@ class Repository:
         self,
         cls: Type[ModelT],
         attribute: InstrumentedAttribute,
-        value: str,
+        value: Any,
         operator: DatabaseFilterOperator = DatabaseFilterOperator.EQUAL,
         load_relationships_list: Optional[list[str]] = None,
     ) -> list[ModelT]:

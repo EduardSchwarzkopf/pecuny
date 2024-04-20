@@ -86,7 +86,7 @@ async def fixture_session() -> AsyncSession:  # type: ignore
     session = db.session
     await cleanup_tests(session)
 
-    yield db.session
+    yield session
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -106,6 +106,15 @@ def anyio_backend():
 
 @pytest.fixture(name="repository")
 def get_repository(session):
+    """
+    Fixture to provide a repository instance for testing.
+
+    Args:
+        session: The SQLAlchemy session object.
+
+    Returns:
+        Repository: An instance of the Repository class.
+    """
 
     yield Repository(session)
 

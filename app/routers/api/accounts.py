@@ -2,8 +2,7 @@ import csv
 import decimal
 from io import StringIO
 
-from fastapi import (BackgroundTasks, Depends, File, Response, UploadFile,
-                     status)
+from fastapi import BackgroundTasks, Depends, File, Response, UploadFile, status
 from fastapi.exceptions import HTTPException
 from pydantic import ValidationError
 
@@ -20,12 +19,15 @@ ResponseModel = schemas.AccountData
 
 
 @router.get("/", response_model=list[ResponseModel])
-async def api_get_accounts(current_user: User = Depends(current_active_verified_user), service: AccountService = Depends(AccountService.get_instance)):
+async def api_get_accounts(
+    current_user: User = Depends(current_active_verified_user),
+    service: AccountService = Depends(AccountService.get_instance),
+):
     """
-    Retrieves a list of accounts.
+        Retrieves a list of accounts.
 
-    Args:
-        current_user: The current active user.
+        Args:
+            current_user: The current active user.
 
     Returns:
         list[response_model]: A list of account information.
@@ -36,8 +38,9 @@ async def api_get_accounts(current_user: User = Depends(current_active_verified_
 
 @router.get("/{account_id}", response_model=ResponseModel)
 async def api_get_account(
-    account_id: int, current_user: User = Depends(current_active_verified_user),
-    service: AccountService = Depends(AccountService.get_instance)
+    account_id: int,
+    current_user: User = Depends(current_active_verified_user),
+    service: AccountService = Depends(AccountService.get_instance),
 ):
     """
     Retrieves an account by ID.
@@ -63,7 +66,9 @@ async def api_get_account(
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ResponseModel)
 async def api_create_account(
-    account: schemas.Account, current_user: User = Depends(current_active_verified_user), service: AccountService = Depends(AccountService.get_instance)
+    account: schemas.Account,
+    current_user: User = Depends(current_active_verified_user),
+    service: AccountService = Depends(AccountService.get_instance),
 ):
     """
     Creates a new account.
@@ -84,7 +89,8 @@ async def api_create_account(
 async def api_update_account(
     account_id: int,
     account_data: schemas.AccountUpdate,
-    current_user: User = Depends(current_active_verified_user),service: AccountService = Depends(AccountService.get_instance)
+    current_user: User = Depends(current_active_verified_user),
+    service: AccountService = Depends(AccountService.get_instance),
 ):
     """
     Updates an account.
@@ -105,7 +111,9 @@ async def api_update_account(
 
 @router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def api_delete_account(
-    account_id: int, current_user: User = Depends(current_active_verified_user), service: AccountService = Depends(AccountService.get_instance)
+    account_id: int,
+    current_user: User = Depends(current_active_verified_user),
+    service: AccountService = Depends(AccountService.get_instance),
 ):
     """
     Deletes an account.
@@ -172,17 +180,14 @@ async def api_import_transactions(
 
         try:
             transaction_list.append(
-                schemas.TransactionInformationCreate(
-                    account_id=account_id,
-                    **row
-                )
+                schemas.TransactionInformationCreate(account_id=account_id, **row)
             )
         except ValidationError as e:
             first_error = e.errors()[0]
             custom_error_message = f"{first_error['loc'][0]}: {first_error['msg']}"
             raise HTTPException(status_code=400, detail=custom_error_message) from e
         except decimal.InvalidOperation as e:
-            msg = f"Invalid value on line {reader.line_num} on value {row["amount"]}"
+            msg = f"Invalid value on line {reader.line_num} on value {row['amount']}"
             raise HTTPException(status_code=400, detail=msg) from e
 
     background_tasks.add_task(import_transactions, current_user, transaction_list)

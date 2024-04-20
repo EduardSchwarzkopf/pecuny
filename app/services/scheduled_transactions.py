@@ -103,7 +103,9 @@ class ScheduledTransactionService(BaseService):
         if account is None:
             return None
 
-        if not AccountService.has_user_access_to_account(user, account):
+        if not AccountService.has_user_access_to_account(  # pylint: disable=duplicate-code
+            user, account
+        ):
             return None
 
         offset_account_id = transaction_information.offset_account_id

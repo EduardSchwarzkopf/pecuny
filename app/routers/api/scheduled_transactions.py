@@ -7,7 +7,7 @@ from app import schemas
 from app import transaction_manager as tm
 from app.models import User
 from app.routers.api.users import current_active_verified_user
-from app.services import scheduled_transactions as service
+from app.services.scheduled_transactions import ScheduledTransactionService
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(
@@ -22,6 +22,9 @@ async def api_get_transactions(
     date_start: datetime,
     date_end: datetime,
     current_user: User = Depends(current_active_verified_user),
+    service: ScheduledTransactionService = Depends(
+        ScheduledTransactionService.get_instance
+    ),
 ):
     """
     Retrieves a list of transactions.
@@ -48,6 +51,9 @@ async def api_get_transactions(
 async def api_get_transaction(
     transaction_id: int,
     current_user: User = Depends(current_active_verified_user),
+    service: ScheduledTransactionService = Depends(
+        ScheduledTransactionService.get_instance
+    ),
 ):
     """
     Retrieves a scheduled transaction by ID.
@@ -77,6 +83,9 @@ async def api_get_transaction(
 async def api_create_transaction(
     transaction_information: schemas.ScheduledTransactionInformationCreate,
     current_user: User = Depends(current_active_verified_user),
+    service: ScheduledTransactionService = Depends(
+        ScheduledTransactionService.get_instance
+    ),
 ):
     """
     Creates a new scheduled transaction.

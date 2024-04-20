@@ -22,8 +22,7 @@ from app.services.transactions import TransactionService
 from app.utils import PageRouter
 from app.utils.account_utils import get_account_list_template
 from app.utils.enums import FeedbackType
-from app.utils.template_utils import (add_breadcrumb, render_template,
-                                      set_feedback)
+from app.utils.template_utils import add_breadcrumb, render_template, set_feedback
 
 PREFIX = f"{dashboard_router.prefix}/accounts"
 router = PageRouter(prefix=PREFIX, tags=["Accounts"])
@@ -82,7 +81,9 @@ async def page_list_accounts(
     )
 
 
-async def max_accounts_reached(user: models.User, request: Request, service: AccountService) -> RedirectResponse:
+async def max_accounts_reached(
+    user: models.User, request: Request, service: AccountService
+) -> RedirectResponse:
     """
     Checks if the maximum number of accounts has been reached for a user.
 
@@ -136,7 +137,9 @@ async def page_create_account_form(
 @csrf_protect
 @router.post("/add")
 async def page_create_account(
-    request: Request, user: models.User = Depends(current_active_verified_user), service: AccountService = Depends(AccountService.get_instance)
+    request: Request,
+    user: models.User = Depends(current_active_verified_user),
+    service: AccountService = Depends(AccountService.get_instance),
 ):
     """
     Creates a new account.
@@ -178,7 +181,7 @@ async def page_get_account(
     user: models.User = Depends(current_active_verified_user),
     date_start: datetime = Cookie(None),
     date_end: datetime = Cookie(None),
-    transaction_service: TransactionService = Depends(TransactionService.get_instance)
+    transaction_service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Renders the account details page.
@@ -225,10 +228,8 @@ async def page_get_account(
 
         total += transaction.information.amount
 
-    # Sort the transactions by date.
     transaction_list.sort(key=lambda x: x.information.date, reverse=True)
 
-    # Group the transactions by date.
     transaction_list_grouped = [
         {"date": date, "transactions": list(transactions)}
         for date, transactions in groupby(
@@ -290,7 +291,7 @@ async def page_delete_account(
     request: Request,
     account_id: int,
     user: models.User = Depends(current_active_verified_user),
-    service: AccountService = Depends(AccountService.get_instance)
+    service: AccountService = Depends(AccountService.get_instance),
 ):
     """
     Handles the deletion of an account.
@@ -320,7 +321,7 @@ async def page_update_account(
     request: Request,
     account_id: int,
     user: models.User = Depends(current_active_verified_user),
-    service: AccountService = Depends(AccountService.get_instance)
+    service: AccountService = Depends(AccountService.get_instance),
 ):
     """
     Handles the update of an account.
@@ -362,13 +363,24 @@ async def page_update_account(
         router.url_path_for("page_get_account", account_id=account_id), status_code=302
     )
 
+
 @router.get("/{account_id}/import")
 async def page_import_transactions_get(
     request: Request,
     account_id: int,
     _user: models.User = Depends(current_active_verified_user),
 ):
+    """
+    Handles GET requests to import transactions for a specific account.
 
+    Args:
+        request: The incoming request object.
+        account_id: The ID of the account for which transactions are being imported.
+        _user: The current active and verified user.
+
+    Returns:
+        The rendered template for importing transactions with the form and action URL.
+    """
 
     form = schemas.ImportTransactionsForm(request)
 
@@ -412,9 +424,11 @@ async def page_import_transactions_post(
         return render_template(
             "pages/dashboard/page_import_transactions.html",
             request,
-            {"form": form, "action_url": router.url_path_for("page_import_transactions_post")},
+            {
+                "form": form,
+                "action_url": router.url_path_for("page_import_transactions_post"),
+            },
         )
-
 
     contents = await file.read()
     if not contents:
@@ -433,22 +447,18 @@ async def page_import_transactions_post(
 
         try:
             transaction_list.append(
-                schemas.TransactionInformationCreate(
-                    account_id=account_id,
-                    **row
-                )
+                schemas.TransactionInformationCreate(account_id=account_id, **row)
             )
         except ValidationError as e:
             first_error = e.errors()[0]
             custom_error_message = f"{first_error['loc'][0]}: {first_error['msg']}"
             raise HTTPException(status_code=400, detail=custom_error_message) from e
         except decimal.InvalidOperation as e:
-            msg = f"Invalid value on line {reader.line_num} on value {row["amount"]}"
+            msg = f"Invalid value on line {reader.line_num} on value {row['amount']}"
             raise HTTPException(status_code=400, detail=msg) from e
 
-    
     background_tasks.add_task(import_transactions, current_user, transaction_list)
 
     return RedirectResponse(
-        router.url_path_for("page_get_account", account_id=account_id), status_code=302)
-
+        router.url_path_for("page_get_account", account_id=account_id), status_code=302
+    )

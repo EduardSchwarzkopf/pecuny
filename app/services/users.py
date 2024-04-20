@@ -75,10 +75,7 @@ class UserService(BaseService):
         """
 
         logger.info("Deleting user %s", current_user.id)
-        try:
-            await self.repository.delete(current_user)
-        except Exception as e:
-            pass
+        await self.repository.delete(current_user)
 
         return True
 
