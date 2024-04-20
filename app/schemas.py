@@ -1,5 +1,6 @@
 import contextlib
 import datetime
+import mimetypes
 import uuid
 from datetime import datetime as dt
 from decimal import Decimal
@@ -18,10 +19,12 @@ from starlette_wtf import StarletteForm
 from wtforms import (
     BooleanField,
     DecimalField,
+    FileField,
     HiddenField,
     PasswordField,
     SelectField,
     StringField,
+    ValidationError,
 )
 from wtforms.validators import (
     DataRequired,
@@ -387,3 +390,20 @@ class DatePickerForm(StarletteForm):
 class UpdateUserForm(StarletteForm):
     email = StringField("Email", validators=[Email(), InputRequired(), Length(max=320)])
     displayname = StringField("Displayname", validators=[Length(max=50)])
+
+
+def validate_csv_file(_form, field):
+    """
+    Validates that the uploaded file is a CSV file.
+    """
+    if field.data and field.data.filename:
+        mimetype, _encoding = mimetypes.guess_type(field.data.filename)
+        if mimetype not in ["text/csv", "application/vnd.ms-excel"]:
+            raise ValidationError("File must be a CSV file.")
+
+
+class ImportTransactionsForm(StarletteForm):
+    file = FileField(
+        "File",
+        validators=[InputRequired(), validate_csv_file],
+    )
