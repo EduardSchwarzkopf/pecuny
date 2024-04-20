@@ -132,7 +132,7 @@ async def api_delete_account(
 
 
 @router.post("/{account_id}/import")
-async def create_items(
+async def api_import_transactions(
     account_id: int,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(current_active_verified_user),
