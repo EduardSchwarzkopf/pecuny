@@ -9,8 +9,8 @@ from pydantic import ValidationError
 
 from app import schemas
 from app import transaction_manager as tm
+from app.background_tasks import import_transactions
 from app.models import User
-from app.routers.api.background_tasks import import_transactions
 from app.routers.api.users import current_active_verified_user
 from app.services.accounts import AccountService
 from app.utils import APIRouterExtended
