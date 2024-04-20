@@ -10,9 +10,10 @@
       {{ btn.edit(url_for('page_update_account_form', account_id=account.id)) }}
     </div>
   </div>
-  <a href="{{ url_for('page_create_transaction_form', account_id=account.id)}}">
-    {{ btn.button("Create Transaction") }}
-  </a>
+  <div class="flex justify-end space-x-2">
+    {{ btn.link("Import", url_for('page_import_transactions_get', account_id=account.id), variant="secondary") }}
+    {{ btn.link("Create Transaction", url_for('page_create_transaction_form', account_id=account.id)) }}
+  </div>
 </div>
 
 <div class="flex flex-col items-center bg-white border py-6 rounded-lg">
