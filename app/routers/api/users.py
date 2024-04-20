@@ -14,7 +14,7 @@ ResponseModel = schemas.UserRead
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def api_delete_me(
     current_user: User = Depends(current_active_verified_user),
-    service: UserService = Depends(UserService),
+    service: UserService = Depends(UserService.get_instance),
 ):
     """
     Deletes the current user.

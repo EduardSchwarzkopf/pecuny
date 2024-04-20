@@ -12,7 +12,6 @@ from app.utils import APIRouterExtended
 
 router = APIRouterExtended(prefix="/transactions", tags=["Transactions"])
 ResponseModel = schemas.Transaction
-service = TransactionService()
 
 
 @router.get("/", response_model=list[ResponseModel])
@@ -21,6 +20,7 @@ async def api_get_transactions(
     date_start: datetime,
     date_end: datetime,
     current_user: User = Depends(current_active_verified_user),
+    service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Retrieves a list of transactions.
@@ -47,6 +47,7 @@ async def api_get_transactions(
 async def api_get_transaction(
     transaction_id: int,
     current_user: User = Depends(current_active_verified_user),
+    service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Retrieves a transaction by ID.
@@ -78,6 +79,7 @@ async def api_get_transaction(
 async def api_create_transaction(
     transaction_information: schemas.TransactionInformationCreate,
     current_user: User = Depends(current_active_verified_user),
+    service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Creates a new transaction.
@@ -110,6 +112,7 @@ async def api_update_transaction(
     transaction_id: int,
     transaction_information: schemas.TransactionInformtionUpdate,
     current_user: User = Depends(current_active_verified_user),
+    service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Updates a transaction.
@@ -143,7 +146,9 @@ async def api_update_transaction(
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def api_delete_transaction(
-    transaction_id: int, current_user: User = Depends(current_active_verified_user)
+    transaction_id: int,
+    current_user: User = Depends(current_active_verified_user),
+    service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
     Deletes a transaction.

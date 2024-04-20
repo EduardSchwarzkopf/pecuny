@@ -14,7 +14,7 @@ router = APIRouterExtended(prefix="/auth", tags=["Auth"])
 async def api_create_user(
     user_data: schemas.UserCreate,
     request: Request,
-    service: UserService = Depends(UserService),
+    service: UserService = Depends(UserService.get_instance),
 ):
     """
     Creates a new user.
