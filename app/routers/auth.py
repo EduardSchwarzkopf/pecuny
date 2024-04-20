@@ -153,7 +153,7 @@ async def get_regsiter(
 @router.post(REGISTER)
 async def register(
     request: Request,
-    user_service: UserService = Depends(UserService),
+    user_service: UserService = Depends(UserService.get_instance),
 ):
     """
     Registers a new user.
@@ -199,7 +199,7 @@ async def register(
 async def verify_email(
     request: Request,
     token: str,
-    user_service: UserService = Depends(UserService),
+    user_service: UserService = Depends(UserService.get_instance),
 ):
     """
     Verifies the email address associated with a user account.
@@ -247,7 +247,7 @@ async def get_new_token(
 @router.post("/send-verify-token")
 async def send_new_token(
     request: Request,
-    user_service: UserService = Depends(UserService),
+    user_service: UserService = Depends(UserService.get_instance),
 ):
     """
     Sends a new token to the user.
@@ -297,7 +297,7 @@ async def send_new_token(
 @router.post(FORGOT_PASSWORD)
 async def forgot_password(
     request: Request,
-    user_service: UserService = Depends(UserService),
+    user_service: UserService = Depends(UserService.get_instance),
 ):
     """
     Handles the forgot password request.
@@ -380,7 +380,7 @@ async def get_reset_password(
 )
 async def reset_password(
     request: Request,
-    user_service: UserService = Depends(UserService),
+    user_service: UserService = Depends(UserService.get_instance),
 ):
     """
     Resets the password for a user.
