@@ -20,10 +20,7 @@ class Repository:
 
     def __init__(self, session: Optional[AsyncSession] = None):
 
-        if session is None:
-            session = db.session
-
-        self.session = session
+        self.session = session if session is not None else db.session
 
     def _load_relationships(
         self, query: Select, relationships: InstrumentedAttribute = None
