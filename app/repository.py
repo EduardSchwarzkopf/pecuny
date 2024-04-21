@@ -104,7 +104,10 @@ class Repository:
         Raises:
             None
         """
-        condition = text(f"{attribute.key} {operator.value} :val")
+        if operator == DatabaseFilterOperator.LIKE:
+            condition = attribute.ilike(f"%{value}%")
+        else:
+            condition = text(f"{attribute.key} {operator.value} :val")
 
         q = select(cls).where(condition).params(val=value)
         q = self._load_relationships(q, load_relationships_list)
@@ -116,7 +119,7 @@ class Repository:
     async def filter_by_multiple(
         self,
         cls: Type[ModelT],
-        conditions: list[Tuple[InstrumentedAttribute, Any, DatabaseFilterOperator]],
+        conditions: List[Tuple[InstrumentedAttribute, Any, DatabaseFilterOperator]],
         load_relationships_list: Optional[list[str]] = None,
     ) -> list[ModelT]:
         """
@@ -137,10 +140,12 @@ class Repository:
         params = {}
         for i, (attribute, value, operator) in enumerate(conditions):
             param_name = f"val{i}"
-            where_conditions.append(
-                text(f"{attribute.key} {operator.value} :{param_name}")
-            )
-            params[param_name] = value
+            if operator == DatabaseFilterOperator.LIKE:
+                condition = attribute.ilike(f"%{value}%")
+            else:
+                condition = text(f"{attribute.key} {operator.value} :{param_name}")
+                params[param_name] = value
+            where_conditions.append(condition)
 
         q = select(cls)
         if where_conditions:

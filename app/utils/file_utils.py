@@ -1,13 +1,10 @@
 import csv
-from decimal import InvalidOperation
 from io import StringIO
 
 from fastapi import BackgroundTasks, HTTPException, UploadFile
-from pydantic import ValidationError
 
-from app.background_tasks import import_transactions
+from app.background_tasks import import_transactions_from_csv
 from app.models import User
-from app.schemas import TransactionInformationCreate
 
 
 async def process_csv_file(
@@ -44,18 +41,6 @@ async def process_csv_file(
 
     reader = csv.DictReader(csv_file, delimiter=";")
 
-    transaction_list = []
-    for row in reader:
-        try:
-            transaction_list.append(
-                TransactionInformationCreate(account_id=account_id, **row)
-            )
-        except ValidationError as e:
-            first_error = e.errors()[0]
-            custom_error_message = f"{first_error['loc'][0]}: {first_error['msg']}"
-            raise HTTPException(status_code=400, detail=custom_error_message) from e
-        except InvalidOperation as e:
-            msg = f"Invalid value on line {reader.line_num} on value {row['amount']}"
-            raise HTTPException(status_code=400, detail=msg) from e
-
-    background_tasks.add_task(import_transactions, current_user, transaction_list)
+    background_tasks.add_task(
+        import_transactions_from_csv, current_user, account_id, reader
+    )

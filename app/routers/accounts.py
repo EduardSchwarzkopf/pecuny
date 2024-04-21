@@ -420,11 +420,13 @@ async def page_import_transactions_post(
 
     if not await form.validate_on_submit():
         return render_template(
-            "pages/dashboard/page_import_transactions.html",
+            "pages/dashboard/page_form_import_transactions.html",
             request,
             {
                 "form": form,
-                "action_url": router.url_path_for("page_import_transactions_post"),
+                "action_url": router.url_path_for(
+                    "page_import_transactions_get", account_id=account_id
+                ),
             },
         )
 

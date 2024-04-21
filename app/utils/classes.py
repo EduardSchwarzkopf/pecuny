@@ -1,5 +1,10 @@
+import csv
+from dataclasses import fields
 from decimal import Decimal
-from typing import Sequence, Tuple
+from io import StringIO
+from typing import List
+
+from app.utils.dataclasses_utils import ImportedTransaction
 
 
 class RoundedDecimal(Decimal):
@@ -60,7 +65,7 @@ class RoundedDecimal(Decimal):
 
 
 class TransactionCSV:
-    def __init__(self, transactions: Sequence[Tuple[str, str, str, float, int]]):
+    def __init__(self, transactions: List[ImportedTransaction]):
         self.transactions = transactions
 
     def calculate_total_amount(self) -> RoundedDecimal:
@@ -70,7 +75,12 @@ class TransactionCSV:
         Returns:
             RoundedDecimal: The total amount of all transactions.
         """
-        return RoundedDecimal(sum(transaction[3] for transaction in self.transactions))
+        total_amount = sum(
+            Decimal(transaction.amount)
+            for transaction in self.transactions
+            if transaction.amount is not None
+        )
+        return RoundedDecimal(total_amount)
 
     def generate_csv_content(self) -> str:
         """
@@ -79,13 +89,19 @@ class TransactionCSV:
         Returns:
             str: The CSV content as a string.
         """
-        csv_content = "date;offset_account_id;reference;amount;category_id\n"
+        output = StringIO()
+        writer = csv.writer(output, delimiter=";")
+
+        field_names = [f.name for f in fields(ImportedTransaction)]
+
+        writer.writerow(field_names)
+
         for transaction in self.transactions:
-            csv_content += (
-                f"{transaction[0]};{transaction[1]};{transaction[2]};"
-                f"{transaction[3]};{transaction[4]}\n"
+            writer.writerow(
+                [getattr(transaction, field_name) for field_name in field_names]
             )
-        return csv_content
+
+        return output.getvalue()
 
     def save_to_file(self, file_path: str):
         """
