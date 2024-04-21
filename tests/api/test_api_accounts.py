@@ -270,18 +270,13 @@ async def test_import_transaction(
     section_label = section.label
 
     transactions = [
-        ImportedTransaction(
-            "08.03.2024", "VISA OPENAI", -0.23, section_label, category_label
-        ),
-        ImportedTransaction(
-            "08.03.2024", "VISA OPENAI", -11.69, section_label, category_label
-        ),
-        ImportedTransaction(
-            "07.03.2024", "Restaurant", -11.95, section_label, category_label
-        ),
-        ImportedTransaction(
-            "07.03.2024", "ROSSMANN", -44.51, section_label, category_label
-        ),
+        ImportedTransaction(date, description, amount, section_label, category_label)
+        for date, description, amount in [
+            ("08.03.2024", "VISA OPENAI", -0.23),
+            ("08.03.2024", "VISA OPENAI", -11.69),
+            ("07.03.2024", "Restaurant", -11.95),
+            ("07.03.2024", "ROSSMANN", -44.51),
+        ]
     ]
 
     csv_obj = TransactionCSV(transactions)
