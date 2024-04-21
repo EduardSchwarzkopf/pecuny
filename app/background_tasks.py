@@ -17,7 +17,7 @@ from app.utils.enums import DatabaseFilterOperator
 logger = get_logger(__name__)
 
 
-async def _process_row(
+async def _process_transaction_row(
     row: dict,
     line_num: int,
     account_id: int,
@@ -138,7 +138,7 @@ async def import_transactions_from_csv(
         failed_transaction_list: List[FailedImportedTransaction] = []
 
         for row in reader:
-            failed_transaction = await _process_row(
+            failed_transaction = await _process_transaction_row(
                 row, reader.line_num, account_id, user, repo, service
             )
             if failed_transaction:
