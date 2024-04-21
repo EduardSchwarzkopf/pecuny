@@ -388,7 +388,6 @@ async def test_invalid_import_transaction_file(
     test_user: models.User,
     test_account: models.Account,
     tmp_path: Path,
-    repository: Repository,
 ):
     """
     Test case for importing transactions into an account.
