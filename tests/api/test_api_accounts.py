@@ -267,7 +267,11 @@ async def test_import_transaction(
 
     account_id = test_account.id
     category = await repository.get(models.TransactionCategory, 1)
+    assert category is not None
+
     section = await repository.get(models.TransactionSection, category.section_id)
+    assert section is not None
+
     category_label = category.label
     section_label = section.label
 
@@ -341,7 +345,9 @@ async def test_import_transaction_fail(
     section_label = section_list[0].get("label")
     if isinstance(category_id, int):
         category = await repository.get(models.TransactionCategory, category_id)
+        assert category is not None
         section = await repository.get(models.TransactionSection, category.section_id)
+        assert section is not None
 
         category_label = category.label
         section_label = section.label
