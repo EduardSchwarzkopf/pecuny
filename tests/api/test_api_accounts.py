@@ -1,6 +1,3 @@
-import time
-from datetime import datetime as dt
-from datetime import timedelta
 from pathlib import Path
 from typing import Any, List
 
@@ -304,7 +301,6 @@ async def test_import_transaction(
 
     # because the import is done in another session we also need a new one
     repository.session.expire_all()
-    time.sleep(0.1)
     account_refresh = await repository.get(models.Account, account_id)
     assert account_refresh is not None
     new_balance = account_balance + total_amount
@@ -377,7 +373,6 @@ async def test_import_transaction_fail(
         )
 
     assert response.status_code == HTTP_202_ACCEPTED
-    time.sleep(0.1)
     repository.session.expire_all()
     account_refresh = await repository.get(models.Account, account_id)
     assert account_refresh is not None
