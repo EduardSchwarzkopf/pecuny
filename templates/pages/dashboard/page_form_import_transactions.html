@@ -4,4 +4,7 @@
 
 {% block content %}
 {{ form_ctrl.single_file_upload_form("Import", form, action_url) }}
+<a href="{{ url_for('static', path='/data/pecuny_import_example.csv') }}" class="text-sm">
+    Download sample CSV
+</a>
 {% endblock %}
