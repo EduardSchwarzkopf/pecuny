@@ -13,3 +13,14 @@ class CreateUserData:
     is_superuser: Optional[bool] = False
     is_active: Optional[bool] = True
     request: Optional[Request] = None
+
+
+@dataclass
+class FailedImportedTransaction:
+    section: str
+    category: str
+    amount: str
+    date: str
+    reference: str
+    reason: str = ""
+    offset_account_id: Optional[int] = None
