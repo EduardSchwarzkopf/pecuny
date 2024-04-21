@@ -409,6 +409,9 @@ async def test_invalid_import_transaction_file(
 
     assert response.status_code == HTTP_400_BAD_REQUEST
 
+    json_response = response.json()
+    assert json_response.get("detail") == "File is empty"
+
     wrong_file: Path = tmp_path / "import.fail"
     wrong_file.write_text("some content")
 
@@ -420,3 +423,7 @@ async def test_invalid_import_transaction_file(
         )
 
     assert response.status_code == HTTP_400_BAD_REQUEST
+
+    json_response = response.json()
+
+    assert json_response.get("detail") == "Invalid file type"
