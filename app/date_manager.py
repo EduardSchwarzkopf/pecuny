@@ -1,4 +1,7 @@
-from datetime import datetime, timedelta, timezone
+import contextlib
+import datetime
+from datetime import datetime as dt
+from datetime import timedelta, timezone
 
 
 def today():
@@ -13,7 +16,7 @@ def today():
     Raises:
         None
     """
-    return datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    return dt.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
 
 
 def get_datetime_from_timestamp(timestamp):
@@ -31,10 +34,10 @@ def get_datetime_from_timestamp(timestamp):
     date = None
     try:
         # when timestamp is in seconds
-        date = datetime.fromtimestamp(timestamp)
+        date = dt.fromtimestamp(timestamp)
     except ValueError:
         # when timestamp is in miliseconds
-        date = datetime.fromtimestamp(timestamp / 1000)
+        date = dt.fromtimestamp(timestamp / 1000)
 
     return date
 
@@ -51,18 +54,38 @@ def string_to_datetime(str_date):
     Raises:
         ValueError: If the string date is not in the expected format.
     """
-    date_formats = ["%d.%m.%Y", "%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d"]
-
-    for fmt in date_formats:
+    with contextlib.suppress(ValueError):
         try:
-            return datetime.strptime(str_date, fmt)
+            # Direct support for 'Z' and no timezone information
+            return dt.fromisoformat(str_date)
         except ValueError:
-            continue
+            # Handling timezone offsets formatted as +HH:MM or -HH:MM
+            if str_date[-3] in ["+", "-"]:
+                with contextlib.suppress(ValueError):
+                    return _extracted_from_string_to_datetime(str_date)
+    # If ISO 8601 parsing fails, try predefined formats
+
+    date_formats = ["%d.%m.%Y", "%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d"]
+    for fmt in date_formats:
+        with contextlib.suppress(ValueError):
+            return datetime.datetime.strptime(str_date, fmt)
 
     raise ValueError(f"Date format not recognized: {str_date}")
 
 
-def get_last_day_of_month(dt):
+def _extracted_from_string_to_datetime(str_date):
+    # Remove the colon from the timezone part
+    no_colon = str_date[:-3] + str_date[-3:].replace(":", "")
+    ddt = dt.fromisoformat(no_colon)
+    # Adjust if necessary based on the last part of the string for timezone
+    timezone_delta = datetime.timedelta(
+        hours=int(str_date[-3:-1]),
+        minutes=int(str_date[-2:]) * int(f"{str_date[-3]}1"),
+    )
+    return ddt - timezone_delta if str_date[-3] == "+" else ddt + timezone_delta
+
+
+def get_last_day_of_month(dt: dt):
     """Returns last day of month
 
     Args:
