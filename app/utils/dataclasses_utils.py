@@ -16,11 +16,15 @@ class CreateUserData:
 
 
 @dataclass
-class FailedImportedTransaction:
-    section: str
-    category: str
-    amount: str
+class ImportedTransaction:
     date: str
     reference: str
-    reason: str = ""
+    amount: float
+    section: str
+    category: str
     offset_account_id: Optional[int] = None
+
+
+@dataclass
+class FailedImportedTransaction(ImportedTransaction):
+    reason: str = ""
