@@ -1,3 +1,5 @@
+import csv
+import io
 from pathlib import Path
 from typing import Any, List
 
@@ -14,10 +16,11 @@ from starlette.status import (
 
 from app import models, schemas
 from app.data.categories import get_section_list
+from app.date_manager import string_to_datetime
 from app.repository import Repository
 from app.utils.classes import RoundedDecimal, TransactionCSV
 from app.utils.dataclasses_utils import ImportedTransaction
-from app.utils.enums import RequestMethod
+from app.utils.enums import DatabaseFilterOperator, RequestMethod
 from tests.utils import make_http_request
 
 ENDPOINT = "/api/accounts/"
@@ -427,3 +430,88 @@ async def test_invalid_import_transaction_file(
     json_response = response.json()
 
     assert json_response.get("detail") == "Invalid file type"
+
+
+async def test_example_import_file(
+    test_account: models.Account,
+    test_user: models.User,
+    tmp_path: Path,
+    repository: Repository,
+):
+    """
+    Test case for importing transactions into an account.
+
+    Args:
+        test_account: The account to import transactions into.
+        test_user: The user performing the import.
+        tmp_path: Path to a temporary directory for file operations.
+
+    Returns:
+        None
+    """
+
+    filename = "pecuny_import_example.csv"
+    response = await make_http_request(
+        f"/static/data/{filename}", method=RequestMethod.GET
+    )
+
+    assert response.status_code == HTTP_200_OK
+
+    file_path: Path = tmp_path / filename
+
+    with open(file_path, "wb") as file:
+        file.write(response.content)
+
+    with open(file_path, "rb") as file:
+        contents = file.read()
+        assert contents is not None
+
+        file_content_str = contents.decode("utf-8")
+        file_like_object = io.StringIO(file_content_str)
+        reader = csv.DictReader(file_like_object, delimiter=";")
+
+        files = {"file": (file_path.name, file, "text/csv")}
+        response = await make_http_request(
+            url=f"{ENDPOINT}{test_account.id}/import", files=files, as_user=test_user
+        )
+
+        assert response.status_code == HTTP_202_ACCEPTED
+
+        repository.session.expire_all()
+
+        for row in reader:
+            date = row.get("date")
+            assert date is not None
+
+            transaction_date = string_to_datetime(date)
+            transaction_category = row.get("category")
+            transaction_section = row.get("section")
+
+            transaction_information_list = await repository.filter_by_multiple(
+                models.TransactionInformation,
+                [
+                    (
+                        models.TransactionInformation.amount,
+                        row.get("amount"),
+                        DatabaseFilterOperator.EQUAL,
+                    ),
+                    (
+                        models.TransactionInformation.date,
+                        transaction_date,
+                        DatabaseFilterOperator.EQUAL,
+                    ),
+                    (
+                        models.TransactionInformation.reference,
+                        row.get("reference"),
+                        DatabaseFilterOperator.EQUAL,
+                    ),
+                ],
+            )
+
+            assert len(transaction_information_list) == 1
+
+            transaction = transaction_information_list[0]
+
+            assert transaction is not None
+            assert transaction.category.label == transaction_category
+            assert transaction.category.section.label == transaction_section
