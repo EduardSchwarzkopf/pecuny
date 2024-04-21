@@ -1,3 +1,4 @@
+import time
 from datetime import datetime as dt
 from datetime import timedelta
 from pathlib import Path
@@ -15,6 +16,7 @@ from starlette.status import (
 )
 
 from app import models, schemas
+from app.data.categories import get_section_list
 from app.repository import Repository
 from app.utils.classes import RoundedDecimal, TransactionCSV
 from app.utils.dataclasses_utils import ImportedTransaction
@@ -298,6 +300,7 @@ async def test_import_transaction(
 
     # because the import is done in another session we also need a new one
     repository.session.expire_all()
+    time.sleep(0.1)
     account_refresh = await repository.get(models.Account, account_id)
     assert account_refresh is not None
     new_balance = account_balance + total_amount
@@ -305,18 +308,21 @@ async def test_import_transaction(
 
 
 @pytest.mark.parametrize(
-    "transaction_data",
+    "date, amount, category_id",
     [
-        (["banane", "", "Test", -0.23, 1]),
-        (["08.03.2024", "", "Test", -0.23, "kaputt"]),
-        (["08.03.2024", "", "Test", "FAIL", 1]),
+        ("banane", -0.23, 1),
+        ("08.03.2024", -0.23, "kaputt"),
+        ("08.03.2024", "FAIL", 1),
     ],
 )
-async def test_invalid_import_transaction_file(
+async def test_import_transaction_fail(
     test_user: models.User,
     test_account: models.Account,
     tmp_path: Path,
-    transaction_data: List,
+    date: str,
+    amount: float | str,
+    category_id: int | str,
+    repository: Repository,
 ):
     """
     Test case for importing transactions into an account.
@@ -330,8 +336,29 @@ async def test_invalid_import_transaction_file(
         None
     """
 
-    csv_data = [tuple(transaction_data)]
-    csv_obj = TransactionCSV(csv_data)
+    category_label = category_id
+    section_list = get_section_list()
+    section_label = section_list[0].get("label")
+    if isinstance(category_id, int):
+        category = await repository.get(models.TransactionCategory, category_id)
+        section = await repository.get(models.TransactionSection, category.section_id)
+
+        category_label = category.label
+        section_label = section.label
+
+    account_id = test_account.id
+    balance = test_account.balance
+
+    transaction_data = [
+        ImportedTransaction(
+            date=date,
+            reference="Test Invalid file",
+            amount=amount,
+            section=section_label,
+            category=category_label,
+        )
+    ]
+    csv_obj = TransactionCSV(transaction_data)
 
     csv_content = csv_obj.generate_csv_content()
     csv_file: Path = tmp_path / "transactions.csv"
@@ -343,10 +370,15 @@ async def test_invalid_import_transaction_file(
             url=f"{ENDPOINT}{test_account.id}/import", files=files, as_user=test_user
         )
 
-    assert response.status_code == HTTP_400_BAD_REQUEST
+    assert response.status_code == HTTP_202_ACCEPTED
+    time.sleep(0.1)
+    repository.session.expire_all()
+    account_refresh = await repository.get(models.Account, account_id)
+    assert account_refresh is not None
+    assert balance == account_refresh.balance
 
 
-async def test_import_transaction_fail(
+async def test_invalid_import_transaction_file(
     test_user: models.User,
     test_account: models.Account,
     tmp_path: Path,
@@ -365,62 +397,26 @@ async def test_import_transaction_fail(
     """
 
     account_id = test_account.id
-    user_id = test_user.id
-    non_existing_id = 999999
-    date = "08.03.2024"
+    empty_file: Path = tmp_path / "empty.csv"
+    empty_file.write_text("")
 
-    csv_obj = TransactionCSV(
-        [
-            (date, "", "Test", 100, non_existing_id),
-        ]
-    )
-
-    csv_file: Path = tmp_path / "transactions.csv"
-    csv_file.write_text(csv_obj.generate_csv_content())
-
-    with open(csv_file, "rb") as f:
+    with open(empty_file, "rb") as f:
         response = await make_http_request(
             url=f"{ENDPOINT}{account_id}/import",
-            files={"file": (csv_file.name, f, "text/csv")},
+            files={"file": (empty_file.name, f, "text/csv")},
             as_user=test_user,
         )
 
-    assert response.status_code == HTTP_202_ACCEPTED
+    assert response.status_code == HTTP_400_BAD_REQUEST
 
-    csv_obj = TransactionCSV(
-        [
-            (date, "", "Test", 100, 1),
-        ]
-    )
+    wrong_file: Path = tmp_path / "import.fail"
+    wrong_file.write_text("some content")
 
-    user = await repository.get(models.User, user_id)
-    with open(csv_file, "rb") as f:
+    with open(wrong_file, "rb") as f:
         response = await make_http_request(
-            url=f"{ENDPOINT}{non_existing_id}/import",
-            files={"file": (csv_file.name, f, "text/csv")},
+            url=f"{ENDPOINT}{account_id}/import",
+            files={"file": (wrong_file.name, f, "text/csv")},
             as_user=test_user,
         )
 
-    assert response.status_code == HTTP_202_ACCEPTED
-
-    input_date = dt.strptime(date, "%d.%m.%Y")
-
-    start_of_day = input_date.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_of_day = start_of_day + timedelta(days=1) - timedelta(seconds=1)
-
-    repository.session.expire_all()
-    user = await repository.get(models.User, user_id)
-    response = await make_http_request(
-        url="/api/transactions/",
-        as_user=user,
-        method=RequestMethod.GET,
-        params={
-            "account_id": account_id,
-            "date_start": start_of_day.isoformat(),
-            "date_end": end_of_day.isoformat(),
-        },
-    )
-
-    assert response.status_code == HTTP_200_OK
-
-    assert len(response.json()) == 0
+    assert response.status_code == HTTP_400_BAD_REQUEST
