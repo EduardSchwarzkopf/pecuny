@@ -39,8 +39,31 @@ async def import_transactions_from_csv(
         failed_transaction_list: list[FailedImportedTransaction] = []
 
         for row in reader:
-            failed_transaction = FailedImportedTransaction(**row)
             row_section = row.get("section")
+            row_amount = row.get("amount")
+            row_date = row.get("date")
+            row_reference = row.get("reference")
+            row_category = row.get("category")
+            row_offset_account_id = row.get("offset_account_id")
+
+            date = row_date or None
+            amount = float(row_amount) if row_amount else None
+            reference = row_reference or None
+            category = int(row_category) if row_category else None
+            offset_account_id = (
+                int(row_offset_account_id) if row_offset_account_id else None
+            )
+            section = int(row_section) if row_section else None
+
+            failed_transaction = FailedImportedTransaction(
+                date=date,
+                amount=amount,
+                reference=reference,
+                category=category,
+                offset_account_id=offset_account_id,
+                section=section,
+            )
+
             section_list = await repo.filter_by(
                 models.TransactionSection,
                 models.TransactionSection.label,
