@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
 
 from fastapi import Request
 
@@ -17,11 +17,11 @@ class CreateUserData:
 
 @dataclass
 class ImportedTransaction:
-    date: str
-    reference: str
-    amount: float | str
-    section: str
-    category: str
+    date: Optional[str]
+    reference: Optional[str]
+    amount: Optional[Union[float, str]]
+    section: Optional[Union[str, int]]
+    category: Optional[Union[str, int]]
     offset_account_id: Optional[int] = None
 
 
