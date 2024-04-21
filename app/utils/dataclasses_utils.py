@@ -19,7 +19,7 @@ class CreateUserData:
 class ImportedTransaction:
     date: str
     reference: str
-    amount: float
+    amount: float | str
     section: str
     category: str
     offset_account_id: Optional[int] = None
