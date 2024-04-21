@@ -51,8 +51,15 @@ def string_to_datetime(str_date):
     Raises:
         ValueError: If the string date is not in the expected format.
     """
-    # format: %d.%m.%Y
-    return datetime.strptime(str_date, "%d.%m.%Y")
+    date_formats = ["%d.%m.%Y", "%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d"]
+
+    for fmt in date_formats:
+        try:
+            return datetime.strptime(str_date, fmt)
+        except ValueError:
+            continue
+
+    raise ValueError(f"Date format not recognized: {str_date}")
 
 
 def get_last_day_of_month(dt):
