@@ -17,6 +17,7 @@ from starlette.status import (
 from app import models, schemas
 from app.repository import Repository
 from app.utils.classes import RoundedDecimal, TransactionCSV
+from app.utils.dataclasses_utils import ImportedTransaction
 from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
 
@@ -263,11 +264,24 @@ async def test_import_transaction(
     """
 
     account_id = test_account.id
+    category = await repository.get(models.TransactionCategory, 1)
+    section = await repository.get(models.TransactionSection, category.section_id)
+    category_label = category.label
+    section_label = section.label
+
     transactions = [
-        ("08.03.2024", "", "VISA OPENAI", -0.23, 1),
-        ("08.03.2024", "", "VISA OPENAI", -11.69, 1),
-        ("07.03.2024", "", "Restaurant", -11.95, 1),
-        ("07.03.2024", "", "ROSSMANN", -44.51, 1),
+        ImportedTransaction(
+            "08.03.2024", "VISA OPENAI", -0.23, section_label, category_label
+        ),
+        ImportedTransaction(
+            "08.03.2024", "VISA OPENAI", -11.69, section_label, category_label
+        ),
+        ImportedTransaction(
+            "07.03.2024", "Restaurant", -11.95, section_label, category_label
+        ),
+        ImportedTransaction(
+            "07.03.2024", "ROSSMANN", -44.51, section_label, category_label
+        ),
     ]
 
     csv_obj = TransactionCSV(transactions)
