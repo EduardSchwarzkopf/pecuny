@@ -362,14 +362,14 @@ async def test_import_transaction_fail(
     ]
     csv_obj = TransactionCSV(transaction_data)
 
-    csv_content = csv_obj.generate_csv_content()
     csv_file: Path = tmp_path / "transactions.csv"
-    csv_file.write_text(csv_content)
+    csv_file.write_text(csv_obj.generate_csv_content())
 
     with open(csv_file, "rb") as f:
-        files = {"file": (csv_file.name, f, "text/csv")}
         response = await make_http_request(
-            url=f"{ENDPOINT}{test_account.id}/import", files=files, as_user=test_user
+            url=f"{ENDPOINT}{test_account.id}/import",
+            files={"file": (csv_file.name, f, "text/csv")},
+            as_user=test_user,
         )
 
     assert response.status_code == HTTP_202_ACCEPTED

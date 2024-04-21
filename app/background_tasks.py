@@ -1,6 +1,6 @@
 from csv import DictReader
 from decimal import InvalidOperation
-from typing import List
+from typing import List, Optional
 
 from pydantic import ValidationError
 
@@ -24,7 +24,7 @@ async def _process_row(
     user: models.User,
     repo: Repository,
     service: TransactionService,
-) -> FailedImportedTransaction:
+) -> Optional[FailedImportedTransaction]:
     """
     Processes a single row from the CSV file and creates a transaction based on its contents.
 
@@ -38,38 +38,30 @@ async def _process_row(
     Returns:
         A FailedImportedTransaction instance if the transaction fails, otherwise None.
     """
-    row_section = row.get("section")
     row_amount = row.get("amount")
-    row_date = row.get("date")
-    row_reference = row.get("reference")
-    row_category = row.get("category")
     row_offset_account_id = row.get("offset_account_id")
 
-    date = row_date or None
     amount = float(row_amount) if row_amount else None
-    reference = row_reference or None
-    category = str(row_category) if row_category else None
     offset_account_id = int(row_offset_account_id) if row_offset_account_id else None
-    section = str(row_section) if row_section else None
 
     failed_transaction = FailedImportedTransaction(
-        date=date,
+        date=row.get("date"),
         amount=amount,
-        reference=reference,
-        category=category,
+        reference=row.get("reference"),
+        category=row.get("category"),
         offset_account_id=offset_account_id,
-        section=section,
+        section=row.get("section"),
     )
 
     section_list = await repo.filter_by(
         models.TransactionSection,
         models.TransactionSection.label,
-        row_section,
+        failed_transaction.section,
         DatabaseFilterOperator.LIKE,
     )
 
     if not section_list:
-        failed_transaction.reason = f"Section {row_section} not found"
+        failed_transaction.reason = f"Section {failed_transaction.section} not found"
         return failed_transaction
 
     section = section_list[0]
@@ -90,11 +82,12 @@ async def _process_row(
     category_list = await repo.filter_by_multiple(
         models.TransactionCategory, conditions
     )
-    category = category_list[0] if category_list else None
 
-    if category is None:
+    if not category_list:
         failed_transaction.reason = f"Category {row['category']} not found"
         return failed_transaction
+
+    category = category_list[0]
 
     try:
 
@@ -103,12 +96,12 @@ async def _process_row(
         )
     except ValidationError as e:
         first_error = e.errors()[0]
-        custom_error_message = f"{first_error['loc'][0]}: {first_error['msg']}"
-        failed_transaction.reason = custom_error_message
+        failed_transaction.reason = f"{first_error['loc'][0]}: {first_error['msg']}"
         return failed_transaction
-    except InvalidOperation as e:
-        msg = f"Invalid value on line {line_num} on value {row['amount']}"
-        failed_transaction.reason = msg
+    except InvalidOperation:
+        failed_transaction.reason = (
+            f"Invalid value on line {line_num} on value {row['amount']}"
+        )
         return failed_transaction
 
     transaction = await transaction_manager.transaction(
@@ -121,6 +114,8 @@ async def _process_row(
     if transaction is None:
         failed_transaction.reason = "Failed to create transaction"
         return failed_transaction
+
+    return None
 
 
 async def import_transactions_from_csv(
@@ -151,5 +146,5 @@ async def import_transactions_from_csv(
 
     if not settings.is_testing_environment:
         await send_transaction_import_report(
-            user, len(reader) - 1, failed_transaction_list
+            user, reader.line_num - 1, failed_transaction_list
         )
