@@ -42,7 +42,7 @@ def get_datetime_from_timestamp(timestamp):
     return date
 
 
-def string_to_datetime(str_date):
+def string_to_datetime(str_date: str):
     """Convert a string date to a datetime object.
 
     Args:
@@ -63,8 +63,8 @@ def string_to_datetime(str_date):
             if str_date[-3] in ["+", "-"]:
                 with contextlib.suppress(ValueError):
                     return _extracted_from_string_to_datetime(str_date)
-    # If ISO 8601 parsing fails, try predefined formats
 
+    # If ISO 8601 parsing fails, try predefined formats
     date_formats = ["%d.%m.%Y", "%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d"]
     for fmt in date_formats:
         with contextlib.suppress(ValueError):
@@ -73,7 +73,16 @@ def string_to_datetime(str_date):
     raise ValueError(f"Date format not recognized: {str_date}")
 
 
-def _extracted_from_string_to_datetime(str_date):
+def _extracted_from_string_to_datetime(str_date: str):
+    """
+    Convert a string date to a datetime object adjusting for timezone.
+
+    Args:
+        str_date (str): A string representing a date with timezone information.
+
+    Returns:
+        datetime: A datetime object adjusted for the timezone specified in the input string.
+    """
     # Remove the colon from the timezone part
     no_colon = str_date[:-3] + str_date[-3:].replace(":", "")
     ddt = dt.fromisoformat(no_colon)
