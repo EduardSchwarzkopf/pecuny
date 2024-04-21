@@ -94,7 +94,7 @@ def _extracted_from_string_to_datetime(str_date: str):
     return ddt - timezone_delta if str_date[-3] == "+" else ddt + timezone_delta
 
 
-def get_last_day_of_month(dt: dt):
+def get_last_day_of_month(date: dt):
     """Returns last day of month
 
     Args:
@@ -105,7 +105,7 @@ def get_last_day_of_month(dt: dt):
     """
 
     # Guaranteed to get the next month. Force any_date to 28th and then add 4 days.
-    next_month = dt.replace(day=28) + timedelta(days=4)
+    next_month = date.replace(day=28) + timedelta(days=4)
 
     # Subtract all days that are over since the start of the month.
     last_day_of_month = next_month - timedelta(days=next_month.day)

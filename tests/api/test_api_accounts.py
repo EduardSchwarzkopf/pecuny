@@ -480,7 +480,10 @@ async def test_example_import_file(
         repository.session.expire_all()
 
         for row in reader:
-            transaction_date = string_to_datetime(row.get("date"))
+            date = row.get("date")
+            assert date is not None
+
+            transaction_date = string_to_datetime(date)
             transaction_category = row.get("category")
             transaction_section = row.get("section")
 
