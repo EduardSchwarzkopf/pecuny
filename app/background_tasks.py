@@ -69,7 +69,7 @@ async def _process_transaction_row(
     conditions = [
         (
             models.TransactionCategory.label,
-            row.get("category"),
+            failed_transaction.category,
             DatabaseFilterOperator.LIKE,
         ),
         (
@@ -90,7 +90,6 @@ async def _process_transaction_row(
     category = category_list[0]
 
     try:
-
         transaction_data = schemas.TransactionInformationCreate(
             account_id=account_id, category_id=category.id, **row
         )
@@ -100,7 +99,7 @@ async def _process_transaction_row(
         return failed_transaction
     except InvalidOperation:
         failed_transaction.reason = (
-            f"Invalid value on line {line_num} on value {row['amount']}"
+            f"Invalid value on line {line_num} on value {failed_transaction.amount}"
         )
         return failed_transaction
 
