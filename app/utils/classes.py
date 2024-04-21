@@ -75,9 +75,12 @@ class TransactionCSV:
         Returns:
             RoundedDecimal: The total amount of all transactions.
         """
-        return RoundedDecimal(
-            sum(transaction.amount for transaction in self.transactions)
+        total_amount = sum(
+            Decimal(transaction.amount)
+            for transaction in self.transactions
+            if transaction.amount is not None
         )
+        return RoundedDecimal(total_amount)
 
     def generate_csv_content(self) -> str:
         """
