@@ -119,7 +119,7 @@ class Repository:
     async def filter_by_multiple(
         self,
         cls: Type[ModelT],
-        conditions: list[Tuple[InstrumentedAttribute, Any, DatabaseFilterOperator]],
+        conditions: List[Tuple[InstrumentedAttribute, Any, DatabaseFilterOperator]],
         load_relationships_list: Optional[list[str]] = None,
     ) -> list[ModelT]:
         """
