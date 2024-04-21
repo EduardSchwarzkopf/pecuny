@@ -18,9 +18,13 @@
             <div>
                 <p>Transaction Details:</p>
                 <div>
-                    {% for key, value in transaction.items() %}
-                        <strong>{{ key }}:</strong> {{ value }}<br/>
-                    {% endfor %}
+                    <strong>Section:</strong> {{ transaction.section }}<br/>
+                    <strong>Category:</strong> {{ transaction.category }}<br/>
+                    <strong>Amount:</strong> {{ transaction.amount }}<br/>
+                    <strong>Date:</strong> {{ transaction.date }}<br/>
+                    <strong>Reference:</strong> {{ transaction.reference }}<br/>
+                    <strong>Reason:</strong> {{ transaction.reason }}<br/>
+                    <strong>Offset Account ID:</strong> {{ transaction.offset_account_id }}<br/>
                 </div>
                 <hr>
             </div>
