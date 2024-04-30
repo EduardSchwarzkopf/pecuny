@@ -4,6 +4,8 @@ from decimal import Decimal
 from io import StringIO
 from typing import List
 
+from pydantic_core import core_schema
+
 from app.utils.dataclasses_utils import ImportedTransaction
 
 
@@ -27,15 +29,17 @@ class RoundedDecimal(Decimal):
         rounded_value = Decimal(value).quantize(Decimal("0.00"))
         return Decimal.__new__(cls, rounded_value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.quantize(Decimal("0.00")))
 
     @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+    def __get_pydantic_core_schema__(cls, _source, _handler):
+        return core_schema.no_info_after_validator_function(
+            cls._validate, core_schema.decimal_schema()
+        )
 
     @classmethod
-    def validate(cls, v: str | float | int | Decimal, _):
+    def _validate(cls, v: str | float | int | Decimal):
         """
         Validates and rounds a value to two decimal places.
 
@@ -62,6 +66,22 @@ class RoundedDecimal(Decimal):
             raise TypeError(f"Invalid input for RoundedDecimal: {v}") from e
 
         return cls(rounded_value)
+
+    @classmethod
+    def _serialize(cls, value):
+        """
+        Class method to serialize a value.
+
+        This class method serializes a given value.
+
+        Args:
+            value: The value to be serialized.
+
+        Returns:
+            The serialized value.
+        """
+
+        return value
 
 
 class TransactionCSV:

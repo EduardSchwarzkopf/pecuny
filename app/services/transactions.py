@@ -255,6 +255,7 @@ class TransactionService(BaseService):
             logger.warning(ACCOUNT_USER_ID_MISMATCH)
             return None
 
+        # TODO: Use RoundedDecimal class here instead of round()
         amount_updated = (
             round(transaction_information.amount, 2) - transaction.information.amount
         )
