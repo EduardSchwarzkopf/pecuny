@@ -30,6 +30,9 @@ class RoundedDecimal(Decimal):
     def __str__(self):
         return str(self.quantize(Decimal("0.00")))
 
+    def __get_pydantic_core_schema__(self):
+        return {"type": "decimal"}
+
     @classmethod
     def __get_validators__(cls):
         yield cls.validate
