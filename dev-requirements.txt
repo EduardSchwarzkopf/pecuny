@@ -32,7 +32,7 @@ filelock==3.13.1
     # via
     #   cachecontrol
     #   virtualenv
-idna==3.6
+idna==3.7
     # via requests
 installer==0.7.0
     # via poetry
