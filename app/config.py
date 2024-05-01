@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     mail_username: str
     mail_password: str
     mail_from: str
-    mail_port: int = 465
+    mail_port: int | str = 465
     mail_server: str
 
     def __init__(self, **values):
