@@ -21,7 +21,7 @@ class Database:
         """
 
         self.url = url
-        self.engine: Optional[AsyncEngine] = None
+        self.engine = create_async_engine(url, future=True)
         self._session: Optional[AsyncSession] = None
 
     async def init(self):
@@ -35,7 +35,6 @@ class Database:
         if self._session is not None:
             await self._session.close()
 
-        self.engine = create_async_engine(self.url, future=True)
         self._session = await self.get_session()
 
     async def get_session(self) -> AsyncSession:
