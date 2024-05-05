@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     mail_port: int | str = 465
     mail_server: str
 
+    celery_broker_url: str = "redis://127.0.0.1:6379/0"
+
     def __init__(self, **values):
         super().__init__(**values)
         self.configure_settings()
