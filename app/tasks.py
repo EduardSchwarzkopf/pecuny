@@ -1,11 +1,15 @@
-from csv import DictReader
+import csv
 from decimal import InvalidOperation
+from io import StringIO
+from multiprocessing.pool import AsyncResult
 from typing import List, Optional
 
+from celery.utils.log import get_task_logger
+from fastapi import HTTPException
 from pydantic import ValidationError
 
 from app import models, schemas, transaction_manager
-from app.config import settings
+from app.celery import celery
 from app.database import db
 from app.logger import get_logger
 from app.repository import Repository
@@ -15,6 +19,8 @@ from app.utils.dataclasses_utils import FailedImportedTransaction
 from app.utils.enums import DatabaseFilterOperator
 
 logger = get_logger(__name__)
+
+ll = get_task_logger(__name__)
 
 
 async def _process_transaction_row(
@@ -117,9 +123,15 @@ async def _process_transaction_row(
     return None
 
 
+@celery.task
+def add_together(x, y):
+    return x + y
+
+
+@celery.task
 async def import_transactions_from_csv(
-    user: models.User, account_id: int, reader: DictReader
-) -> None:
+    user_id: int, account_id: int, contents: bytes
+) -> AsyncResult:
     """
     Imports transactions for a user from a CSV file.
 
@@ -131,8 +143,22 @@ async def import_transactions_from_csv(
     Returns:
         None. Transactions are imported to the database, and any failures are handled appropriately.
     """
+    try:
+        contents_str = contents.decode()
+        csv_file = StringIO(contents_str)
+    except UnicodeDecodeError as e:
+        raise HTTPException(status_code=400, detail=e.reason) from e
+
+    reader = csv.DictReader(csv_file, delimiter=";")
+
     async with await db.get_session() as session:
         repo = Repository(session)
+
+        user = await repo.get(models.User, user_id)
+
+        if user is None:
+            raise ValueError("User not found")
+
         service = TransactionService(repo)
         failed_transaction_list: List[FailedImportedTransaction] = []
 
@@ -143,7 +169,8 @@ async def import_transactions_from_csv(
             if failed_transaction:
                 failed_transaction_list.append(failed_transaction)
 
-    if not settings.is_testing_environment:
-        await send_transaction_import_report(
-            user, reader.line_num - 1, failed_transaction_list
-        )
+    ll.info(f"failed_transactions: {failed_transaction_list}")
+    # if not settings.is_testing_environment:
+    #     await send_transaction_import_report(
+    #         user, reader.line_num - 1, failed_transaction_list
+    #     )
