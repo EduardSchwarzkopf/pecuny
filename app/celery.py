@@ -37,14 +37,14 @@ class AsyncCelery(Celery):
     def init_app(self, app):
         self.app = app
 
-        conf = {}
-        for key in app.config.keys():
-            if key[0:7] == "CELERY_":
-                conf[key[7:].lower()] = app.config[key]
-
+        conf = {
+            key[7:].lower(): app.config[key]
+            for key in app.config.keys()
+            if key[:7] == "CELERY_"
+        }
         if (
             "broker_transport_options" not in conf
-            and conf.get("broker_url", "")[0:4] == "sqs:"
+            and conf.get("broker_url", "")[:4] == "sqs:"
         ):
             conf["broker_transport_options"] = {"region": "eu-west-1"}
 
@@ -56,4 +56,4 @@ celery = AsyncCelery(
     include=["app.tasks"],
 )
 
-celery.config_from_object(settings, namespace="CELERY")
+celery.config_from_object(settings, namespace="celery")
