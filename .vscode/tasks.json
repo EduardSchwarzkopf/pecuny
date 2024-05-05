@@ -1,0 +1,25 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "start-docker-compose",
+      "type": "shell",
+      "command": "docker compose -f ${workspaceFolder}/docker-compose.dev.yml up -d"
+    },
+    {
+      "label": "stop-docker-compose",
+      "type": "shell",
+      "command": "docker compose -f ${workspaceFolder}/docker-compose.dev.yml down"
+    },
+    {
+      "label": "start-docker-compose-test",
+      "type": "shell",
+      "command": "docker compose -f ${workspaceFolder}/docker-compose.test.yml up -d"
+    },
+    {
+      "label": "stop-docker-compose-test",
+      "type": "shell",
+      "command": "docker compose -f ${workspaceFolder}/docker-compose.test.yml down"
+    }
+  ]
+}
