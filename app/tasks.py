@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from app import models, schemas, transaction_manager
 from app.celery import celery
+from app.config import settings
 from app.database import db
 from app.logger import get_logger
 from app.repository import Repository
@@ -124,11 +125,6 @@ async def _process_transaction_row(
 
 
 @celery.task
-def add_together(x, y):
-    return x + y
-
-
-@celery.task
 async def import_transactions_from_csv(
     user_id: int, account_id: int, contents: bytes
 ) -> AsyncResult:
@@ -170,7 +166,7 @@ async def import_transactions_from_csv(
                 failed_transaction_list.append(failed_transaction)
 
     ll.info(f"failed_transactions: {failed_transaction_list}")
-    # if not settings.is_testing_environment:
-    #     await send_transaction_import_report(
-    #         user, reader.line_num - 1, failed_transaction_list
-    #     )
+    if not settings.is_testing_environment:
+        await send_transaction_import_report(
+            user, reader.line_num - 1, failed_transaction_list
+        )
