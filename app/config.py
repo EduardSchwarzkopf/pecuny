@@ -6,13 +6,13 @@ from typing import List
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-env = os.getenv("ENVIRONMENT", default="dev")
+ENV = os.getenv("ENVIRONMENT", default="dev")
 
 if "pytest" in sys.modules:
-    env = "test"
+    ENV = "test"
 
 
-dotenv_path = f".env.{env}"
+dotenv_path = f".env.{ENV}"
 
 load_dotenv(dotenv_path=dotenv_path, override=True)
 

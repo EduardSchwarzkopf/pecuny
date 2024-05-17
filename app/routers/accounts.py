@@ -430,7 +430,9 @@ async def page_import_transactions_post(
             },
         )
 
-    await process_csv_file(account_id, file, current_user, background_tasks)
+    await process_csv_file(  # pylint: disable=too-many-function-args
+        account_id, file, current_user, background_tasks
+    )
 
     return RedirectResponse(
         router.url_path_for("page_get_account", account_id=account_id), status_code=302

@@ -16,25 +16,49 @@ class AsyncCelery(Celery):
             self.init_app(kwargs["app"])
 
     def get_db(self):
+        """
+        Returns the database connection.
+        """
+
         return db
 
     def patch_task(self):
+        """
+        Patches the task to run asynchronously.
+
+        Returns:
+            None
+        """
         TaskBase = self.Task
 
         class ContextTask(TaskBase):
             abstract = True
 
             async def _run(self, *args, **kwargs):
-                result = TaskBase.__call__(self, *args, **kwargs)
+                result = TaskBase.__call__(  # pylint: disable=assignment-from-no-return
+                    self, *args, **kwargs
+                )
                 if isawaitable(result):
                     await result
 
             def __call__(self, *args, **kwargs):
                 asyncio.get_event_loop().run_until_complete(self._run(*args, **kwargs))
 
-        self.Task = ContextTask
+        self.Task = (  # pylint: disable=invalid-name,assignment-from-no-return
+            ContextTask
+        )
 
     def init_app(self, app):
+        """
+        Initializes the app configuration.
+
+        Args:
+            app: The application object.
+
+        Returns:
+            None
+        """
+
         self.app = app
 
         conf = {
