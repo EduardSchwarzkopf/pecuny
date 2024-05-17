@@ -6,6 +6,8 @@ services:
     image: shinysonic/pecuny:latest
     env_file:
       - .env.prod
+    networks:
+      - internal_network
     ports:
       - '8000:8000'
     logging:
