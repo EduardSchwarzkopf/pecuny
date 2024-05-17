@@ -82,4 +82,4 @@ jobs:
           ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose down
           ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose up -d --build --no-deps
       - name: upgrade database
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose -f production.yml exec ${{ env.CONTAINER }} alembic upgrade head
+        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose exec ${{ env.CONTAINER }} alembic upgrade head
