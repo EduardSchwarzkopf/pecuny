@@ -35,16 +35,21 @@ services:
     restart: always
     volumes:
       - redis_data:/data
+    expose:
+      - 6379
     networks:
       - internal_network
 
 networks:
   internal_network:
     driver: bridge
+    internal: true 
     ipam:
       config:
-        - subnet: 172.20.0.0/16
+        - subnet: 172.17.0.0/16 
 
 volumes:
   redis_data:
+    driver: local
+  postgres_data:
     driver: local
