@@ -130,5 +130,7 @@ dmypy.json
 .vscode/settings.json
 logs/
 .env
+.env.*
+!.env.test
 
 start-dev.sh
