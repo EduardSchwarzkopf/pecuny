@@ -16,7 +16,7 @@ on:
         required: false
 
 env:
-  DB_NAME: db
+  DB_NAME: pecuny_test
   DB_PASSWORD: postgres
   DB_HOST: 127.0.0.1
   DB_USER: postgres
