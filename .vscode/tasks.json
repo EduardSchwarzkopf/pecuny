@@ -12,14 +12,22 @@
       "command": "docker compose -f ${workspaceFolder}/docker-compose.dev.yml down"
     },
     {
-      "label": "start-docker-compose-test",
+      "label": "start-test-suite",
       "type": "shell",
-      "command": "docker compose -f ${workspaceFolder}/docker-compose.test.yml up -d"
+      "command": "docker compose --env-file ${workspaceFolder}/.env.test -f ${workspaceFolder}/docker-compose.test.yml up -d --build",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
     },
     {
-      "label": "stop-docker-compose-test",
+      "label": "stop-test-suite",
       "type": "shell",
-      "command": "docker compose -f ${workspaceFolder}/docker-compose.test.yml down"
+      "command": "docker compose --env-file ${workspaceFolder}/.env.test -f ${workspaceFolder}/docker-compose.test.yml down",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
     }
   ]
 }
