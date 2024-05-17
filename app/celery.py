@@ -30,7 +30,7 @@ class AsyncCelery(Celery):
                     await result
 
             def __call__(self, *args, **kwargs):
-                asyncio.run(self._run(*args, **kwargs))
+                asyncio.get_event_loop().run_until_complete(self._run(*args, **kwargs))
 
         self.Task = ContextTask
 
@@ -40,7 +40,7 @@ class AsyncCelery(Celery):
         conf = {
             key[7:].lower(): app.config[key]
             for key in app.config.keys()
-            if key[:7] == "CELERY_"
+            if key[:7] == self.namespace
         }
         if (
             "broker_transport_options" not in conf
