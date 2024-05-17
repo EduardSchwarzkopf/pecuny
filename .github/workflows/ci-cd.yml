@@ -51,29 +51,29 @@ jobs:
       - name: create .env file
         run: |
           set -e
-          echo "ENVIRONMENT='${{ vars.ENVIRONMENT }}'" > .env
-          echo "DOMAIN='${{ vars.DOMAIN }}'" >> .env
-          echo "REFRESH_TOKEN_EXPIRE_MINUTES='${{ vars.REFRESH_TOKEN_EXPIRE_MINUTES }}'" >> .env
-          echo "VERIFY_TOKEN_SECRET_KEY='${{ secrets.VERIFY_TOKEN_SECRET_KEY }}'" >> .env
-          echo "ACCESS_TOKEN_SECRET_KEY='${{ secrets.ACCESS_TOKEN_SECRET_KEY }}'" >> .env
-          echo "REFRESH_TOKEN_SECRET_KEY='${{ secrets.REFRESH_TOKEN_SECRET_KEY }}'" >> .env
-          echo "ALGORITHM='HS256'" >> .env
-          echo "CSRF_SECRET='${{ secrets.CSRF_SECRET }}'" >> .env
-          echo "SESSION_SECRET_KEY='${{ secrets.SESSION_SECRET_KEY }}'" >> .env
-          echo "ACCESS_TOKEN_EXPIRE_MINUTES='${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }}'" >> .env
-          echo "DB_NAME='${{ secrets.DB_NAME }}'" >> .env
-          echo "DB_PASSWORD='${{ secrets.DB_PASSWORD }}'" >> .env
-          echo "DB_HOST='${{ secrets.DB_HOST }}'" >> .env
-          echo "DB_PORT='${{ secrets.DB_PORT }}'" >> .env
-          echo "DB_USER='${{ secrets.DB_USER }}'" >> .env
-          echo "MAIL_USERNAME='${{ secrets.MAIL_USERNAME }}'" >> .env
-          echo "MAIL_FROM='${{ secrets.MAIL_FROM }}'" >> .env
-          echo "MAIL_SERVER='${{ secrets.MAIL_SERVER }}'" >> .env
-          echo "MAIL_PORT='${{ secrets.MAIL_PORT }}'" >> .env
-          echo "MAIL_PASSWORD='${{ secrets.MAIL_PASSWORD }}'" >> .env
-          echo "REDIS_PORT='6379'" >> .env
-          echo "CELERY_BROKER_URL='redis://redis:6379/0'" >> .env
-          echo "CELERY_RESULT_BACKEND='redis://redis:6379/0'" >> .env
+          echo 'ENVIRONMENT=${{ vars.ENVIRONMENT }}' > .env
+          echo 'DOMAIN=${{ vars.DOMAIN }}' >> .env
+          echo 'REFRESH_TOKEN_EXPIRE_MINUTES=${{ vars.REFRESH_TOKEN_EXPIRE_MINUTES }}' >> .env
+          echo 'VERIFY_TOKEN_SECRET_KEY=${{ secrets.VERIFY_TOKEN_SECRET_KEY }}' >> .env
+          echo 'ACCESS_TOKEN_SECRET_KEY=${{ secrets.ACCESS_TOKEN_SECRET_KEY }}' >> .env
+          echo 'REFRESH_TOKEN_SECRET_KEY=${{ secrets.REFRESH_TOKEN_SECRET_KEY }}' >> .env
+          echo 'ALGORITHM=HS256' >> .env
+          echo 'CSRF_SECRET=${{ secrets.CSRF_SECRET }}' >> .env
+          echo 'SESSION_SECRET_KEY=${{ secrets.SESSION_SECRET_KEY }}' >> .env
+          echo 'ACCESS_TOKEN_EXPIRE_MINUTES=${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }}' >> .env
+          echo 'DB_NAME=${{ secrets.DB_NAME }}' >> .env
+          echo 'DB_PASSWORD=${{ secrets.DB_PASSWORD }}' >> .env
+          echo 'DB_HOST=${{ secrets.DB_HOST }}' >> .env
+          echo 'DB_PORT=${{ secrets.DB_PORT }}' >> .env
+          echo 'DB_USER=${{ secrets.DB_USER }}' >> .env
+          echo 'MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}' >> .env
+          echo 'MAIL_FROM=${{ secrets.MAIL_FROM }}' >> .env
+          echo 'MAIL_SERVER=${{ secrets.MAIL_SERVER }}' >> .env
+          echo 'MAIL_PORT=${{ secrets.MAIL_PORT }}' >> .env
+          echo 'MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}' >> .env
+          echo 'REDIS_PORT=6379' >> .env
+          echo 'CELERY_BROKER_URL=redis://redis:6379/0' >> .env
+          echo 'CELERY_RESULT_BACKEND=redis://redis:6379/0' >> .env
       - name: copy .env file
         run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
       - name: deploy pecuny
