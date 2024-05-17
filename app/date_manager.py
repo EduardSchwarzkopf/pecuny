@@ -1,5 +1,5 @@
-import contextlib
 import datetime
+from contextlib import suppress
 from datetime import datetime as dt
 from datetime import timedelta, timezone
 
@@ -54,21 +54,30 @@ def string_to_datetime(str_date: str):
     Raises:
         ValueError: If the string date is not in the expected format.
     """
-    with contextlib.suppress(ValueError):
+    with suppress(ValueError):
         try:
             # Direct support for 'Z' and no timezone information
-            return dt.fromisoformat(str_date)
+            dt_obj = datetime.datetime.fromisoformat(str_date)
+            # Make the datetime object timezone-aware and set to UTC
+            dt_obj = dt_obj.replace(tzinfo=datetime.timezone.utc)
+            return dt_obj
         except ValueError:
             # Handling timezone offsets formatted as +HH:MM or -HH:MM
             if str_date[-3] in ["+", "-"]:
-                with contextlib.suppress(ValueError):
-                    return _extracted_from_string_to_datetime(str_date)
+                with suppress(ValueError):
+                    dt_obj = _extracted_from_string_to_datetime(str_date)
+                    # Make the datetime object timezone-aware and set to UTC
+                    dt_obj = dt_obj.replace(tzinfo=datetime.timezone.utc)
+                    return dt_obj
 
     # If ISO 8601 parsing fails, try predefined formats
-    date_formats = ["%d.%m.%Y", "%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d"]
+    date_formats = ["%d.%m.%Y", "%Y.%m.%d", "%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d"]
     for fmt in date_formats:
-        with contextlib.suppress(ValueError):
-            return datetime.datetime.strptime(str_date, fmt)
+        with suppress(ValueError):
+            dt_obj = datetime.datetime.strptime(str_date, fmt)
+            # Make the datetime object timezone-aware and set to UTC
+            dt_obj = dt_obj.replace(tzinfo=datetime.timezone.utc)
+            return dt_obj
 
     raise ValueError(f"Date format not recognized: {str_date}")
 
