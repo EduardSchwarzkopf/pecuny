@@ -46,16 +46,12 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
       - name: config ssh
         run: echo -e 'Host ${{ env.SSH_HOST }}\n  HostName ${{ vars.HOSTNAME }}\n  Port 22\n  User root\n  IdentityFile ~/.ssh/id_rsa' > ~/.ssh/config
-      - name: copy docker-compose file
-        run: scp -o "StrictHostKeyChecking=no" docker-compose.prod.yml ${{ env.SSH_HOST }}:.docker-compose.yml
-      - name: stop pecuny
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose down
-      - name: pull latest image
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose pull ${{ env.IMAGE }}
+      - name: copy docker-compose files
+        run: scp -o "StrictHostKeyChecking=no" docker-compose.prod.yml ${{ env.SSH_HOST }}:docker-compose.yml
       - name: create .env file
         run: |
           set -e
-          echo 'ENVIRONMENT=${{ vars.ENVIRONMENT }}' >> .env
+          echo 'ENVIRONMENT=${{ vars.ENVIRONMENT }}' > .env
           echo 'DOMAIN=${{ vars.DOMAIN }}' >> .env
           echo 'REFRESH_TOKEN_EXPIRE_MINUTES=${{ vars.REFRESH_TOKEN_EXPIRE_MINUTES }}' >> .env
           echo 'VERIFY_TOKEN_SECRET_KEY=${{ secrets.VERIFY_TOKEN_SECRET_KEY }}' >> .env
@@ -75,12 +71,15 @@ jobs:
           echo 'MAIL_SERVER=${{ secrets.MAIL_SERVER }}' >> .env
           echo 'MAIL_PORT=${{ secrets.MAIL_PORT }}' >> .env
           echo 'MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}' >> .env
-          echo 'REDIS_PORT=6379 >> .env
-          echo 'CELERY_BROKER_URL=redis://redis:6379/0 >> .env
-          echo 'CELERY_RESULT_BACKEND=redis://redis:6379/0 >> .env
+          echo 'REDIS_PORT=6379' >> .env
+          echo 'CELERY_BROKER_URL=redis://redis:6379/0' >> .env
+          echo 'CELERY_RESULT_BACKEND=redis://redis:6379/0' >> .env
       - name: copy .env file
         run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
-      - name: pecuny start
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose --env-file .env up -d
+      - name: deploy pecuny
+        run: |
+          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose pull
+          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose down
+          ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose up -d --build --no-deps
       - name: upgrade database
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose exec ${{ env.CONTAINER }} alembic upgrade head
+        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose -f production.yml exec ${{ env.CONTAINER }} alembic upgrade head
