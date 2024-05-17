@@ -5,7 +5,7 @@ services:
     restart: always
     image: shinysonic/pecuny:latest
     env_file:
-      - .env
+      - .env.prod
     ports:
       - '8000:8000'
     logging:
@@ -17,7 +17,7 @@ services:
   celery: 
     image: shinysonic/pecuny:latest
     env_file:
-      - .env
+      - .env.prod
     restart: always
     command: celery --app app.celery --broker redis://redis:6379/0 --result-backend redis://redis:6379/0 worker
     depends_on:

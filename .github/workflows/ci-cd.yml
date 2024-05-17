@@ -75,7 +75,7 @@ jobs:
           echo 'CELERY_BROKER_URL=redis://redis:6379/0' >> .env
           echo 'CELERY_RESULT_BACKEND=redis://redis:6379/0' >> .env
       - name: copy .env file
-        run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
+        run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env.prod
       - name: deploy pecuny
         run: |
           ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose pull
