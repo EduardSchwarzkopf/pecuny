@@ -49,7 +49,7 @@ jobs:
       - name: copy docker-compose file
         run: scp -o "StrictHostKeyChecking=no" docker-compose.prod.yml ${{ env.SSH_HOST }}:.docker-compose.yml
       - name: stop pecuny
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker-compose down
+        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose down
       - name: pull latest image
         run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose pull ${{ env.IMAGE }}
       - name: create .env file
