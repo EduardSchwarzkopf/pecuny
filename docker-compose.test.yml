@@ -4,26 +4,34 @@ services:
   celery:
     build: .
     env_file:
-      - .env
+      - .env.test
     environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-    command: celery --app=app.celery worker --loglevel=info
+      - DB_HOST=db_test
+      - DB_PORT=5432
+    command: celery --app app.celery --broker redis://redis:${REDIS_PORT}/0 --result-backend redis://redis:${REDIS_PORT}/0 worker
     depends_on:
       - redis
+    logging:
+      driver: json-file
+      options:
+        max-size: "200k"
+        max-file: "10"
+
 
   redis:
     image: redis:7.2.4-alpine
     ports:
-      - 6380:6379
+      - ${REDIS_PORT}:${REDIS_PORT}
+    command: --port ${REDIS_PORT}
 
   db_test:
     image: 'postgres:14-alpine'
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${TEST_DB_NAME}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - ${TEST_DB_PORT}:5432
+      - ${DB_PORT}:5432
 
   pgadmin-compose:
     image: dpage/pgadmin4
@@ -36,8 +44,6 @@ services:
       - db_test
     volumes:
       - pgadmin_data:/var/lib/pgadmin
-
-
 
 volumes:
   pgadmin_data:
