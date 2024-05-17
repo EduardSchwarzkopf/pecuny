@@ -4,7 +4,6 @@ from io import StringIO
 from multiprocessing.pool import AsyncResult
 from typing import List, Optional
 
-from celery.utils.log import get_task_logger
 from fastapi import HTTPException
 from pydantic import ValidationError
 
@@ -20,8 +19,6 @@ from app.utils.dataclasses_utils import FailedImportedTransaction
 from app.utils.enums import DatabaseFilterOperator
 
 logger = get_logger(__name__)
-
-ll = get_task_logger(__name__)
 
 
 async def _process_transaction_row(
@@ -165,8 +162,7 @@ async def import_transactions_from_csv(
             if failed_transaction:
                 failed_transaction_list.append(failed_transaction)
 
-    ll.info(f"failed_transactions: {failed_transaction_list}")
-    if not settings.is_testing_environment:
+    if settings.environment != "test":
         await send_transaction_import_report(
             user, reader.line_num - 1, failed_transaction_list
         )
