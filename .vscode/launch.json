@@ -16,6 +16,10 @@
         "worker",
         "--loglevel",
         "DEBUG",
+        "-b",
+        "redis://redis:6379/0",
+        "--result-backend",
+        "redis://redis:6379/0",
         "--pool",
         "solo"
       ]
@@ -37,9 +41,12 @@
       "request": "launch",
       "purpose": ["debug-test"],
       "console": "integratedTerminal",
-      "preLaunchTask": "start-docker-compose-test",
-      "postDebugTask": "stop-docker-compose-test"
-      // "justMyCode": false
+      "preLaunchTask": "start-test-suite",
+      "postDebugTask": "stop-test-suite",
+      "justMyCode": false,
+      "env": {
+        "ENVIRONMENT": "test"
+      }
     }
   ],
   "compounds": [
