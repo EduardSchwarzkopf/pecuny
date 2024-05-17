@@ -51,5 +51,3 @@ networks:
 volumes:
   redis_data:
     driver: local
-  postgres_data:
-    driver: local
