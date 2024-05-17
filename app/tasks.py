@@ -124,7 +124,7 @@ async def _process_transaction_row(
 @celery.task
 async def import_transactions_from_csv(
     user_id: int, account_id: int, contents: bytes
-) -> AsyncResult:
+) -> None:
     """
     Imports transactions for a user from a CSV file.
 
@@ -166,3 +166,5 @@ async def import_transactions_from_csv(
         await send_transaction_import_report(
             user, reader.line_num - 1, failed_transaction_list
         )
+
+    return None
