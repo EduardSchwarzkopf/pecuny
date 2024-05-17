@@ -2,7 +2,7 @@ import calendar
 from datetime import datetime
 from itertools import groupby
 
-from fastapi import BackgroundTasks, Cookie, Depends, File, Request, UploadFile
+from fastapi import Cookie, Depends, File, Request, UploadFile
 from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette import status
@@ -398,7 +398,6 @@ async def page_import_transactions_get(
 async def page_import_transactions_post(
     request: Request,
     account_id: int,
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     current_user: models.User = Depends(current_active_verified_user),
 ):
@@ -430,7 +429,7 @@ async def page_import_transactions_post(
             },
         )
 
-    await process_csv_file(account_id, file, current_user, background_tasks)
+    await process_csv_file(account_id, file, current_user)
 
     return RedirectResponse(
         router.url_path_for("page_get_account", account_id=account_id), status_code=302

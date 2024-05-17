@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  pecuny: 
+    restart: always
+    image: shinysonic/pecuny:latest
+    ports:
+      - '8000:8000'
+    logging:
+      driver: json-file
+      options:
+        max-size: "200k"
+        max-file: "10"
+
+  celery: 
+    image: shinysonic/pecuny:latest
+    restart: always
+    command: celery --app app.celery --broker redis://redis:6379/0 --result-backend redis://redis:6379/0 worker
+    depends_on:
+      - redis
+    logging:
+      driver: json-file
+      options:
+        max-size: "200k"
+        max-file: "10"
+    networks:
+      - internal_network
+
+  redis:
+    image: redis:7.2.4-alpine
+    restart: always
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal_network
+
+networks:
+  internal_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  redis_data:
+    driver: local

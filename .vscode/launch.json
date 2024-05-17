@@ -1,0 +1,58 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Celery",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "celery",
+      "console": "integratedTerminal",
+      "args": [
+        "--app",
+        "app.celery",
+        "worker",
+        "--loglevel",
+        "DEBUG",
+        "-b",
+        "redis://redis:6379/0",
+        "--result-backend",
+        "redis://redis:6379/0",
+        "--pool",
+        "solo"
+      ]
+    },
+    {
+      "name": "FastAPI",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["app.main:app", "--reload"],
+      "jinja": true,
+      "justMyCode": false,
+      "preLaunchTask": "start-docker-compose",
+      "postDebugTask": "stop-docker-compose"
+    },
+    {
+      "name": "Python: Debug Unit Tests",
+      "type": "debugpy",
+      "request": "launch",
+      "purpose": ["debug-test"],
+      "console": "integratedTerminal",
+      "preLaunchTask": "start-test-suite",
+      "postDebugTask": "stop-test-suite",
+      "justMyCode": false,
+      "env": {
+        "ENVIRONMENT": "test"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug pecuny",
+      "configurations": ["Celery", "FastAPI"]
+    }
+  ]
+}

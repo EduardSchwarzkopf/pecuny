@@ -37,7 +37,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             None
         """
 
-        if settings.is_testing_environment:
+        if settings.environment == "test":
             return
 
         if "email" in update_dict and not user.is_verified:
@@ -62,7 +62,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             None
         """
 
-        if user.is_verified or settings.is_testing_environment:
+        if user.is_verified or settings.environment == "test":
             return
 
         await email.send_welcome(user, self.get_token(user))

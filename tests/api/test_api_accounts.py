@@ -1,5 +1,6 @@
 import csv
 import io
+import time
 from pathlib import Path
 from typing import Any, List
 
@@ -302,6 +303,8 @@ async def test_import_transaction(
 
     assert response.status_code == HTTP_202_ACCEPTED
 
+    time.sleep(1)
+
     # because the import is done in another session we also need a new one
     repository.session.expire_all()
     account_refresh = await repository.get(models.Account, account_id)
@@ -477,6 +480,7 @@ async def test_example_import_file(
 
         assert response.status_code == HTTP_202_ACCEPTED
 
+        time.sleep(1)  # give the queue some time to process
         repository.session.expire_all()
 
         for row in reader:

@@ -1,17 +1,28 @@
+import os
+import sys
 from functools import lru_cache
 from typing import List
 
 from dotenv import load_dotenv
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv()
+ENV = os.getenv("ENVIRONMENT", default="dev")
+
+if "pytest" in sys.modules:
+    ENV = "test"
+
+
+dotenv_path = f".env.{ENV}"
+
+load_dotenv(dotenv_path=dotenv_path, override=True)
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(extra="ignore")
+
     app_name: str = "pecuny"
     max_allowed_accounts: int = 5
     environment: str = "dev"
-    is_testing_environment: bool = False
     domain: str
     db_host: str
     db_name: str
@@ -33,15 +44,14 @@ class Settings(BaseSettings):
     refresh_token_expire_minutes: int = 1440
     secure_cookie: bool = True
 
-    test_db_name: str = "test_db"
-    test_db_port: int = 5433
-    test_db_url: str = ""
-
     mail_username: str
     mail_password: str
     mail_from: str
     mail_port: int | str = 465
     mail_server: str
+
+    celery_broker_url: str = "redis://127.0.0.1:6379/0"
+    celery_result_backend: str = "redis://127.0.0.1:6379/0"
 
     def __init__(self, **values):
         super().__init__(**values)
@@ -61,11 +71,6 @@ class Settings(BaseSettings):
         self.db_url = (
             f"postgresql+asyncpg://{self.db_user}:{self.db_password}@"
             f"{self.db_host}:{self.db_port}/{self.db_name}"
-        )
-
-        self.test_db_url = (
-            f"postgresql+asyncpg://{self.db_user}:{self.db_password}@"
-            f"{self.db_host}:{self.test_db_port}/{self.test_db_name}"
         )
 
         self.access_token_expire_minutes *= 60

@@ -45,7 +45,7 @@ class TransactionService(BaseService):
         account = await self.repository.get(models.Account, account_id)
 
         if account is None:
-            return None
+            return []
 
         if account.user_id == user.id:
             logger.info("User ID verified. Retrieving transactions.")
@@ -54,7 +54,7 @@ class TransactionService(BaseService):
             )
 
         logger.warning(ACCOUNT_USER_ID_MISMATCH)
-        return None
+        return []
 
     async def get_transaction(
         self, user: models.User, transaction_id: int

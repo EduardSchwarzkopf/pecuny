@@ -1,13 +1,10 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
 from app.data import categories
 from app.database import db
 from app.models import Base
 from app.repository import Repository
-
-settings.is_testing_environment = True
 
 
 async def populate_db(session: AsyncSession):

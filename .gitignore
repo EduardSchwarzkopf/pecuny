@@ -127,8 +127,10 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-.vscode/
+.vscode/settings.json
 logs/
 .env
+.env.*
+!.env.test
 
 start-dev.sh

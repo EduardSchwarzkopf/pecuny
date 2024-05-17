@@ -1,0 +1,33 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "start-docker-compose",
+      "type": "shell",
+      "command": "docker compose -f ${workspaceFolder}/docker-compose.dev.yml up -d"
+    },
+    {
+      "label": "stop-docker-compose",
+      "type": "shell",
+      "command": "docker compose -f ${workspaceFolder}/docker-compose.dev.yml down"
+    },
+    {
+      "label": "start-test-suite",
+      "type": "shell",
+      "command": "docker compose --env-file ${workspaceFolder}/.env.test -f ${workspaceFolder}/docker-compose.test.yml up -d --build",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "stop-test-suite",
+      "type": "shell",
+      "command": "docker compose --env-file ${workspaceFolder}/.env.test -f ${workspaceFolder}/docker-compose.test.yml down",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    }
+  ]
+}

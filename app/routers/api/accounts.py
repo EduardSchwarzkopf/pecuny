@@ -1,4 +1,4 @@
-from fastapi import BackgroundTasks, Depends, File, Response, UploadFile, status
+from fastapi import Depends, File, Response, UploadFile, status
 from fastapi.exceptions import HTTPException
 
 from app import schemas
@@ -137,7 +137,6 @@ async def api_delete_account(
 @router.post("/{account_id}/import")
 async def api_import_transactions(
     account_id: int,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(current_active_verified_user),
     file: UploadFile = File(...),
 ):
@@ -155,6 +154,6 @@ async def api_import_transactions(
         decoding error occurs, validation fails, or import fails.
     """
 
-    await process_csv_file(account_id, file, current_user, background_tasks)
+    await process_csv_file(account_id, file, current_user)
 
     return Response(status_code=status.HTTP_202_ACCEPTED)

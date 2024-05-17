@@ -1,10 +1,13 @@
-from csv import DictReader
+import csv
 from decimal import InvalidOperation
+from io import StringIO
 from typing import List, Optional
 
+from fastapi import HTTPException
 from pydantic import ValidationError
 
 from app import models, schemas, transaction_manager
+from app.celery import celery
 from app.config import settings
 from app.database import db
 from app.logger import get_logger
@@ -117,8 +120,9 @@ async def _process_transaction_row(
     return None
 
 
+@celery.task
 async def import_transactions_from_csv(
-    user: models.User, account_id: int, reader: DictReader
+    user_id: int, account_id: int, contents: bytes
 ) -> None:
     """
     Imports transactions for a user from a CSV file.
@@ -131,8 +135,22 @@ async def import_transactions_from_csv(
     Returns:
         None. Transactions are imported to the database, and any failures are handled appropriately.
     """
+    try:
+        contents_str = contents.decode()
+        csv_file = StringIO(contents_str)
+    except UnicodeDecodeError as e:
+        raise HTTPException(status_code=400, detail=e.reason) from e
+
+    reader = csv.DictReader(csv_file, delimiter=";")
+
     async with await db.get_session() as session:
         repo = Repository(session)
+
+        user = await repo.get(models.User, user_id)
+
+        if user is None:
+            raise ValueError("User not found")
+
         service = TransactionService(repo)
         failed_transaction_list: List[FailedImportedTransaction] = []
 
@@ -143,7 +161,9 @@ async def import_transactions_from_csv(
             if failed_transaction:
                 failed_transaction_list.append(failed_transaction)
 
-    if not settings.is_testing_environment:
+    if settings.environment != "test":
         await send_transaction_import_report(
             user, reader.line_num - 1, failed_transaction_list
         )
+
+    return None

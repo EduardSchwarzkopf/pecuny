@@ -1,8 +1,7 @@
-import sys
 from typing import Optional
 
 from fastapi_users.db import SQLAlchemyUserDatabase
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
@@ -21,7 +20,7 @@ class Database:
         """
 
         self.url = url
-        self.engine: Optional[AsyncEngine] = None
+        self.engine = create_async_engine(url, future=True)
         self._session: Optional[AsyncSession] = None
 
     async def init(self):
@@ -35,7 +34,6 @@ class Database:
         if self._session is not None:
             await self._session.close()
 
-        self.engine = create_async_engine(self.url, future=True)
         self._session = await self.get_session()
 
     async def get_session(self) -> AsyncSession:
@@ -92,10 +90,4 @@ async def get_user_db():
     yield SQLAlchemyUserDatabase(db.session, User, OAuthAccount)
 
 
-SQLALCHEMY_DATABASE_URL = settings.db_url
-
-
-if "pytest" in sys.modules:
-    SQLALCHEMY_DATABASE_URL = settings.test_db_url
-
-db: Database = Database(SQLALCHEMY_DATABASE_URL)
+db: Database = Database(settings.db_url)

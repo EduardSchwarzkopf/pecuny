@@ -1,17 +1,13 @@
-import csv
-from io import StringIO
+from fastapi import HTTPException, UploadFile
 
-from fastapi import BackgroundTasks, HTTPException, UploadFile
-
-from app.background_tasks import import_transactions_from_csv
 from app.models import User
+from app.tasks import import_transactions_from_csv
 
 
 async def process_csv_file(
     account_id: int,
     file: UploadFile,
     current_user: User,
-    background_tasks: BackgroundTasks,
 ):
     """
     Processes a CSV file upload.
@@ -33,14 +29,4 @@ async def process_csv_file(
     if not contents:
         raise HTTPException(status_code=400, detail="File is empty")
 
-    try:
-        contents_str = contents.decode()
-        csv_file = StringIO(contents_str)
-    except UnicodeDecodeError as e:
-        raise HTTPException(status_code=400, detail=e.reason) from e
-
-    reader = csv.DictReader(csv_file, delimiter=";")
-
-    background_tasks.add_task(
-        import_transactions_from_csv, current_user, account_id, reader
-    )
+    import_transactions_from_csv.delay(current_user.id, account_id, contents)
