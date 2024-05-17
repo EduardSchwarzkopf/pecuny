@@ -46,10 +46,12 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
       - name: config ssh
         run: echo -e 'Host ${{ env.SSH_HOST }}\n  HostName ${{ vars.HOSTNAME }}\n  Port 22\n  User root\n  IdentityFile ~/.ssh/id_rsa' > ~/.ssh/config
+      - name: copy docker-compose file
+        run: scp -o "StrictHostKeyChecking=no" docker-compose.prod.yml ${{ env.SSH_HOST }}:.docker-compose.yml
       - name: stop pecuny
-        run: "${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker rm --force ${{ env.CONTAINER }} || :"
+        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker-compose down
       - name: pull latest image
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker pull ${{ env.IMAGE }}
+        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose pull ${{ env.IMAGE }}
       - name: create .env file
         run: |
           set -e
@@ -73,9 +75,12 @@ jobs:
           echo 'MAIL_SERVER=${{ secrets.MAIL_SERVER }}' >> .env
           echo 'MAIL_PORT=${{ secrets.MAIL_PORT }}' >> .env
           echo 'MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}' >> .env
+          echo 'REDIS_PORT=6379 >> .env
+          echo 'CELERY_BROKER_URL=redis://redis:6379/0 >> .env
+          echo 'CELERY_RESULT_BACKEND=redis://redis:6379/0 >> .env
       - name: copy .env file
         run: scp -o "StrictHostKeyChecking=no" .env ${{ env.SSH_HOST }}:.env
       - name: pecuny start
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker run -d --name ${{ env.CONTAINER }} -p ${{ vars.PORT }}:8000 --env-file .env ${{ env.IMAGE }}
+        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose --env-file .env up -d
       - name: upgrade database
-        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker exec ${{ env.CONTAINER }} alembic upgrade head
+        run: ${{ env.SSH_CMD }} ${{ env.SSH_HOST }} docker compose exec ${{ env.CONTAINER }} alembic upgrade head

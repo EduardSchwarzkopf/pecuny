@@ -1,5 +1,9 @@
 version: '3.9'
 
+networks:
+  test_network:
+    driver: bridge
+
 services:
   celery:
     build: .
@@ -16,13 +20,16 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
-
+    networks:
+      - test_network
 
   redis:
     image: redis:7.2.4-alpine
     ports:
       - ${REDIS_PORT}:${REDIS_PORT}
     command: --port ${REDIS_PORT}
+    networks:
+      - test_network
 
   db_test:
     image: 'postgres:14-alpine'
@@ -32,6 +39,8 @@ services:
       POSTGRES_DB: ${DB_NAME}
     ports:
       - ${DB_PORT}:5432
+    networks:
+      - test_network
 
   pgadmin-compose:
     image: dpage/pgadmin4
@@ -44,6 +53,8 @@ services:
       - db_test
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - test_network
 
 volumes:
   pgadmin_data:
