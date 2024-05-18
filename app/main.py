@@ -11,7 +11,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from jwt import ExpiredSignatureError, InvalidTokenError
+from jwt import ExpiredSignatureError, InvalidSignatureError, InvalidTokenError
 from starlette.exceptions import HTTPException
 from starlette.middleware.sessions import SessionMiddleware
 from starlette_wtf import CSRFProtectMiddleware
@@ -128,7 +128,7 @@ async def token_refresh_middleware(request: Request, call_next) -> Response:
     if not refresh_token:
         return await call_next(request)
 
-    with suppress(ExpiredSignatureError):
+    with suppress(ExpiredSignatureError, InvalidSignatureError):
         payload = jwt.decode(
             refresh_token,
             settings.refresh_token_secret_key,
