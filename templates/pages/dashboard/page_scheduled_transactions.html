@@ -1,0 +1,16 @@
+{% extends "layouts/dashboard.html" %} {% import 'macros/buttons.html' as btn %}
+{% import 'macros/icons.html' as icon %} {% block content %}
+
+<div id="transactions" class="grid gap-4 mb-12">
+
+    <div class="grid gap-3">
+      {% for transaction in scheduled_transaction_list %}
+      <a
+        href="{{ url_for('page_update_transaction_get', account_id=account_id, transaction_id=transaction.id)}}"
+      >
+        {% include 'fragments/accounts/transaction.html' %} 
+      </a>
+      {% endfor %}
+    </div>
+</div>
+{% endblock %}
