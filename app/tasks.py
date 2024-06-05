@@ -1,15 +1,19 @@
 import csv
+from datetime import datetime
 from decimal import InvalidOperation
 from io import StringIO
 from typing import List, Optional
 
 from fastapi import HTTPException
 from pydantic import ValidationError
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas, transaction_manager
 from app.celery import celery
 from app.config import settings
 from app.database import db
+from app.date_manager import get_today
 from app.logger import get_logger
 from app.repository import Repository
 from app.services.email import send_transaction_import_report
@@ -167,3 +171,73 @@ async def import_transactions_from_csv(
         )
 
     return None
+
+
+async def _create_transaction(
+    session: AsyncSession,
+    today: datetime,
+    service: TransactionService,
+    repo: Repository,
+    scheduled_transaction: models.TransactionScheduled,
+):
+
+    # TODO: Check for weekly and monthly
+
+    result = await session.execute(
+        select(models.Transaction).filter(
+            models.Transaction.scheduled_transaction_id == scheduled_transaction.id,
+            models.Transaction.information.has(date=today),
+        )
+    )
+
+    if result.scalars().first():
+        return None
+
+    user = await repo.get(models.User, scheduled_transaction.account.user_id)
+
+    information: models.TransactionInformation = scheduled_transaction.information
+    new_transaction = schemas.TransactionCreate(
+        account_id=scheduled_transaction.account.id,
+        amount=information.amount,
+        reference=information.reference,
+        date=today,
+        category_id=information.category_id,
+        scheduled_transaction_id=scheduled_transaction.id,
+    )
+
+    await transaction_manager.transaction(
+        service.create_transaction, user, new_transaction, session=session
+    )
+
+
+@celery.task
+async def create_transactions_for_batch():
+
+    async with await db.get_session() as session:
+
+        repo = Repository(session)
+        service = TransactionService(repo)
+        today = get_today()
+
+        offset = 0
+        batch_size = settings.batch_size
+
+        while True:
+            result = await session.execute(
+                select(models.TransactionScheduled).offset(offset).limit(batch_size)
+            )
+            scheduled_transaction_list = result.unique().scalars().all()
+
+            if not scheduled_transaction_list:
+                break
+
+            for scheduled in scheduled_transaction_list:
+                await _create_transaction(
+                    session=session,
+                    repo=repo,
+                    today=today,
+                    service=service,
+                    scheduled_transaction=scheduled,
+                )
+
+            offset += batch_size
