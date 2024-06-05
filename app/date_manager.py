@@ -4,8 +4,9 @@ from datetime import datetime as dt
 from datetime import timedelta, timezone
 
 
-def today():
-    """Get the current UTC date with time set to 00:00:00.
+def get_today():
+    """
+    Get the current UTC date with time set to 00:00:00.
 
     Args:
         None
@@ -20,7 +21,8 @@ def today():
 
 
 def get_datetime_from_timestamp(timestamp):
-    """Convert a timestamp to a datetime object.
+    """
+    Convert a timestamp to a datetime object.
 
     Args:
         timestamp: The timestamp to convert.
@@ -43,7 +45,8 @@ def get_datetime_from_timestamp(timestamp):
 
 
 def string_to_datetime(str_date: str):
-    """Convert a string date to a datetime object.
+    """
+    Convert a string date to a datetime object.
 
     Args:
         str_date: The string date to convert.
@@ -104,7 +107,8 @@ def _extracted_from_string_to_datetime(str_date: str):
 
 
 def get_last_day_of_month(date: dt):
-    """Returns last day of month
+    """
+    Returns last day of month
 
     Args:
         dt (datetime): date to get the last day of month
