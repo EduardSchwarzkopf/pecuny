@@ -173,7 +173,6 @@ async def api_delete_transaction(
             content="Transaction deleted successfully",
         )
 
-    if result is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
-        )
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
+    )
