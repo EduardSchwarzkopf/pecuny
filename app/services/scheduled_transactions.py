@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Optional
 
 from app import models, schemas
@@ -15,9 +14,7 @@ class ScheduledTransactionService(BaseService):
         self,
         user: models.User,
         account_id: int,
-        date_start: datetime,
-        date_end: datetime,
-    ) -> Optional[list[models.TransactionScheduled]]:
+    ) -> list[Optional[models.TransactionScheduled]]:
         """
         Retrieves a list of transactions within a specified period for a given account.
 
@@ -37,14 +34,16 @@ class ScheduledTransactionService(BaseService):
         account = await self.repository.get(models.Account, account_id)
 
         if account is None:
-            return None
+            return []
 
         if account.user_id == user.id:
-            return await self.repository.get_scheduled_transactions_from_period(
-                account_id, date_start, date_end
+            return await self.repository.filter_by(
+                models.TransactionScheduled,
+                models.TransactionScheduled.account_id,
+                account.id,
             )
 
-        return None
+        return []
 
     async def get_transaction(
         self, user: models.User, transaction_id: int
@@ -80,7 +79,7 @@ class ScheduledTransactionService(BaseService):
     async def create_scheduled_transaction(
         self,
         user: models.User,
-        transaction_information: schemas.ScheduledTransactionInformationCreate,
+        transaction_information: schemas.TransactionCreate,
     ) -> Optional[models.TransactionScheduled]:
         """
         Creates a scheduled transaction.
