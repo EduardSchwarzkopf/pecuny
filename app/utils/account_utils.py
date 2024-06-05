@@ -25,7 +25,7 @@ async def get_account_list_template(
     """
 
     service = AccountService()
-    account_list = await service.get_accounts(user) or []
+    account_list = await service.get_accounts(user)
     total_balance = service.calculate_total_balance(account_list)
 
     return render_template(
