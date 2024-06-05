@@ -13,15 +13,15 @@
       "args": [
         "--app",
         "app.celery",
-        "worker",
-        "--loglevel",
-        "DEBUG",
-        "-b",
-        "redis://redis:6379/0",
+        "--broker",
+        "redis://127.0.0.1:6379/0",
         "--result-backend",
-        "redis://redis:6379/0",
+        "redis://127.0.0.1:6379/0",
+        "worker",
         "--pool",
-        "solo"
+        "solo",
+        "--loglevel",
+        "DEBUG"
       ]
     },
     {
