@@ -12,7 +12,7 @@ class AccountService(BaseService):
 
     async def get_accounts(
         self, current_user: models.User
-    ) -> Optional[list[models.Account]]:
+    ) -> list[Optional[models.Account]]:
         """
         Retrieves a list of accounts.
 
@@ -23,8 +23,11 @@ class AccountService(BaseService):
             list[Account]: A list of account objects.
         """
 
-        return await self.repository.filter_by(
-            models.Account, models.Account.user_id, current_user.id
+        return (
+            await self.repository.filter_by(
+                models.Account, models.Account.user_id, current_user.id
+            )
+            or []
         )
 
     async def get_account(
