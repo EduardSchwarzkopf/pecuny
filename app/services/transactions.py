@@ -1,3 +1,4 @@
+from ctypes import Union
 from datetime import datetime
 from typing import Optional
 
@@ -20,7 +21,7 @@ class TransactionService(BaseService):
         account_id: int,
         date_start: datetime,
         date_end: datetime,
-    ) -> Optional[list[models.Transaction]]:
+    ) -> list[Optional[models.Transaction]]:
         """
         Retrieves a list of transactions within a specified period for a given account.
 
@@ -97,7 +98,7 @@ class TransactionService(BaseService):
     async def create_transaction(
         self,
         user: models.User,
-        transaction_information: schemas.TransactionInformationCreate,
+        transaction_information: schemas.TransactionCreate,
     ) -> Optional[models.Transaction]:
         """
         Creates a new transaction.
@@ -130,7 +131,9 @@ class TransactionService(BaseService):
         )
 
         transaction = models.Transaction(
-            information=db_transaction_information, account_id=account.id
+            information=db_transaction_information,
+            account_id=account.id,
+            scheduled_transaction_id=transaction_information.scheduled_transaction_id,
         )
 
         if transaction_information.offset_account_id:
@@ -165,7 +168,7 @@ class TransactionService(BaseService):
     async def _handle_offset_transaction(
         self,
         user: models.User,
-        transaction_information: schemas.TransactionInformationCreate,
+        transaction_information: schemas.TransactionCreate,
     ) -> Optional[models.Transaction]:
         """
         Handles an offset transaction for a user.
@@ -209,6 +212,7 @@ class TransactionService(BaseService):
         offset_transaction = models.Transaction(
             information=db_offset_transaction_information,
             account_id=offset_account_id,
+            scheduled_transaction_id=transaction_information.scheduled_transaction_id,
         )
 
         await self.repository.save(offset_transaction)
