@@ -11,6 +11,7 @@ from app.routers.accounts import handle_account_route
 from app.routers.accounts import router as account_router
 from app.services.accounts import AccountService
 from app.services.categories import CategoryService
+from app.services.frequency import FrequencyService
 from app.services.transactions import TransactionService
 from app.utils import PageRouter
 from app.utils.account_utils import get_account_list_template
@@ -109,6 +110,27 @@ async def populate_transaction_form_category_choices(
     form.category_id.choices = group_categories_by_section(category_data_list)
 
 
+async def populate_transaction_form_frequency_choices(
+    user: models.User, form: schemas.CreateTransactionForm
+) -> None:
+    """
+    Populates the category choices in the transaction form.
+
+    Args:
+        user: The current active user.
+        form: The create transaction form.
+
+    Returns:
+        None
+    """
+    category_service = FrequencyService()
+    category_list = await category_service.get_frequency_list() or []
+    category_data_list = [
+        schemas.CategoryData(**category.__dict__) for category in category_list
+    ]
+    form.category_id.choices = group_categories_by_section(category_data_list)
+
+
 @router.get("/", response_class=HTMLResponse)
 async def page_list_accounts(
     request: Request,
@@ -131,7 +153,7 @@ async def page_list_accounts(
 
 
 @csrf_protect
-@router.get("/add-transaction/")
+@router.get("/add")
 async def page_create_transaction_form(
     request: Request,
     account_id: int,
@@ -166,7 +188,7 @@ async def page_create_transaction_form(
     )
 
 
-@router.post("/add-transaction")
+@router.post("/add")
 async def page_create_transaction(
     request: Request,
     account_id: int,
