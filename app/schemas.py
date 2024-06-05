@@ -166,6 +166,10 @@ class TransactionInformationCreate(TransactionInformation):
         return None if v == "" else int(v)
 
 
+class TransactionCreate(TransactionInformationCreate):
+    scheduled_transaction_id: int
+
+
 class TransactionInformtionUpdate(TransactionInformationCreate):
     pass
 
@@ -175,7 +179,7 @@ class ScheduledTransactionInformationCreate(TransactionInformationBase):
     frequency_id: int
     date_end: dt
     account_id: int
-    offset_account_id: Optional[int]
+    offset_account_id: Optional[int] = None
 
 
 class TransactionInformationData(TransactionInformation):
@@ -355,6 +359,66 @@ class UpdateTransactionForm(StarletteForm):
     offset_account_id = SelectField(
         "Linked Account", coerce=int, render_kw={"disabled": "disabled"}, default=0
     )
+
+
+class CreateScheduledTransactionForm(StarletteForm):
+    reference = StringField(
+        "Reference",
+        validators=[InputRequired(), Length(max=128)],
+        render_kw={"placeholder": "e.g. 'Rent payment for March'"},
+    )
+    amount = DecimalField(
+        "Amount",
+        validators=[InputRequired(), NumberRange(min=0)],
+        render_kw={"placeholder": "500"},
+    )
+    is_expense = BooleanField("Is this an expense?", default=True)
+    category_id = SelectField(
+        "Category",
+        validators=[InputRequired()],
+        coerce=int,
+        render_kw={"placeholder": "Select the appropriate category"},
+    )
+    frequency_id = SelectField(
+        "Frequency",
+        validators=[InputRequired()],
+        coerce=int,
+        render_kw={"placeholder": "Select the appropriate category"},
+    )
+    date_start = DatetimeLocalFieldWithoutTime(
+        "Date Start",
+        validators=[InputRequired()],
+    )
+    date_end = DatetimeLocalFieldWithoutTime(
+        "Date End",
+        validators=[InputRequired()],
+    )
+    offset_account_id = SelectField(
+        "Linked Account",
+        coerce=int,
+        render_kw={
+            "placeholder": (
+                "Select an account if this transaction is "
+                "transferring funds between accounts"
+            ),
+        },
+    )
+
+
+class UpdateScheduledTransactionForm(StarletteForm):
+    reference = StringField("Reference", validators=[InputRequired(), Length(max=128)])
+    amount = DecimalField(
+        "Amount",
+        validators=[InputRequired(), NumberRange(min=0)],
+    )
+    is_expense = BooleanField("Is this an expense?")
+    category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
+    date_start = DatetimeLocalFieldWithoutTime(
+        "Date Start", validators=[InputRequired()]
+    )
+    date_end = DatetimeLocalFieldWithoutTime("Date End", validators=[InputRequired()])
+    offset_account_id = SelectField("Linked Account", coerce=int, default=0)
+    frequency_id = SelectField("Frequency", coerce=int, default=0)
 
 
 class DatePickerForm(StarletteForm):
