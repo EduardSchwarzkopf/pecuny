@@ -7,7 +7,7 @@ from app.services.base import BaseService
 logger = get_logger(__name__)
 
 
-class CategoryService(BaseService):
+class FrequencyService(BaseService):
 
     async def get_frequency_list(
         self,
@@ -21,7 +21,7 @@ class CategoryService(BaseService):
 
         return await self.repository.get_all(models.Frequency)
 
-    async def get_category(self, frequency_id: int) -> Optional[models.Frequency]:
+    async def get_frequency(self, frequency_id: int) -> Optional[models.Frequency]:
         """
         Get a specific transaction category by frequency ID.
 
