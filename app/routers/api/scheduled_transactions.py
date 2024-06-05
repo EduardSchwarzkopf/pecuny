@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import Depends, status
+from fastapi import Depends, Response, status
 from fastapi.exceptions import HTTPException
 
 from app import schemas
@@ -11,7 +11,7 @@ from app.services.scheduled_transactions import ScheduledTransactionService
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(
-    prefix="/scheduled_transactions", tags=["Scheduled Transactions"]
+    prefix="/scheduled-transactions", tags=["Scheduled Transactions"]
 )
 ResponseModel = schemas.ScheduledTransactionData
 
@@ -81,7 +81,7 @@ async def api_get_transaction(
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ResponseModel)
 async def api_create_transaction(
-    transaction_information: schemas.ScheduledTransactionInformationCreate,
+    transaction_information: schemas.TransactionCreate,
     current_user: User = Depends(current_active_verified_user),
     service: ScheduledTransactionService = Depends(
         ScheduledTransactionService.get_instance
@@ -111,4 +111,40 @@ async def api_create_transaction(
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Scheduled transaction not created",
+    )
+
+
+@router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def api_delete_transaction(
+    transaction_id: int,
+    current_user: User = Depends(current_active_verified_user),
+    service: ScheduledTransactionService = Depends(
+        ScheduledTransactionService.get_instance
+    ),
+):
+    """
+    Deletes a transaction.
+
+    Args:
+        transaction_id: The ID of the transaction.
+        current_user: The current active user.
+
+    Returns:
+        Response: A response indicating the success or failure of the deletion.
+
+    Raises:
+        HTTPException: If the transaction is not found.
+    """
+
+    result = await tm.transaction(
+        service.delete_scheduled_transaction, current_user, transaction_id
+    )
+    if result:
+        return Response(
+            status_code=status.HTTP_204_NO_CONTENT,
+            content="Transaction deleted successfully",
+        )
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
     )
