@@ -97,7 +97,7 @@ async def _process_transaction_row(
     category = category_list[0]
 
     try:
-        transaction_data = schemas.TransactionInformationCreate(
+        transaction_data = schemas.TransactionData(
             account_id=account_id, category_id=category.id, **row
         )
     except ValidationError as e:
@@ -196,7 +196,7 @@ async def _create_transaction(
     user = await repo.get(models.User, scheduled_transaction.account.user_id)
 
     information: models.TransactionInformation = scheduled_transaction.information
-    new_transaction = schemas.TransactionCreate(
+    new_transaction = schemas.TransactionData(
         account_id=scheduled_transaction.account.id,
         amount=information.amount,
         reference=information.reference,

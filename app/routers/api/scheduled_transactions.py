@@ -81,7 +81,7 @@ async def api_get_transaction(
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ResponseModel)
 async def api_create_transaction(
-    transaction_information: schemas.TransactionCreate,
+    transaction_information: schemas.TransactionInformationCreate,
     current_user: User = Depends(current_active_verified_user),
     service: ScheduledTransactionService = Depends(
         ScheduledTransactionService.get_instance
