@@ -163,11 +163,14 @@ class TransactionInformationCreate(TransactionInformation):
             int or None: The parsed offset account ID or None if the input is an empty string.
         """
 
-        return None if v == "" else int(v)
+        if v is None or v == "":
+            return None
 
+        try:
+            return int(v)
+        except ValueError as e:
+            raise ValueError(f"Invalid value {v} for offset_account_id") from e
 
-class TransactionCreate(TransactionInformationCreate):
-    scheduled_transaction_id: int
 
 
 class TransactionInformtionUpdate(TransactionInformationCreate):
