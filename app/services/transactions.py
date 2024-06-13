@@ -98,7 +98,7 @@ class TransactionService(BaseService):
     async def create_transaction(
         self,
         user: models.User,
-        transaction_information: schemas.TransactionCreate,
+        transaction_data: schemas.TransactionData,
     ) -> Optional[models.Transaction]:
         """
         Creates a new transaction.
@@ -115,9 +115,7 @@ class TransactionService(BaseService):
         """
 
         logger.info("Creating new transaction for user %s", user.id)
-        account = await self.repository.get(
-            models.Account, transaction_information.account_id
-        )
+        account = await self.repository.get(models.Account, transaction_data.account_id)
 
         if account is None:
             return None
@@ -127,31 +125,31 @@ class TransactionService(BaseService):
 
         db_transaction_information = models.TransactionInformation()
         db_transaction_information.add_attributes_from_dict(
-            transaction_information.model_dump()
+            transaction_data.model_dump()
         )
 
         transaction = models.Transaction(
             information=db_transaction_information,
             account_id=account.id,
-            scheduled_transaction_id=transaction_information.scheduled_transaction_id,
+            scheduled_transaction_id=transaction_data.scheduled_transaction_id,
         )
 
-        if transaction_information.offset_account_id:
+        if transaction_data.offset_account_id:
             logger.info("Handling offset account for transaction.")
             offset_transaction = await self._handle_offset_transaction(
-                user, transaction_information
+                user, transaction_data
             )
 
             if offset_transaction is None:
                 logger.warning(
                     "User[id: %s] not allowed to access offset_account[id: %s]",
                     user.id,
-                    transaction_information.offset_account_id,
+                    transaction_data.offset_account_id,
                 )
                 raise AccessDeniedError(
                     (
                         f"User[id: {user.id}] not allowed to access "
-                        f"offset_account[id: {transaction_information.offset_account_id}]"
+                        f"offset_account[id: {transaction_data.offset_account_id}]"
                     )
                 )
 
@@ -168,7 +166,7 @@ class TransactionService(BaseService):
     async def _handle_offset_transaction(
         self,
         user: models.User,
-        transaction_information: schemas.TransactionCreate,
+        transaction_data: schemas.TransactionData,
     ) -> Optional[models.Transaction]:
         """
         Handles an offset transaction for a user.
@@ -185,7 +183,7 @@ class TransactionService(BaseService):
         """
 
         logger.info("Handling offset transaction for user %s", user.id)
-        offset_account_id = transaction_information.offset_account_id
+        offset_account_id = transaction_data.offset_account_id
 
         if offset_account_id is None:
             return None
@@ -199,20 +197,18 @@ class TransactionService(BaseService):
             logger.warning("User ID does not match the offset account's User ID.")
             return None
 
-        transaction_information.amount = RoundedDecimal(
-            transaction_information.amount * -1
-        )
+        transaction_data.amount = RoundedDecimal(transaction_data.amount * -1)
 
-        offset_account.balance += transaction_information.amount
+        offset_account.balance += transaction_data.amount
 
         db_offset_transaction_information = models.TransactionInformation()
         db_offset_transaction_information.add_attributes_from_dict(
-            transaction_information.model_dump()
+            transaction_data.model_dump()
         )
         offset_transaction = models.Transaction(
             information=db_offset_transaction_information,
             account_id=offset_account_id,
-            scheduled_transaction_id=transaction_information.scheduled_transaction_id,
+            scheduled_transaction_id=transaction_data.scheduled_transaction_id,
         )
 
         await self.repository.save(offset_transaction)
