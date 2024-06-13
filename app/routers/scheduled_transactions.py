@@ -218,9 +218,7 @@ async def page_create_transaction(
     if form.is_expense.data:
         form.amount.data *= -1
 
-    transaction = schemas.TransactionInformationCreate(
-        account_id=account_id, **form.data
-    )
+    transaction = schemas.TransactionData(account_id=account_id, **form.data)
 
     response = await tm.transaction(
         transaction_service.create_transaction, user, transaction
