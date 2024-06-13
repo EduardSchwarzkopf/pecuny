@@ -95,8 +95,9 @@ async def api_create_transaction(
         HTTPException: If the transaction is not created.
     """
 
+    transaction_data = schemas.TransactionData(**transaction_information.model_dump())
     transaction = await tm.transaction(
-        service.create_transaction, current_user, transaction_information
+        service.create_transaction, current_user, transaction_data
     )
 
     if transaction:
