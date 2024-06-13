@@ -172,6 +172,9 @@ class TransactionInformationCreate(TransactionInformation):
             raise ValueError(f"Invalid value {v} for offset_account_id") from e
 
 
+class TransactionData(TransactionInformationCreate):
+    scheduled_transaction_id: Optional[int] = None
+
 
 class TransactionInformtionUpdate(TransactionInformationCreate):
     pass
