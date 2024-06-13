@@ -391,7 +391,7 @@ async def fixture_create_transactions(
             [
                 service.create_transaction(
                     account.user,
-                    schemas.TransactionInformationCreate(
+                    schemas.TransactionData(
                         account_id=account.id,
                         amount=transaction["amount"],
                         reference=transaction["reference"],
