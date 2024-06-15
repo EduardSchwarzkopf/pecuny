@@ -6,7 +6,7 @@
     <div class="grid gap-3">
       {% for transaction in scheduled_transaction_list %}
       <a
-        href="{{ url_for('page_update_transaction_get', account_id=account_id, transaction_id=transaction.id)}}"
+        href="{{ url_for('page_update_scheduled_transaction_get', account_id=account_id, transaction_id=transaction.id)}}"
       >
         {% include 'fragments/accounts/transaction.html' %} 
       </a>

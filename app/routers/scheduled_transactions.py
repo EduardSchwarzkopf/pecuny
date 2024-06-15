@@ -234,7 +234,7 @@ async def page_create_transaction(
 
 
 @router.get("/{transaction_id}")
-async def page_update_transaction_get(
+async def page_update_scheduled_transaction_get(
     request: Request,
     account_id: int,
     transaction_id: int,
@@ -288,7 +288,7 @@ async def page_update_transaction_get(
             "account_id": account_id,
             "transaction_id": transaction.id,
             "action_url": router.url_path_for(
-                "page_update_transaction_get",
+                "page_update_scheduled_transaction_get",
                 account_id=account_id,
                 transaction_id=transaction.id,
             ),
@@ -342,7 +342,7 @@ async def page_update_transaction_post(
                 "account_id": account_id,
                 "transaction_id": transaction.id,
                 "action_url": router.url_path_for(
-                    "page_update_transaction_get",
+                    "page_update_scheduled_transaction_get",
                     account_id=account_id,
                     transaction_id=transaction.id,
                 ),
