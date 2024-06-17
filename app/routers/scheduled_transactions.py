@@ -83,6 +83,27 @@ async def populate_transaction_form_category_choices(
     form.category_id.choices = group_categories_by_section(category_data_list)
 
 
+async def populate_transaction_form_frequency_choices(
+    form: schemas.CreateScheduledTransactionForm,
+) -> None:
+    """
+    Populates the frequency choices in the transaction form.
+
+    Args:
+        user: The current active user.
+        form: The create transaction form.
+
+    Returns:
+        None
+    """
+    service = FrequencyService()
+    frequency_list = await service.get_frequency_list() or []
+
+    choices = [(frequency.id, frequency.label) for frequency in frequency_list]
+
+    form.frequency_id.choices = choices
+
+
 async def populate_transaction_form_choices(
     account_id: int,
     user: models.User,
@@ -103,6 +124,7 @@ async def populate_transaction_form_choices(
     """
 
     await populate_transaction_form_category_choices(user, form)
+    await populate_transaction_form_frequency_choices(form)
     await populate_transaction_form_account_choices(
         account_id, user, form, first_select_label
     )
