@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from fastapi import HTTPException
 from pydantic import ValidationError
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas, transaction_manager
@@ -19,7 +19,7 @@ from app.repository import Repository
 from app.services.email import send_transaction_import_report
 from app.services.transactions import TransactionService
 from app.utils.dataclasses_utils import FailedImportedTransaction
-from app.utils.enums import DatabaseFilterOperator
+from app.utils.enums import DatabaseFilterOperator, Frequency
 
 logger = get_logger(__name__)
 
@@ -181,8 +181,6 @@ async def _create_transaction(
     scheduled_transaction: models.TransactionScheduled,
 ):
 
-    # TODO: Check for weekly and monthly
-
     result = await session.execute(
         select(models.Transaction).filter(
             models.Transaction.scheduled_transaction_id == scheduled_transaction.id,
@@ -212,9 +210,7 @@ async def _create_transaction(
 
 @celery.task
 async def create_transactions_for_batch():
-
     async with await db.get_session() as session:
-
         repo = Repository(session)
         service = TransactionService(repo)
         today = get_today()
@@ -232,6 +228,56 @@ async def create_transactions_for_batch():
                 break
 
             for scheduled in scheduled_transaction_list:
+
+                latest_transaction = (
+                    (
+                        await session.execute(
+                            select(models.Transaction)
+                            .filter(
+                                models.Transaction.scheduled_transaction_id
+                                == scheduled.id
+                            )
+                            .order_by(desc(models.Transaction.created_at))
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
+
+                if latest_transaction:
+
+                    created_date: datetime = latest_transaction.created_at
+                    today = get_today()
+
+                    if (
+                        scheduled.frequency_id == Frequency.DAILY.value
+                        and created_date.date() == today.date()
+                    ):
+                        continue
+
+                    # TODO: is a frequency of "once" necessary?
+                    if (
+                        latest_transaction
+                        and scheduled.frequency_id == Frequency.ONCE.value
+                    ):
+                        continue
+
+                    if scheduled.frequency_id == Frequency.WEEKLY.value:
+                        # Weekly frequency, check if today is in the next week from the last transaction
+                        if (today - created_date).days < 7:
+                            continue
+                    elif scheduled.frequency_id == Frequency.MONTHLY.value:
+                        # Monthly frequency, check if today is in the next month from the last transaction
+                        if (
+                            created_date.year == today.year
+                            and created_date.month == today.month
+                        ):
+                            continue
+                    elif scheduled.frequency_id == Frequency.YEARLY.value:
+                        # Yearly frequency, check if today is in the next year from the last transaction
+                        if created_date.year == today.year:
+                            continue
+
                 await _create_transaction(
                     session=session,
                     repo=repo,
