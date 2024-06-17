@@ -389,7 +389,7 @@ class CreateScheduledTransactionForm(StarletteForm):
         "Frequency",
         validators=[InputRequired()],
         coerce=int,
-        render_kw={"placeholder": "Select the appropriate category"},
+        render_kw={"placeholder": "Select the appropriate frequency"},
     )
     date_start = DatetimeLocalFieldWithoutTime(
         "Date Start",
