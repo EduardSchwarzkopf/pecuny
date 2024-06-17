@@ -29,3 +29,11 @@ class DatabaseFilterOperator(Enum):
     GREATER_THAN = ">"
     GREATER_THAN_OR_EQUAL = ">="
     LIKE = "LIKE"
+
+
+class Frequency(Enum):
+    ONCE = 1
+    DAILY = 2
+    WEEKLY = 3
+    MONTHLY = 4
+    YEARLY = 5
