@@ -301,6 +301,7 @@ async def page_update_scheduled_transaction_get(
         form.is_expense.data = True
 
     form.amount.data = abs(form_amount)
+    form.frequency_id.data = transaction.frequency_id
 
     return render_template(
         "pages/dashboard/page_form_transaction.html",
