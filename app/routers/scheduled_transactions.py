@@ -11,6 +11,7 @@ from app.routers.accounts import handle_account_route
 from app.routers.accounts import router as account_router
 from app.services.accounts import AccountService
 from app.services.categories import CategoryService
+from app.services.frequency import FrequencyService
 from app.services.scheduled_transactions import ScheduledTransactionService
 from app.utils import PageRouter
 from app.utils.template_utils import group_categories_by_section, render_template
