@@ -136,8 +136,9 @@ class SectionData(MinimalResponse):
     pass
 
 
-class FrequencyData(MinimalResponse):
-    pass
+class FrequencyData(Base):
+    id: int
+    label: StringContr
 
 
 class CategoryData(Base):
