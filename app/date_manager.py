@@ -20,6 +20,24 @@ def get_today():
     return dt.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
 
 
+def get_day_delta(date: dt, days: int) -> dt:
+    return date + timedelta(days=days)
+
+
+def get_tomorrow(date: dt = None) -> dt:
+    if date is None:
+        date = get_today()
+
+    return get_day_delta(date, 1)
+
+
+def get_yesterday(date: dt = None) -> dt:
+    if date is None:
+        date = get_today()
+
+    return get_day_delta(date, -1)
+
+
 def get_datetime_from_timestamp(timestamp):
     """
     Convert a timestamp to a datetime object.
