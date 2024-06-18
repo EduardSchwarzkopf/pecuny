@@ -79,7 +79,7 @@ class ScheduledTransactionService(BaseService):
     async def create_scheduled_transaction(
         self,
         user: models.User,
-        transaction_information: schemas.TransactionInformationCreate,
+        transaction_information: schemas.ScheduledTransactionInformationCreate,
     ) -> Optional[models.TransactionScheduled]:
         """
         Creates a scheduled transaction.
