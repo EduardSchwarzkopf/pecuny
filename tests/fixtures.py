@@ -525,6 +525,29 @@ async def fixture_create_scheduled_transactions(
     yield
 
 
+@pytest.fixture(name="test_account_scheduled_transaction_list")
+async def fixture_test_account_scheduled_transaction_list(
+    create_scheduled_transactions, test_account, repository: Repository
+):
+    """
+    Fixture for retrieving a list of scheduled transactions for a test account.
+
+    Args:
+        create_scheduled_transactions: A fixture for creating scheduled transactions.
+        test_account: The test account for which transactions are retrieved.
+        repository: The repository to filter transactions from.
+
+    Returns:
+        A list of scheduled transactions filtered by the test account.
+    """
+
+    yield await repository.filter_by(
+        models.TransactionScheduled,
+        models.TransactionScheduled.account_id,
+        test_account.id,
+    )
+
+
 @pytest.fixture(name="test_account_transaction_list")
 async def fixture_test_account_transaction_list(
     create_transactions, test_account, repository: Repository
