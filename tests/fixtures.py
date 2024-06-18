@@ -6,12 +6,14 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas
+from app.date_manager import get_today, get_tomorrow, get_yesterday
 from app.repository import Repository
 from app.services.accounts import AccountService
+from app.services.scheduled_transactions import ScheduledTransactionService
 from app.services.transactions import TransactionService
 from app.services.users import UserService
 from app.utils.dataclasses_utils import CreateUserData
-from app.utils.enums import DatabaseFilterOperator
+from app.utils.enums import DatabaseFilterOperator, Frequency
 
 # Reference: https://github.com/EduardSchwarzkopf/pecuny/issues/88
 # pylint: disable=unused-argument
@@ -400,6 +402,120 @@ async def fixture_create_transactions(
                     ),
                 )
                 for transaction in transaction_data
+            ]
+        )
+
+    await asyncio.gather(*create_task)
+    await session.commit()
+
+    yield
+
+
+@pytest.fixture(name="create_scheduled_transactions")
+async def fixture_create_scheduled_transactions(
+    test_accounts: list[models.Account],
+    session: AsyncSession,
+):
+    today = get_today()
+    tomorrow = get_tomorrow(today)
+    yesterday = get_yesterday(today)
+    reference_prefix = "scheduled_transaction"
+
+    transaction_data_list = [
+        {
+            "amount": 100,
+            "reference": f"{reference_prefix}_daily",
+            "category_id": 1,
+            "date_start": today,
+            "frequency_id": Frequency.DAILY.value,
+            "date_end": tomorrow,
+        },
+        {
+            "amount": 1000,
+            "reference": f"{reference_prefix}_weekly",
+            "category_id": 1,
+            "date_start": today,
+            "frequency_id": Frequency.WEEKLY.value,
+            "date_end": (today + datetime.timedelta(weeks=2)),
+        },
+        {
+            "amount": 10000,
+            "reference": f"{reference_prefix}_yearly",
+            "category_id": 1,
+            "date_start": today,
+            "frequency_id": Frequency.YEARLY.value,
+            "date_end": (today + datetime.timedelta(weeks=48)),
+        },
+        {
+            "amount": 100,
+            "reference": f"{reference_prefix}_daily_not_started",
+            "category_id": 1,
+            "date_start": tomorrow,
+            "frequency_id": Frequency.DAILY.value,
+            "date_end": (today + datetime.timedelta(weeks=48)),
+        },
+        {
+            "amount": 1000,
+            "reference": f"{reference_prefix}_weekly_not_started",
+            "category_id": 1,
+            "date_start": tomorrow,
+            "frequency_id": Frequency.WEEKLY.value,
+            "date_end": (today + datetime.timedelta(weeks=1)),
+        },
+        {
+            "amount": 10000,
+            "reference": f"{reference_prefix}_yearly_not_started",
+            "category_id": 1,
+            "date_start": tomorrow,
+            "frequency_id": Frequency.DAILY.value,
+            "date_end": (today + datetime.timedelta(weeks=53)),
+        },
+        {
+            "amount": 100,
+            "reference": f"{reference_prefix}_daily_ended",
+            "category_id": 1,
+            "date_start": (today - datetime.timedelta(weeks=2)),
+            "frequency_id": Frequency.DAILY.value,
+            "date_end": yesterday,
+        },
+        {
+            "amount": 1000,
+            "reference": f"{reference_prefix}_weekly_ended",
+            "category_id": 1,
+            "date_start": today,
+            "frequency_id": Frequency.WEEKLY.value,
+            "date_end": yesterday,
+        },
+        {
+            "amount": 10000,
+            "reference": f"{reference_prefix}_yearly_ended",
+            "category_id": 1,
+            "date_start": today,
+            "frequency_id": Frequency.YEARLY.value,
+            "date_end": yesterday,
+        },
+    ]
+
+    service = ScheduledTransactionService()
+    create_task = []
+
+    for account in test_accounts:
+
+        create_task.extend(
+            [
+                service.create_scheduled_transaction(
+                    account.user,
+                    schemas.ScheduledTransactionInformationCreate(
+                        account_id=account.id,
+                        amount=transaction["amount"],
+                        reference=transaction["reference"],
+                        category_id=transaction["category_id"],
+                        date_start=transaction["date_start"],
+                        frequency_id=transaction["frequency_id"],
+                        date_end=transaction["date_end"],
+                    ),
+                )
+                for transaction in transaction_data_list
             ]
         )
 
