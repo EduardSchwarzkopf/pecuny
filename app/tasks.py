@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from fastapi import HTTPException
 from pydantic import ValidationError
-from sqlalchemy import desc, select
+from sqlalchemy import and_, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas, transaction_manager
@@ -208,6 +208,7 @@ async def _create_transaction(
     )
 
 
+# TODO: Refactor this function before merge into main
 @celery.task
 async def create_transactions_for_batch():
     async with await db.get_session() as session:
@@ -219,8 +220,17 @@ async def create_transactions_for_batch():
         batch_size = settings.batch_size
 
         while True:
+
             result = await session.execute(
-                select(models.TransactionScheduled).offset(offset).limit(batch_size)
+                select(models.TransactionScheduled)
+                .where(
+                    and_(
+                        models.TransactionScheduled.date_start <= today,
+                        models.TransactionScheduled.date_end >= today,
+                    )
+                )
+                .offset(offset)
+                .limit(batch_size)
             )
             scheduled_transaction_list = result.unique().scalars().all()
 
@@ -247,7 +257,6 @@ async def create_transactions_for_batch():
                 if latest_transaction:
 
                     created_date: datetime = latest_transaction.created_at
-                    today = get_today()
 
                     if (
                         scheduled.frequency_id == Frequency.DAILY.value
