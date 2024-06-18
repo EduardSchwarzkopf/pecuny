@@ -106,6 +106,8 @@ class Repository:
         """
         if operator == DatabaseFilterOperator.LIKE:
             condition = attribute.ilike(f"%{value}%")
+        elif operator == DatabaseFilterOperator.IS_NOT:
+            condition = attribute.is_not(value)
         else:
             condition = text(f"{attribute.key} {operator.value} :val")
 
@@ -133,26 +135,30 @@ class Repository:
             load_relationships_list: Optional list of relationships to load.
 
         Returns:
-            list[Model]: The filtered records.
+            list[ModelT]: The filtered records.
         """
 
         where_conditions = []
         params = {}
         for i, (attribute, value, operator) in enumerate(conditions):
             param_name = f"val{i}"
+
             if operator == DatabaseFilterOperator.LIKE:
                 condition = attribute.ilike(f"%{value}%")
+            elif operator == DatabaseFilterOperator.IS_NOT:
+                condition = attribute.is_not(value)
             else:
                 condition = text(f"{attribute.key} {operator.value} :{param_name}")
                 params[param_name] = value
+
             where_conditions.append(condition)
 
         q = select(cls)
         if where_conditions:
             for condition in where_conditions:
                 q = q.where(condition)
-        q = q.params(**params)
 
+        q = q.params(**params)
         q = self._load_relationships(q, load_relationships_list)
 
         result = await self.session.execute(q)

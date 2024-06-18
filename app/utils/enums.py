@@ -29,6 +29,7 @@ class DatabaseFilterOperator(Enum):
     GREATER_THAN = ">"
     GREATER_THAN_OR_EQUAL = ">="
     LIKE = "LIKE"
+    IS_NOT = "!="
 
 
 class Frequency(Enum):
