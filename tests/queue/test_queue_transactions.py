@@ -21,7 +21,7 @@ async def test_create_daily_transaction(
 
     create_transactions_for_batch.delay()
 
-    time.sleep(1)
+    time.sleep(0.3)  # give it some time to process
     repository.session.expire_all()
 
     account = await repository.get(models.Account, account_id)
