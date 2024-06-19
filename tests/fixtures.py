@@ -542,10 +542,27 @@ async def fixture_test_account_scheduled_transaction_list(
         A list of scheduled transactions filtered by the test account.
     """
 
-    yield await repository.filter_by(
+    today = get_today()
+
+    yield await repository.filter_by_multiple(
         models.TransactionScheduled,
-        models.TransactionScheduled.account_id,
-        test_account.id,
+        [
+            (
+                models.TransactionScheduled.account_id,
+                test_account.id,
+                DatabaseFilterOperator.EQUAL,
+            ),
+            (
+                models.TransactionScheduled.date_start,
+                today,
+                DatabaseFilterOperator.EQUAL,
+            ),
+            (
+                models.TransactionScheduled.date_end,
+                today,
+                DatabaseFilterOperator.GREATER_THAN_OR_EQUAL,
+            ),
+        ],
     )
 
 
