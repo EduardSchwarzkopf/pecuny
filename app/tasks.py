@@ -181,16 +181,6 @@ async def _create_transaction(
     scheduled_transaction: models.TransactionScheduled,
 ):
 
-    result = await session.execute(
-        select(models.Transaction).filter(
-            models.Transaction.scheduled_transaction_id == scheduled_transaction.id,
-            models.Transaction.information.has(date=today),
-        )
-    )
-
-    if result.scalars().first():
-        return None
-
     user = await repo.get(models.User, scheduled_transaction.account.user_id)
 
     information: models.TransactionInformation = scheduled_transaction.information
