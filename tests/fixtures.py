@@ -6,7 +6,8 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas
-from app.date_manager import get_today, get_tomorrow, get_yesterday
+from app.date_manager import (get_day_delta, get_today, get_tomorrow,
+                              get_yesterday)
 from app.repository import Repository
 from app.services.accounts import AccountService
 from app.services.scheduled_transactions import ScheduledTransactionService
@@ -444,7 +445,7 @@ async def fixture_create_scheduled_transactions(
             "category_id": 1,
             "date_start": today,
             "frequency_id": Frequency.YEARLY.value,
-            "date_end": (today + datetime.timedelta(weeks=48)),
+            "date_end": (today + datetime.timedelta(weeks=52)),
         },
         {
             "amount": 100,
@@ -452,7 +453,7 @@ async def fixture_create_scheduled_transactions(
             "category_id": 1,
             "date_start": tomorrow,
             "frequency_id": Frequency.DAILY.value,
-            "date_end": (today + datetime.timedelta(weeks=48)),
+            "date_end": (tomorrow + datetime.timedelta(weeks=48)),
         },
         {
             "amount": 1000,
@@ -460,7 +461,7 @@ async def fixture_create_scheduled_transactions(
             "category_id": 1,
             "date_start": tomorrow,
             "frequency_id": Frequency.WEEKLY.value,
-            "date_end": (today + datetime.timedelta(weeks=1)),
+            "date_end": (tomorrow + datetime.timedelta(weeks=1)),
         },
         {
             "amount": 10000,
@@ -468,7 +469,7 @@ async def fixture_create_scheduled_transactions(
             "category_id": 1,
             "date_start": tomorrow,
             "frequency_id": Frequency.DAILY.value,
-            "date_end": (today + datetime.timedelta(weeks=53)),
+            "date_end": (tomorrow + datetime.timedelta(weeks=52)),
         },
         {
             "amount": 100,
@@ -482,7 +483,7 @@ async def fixture_create_scheduled_transactions(
             "amount": 1000,
             "reference": f"{reference_prefix}_weekly_ended",
             "category_id": 1,
-            "date_start": today,
+            "date_start": get_day_delta(today, -7),
             "frequency_id": Frequency.WEEKLY.value,
             "date_end": yesterday,
         },
@@ -490,7 +491,7 @@ async def fixture_create_scheduled_transactions(
             "amount": 10000,
             "reference": f"{reference_prefix}_yearly_ended",
             "category_id": 1,
-            "date_start": today,
+            "date_start": get_day_delta(today, -365),
             "frequency_id": Frequency.YEARLY.value,
             "date_end": yesterday,
         },
