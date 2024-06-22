@@ -173,7 +173,7 @@ class TransactionScheduled(BaseModel):
     information_id = Column(Integer, ForeignKey("transactions_information.id"))
     offset_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
 
-    frequency = relationship("Frequency", cascade="all,delete", lazy="selectin")
+    frequency = relationship("Frequency", lazy="selectin")
     frequency_id = Column(Integer, ForeignKey("frequencies.id", ondelete="CASCADE"))
     date_start = Column(type_=TIMESTAMP(timezone=True))
     date_end = Column(type_=TIMESTAMP(timezone=True))
@@ -181,7 +181,6 @@ class TransactionScheduled(BaseModel):
     created_transactions = relationship(
         "Transaction",
         back_populates="scheduled_transaction",
-        cascade="all, delete",
         lazy="selectin",
         foreign_keys=[Transaction.scheduled_transaction_id],
     )
