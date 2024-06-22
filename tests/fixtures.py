@@ -1,13 +1,13 @@
 import asyncio
 import datetime
 import itertools
+from typing import List
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas
-from app.date_manager import (get_day_delta, get_today, get_tomorrow,
-                              get_yesterday)
+from app.date_manager import get_day_delta, get_today, get_tomorrow, get_yesterday
 from app.repository import Repository
 from app.services.accounts import AccountService
 from app.services.scheduled_transactions import ScheduledTransactionService
@@ -415,7 +415,7 @@ async def fixture_create_transactions(
 @pytest.fixture(name="create_scheduled_transactions")
 async def fixture_create_scheduled_transactions(
     test_accounts: list[models.Account],
-    session: AsyncSession,
+    repository: Repository,
 ):
     today = get_today()
     tomorrow = get_tomorrow(today)
@@ -520,10 +520,21 @@ async def fixture_create_scheduled_transactions(
             ]
         )
 
-    await asyncio.gather(*create_task)
-    await session.commit()
+    scheduled_transaction_list: List[models.TransactionScheduled] = (
+        await asyncio.gather(*create_task)
+    )
+    await repository.session.commit()
 
-    yield
+    yield scheduled_transaction_list
+
+    delete_task = []
+    for scheduled_transaction in scheduled_transaction_list:
+        user = await repository.get(models.User, scheduled_transaction.account.user_id)
+        delete_task.extend(
+            [service.delete_scheduled_transaction(user, scheduled_transaction.id)]
+        )
+    await asyncio.gather(*delete_task)
+    await repository.session.commit()
 
 
 @pytest.fixture(name="test_account_scheduled_transaction_list")
