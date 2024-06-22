@@ -184,11 +184,14 @@ class ScheduledTransactionService(BaseService):
             transaction.id,
         )
 
-        # TODO: add user decision to delete created transaction or not
-        for created_transaction in created_transaction_list:
-            created_transaction.scheduled_transaction_id = None
+        if len(created_transaction_list) > 0:
 
-        self.repository.save(created_transaction_list)
+            # TODO: add user decision to delete created transaction or not
+            # TODO: make it async?
+            for created_transaction in created_transaction_list:
+                created_transaction.scheduled_transaction_id = None
+
+            self.repository.save(created_transaction_list)
 
         await self.repository.delete(transaction)
 
