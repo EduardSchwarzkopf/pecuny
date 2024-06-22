@@ -264,11 +264,11 @@ async def fixture_create_test_accounts(
             ),
         )
         create_task_list.append(task)
-    await asyncio.gather(*create_task_list)
 
+    account_list = await asyncio.gather(*create_task_list)
     await session.commit()
 
-    yield
+    yield account_list
 
 
 @pytest.fixture(name="test_account")
@@ -406,10 +406,10 @@ async def fixture_create_transactions(
             ]
         )
 
-    await asyncio.gather(*create_task)
+    transaction_list = await asyncio.gather(*create_task)
     await session.commit()
 
-    yield
+    yield transaction_list
 
 
 @pytest.fixture(name="create_scheduled_transactions")
