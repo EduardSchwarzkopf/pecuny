@@ -533,6 +533,7 @@ async def fixture_create_scheduled_transactions(
         delete_task.extend(
             [service.delete_scheduled_transaction(user, scheduled_transaction.id)]
         )
+    # TODO: Something is slow here or in service deletion
     await asyncio.gather(*delete_task)
     await repository.session.commit()
 
