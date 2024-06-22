@@ -15,6 +15,34 @@ def _process_scheduled_transactions() -> None:
     time.sleep(0.3)  # give it some time to process
 
 
+async def _assert_transaction_creation(
+    frequency: Frequency,
+    test_account: models.Account,
+    repository: Repository,
+):
+    model = models.TransactionScheduled
+    equal = DatabaseFilterOperator.EQUAL
+    transaction_list = await repository.filter_by_multiple(
+        model,
+        [
+            (model.date_start, get_today(), equal),
+            (model.account_id, test_account.id, equal),
+            (model.frequency_id, frequency.value, equal),
+        ],
+    )
+
+    assert len(transaction_list) == 1
+
+    transaction = await repository.filter_by(
+        models.Transaction,
+        models.Transaction.scheduled_transaction_id,
+        transaction_list[0].id,
+    )
+
+    assert len(transaction) == 1
+    assert transaction[0] is not None
+
+
 async def test_create_transactions_from_schedule(
     test_account: models.Account,
     test_account_scheduled_transaction_list: List[models.TransactionScheduled],
@@ -39,95 +67,26 @@ async def test_create_transactions_from_schedule(
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
 async def test_create_daily_transaction(
-    test_account: models.Account,
-    repository: Repository,
+    test_account: models.Account, repository: Repository
 ):
     _process_scheduled_transactions()
-
-    model = models.TransactionScheduled
-    daily_transaction_list = await repository.filter_by_multiple(
-        model,
-        [
-            (model.date_start, get_today(), DatabaseFilterOperator.EQUAL),
-            (model.account_id, test_account.id, DatabaseFilterOperator.EQUAL),
-            (model.frequency_id, Frequency.DAILY.value, DatabaseFilterOperator.EQUAL),
-        ],
-    )
-
-    assert len(daily_transaction_list) == 1
-
-    daily_transaction = daily_transaction_list[0]
-
-    transaction = await repository.filter_by(
-        models.Transaction,
-        models.Transaction.scheduled_transaction_id,
-        daily_transaction.id,
-    )
-
-    assert len(transaction) == 1
-    assert transaction[0] is not None
+    await _assert_transaction_creation(Frequency.DAILY, test_account, repository)
 
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
 async def test_create_weekly_transaction(
-    test_account: models.Account,
-    repository: Repository,
+    test_account: models.Account, repository: Repository
 ):
     _process_scheduled_transactions()
-
-    model = models.TransactionScheduled
-    weekly_transaction_list = await repository.filter_by_multiple(
-        model,
-        [
-            (model.date_start, get_today(), DatabaseFilterOperator.EQUAL),
-            (model.account_id, test_account.id, DatabaseFilterOperator.EQUAL),
-            (model.frequency_id, Frequency.WEEKLY.value, DatabaseFilterOperator.EQUAL),
-        ],
-    )
-
-    assert len(weekly_transaction_list) == 1
-
-    weekly_transaction = weekly_transaction_list[0]
-
-    transaction = await repository.filter_by(
-        models.Transaction,
-        models.Transaction.scheduled_transaction_id,
-        weekly_transaction.id,
-    )
-
-    assert len(transaction) == 1
-    assert transaction[0] is not None
+    await _assert_transaction_creation(Frequency.WEEKLY, test_account, repository)
 
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
 async def test_create_yearly_transaction(
-    test_account: models.Account,
-    repository: Repository,
+    test_account: models.Account, repository: Repository
 ):
     _process_scheduled_transactions()
-
-    model = models.TransactionScheduled
-    yearly_transaction_list = await repository.filter_by_multiple(
-        model,
-        [
-            (model.date_start, get_today(), DatabaseFilterOperator.EQUAL),
-            (model.account_id, test_account.id, DatabaseFilterOperator.EQUAL),
-            (model.frequency_id, Frequency.YEARLY.value, DatabaseFilterOperator.EQUAL),
-        ],
-    )
-
-    assert len(yearly_transaction_list) == 1
-
-    yearly_transaction = yearly_transaction_list[0]
-
-    transaction = await repository.filter_by(
-        models.Transaction,
-        models.Transaction.scheduled_transaction_id,
-        yearly_transaction.id,
-    )
-
-    assert len(transaction) == 1
-    assert transaction[0] is not None
+    await _assert_transaction_creation(Frequency.YEARLY, test_account, repository)
 
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
@@ -149,13 +108,11 @@ async def test_scheduled_transaction_ended(
     assert len(scheduled_transaction_list) > 0
 
     for scheduled_transaction in scheduled_transaction_list:
-
         created_transaction = await repository.filter_by(
             models.Transaction,
             models.Transaction.scheduled_transaction_id,
             scheduled_transaction.id,
         )
-
         assert len(created_transaction) == 0
 
 
@@ -178,11 +135,9 @@ async def test_scheduled_transaction_not_started(
     assert len(scheduled_transaction_list) > 0
 
     for scheduled_transaction in scheduled_transaction_list:
-
         created_transaction = await repository.filter_by(
             models.Transaction,
             models.Transaction.scheduled_transaction_id,
             scheduled_transaction.id,
         )
-
         assert len(created_transaction) == 0
