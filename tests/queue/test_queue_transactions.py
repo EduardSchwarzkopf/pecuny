@@ -130,9 +130,59 @@ async def test_create_yearly_transaction(
     assert transaction[0] is not None
 
 
-def test_scheduled_transaction_date_end():
-    assert False
+@pytest.mark.usefixtures("create_scheduled_transactions")
+async def test_scheduled_transaction_ended(
+    test_account: models.Account, repository: Repository
+):
+    _process_scheduled_transactions()
+
+    model = models.TransactionScheduled
+
+    scheduled_transaction_list = await repository.filter_by_multiple(
+        model,
+        [
+            (model.date_end, get_today(), DatabaseFilterOperator.LESS_THAN),
+            (model.account_id, test_account.id, DatabaseFilterOperator.EQUAL),
+        ],
+    )
+
+    assert len(scheduled_transaction_list) > 0
+
+    for scheduled_transaction in scheduled_transaction_list:
+
+        created_transaction = await repository.filter_by(
+            models.Transaction,
+            models.Transaction.scheduled_transaction_id,
+            scheduled_transaction.id,
+        )
+
+        assert len(created_transaction) == 0
 
 
-def test_scheduled_transaction_date_start():
-    assert False
+@pytest.mark.usefixtures("create_scheduled_transactions")
+async def test_scheduled_transaction_not_started(
+    test_account: models.Account, repository: Repository
+):
+    _process_scheduled_transactions()
+
+    model = models.TransactionScheduled
+
+    scheduled_transaction_list = await repository.filter_by_multiple(
+        model,
+        [
+            (model.date_start, get_today(), DatabaseFilterOperator.LESS_THAN),
+            (model.account_id, test_account.id, DatabaseFilterOperator.EQUAL),
+        ],
+    )
+
+    assert len(scheduled_transaction_list) > 0
+
+    for scheduled_transaction in scheduled_transaction_list:
+
+        created_transaction = await repository.filter_by(
+            models.Transaction,
+            models.Transaction.scheduled_transaction_id,
+            scheduled_transaction.id,
+        )
+
+        assert len(created_transaction) == 0
