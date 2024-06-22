@@ -166,7 +166,6 @@ class ScheduledTransactionService(BaseService):
         transaction = await self.repository.get(
             models.TransactionScheduled,
             transaction_id,
-            load_relationships_list=[models.Transaction.offset_transaction],
         )
 
         if transaction is None:
@@ -178,6 +177,18 @@ class ScheduledTransactionService(BaseService):
         account = await self.repository.get(models.Account, transaction.account_id)
         if account is None or current_user.id != account.user_id:
             return None
+
+        created_transaction_list = await self.repository.filter_by(
+            models.Transaction,
+            models.Transaction.scheduled_transaction_id,
+            transaction.id,
+        )
+
+        # TODO: add user decision to delete created transaction or not
+        for created_transaction in created_transaction_list:
+            created_transaction.scheduled_transaction_id = None
+
+        self.repository.save(created_transaction_list)
 
         await self.repository.delete(transaction)
 
