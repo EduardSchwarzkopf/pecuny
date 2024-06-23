@@ -27,18 +27,16 @@
     <p class="text-xl font-medium">{{ '%0.2f' % total }}</p>
   </div>
 
-  <div class="flex space-x-12 mt-2 text-gray">
-    <div class="flex flex-row items-center">
+  <div class="flex space-x-12 mt-2 text-center">
+    <div class="flex flex-row items-center text-success-dark bg-success-light p-2 rounded-lg">
       <div>
-        {{ icon.arrow_up('p-2 w-8 h-8 mr-3 fill-success-dark bg-success-100
-        rounded-full') }}
+        <i class="fa-solid fa-arrow-up mr-2"></i>
       </div>
       <div>{{ '%0.2f' % income }}</div>
     </div>
-    <div class="flex flex-row items-center">
+    <div class="flex flex-row items-center text-danger-dark bg-red-100 p-2 rounded-lg">
       <div>
-        {{ icon.arrow_up("p-2 w-8 h-8 mr-3 rotate-180 fill-danger-dark
-        bg-red-100 rounded-full") }}
+        <i class="fa-solid fa-arrow-down mr-2"></i>
       </div>
       <div>{{ '%0.2f' % expenses }}</div>
     </div>

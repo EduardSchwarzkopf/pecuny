@@ -5,10 +5,14 @@
     <div class="flex gap-x-4">
         <div class="min-w-0 flex-auto">
             <div class="flex flex-row">
-                <div
-                    class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">
-                    {{
-                    transaction.information.category.label }}</div>
+                <div class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">
+                    {{transaction.information.category.label }}
+                </div>
+                {% if transaction.scheduled_transaction_id %}
+                    <div class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">
+                        {{ icon.repeat() }}
+                    </div>
+                {% endif %}
 
                 {% if transaction.offset_transaction %}
                 <div
