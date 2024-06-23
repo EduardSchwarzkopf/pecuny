@@ -217,6 +217,7 @@ async def create_transactions_for_batch():
                     and_(
                         models.TransactionScheduled.date_start <= today,
                         models.TransactionScheduled.date_end >= today,
+                        models.TransactionScheduled.is_active == True,
                     )
                 )
                 .offset(offset)
