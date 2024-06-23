@@ -2,7 +2,7 @@ from fastapi_users.db import (
     SQLAlchemyBaseOAuthAccountTableUUID,
     SQLAlchemyBaseUserTableUUID,
 )
-from sqlalchemy import DECIMAL, Column, Integer, String, UniqueConstraint, text
+from sqlalchemy import DECIMAL, Boolean, Column, Integer, String, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship
@@ -153,6 +153,7 @@ class Transaction(BaseModel):
 class TransactionScheduled(BaseModel):
     __tablename__ = "transactions_scheduled"
 
+    is_active = Column(Boolean, default=True)
     account_id = Column(
         Integer, ForeignKey("accounts.id", ondelete="CASCADE", onupdate="CASCADE")
     )
