@@ -153,7 +153,7 @@ class Transaction(BaseModel):
 class TransactionScheduled(BaseModel):
     __tablename__ = "transactions_scheduled"
 
-    is_active = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=True, server_default=text("true"))
     account_id = Column(
         Integer, ForeignKey("accounts.id", ondelete="CASCADE", onupdate="CASCADE")
     )
