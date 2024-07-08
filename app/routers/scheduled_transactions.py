@@ -165,7 +165,7 @@ async def page_list_scheduled_transactions(
 
 @csrf_protect
 @router.get("/add")
-async def page_create_transaction_form(
+async def page_create_scheduled_transaction_form(
     request: Request,
     account_id: int,
     user: models.User = Depends(current_active_verified_user),
