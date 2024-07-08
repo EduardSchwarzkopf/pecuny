@@ -152,13 +152,31 @@ async def page_list_scheduled_transactions(
     """
 
     transaction_list = await service.get_transaction_list(user, account_id)
+    account = await handle_account_route(request, user, account_id)
+
+    add_breadcrumb(request, "Scheduled Transactions", None)
+
+    expenses = 0
+    income = 0
+    total = 0
+
+    for transaction in transaction_list:
+        if transaction.information.amount < 0:
+            expenses += transaction.information.amount
+        else:
+            income += transaction.information.amount
+
+        total += transaction.information.amount
 
     return render_template(
         "pages/dashboard/page_scheduled_transactions.html",
         request,
         {
-            "account_id": account_id,
+            "account": account,
             "scheduled_transaction_list": transaction_list,
+            "expenses": expenses,
+            "income": income,
+            "total": total,
         },
     )
 
