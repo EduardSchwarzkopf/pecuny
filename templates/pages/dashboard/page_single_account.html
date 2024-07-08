@@ -6,15 +6,45 @@
 >
   <div class="grow w-full md:w-auto">
     <div class="flex flex-row space-x-4 items-center">
-      <p class="text-xl text-gray font-medium">{{account.label}}</p>
+      <p class="text-xl text-gray-700 font-medium">{{account.label}}</p>
       {{ btn.edit(url_for('page_update_account_form', account_id=account.id)) }}
     </div>
   </div>
-  <div class="flex justify-end space-x-2">
-    {{ btn.link("Import", url_for('page_import_transactions_get', account_id=account.id), variant="secondary") }}
+  <div class="flex justify-end space-x-2 ">
     {{ btn.link("Create Transaction", url_for('page_create_transaction_form', account_id=account.id)) }}
+    <div class="relative">
+        {{btn.button(id="menu-button", classname="text-lg", text='<i class="fa-solid fa-ellipsis py-1"></i>', variant='secondary' )}}
+      <div class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" id="dropdown-menu">
+        <div class="py-1" role="none">
+          <a href="{{ url_for('page_list_scheduled_transactions', account_id=account.id) }}" class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-0">Scheduled Transactions</a>
+          <a href="{{ url_for('page_import_transactions_get', account_id=account.id) }}" class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-0">Import</a>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
+
+  <script>
+    document.getElementById('menu-button').addEventListener('click', function (event) {
+      const dropdownMenu = document.getElementById('dropdown-menu');
+      if (dropdownMenu.classList.contains('hidden')) {
+        dropdownMenu.classList.remove('hidden');
+        event.target.setAttribute('aria-expanded', 'true');
+      } else {
+        dropdownMenu.classList.add('hidden');
+        event.target.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Close the dropdown if the user clicks outside of it
+    window.addEventListener('click', function (event) {
+      const menuButton = document.getElementById('menu-button');
+      const dropdownMenu = document.getElementById('dropdown-menu');
+      if (!menuButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+        dropdownMenu.classList.add('hidden');
+      }
+    });
+  </script>
 
 <div class="flex flex-col items-center bg-white shadow py-6 rounded-lg">
   <div class="uppercase tracking-wide text-center mb-6 md:mb-8">
