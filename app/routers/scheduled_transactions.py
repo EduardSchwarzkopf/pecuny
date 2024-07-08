@@ -14,7 +14,11 @@ from app.services.categories import CategoryService
 from app.services.frequency import FrequencyService
 from app.services.scheduled_transactions import ScheduledTransactionService
 from app.utils import PageRouter
-from app.utils.template_utils import group_categories_by_section, render_template
+from app.utils.template_utils import (
+    add_breadcrumb,
+    group_categories_by_section,
+    render_template,
+)
 
 PREFIX = account_router.prefix + "/{account_id}/scheduled-transactions"
 
@@ -200,6 +204,11 @@ async def page_create_scheduled_transaction_form(
         TemplateResponse: The rendered create transaction
     """
     await handle_account_route(request, user, account_id)
+    add_breadcrumb(
+        request,
+        "Scheduled Transactions",
+        url=request.url_for("page_list_scheduled_transactions", account_id=account_id),
+    )
 
     form = schemas.CreateScheduledTransactionForm(request)
     await populate_transaction_form_choices(account_id, user, form)
