@@ -145,7 +145,7 @@ leading-tight focus:outline-none focus:border-primary" %}
 </div>
 {% endmacro %}
 
-{% macro transaction_form(request, form, action_url, account_id, transaction_id=false) %}
+{% macro transaction_form(request, form, action_url, account_id, transaction=None) %}
 <div class="container mx-auto py-8">
     <form class="space-y-4 w-full mx-auto bg-white p-8 rounded-lg shadow-md " action="{{ action_url }}" method="POST">
         {{ form.csrf_token }}
@@ -157,10 +157,10 @@ leading-tight focus:outline-none focus:border-primary" %}
 
         <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full">
             <div class="w-full md:w-auto">
-                {{ submit_button('Update' if transaction_id else 'Add') }}
+                {{ submit_button('Update' if transaction else 'Add') }}
             </div>
             <div class="w-full md:w-auto">
-                {% if transaction_id %}
+                {% if transaction %}
                 {{ modal.button("Delete") }}
                 {% endif %}
             </div>
@@ -170,11 +170,17 @@ leading-tight focus:outline-none focus:border-primary" %}
 
     </form>
 
-    {% if transaction_id %}
-    {{ modal.delete_object(request.url_for('page_delete_transaction', account_id=account_id,
-    transaction_id=transaction_id),
-    title="Delete Transaction") }}
+    {% if transaction %}
+        {{ modal.delete_object(
+            request.url_for(
+                'page_delete_scheduled_transaction' if transaction.frequency_id else 'page_delete_transaction', 
+                account_id=account_id, 
+                transaction_id=transaction.id
+            ), 
+            title="Delete Transaction"
+        ) }}
     {% endif %}
+
 </div>
 {% endmacro %}
 

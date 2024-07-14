@@ -299,7 +299,7 @@ async def page_update_transaction_get(
         {
             "form": form,
             "account_id": account_id,
-            "transaction_id": transaction.id,
+            "transaction": transaction,
             "action_url": router.url_path_for(
                 "page_update_transaction_get",
                 account_id=account_id,
@@ -351,7 +351,7 @@ async def page_update_transaction_post(
             {
                 "form": form,
                 "account_id": account_id,
-                "transaction_id": transaction.id,
+                "transaction": transaction,
                 "action_url": router.url_path_for(
                     "page_update_transaction_get",
                     account_id=account_id,
