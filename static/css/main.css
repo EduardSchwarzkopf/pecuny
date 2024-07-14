@@ -1766,6 +1766,27 @@ input[type="file"]::file-selector-button:hover {
   background-color: transparent;
 }
 
+.hover\:bg-gray:hover {
+  background-color: var(--gray);
+}
+
+.hover\:bg-slate-50:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(248 250 252 / var(--tw-bg-opacity));
+}
+
+.hover\:bg-primary-50:hover {
+  background-color: var(--primary-50);
+}
+
+.hover\:bg-secondary-50:hover {
+  background-color: var(--secondary-50);
+}
+
+.hover\:bg-gray-50:hover {
+  background-color: var(--gray-50);
+}
+
 .hover\:fill-gray-700:hover {
   fill: var(--gray-700);
 }
