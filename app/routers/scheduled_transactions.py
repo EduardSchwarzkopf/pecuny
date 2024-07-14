@@ -7,6 +7,7 @@ from starlette_wtf import csrf_protect
 from app import models, schemas
 from app import transaction_manager as tm
 from app.auth_manager import current_active_verified_user
+from app.date_manager import now
 from app.routers.accounts import handle_account_route
 from app.routers.accounts import router as account_router
 from app.services.accounts import AccountService
@@ -181,6 +182,7 @@ async def page_list_scheduled_transactions(
             "expenses": expenses,
             "income": income,
             "total": total,
+            "now": now(),
         },
     )
 
