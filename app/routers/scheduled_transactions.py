@@ -322,9 +322,7 @@ async def page_update_scheduled_transaction_get(
             request, data=transaction.information.__dict__
         )
     )
-    await populate_transaction_form_choices(
-        account_id, user, form, "Linked account (not editable)"
-    )
+    await populate_transaction_form_choices(account_id, user, form)
     form.date_start.data = transaction.information.date.strftime("%Y-%m-%d")
     form.date_end.data = transaction.information.date.strftime("%Y-%m-%d")
 
@@ -335,13 +333,19 @@ async def page_update_scheduled_transaction_get(
     form.amount.data = abs(form_amount)
     form.frequency_id.data = transaction.frequency_id
 
+    add_breadcrumb(
+        request,
+        "Scheduled Transactions",
+        url=request.url_for("page_list_scheduled_transactions", account_id=account_id),
+    )
+
     return render_template(
         "pages/dashboard/page_form_transaction.html",
         request,
         {
             "form": form,
             "account_id": account_id,
-            "transaction_id": transaction.id,
+            "transaction": transaction,
             "action_url": router.url_path_for(
                 "page_update_scheduled_transaction_get",
                 account_id=account_id,
@@ -383,9 +387,7 @@ async def page_update_transaction_post(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
     form = await schemas.UpdateScheduledTransactionForm.from_formdata(request)
-    await populate_transaction_form_choices(
-        account_id, user, form, "Linked account (not editable)"
-    )
+    await populate_transaction_form_choices(account_id, user, form)
 
     if not await form.validate_on_submit():
         form.date.data = transaction.information.date.strftime("%Y-%m-%d")
@@ -395,7 +397,7 @@ async def page_update_transaction_post(
             {
                 "form": form,
                 "account_id": account_id,
-                "transaction_id": transaction.id,
+                "transaction": transaction,
                 "action_url": router.url_path_for(
                     "page_update_scheduled_transaction_get",
                     account_id=account_id,
@@ -411,7 +413,7 @@ async def page_update_transaction_post(
         account_id=account_id, **form.data
     )
 
-    response = await tm.transaction(
+    await tm.transaction(
         transaction_service.update_scheduled_transaction,
         user,
         transaction_id,
@@ -426,7 +428,8 @@ async def page_update_transaction_post(
 
 @csrf_protect
 @router.post("/{transaction_id}/delete")
-async def page_delete_transaction(
+async def page_delete_scheduled_transaction(
+    request: Request,
     account_id: int,
     transaction_id: int,
     user: models.User = Depends(current_active_verified_user),
@@ -451,14 +454,11 @@ async def page_delete_transaction(
     if transaction is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
-    response = await tm.transaction(
+    await tm.transaction(
         transaction_service.delete_scheduled_transaction, user, transaction_id
     )
 
-    if not response:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
-
     return RedirectResponse(
-        account_router.url_path_for("page_get_account", account_id=account_id),
+        request.url_for("page_list_scheduled_transactions", account_id=account_id),
         status_code=302,
     )
