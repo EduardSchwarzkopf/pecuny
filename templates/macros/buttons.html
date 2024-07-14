@@ -38,7 +38,7 @@ focus-visible:outline-gray',
 {% endmacro %}
 
 {% macro edit(url, id='') %}
-<a href="{{ url }}" id="{{ id }}" class="hover:bg-gray-100 p-3 rounded-lg">
-    <i class="fa-solid fa-pencil"></i>
+<a href="{{ url }}" id="{{ id }}">
+    {{ button('<i class="fa-solid fa-pencil py-1"></i>', variant='secondary') }}
 </a>
 {% endmacro %}
