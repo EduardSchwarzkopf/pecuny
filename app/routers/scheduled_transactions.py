@@ -222,14 +222,14 @@ async def page_create_scheduled_transaction_form(
             "form": form,
             "account_id": account_id,
             "action_url": request.url_for(
-                "page_create_transaction", account_id=account_id
+                "page_create_scheduled_transaction", account_id=account_id
             ),
         },
     )
 
 
 @router.post("/add")
-async def page_create_transaction(
+async def page_create_scheduled_transaction(
     request: Request,
     account_id: int,
     user: models.User = Depends(current_active_verified_user),
@@ -262,7 +262,7 @@ async def page_create_transaction(
                 "form": form,
                 "account_id": account_id,
                 "action_url": router.url_path_for(
-                    "page_create_transaction", account_id=account_id
+                    "page_create_scheduled_transaction", account_id=account_id
                 ),
             },
         )
@@ -270,17 +270,19 @@ async def page_create_transaction(
     if form.is_expense.data:
         form.amount.data *= -1
 
-    transaction = schemas.TransactionData(account_id=account_id, **form.data)
+    transaction = schemas.ScheduledTransactionInformationCreate(
+        account_id=account_id, **form.data
+    )
 
     response = await tm.transaction(
-        transaction_service.create_transaction, user, transaction
+        transaction_service.create_scheduled_transaction, user, transaction
     )
 
     if not response:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
-        account_router.url_path_for("page_get_account", account_id=account_id),
+        request.url_for("page_list_scheduled_transactions", account_id=account_id),
         status_code=302,
     )
 
