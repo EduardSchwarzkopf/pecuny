@@ -1,7 +1,14 @@
 from typing import Optional
 
-from app import models, schemas
+from app import schemas
 from app.logger import get_logger
+from app.models import (
+    Account,
+    Transaction,
+    TransactionInformation,
+    TransactionScheduled,
+    User,
+)
 from app.services.accounts import AccountService
 from app.services.base import BaseService
 from app.utils.exceptions import AccessDeniedError
@@ -9,16 +16,16 @@ from app.utils.log_messages import ACCOUNT_USER_ID_MISMATCH
 
 logger = get_logger(__name__)
 
-MODEL = models.TransactionScheduled
+SERVICE_MODEL = TransactionScheduled
 
 
 class ScheduledTransactionService(BaseService):
 
     async def get_transaction_list(
         self,
-        user: models.User,
+        user: User,
         account_id: int,
-    ) -> list[Optional[MODEL]]:
+    ) -> list[Optional[SERVICE_MODEL]]:
         """
         Retrieves a list of transactions within a specified period for a given account.
 
@@ -35,23 +42,23 @@ class ScheduledTransactionService(BaseService):
             None
         """
 
-        account = await self.repository.get(models.Account, account_id)
+        account = await self.repository.get(Account, account_id)
 
         if account is None:
             return []
 
         if account.user_id == user.id:
             return await self.repository.filter_by(
-                MODEL,
-                MODEL.account_id,
+                SERVICE_MODEL,
+                SERVICE_MODEL.account_id,
                 account.id,
             )
 
         return []
 
     async def get_transaction(
-        self, user: models.User, transaction_id: int
-    ) -> Optional[MODEL]:
+        self, user: User, transaction_id: int
+    ) -> Optional[SERVICE_MODEL]:
         """
         Retrieves a transaction by ID.
 
@@ -66,12 +73,12 @@ class ScheduledTransactionService(BaseService):
             None
         """
 
-        transaction = await self.repository.get(MODEL, transaction_id)
+        transaction = await self.repository.get(SERVICE_MODEL, transaction_id)
 
         if transaction is None:
             return None
 
-        account = await self.repository.get(models.Account, transaction.account_id)
+        account = await self.repository.get(Account, transaction.account_id)
 
         if account is None:
             return None
@@ -80,9 +87,9 @@ class ScheduledTransactionService(BaseService):
 
     async def create_scheduled_transaction(
         self,
-        user: models.User,
+        user: User,
         transaction_information: schemas.ScheduledTransactionInformationCreate,
-    ) -> Optional[MODEL]:
+    ) -> Optional[SERVICE_MODEL]:
         """
         Creates a scheduled transaction.
 
@@ -97,9 +104,7 @@ class ScheduledTransactionService(BaseService):
             None
         """
 
-        account = await self.repository.get(
-            models.Account, transaction_information.account_id
-        )
+        account = await self.repository.get(Account, transaction_information.account_id)
 
         if account is None:
             return None
@@ -112,9 +117,7 @@ class ScheduledTransactionService(BaseService):
         offset_account_id = transaction_information.offset_account_id
 
         if offset_account_id:
-            offset_account = await self.repository.get(
-                models.Account, offset_account_id
-            )
+            offset_account = await self.repository.get(Account, offset_account_id)
 
             if offset_account is None:
                 return None
@@ -127,12 +130,12 @@ class ScheduledTransactionService(BaseService):
                     )
                 )
 
-        db_transaction_information = models.TransactionInformation()
+        db_transaction_information = TransactionInformation()
         db_transaction_information.add_attributes_from_dict(
             transaction_information.model_dump()
         )
 
-        transaction = MODEL(
+        transaction = SERVICE_MODEL(
             frequency_id=transaction_information.frequency_id,
             date_start=transaction_information.date_start,
             date_end=transaction_information.date_end,
@@ -147,21 +150,21 @@ class ScheduledTransactionService(BaseService):
 
     async def update_scheduled_transaction(
         self,
-        user: models.User,
+        user: User,
         transaction_id: int,
         transaction_information: schemas.ScheduledTransactionInformtionUpdate,
-    ) -> Optional[MODEL]:
+    ) -> Optional[SERVICE_MODEL]:
 
         transaction = await self.repository.get(
-            MODEL,
+            SERVICE_MODEL,
             transaction_id,
-            load_relationships_list=[MODEL.account],
+            load_relationships_list=[SERVICE_MODEL.account],
         )
 
         if transaction is None:
             return None
 
-        account: models.Account = transaction.account
+        account: Account = transaction.account
 
         if user.id != account.user_id:
             logger.warning(ACCOUNT_USER_ID_MISMATCH)
@@ -171,9 +174,7 @@ class ScheduledTransactionService(BaseService):
 
         if transaction.offset_account_id:
 
-            offset_account = await self.repository.get(
-                models.Account, offset_account_id
-            )
+            offset_account = await self.repository.get(Account, offset_account_id)
 
             if offset_account is None:
                 return None
@@ -193,7 +194,7 @@ class ScheduledTransactionService(BaseService):
         }
 
         await self.repository.update(
-            models.TransactionInformation,
+            TransactionInformation,
             transaction.information.id,
             **transaction_values,
         )
@@ -204,7 +205,7 @@ class ScheduledTransactionService(BaseService):
         return transaction
 
     async def delete_scheduled_transaction(
-        self, current_user: models.User, transaction_id: int
+        self, current_user: User, transaction_id: int
     ) -> Optional[bool]:
         """
         Deletes a scheduled transaction.
@@ -224,7 +225,7 @@ class ScheduledTransactionService(BaseService):
         )
 
         transaction = await self.repository.get(
-            MODEL,
+            SERVICE_MODEL,
             transaction_id,
         )
 
@@ -234,13 +235,13 @@ class ScheduledTransactionService(BaseService):
             )
             return None
 
-        account = await self.repository.get(models.Account, transaction.account_id)
+        account = await self.repository.get(Account, transaction.account_id)
         if account is None or current_user.id != account.user_id:
             return None
 
         created_transaction_list = await self.repository.filter_by(
-            models.Transaction,
-            models.Transaction.scheduled_transaction_id,
+            Transaction,
+            Transaction.scheduled_transaction_id,
             transaction.id,
         )
 
