@@ -22,7 +22,7 @@
       <a
         href="{{ url_for('page_update_scheduled_transaction_get', account_id=account.id, transaction_id=transaction.id)}}"
       >
-        {% include 'fragments/accounts/transaction.html' %} 
+        {% include 'fragments/accounts/scheduled_transaction.html' %} 
       </a>
       {% endfor %}
     </div>
