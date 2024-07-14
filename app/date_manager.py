@@ -20,6 +20,10 @@ def get_today():
     return dt.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
 
 
+def now():
+    return dt.now(timezone.utc)
+
+
 def get_day_delta(date: dt, days: int) -> dt:
     return date + timedelta(days=days)
 
