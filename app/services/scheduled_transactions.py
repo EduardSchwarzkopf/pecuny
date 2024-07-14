@@ -1,6 +1,5 @@
 from typing import Optional
 
-from app import schemas
 from app.logger import get_logger
 from app.models import (
     Account,
@@ -8,6 +7,10 @@ from app.models import (
     TransactionInformation,
     TransactionScheduled,
     User,
+)
+from app.schemas import (
+    ScheduledTransactionInformationCreate,
+    ScheduledTransactionInformtionUpdate,
 )
 from app.services.accounts import AccountService
 from app.services.base import BaseService
@@ -88,7 +91,7 @@ class ScheduledTransactionService(BaseService):
     async def create_scheduled_transaction(
         self,
         user: User,
-        transaction_information: schemas.ScheduledTransactionInformationCreate,
+        transaction_information: ScheduledTransactionInformationCreate,
     ) -> Optional[SERVICE_MODEL]:
         """
         Creates a scheduled transaction.
@@ -152,7 +155,7 @@ class ScheduledTransactionService(BaseService):
         self,
         user: User,
         transaction_id: int,
-        transaction_information: schemas.ScheduledTransactionInformtionUpdate,
+        transaction_information: ScheduledTransactionInformtionUpdate,
     ) -> Optional[SERVICE_MODEL]:
 
         transaction = await self.repository.get(
