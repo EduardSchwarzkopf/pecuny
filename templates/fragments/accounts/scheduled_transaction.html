@@ -1,7 +1,7 @@
 {% import 'macros/icons.html' as icon %}
 
 <div
-    class="flex flex-col bg-white transition rounded-lg py-4 px-6 border border-t-0 border-r-0 border-b-0 shadow-md hover:shadow-lg border-l-2 border-l-gray hover:border-l-primary">
+    class="flex flex-col py-4 px-6 rounded-lg hover:bg-primary-50 bg-white">
     <div class="grid grid-cols-3 gap-4 w-full">
         <div class="col-span-2">
             <h4>
@@ -15,12 +15,7 @@
             </h4>
         </div>
     </div>
-    <div class="flex items-center text-xs text-gray">
-        <div>
-
-            <div class="mr-1">
-                Status:
-            </div>
+    <div class="flex text-xs flex-col text-gray">
             <div>
                 {% if transaction.date_start <= now and transaction.date_end >= now %}
                 Active
@@ -30,10 +25,9 @@
                 Pending
                 {% endif %}
             </div>
-        </div>
-        {% if transaction.offset_transaction %}
+        {% if transaction.offset_account %}
             <div class="flex items-center">
-                <span class="mr-1">{{ transaction.offset_transaction.account.label }}</span>
+                <span class="mr-1">{{ transaction.offset_account.label }}</span>
                 <i class="fa-solid fa-arrow-right {% if transaction.information.amount < 0 %}fa-rotate-180{% endif %}"></i>
             </div>
         {% endif %}
