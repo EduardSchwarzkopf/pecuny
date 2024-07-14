@@ -16,17 +16,26 @@
         </div>
     </div>
     <div class="flex items-center text-xs text-gray">
-        <div class="mr-1">
-            Status:
-        </div>
         <div>
-            {% if transaction.date_start <= now and transaction.date_end >= now %}
-            Active
-            {% elif transaction.date_end < now %}
-            Completed
-            {% elif transaction.date_start > now %}
-            Pending
-            {% endif %}
+
+            <div class="mr-1">
+                Status:
+            </div>
+            <div>
+                {% if transaction.date_start <= now and transaction.date_end >= now %}
+                Active
+                {% elif transaction.date_end < now %}
+                Completed
+                {% elif transaction.date_start > now %}
+                Pending
+                {% endif %}
+            </div>
         </div>
+        {% if transaction.offset_transaction %}
+            <div class="flex items-center">
+                <span class="mr-1">{{ transaction.offset_transaction.account.label }}</span>
+                <i class="fa-solid fa-arrow-right {% if transaction.information.amount < 0 %}fa-rotate-180{% endif %}"></i>
+            </div>
+        {% endif %}
     </div>
 </div>
