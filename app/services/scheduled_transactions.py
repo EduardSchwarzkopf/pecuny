@@ -143,6 +143,64 @@ class ScheduledTransactionService(BaseService):
 
         return transaction
 
+    async def update_scheduled_transaction(
+        self,
+        user: models.User,
+        transaction_id: int,
+        transaction_information: schemas.ScheduledTransactionInformtionUpdate,
+    ) -> Optional[MODEL]:
+
+        transaction = await self.repository.get(
+            MODEL,
+            transaction_id,
+            load_relationships_list=[MODEL.account],
+        )
+
+        if transaction is None:
+            return None
+
+        account: models.Account = transaction.account
+
+        if user.id != account.user_id:
+            logger.warning(ACCOUNT_USER_ID_MISMATCH)
+            return None
+
+        offset_account_id = transaction_information.offset_account_id
+
+        if transaction.offset_account_id:
+
+            offset_account = await self.repository.get(
+                models.Account, offset_account_id
+            )
+
+            if offset_account is None:
+                return None
+
+            if not AccountService.has_user_access_to_account(user, offset_account):
+                raise AccessDeniedError(
+                    (
+                        f"User[id: {user.id}] not allowed to access "
+                        f"offset_account[id: {transaction_information.offset_account_id}]"
+                    )
+                )
+
+        transaction_values = {
+            "amount": transaction_information.amount,
+            "reference": transaction_information.reference,
+            "category_id": transaction_information.category_id,
+        }
+
+        await self.repository.update(
+            models.TransactionInformation,
+            transaction.information.id,
+            **transaction_values,
+        )
+
+        transaction.add_attributes_from_dict(transaction_information.model_dump())
+        await self.repository.save(transaction)
+
+        return transaction
+
     async def delete_scheduled_transaction(
         self, current_user: models.User, transaction_id: int
     ) -> Optional[bool]:
