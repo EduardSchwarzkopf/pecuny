@@ -5,16 +5,20 @@ from app.logger import get_logger
 from app.services.accounts import AccountService
 from app.services.base import BaseService
 from app.utils.exceptions import AccessDeniedError
+from app.utils.log_messages import ACCOUNT_USER_ID_MISMATCH
 
 logger = get_logger(__name__)
 
+MODEL = models.TransactionScheduled
+
 
 class ScheduledTransactionService(BaseService):
+
     async def get_transaction_list(
         self,
         user: models.User,
         account_id: int,
-    ) -> list[Optional[models.TransactionScheduled]]:
+    ) -> list[Optional[MODEL]]:
         """
         Retrieves a list of transactions within a specified period for a given account.
 
@@ -38,8 +42,8 @@ class ScheduledTransactionService(BaseService):
 
         if account.user_id == user.id:
             return await self.repository.filter_by(
-                models.TransactionScheduled,
-                models.TransactionScheduled.account_id,
+                MODEL,
+                MODEL.account_id,
                 account.id,
             )
 
@@ -47,7 +51,7 @@ class ScheduledTransactionService(BaseService):
 
     async def get_transaction(
         self, user: models.User, transaction_id: int
-    ) -> Optional[models.TransactionScheduled]:
+    ) -> Optional[MODEL]:
         """
         Retrieves a transaction by ID.
 
@@ -62,9 +66,7 @@ class ScheduledTransactionService(BaseService):
             None
         """
 
-        transaction = await self.repository.get(
-            models.TransactionScheduled, transaction_id
-        )
+        transaction = await self.repository.get(MODEL, transaction_id)
 
         if transaction is None:
             return None
@@ -80,7 +82,7 @@ class ScheduledTransactionService(BaseService):
         self,
         user: models.User,
         transaction_information: schemas.ScheduledTransactionInformationCreate,
-    ) -> Optional[models.TransactionScheduled]:
+    ) -> Optional[MODEL]:
         """
         Creates a scheduled transaction.
 
@@ -130,7 +132,7 @@ class ScheduledTransactionService(BaseService):
             transaction_information.model_dump()
         )
 
-        transaction = models.TransactionScheduled(
+        transaction = MODEL(
             frequency_id=transaction_information.frequency_id,
             date_start=transaction_information.date_start,
             date_end=transaction_information.date_end,
@@ -222,7 +224,7 @@ class ScheduledTransactionService(BaseService):
         )
 
         transaction = await self.repository.get(
-            models.TransactionScheduled,
+            MODEL,
             transaction_id,
         )
 
