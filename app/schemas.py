@@ -193,6 +193,10 @@ class ScheduledTransactionInformationCreate(TransactionInformationBase):
         cls.offset_account_id = None if value == 0 else value
 
 
+class ScheduledTransactionInformtionUpdate(ScheduledTransactionInformationCreate):
+    pass
+
+
 class TransactionInformationData(TransactionInformation):
     category: CategoryData
 
