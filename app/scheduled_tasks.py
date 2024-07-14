@@ -21,5 +21,6 @@ def register_job(trigger, **kwargs):
     return decorator
 
 
+@register_job("interval", days=1)
 async def create_scheduled_transactions():
     create_transactions_for_batch.delay()
