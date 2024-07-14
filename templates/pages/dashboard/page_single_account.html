@@ -83,7 +83,7 @@
     <span class="pb-4 text-gray font-medium text-lg"
       >{{ group.date.strftime('%A - %d %B') }}</span
     >
-    <div class="grid gap-3">
+    <div class="grid gap-3 bg-white transition rounded-lg">
       {% for transaction in group.transactions %}
       <a
         href="{{ url_for('page_update_transaction_get', account_id=account.id, transaction_id=transaction.id)}}"
