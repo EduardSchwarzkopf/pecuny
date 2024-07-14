@@ -188,6 +188,10 @@ class ScheduledTransactionInformationCreate(TransactionInformationBase):
     account_id: int
     offset_account_id: Optional[int] = None
 
+    @field_validator("offset_account_id", mode="before")
+    def parse_offset_account_id(cls, value: Optional[int]):
+        cls.offset_account_id = None if value == 0 else value
+
 
 class TransactionInformationData(TransactionInformation):
     category: CategoryData
