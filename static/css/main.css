@@ -816,6 +816,10 @@ input[type="file"]::file-selector-button:hover {
   margin-right: 0.25rem;
 }
 
+.ml-1 {
+  margin-left: 0.25rem;
+}
+
 .block {
   display: block;
 }
@@ -1036,6 +1040,10 @@ input[type="file"]::file-selector-button:hover {
 
 .gap-6 {
   gap: 1.5rem;
+}
+
+.gap-1 {
+  gap: 0.25rem;
 }
 
 .gap-x-4 {
