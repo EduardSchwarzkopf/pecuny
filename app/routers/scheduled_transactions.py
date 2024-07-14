@@ -382,7 +382,7 @@ async def page_update_transaction_post(
     if transaction is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
-    form = await schemas.UpdateTransactionForm.from_formdata(request)
+    form = await schemas.UpdateScheduledTransactionForm.from_formdata(request)
     await populate_transaction_form_choices(
         account_id, user, form, "Linked account (not editable)"
     )
@@ -407,22 +407,19 @@ async def page_update_transaction_post(
     if form.is_expense.data:
         form.amount.data *= -1
 
-    transaction_information = schemas.TransactionInformtionUpdate(
+    transaction_information = schemas.ScheduledTransactionInformtionUpdate(
         account_id=account_id, **form.data
     )
 
     response = await tm.transaction(
-        transaction_service.update_transaction,
+        transaction_service.update_scheduled_transaction,
         user,
         transaction_id,
         transaction_information,
     )
 
-    if not response:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
-
     return RedirectResponse(
-        account_router.url_path_for("page_get_account", account_id=account_id),
+        request.url_for("page_list_scheduled_transactions", account_id=account_id),
         status_code=302,
     )
 
@@ -455,7 +452,7 @@ async def page_delete_transaction(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
     response = await tm.transaction(
-        transaction_service.delete_transaction, user, transaction_id
+        transaction_service.delete_scheduled_transaction, user, transaction_id
     )
 
     if not response:
