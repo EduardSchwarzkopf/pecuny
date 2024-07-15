@@ -211,7 +211,7 @@ class Transaction(TransactionBase):
     offset_transactions_id: Optional[int]
 
 
-class ScheduledTransactionData(TransactionBase):
+class ScheduledTransaction(TransactionBase):
     date_start: dt
     frequency: FrequencyData
     date_end: dt
