@@ -10,17 +10,58 @@ from starlette.status import (
 )
 
 from app import models, schemas
+from app.date_manager import get_tomorrow, get_yesterday
 from app.repository import Repository
 from app.utils.classes import RoundedDecimal
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
-from tests.utils import get_iso_timestring, get_user_offset_account, make_http_request
+from tests.utils import make_http_request
 
 ENDPOINT = "/api/scheduled-transactions/"
 
 
 # Tests for basic CRUD operations
-async def test_create_scheduled_transaction():
-    assert False
+@pytest.mark.parametrize(
+    "amount, reference, category_id, frequency_id",
+    [
+        (10, "Added 10", 1, 1),
+        (20.5, "Added 20.5", 3, 2),
+        (-30.5, "Substract 30.5", 6, 3),
+        (-40.5, "Subsctract 40.5", 6, 4),
+        (-0.5, "Subsctract .5", 6, 5),
+    ],
+)
+async def test_create_scheduled_transaction(
+    amount: float | int,
+    reference: str,
+    category_id: int,
+    frequency_id: int,
+    test_account: models.Account,
+    test_user: models.User,
+):
+
+    res = await make_http_request(
+        ENDPOINT,
+        json={
+            "account_id": test_account.id,
+            "amount": amount,
+            "reference": reference,
+            "date_start": get_yesterday().isoformat(),
+            "date_end": get_tomorrow().isoformat(),
+            "category_id": category_id,
+            "frequency_id": frequency_id,
+        },
+        as_user=test_user,
+    )
+
+    json_response = res.json()
+    new_transaction = schemas.ScheduledTransaction(**json_response)
+
+    assert res.status_code == HTTP_201_CREATED
+    assert new_transaction.account_id == test_account.id
+    assert new_transaction.information.amount == amount
+    assert isinstance(json_response["information"]["amount"], float)
+    assert isinstance(new_transaction.information.amount, Decimal)
+    assert new_transaction.information.reference == reference
 
 
 async def test_read_scheduled_transaction():
