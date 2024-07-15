@@ -146,3 +146,13 @@ def get_last_day_of_month(date: dt):
     last_day_of_month = next_month - timedelta(days=next_month.day)
 
     return last_day_of_month.day
+
+
+def get_iso_timestring() -> str:
+    """
+    Returns the current time in ISO 8601 format.
+
+    Returns:
+        str: The current time in ISO 8601 format.
+    """
+    return datetime.datetime.now().isoformat()

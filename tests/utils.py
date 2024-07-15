@@ -112,13 +112,3 @@ async def get_user_offset_account(account: models.Account) -> Optional[models.Ac
         ),
         None,
     )
-
-
-def get_iso_timestring() -> str:
-    """
-    Returns the current time in ISO 8601 format.
-
-    Returns:
-        str: The current time in ISO 8601 format.
-    """
-    return datetime.datetime.now().isoformat()
