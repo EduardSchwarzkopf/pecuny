@@ -83,6 +83,18 @@ async def test_create_scheduled_transaction_all_fields():
     assert False
 
 
+async def test_create_scheduled_transaction_with_missing_fields():
+    assert False
+
+
+async def test_create_scheduled_transaction_with_invalid_data():
+    assert False
+
+
+async def test_update_scheduled_transaction_with_invalid_data():
+    assert False
+
+
 async def test_update_scheduled_transaction_non_existent():
     assert False
 
