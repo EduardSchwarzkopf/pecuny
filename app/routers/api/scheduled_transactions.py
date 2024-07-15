@@ -13,11 +13,11 @@ from app.utils import APIRouterExtended
 router = APIRouterExtended(
     prefix="/scheduled-transactions", tags=["Scheduled Transactions"]
 )
-ResponseModel = schemas.ScheduledTransactionData
+ResponseModel = schemas.ScheduledTransaction
 
 
 @router.get("/", response_model=list[ResponseModel])
-async def api_get_transactions(
+async def api_get_scheduled_transactions(
     account_id: int,
     date_start: datetime,
     date_end: datetime,
@@ -48,7 +48,7 @@ async def api_get_transactions(
 
 
 @router.get("/{transaction_id}", response_model=ResponseModel)
-async def api_get_transaction(
+async def api_get_scheduled_transaction(
     transaction_id: int,
     current_user: User = Depends(current_active_verified_user),
     service: ScheduledTransactionService = Depends(
@@ -80,8 +80,8 @@ async def api_get_transaction(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ResponseModel)
-async def api_create_transaction(
-    transaction_information: schemas.TransactionInformationCreate,
+async def api_create_scheduled_transaction(
+    transaction_information: schemas.ScheduledTransactionInformationCreate,
     current_user: User = Depends(current_active_verified_user),
     service: ScheduledTransactionService = Depends(
         ScheduledTransactionService.get_instance
@@ -115,7 +115,7 @@ async def api_create_transaction(
 
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def api_delete_transaction(
+async def api_delete_scheduled_transaction(
     transaction_id: int,
     current_user: User = Depends(current_active_verified_user),
     service: ScheduledTransactionService = Depends(
