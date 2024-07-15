@@ -39,14 +39,17 @@ async def test_create_scheduled_transaction(
     test_user: models.User,
 ):
 
+    yesterday = get_yesterday()
+    tomorrow = get_tomorrow()
+
     res = await make_http_request(
         ENDPOINT,
         json={
             "account_id": test_account.id,
             "amount": amount,
             "reference": reference,
-            "date_start": get_yesterday().isoformat(),
-            "date_end": get_tomorrow().isoformat(),
+            "date_start": yesterday.isoformat(),
+            "date_end": tomorrow.isoformat(),
             "category_id": category_id,
             "frequency_id": frequency_id,
         },
@@ -62,6 +65,8 @@ async def test_create_scheduled_transaction(
     assert isinstance(json_response["information"]["amount"], float)
     assert isinstance(new_transaction.information.amount, Decimal)
     assert new_transaction.information.reference == reference
+    assert new_transaction.date_start == yesterday
+    assert new_transaction.date_end == tomorrow
 
 
 async def test_read_scheduled_transaction():
