@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import List
 
 import pytest
 from starlette.status import (
@@ -69,8 +70,30 @@ async def test_create_scheduled_transaction(
     assert new_transaction.date_end == tomorrow
 
 
-async def test_read_scheduled_transaction():
-    assert False
+async def test_read_scheduled_transaction(
+    test_account: models.Account,
+    test_user: models.User,
+    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+):
+    transaction = test_account_scheduled_transaction_list[0]
+
+    res = await make_http_request(
+        ENDPOINT + str(transaction.id), as_user=test_user, method=RequestMethod.GET
+    )
+
+    json_response = res.json()
+    read_transaction = schemas.ScheduledTransaction(**json_response)
+
+    assert res.status_code == HTTP_200_OK
+    assert read_transaction.account_id == test_account.id
+    assert read_transaction.information.amount == transaction.information.amount
+    assert read_transaction.information.reference == transaction.information.reference
+    assert read_transaction.date_start == transaction.date_start
+    assert read_transaction.date_end == transaction.date_end
+    assert (
+        read_transaction.information.category_id == transaction.information.category_id
+    )
+    assert read_transaction.frequency.id == transaction.frequency_id
 
 
 async def test_update_scheduled_transaction():
