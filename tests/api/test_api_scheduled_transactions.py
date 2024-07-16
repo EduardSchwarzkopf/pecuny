@@ -204,8 +204,36 @@ async def test_read_scheduled_transaction_unauthorized(
     assert res.status_code == HTTP_404_NOT_FOUND
 
 
-async def test_update_scheduled_transaction_unauthorized():
-    assert False
+@pytest.mark.usefixtures("test_account_scheduled_transaction_list")
+async def test_update_scheduled_transaction_unauthorized(
+    test_user: models.User,
+    repository: Repository,
+):
+    other_account = await get_other_user_account(test_user, repository)
+    transaction_list = await repository.filter_by(
+        models.TransactionScheduled,
+        models.TransactionScheduled.account_id,
+        other_account.id,
+        DatabaseFilterOperator.EQUAL,
+    )
+
+    transaction = transaction_list[0]
+
+    res = await make_http_request(
+        ENDPOINT + str(transaction.id),
+        json={
+            "account_id": other_account.id,
+            "amount": 999,
+            "reference": "unautherized",
+            "date_start": now().isoformat(),
+            "date_end": get_tomorrow().isoformat(),
+            "category_id": 1,
+            "frequency_id": 2,
+        },
+        as_user=test_user,
+    )
+
+    assert res.status_code == HTTP_401_UNAUTHORIZED
 
 
 async def test_delete_scheduled_transaction_unauthorized():
