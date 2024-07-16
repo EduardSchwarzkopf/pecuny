@@ -162,11 +162,10 @@ async def test_create_scheduled_transaction_unauthorized(
     test_account_scheduled_transaction_list: List[models.TransactionScheduled],
     repository: Repository,
 ):
-    transaction = test_account_scheduled_transaction_list[0]
     other_account = await get_other_user_account(test_user, repository)
 
     res = await make_http_request(
-        ENDPOINT + str(transaction.id),
+        ENDPOINT,
         json={
             "account_id": other_account.id,
             "amount": 999,
@@ -264,20 +263,71 @@ async def test_delete_scheduled_transaction_unauthorized(
 
 
 # Tests for unauthenticated access
-async def test_create_scheduled_transaction_unauthenticated():
-    assert False
+async def test_create_scheduled_transaction_unauthenticated(
+    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+):
+    transaction = test_account_scheduled_transaction_list[0]
+
+    res = await make_http_request(
+        ENDPOINT,
+        json={
+            "account_id": transaction.account_id,
+            "amount": 999,
+            "reference": "unautherized",
+            "date_start": now().isoformat(),
+            "date_end": get_tomorrow().isoformat(),
+            "category_id": 1,
+            "frequency_id": 2,
+        },
+    )
+
+    assert res.status_code == HTTP_401_UNAUTHORIZED
 
 
-async def test_read_scheduled_transaction_unauthenticated():
-    assert False
+async def test_read_scheduled_transaction_unauthenticated(
+    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+):
+    transaction = test_account_scheduled_transaction_list[0]
+
+    res = await make_http_request(
+        ENDPOINT + str(transaction.id), method=RequestMethod.GET
+    )
+
+    assert res.status_code == HTTP_401_UNAUTHORIZED
 
 
-async def test_update_scheduled_transaction_unauthenticated():
-    assert False
+async def test_update_scheduled_transaction_unauthenticated(
+    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+):
+    transaction = test_account_scheduled_transaction_list[0]
+
+    res = await make_http_request(
+        ENDPOINT + str(transaction.id),
+        json={
+            "account_id": transaction.account_id,
+            "amount": 999,
+            "reference": "unautherized",
+            "date_start": now().isoformat(),
+            "date_end": get_tomorrow().isoformat(),
+            "category_id": 1,
+            "frequency_id": 2,
+        },
+        method=RequestMethod.GET,
+    )
+
+    assert res.status_code == HTTP_401_UNAUTHORIZED
 
 
-async def test_delete_scheduled_transaction_unauthenticated():
-    assert False
+async def test_delete_scheduled_transaction_unauthenticated(
+    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+):
+    transaction = test_account_scheduled_transaction_list[0]
+
+    res = await make_http_request(
+        ENDPOINT + str(transaction.id), method=RequestMethod.DELETE
+    )
+
+    assert res.status_code == HTTP_401_UNAUTHORIZED
 
 
 # Tests for handling non-existent entities
