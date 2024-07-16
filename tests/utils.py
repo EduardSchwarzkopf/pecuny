@@ -1,4 +1,3 @@
-import datetime
 from io import BufferedReader
 from typing import Optional
 
@@ -10,7 +9,7 @@ from app.auth_manager import get_strategy
 from app.config import settings
 from app.main import app
 from app.repository import Repository
-from app.utils.enums import RequestMethod
+from app.utils.enums import DatabaseFilterOperator, RequestMethod
 
 
 async def authorized_httpx_client(client: AsyncClient, user: models.User):
@@ -123,3 +122,19 @@ async def get_user_offset_account(
 
     return account_list[0]
 
+
+async def get_other_user_account(
+    user: models.User, repository: Repository
+) -> Optional[models.Account]:
+
+    account_list = await repository.filter_by(
+        models.Account,
+        models.Account.user_id,
+        user.id,
+        DatabaseFilterOperator.NOT_EQUAL,
+    )
+
+    if account_list is None:
+        raise ValueError("No accounts found")
+
+    return account_list[0]
