@@ -114,6 +114,32 @@ async def api_create_scheduled_transaction(
     )
 
 
+@router.post("/{transaction_id}", response_model=ResponseModel)
+async def api_update_scheduled_transaction(
+    transaction_id: int,
+    transaction_information: schemas.ScheduledTransactionInformtionUpdate,
+    current_user: User = Depends(current_active_verified_user),
+    service: ScheduledTransactionService = Depends(
+        ScheduledTransactionService.get_instance
+    ),
+):
+
+    transaction = await tm.transaction(
+        service.update_scheduled_transaction,
+        current_user,
+        transaction_id,
+        transaction_information,
+    )
+
+    if transaction:
+        return transaction
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Scheduled transaction not created",
+    )
+
+
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def api_delete_scheduled_transaction(
     transaction_id: int,
