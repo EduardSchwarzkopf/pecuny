@@ -11,7 +11,7 @@ from starlette.status import (
 )
 
 from app import models, schemas
-from app.date_manager import get_tomorrow, get_yesterday
+from app.date_manager import get_day_delta, get_tomorrow, get_yesterday, now
 from app.repository import Repository
 from app.utils.classes import RoundedDecimal
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
@@ -96,12 +96,46 @@ async def test_read_scheduled_transaction(
     assert read_transaction.frequency.id == transaction.frequency_id
 
 
-async def test_update_scheduled_transaction():
-    assert False
+async def test_update_scheduled_transaction(
+    test_user: models.User,
+    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+):
+    transaction = test_account_scheduled_transaction_list[0]
 
+    now_ = now()
 
-async def test_delete_scheduled_transaction():
-    assert False
+    reference = "Updated reference"
+    amount = 10000
+    category_id = 3
+    frequency_id = 2
+    date_start = get_day_delta(now_, -3)
+    date_end = get_day_delta(now_, +3)
+
+    res = await make_http_request(
+        ENDPOINT + str(transaction.id),
+        as_user=test_user,
+        json={
+            "account_id": transaction.account_id,
+            "amount": amount,
+            "reference": reference,
+            "date_start": date_start.isoformat(),
+            "date_end": date_end.isoformat(),
+            "category_id": category_id,
+            "frequency_id": frequency_id,
+        },
+    )
+
+    assert res.status_code == HTTP_200_OK
+
+    updated_transaction = schemas.ScheduledTransaction(**res.json())
+
+    assert updated_transaction.information.amount == amount
+    assert updated_transaction.information.reference == reference
+    assert updated_transaction.date_start == date_start
+    assert updated_transaction.date_end == date_end
+    assert updated_transaction.frequency.id == frequency_id
+    assert updated_transaction.information.category_id == category_id
+
 
 
 # Tests for unauthorized access
