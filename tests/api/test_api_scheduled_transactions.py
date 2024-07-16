@@ -336,14 +336,6 @@ async def test_read_scheduled_transaction_not_found():
 
 
 # Additional tests for enhanced functionality
-async def test_create_scheduled_transaction_minimal_data():
-    assert False
-
-
-async def test_create_scheduled_transaction_all_fields():
-    assert False
-
-
 async def test_create_scheduled_transaction_with_missing_fields():
     assert False
 
