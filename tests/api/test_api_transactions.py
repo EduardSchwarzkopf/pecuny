@@ -293,7 +293,7 @@ async def test_create_offset_transaction(
     """
 
     account_id = test_account.id
-    offset_account = await get_user_offset_account(test_account)
+    offset_account = await get_user_offset_account(test_account, repository)
 
     assert offset_account is not None
 
@@ -434,7 +434,7 @@ async def test_updated_offset_transaction(
 
     """
 
-    offset_account = await get_user_offset_account(test_account)
+    offset_account = await get_user_offset_account(test_account, repository)
 
     assert offset_account is not None
 
@@ -527,7 +527,7 @@ async def test_delete_offset_transaction(
         AssertionError: If the test fails.
     """
 
-    offset_account = await get_user_offset_account(test_account)
+    offset_account = await get_user_offset_account(test_account, repository)
 
     assert offset_account is not None
 
