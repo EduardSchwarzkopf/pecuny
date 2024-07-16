@@ -88,7 +88,9 @@ async def make_http_request(  # pylint: disable=too-many-arguments
         return await response
 
 
-async def get_user_offset_account(account: models.Account) -> Optional[models.Account]:
+async def get_user_offset_account(
+    account: models.Account, repository: Repository
+) -> Optional[models.Account]:
     """
     Returns the offset account for a given account within a list of accounts.
 
@@ -99,16 +101,25 @@ async def get_user_offset_account(account: models.Account) -> Optional[models.Ac
     Returns:
         models.Account or None: The offset account if found, otherwise None.
     """
-    repository = Repository()
-    account_list = await repository.get_all(models.Account)
-    return next(
-        (
-            account_element
-            for account_element in account_list
-            if (
-                account_element.user_id == account.user_id
-                and account.id != account_element.id
-            )
-        ),
-        None,
+
+    account_list = await repository.filter_by_multiple(
+        models.Account,
+        [
+            (
+                models.Account.user_id,
+                account.user.id,
+                DatabaseFilterOperator.EQUAL,
+            ),
+            (
+                models.Account.id,
+                account.id,
+                DatabaseFilterOperator.NOT_EQUAL,
+            ),
+        ],
     )
+
+    if account_list is None:
+        raise ValueError("No accounts found")
+
+    return account_list[0]
+
