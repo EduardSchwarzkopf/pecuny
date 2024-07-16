@@ -167,7 +167,12 @@ class ScheduledTransactionService(BaseService):
         if transaction is None:
             return None
 
-        account: Account = transaction.account
+        account = await self.repository.get(Account, transaction_information.account_id)
+
+        if not AccountService.has_user_access_to_account(  # pylint: disable=duplicate-code
+            user, account
+        ):
+            return None
 
         if user.id != account.user_id:
             logger.warning(ACCOUNT_USER_ID_MISMATCH)
