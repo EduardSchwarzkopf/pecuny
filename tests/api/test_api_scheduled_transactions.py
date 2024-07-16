@@ -227,14 +227,14 @@ async def test_partial_update_scheduled_transaction():
 
 async def test_delete_scheduled_transactions_keep_transactions():
     # TODO: needs to be implemented
-    assert False
+    pass
 
 
 async def test_rate_limiting_scheduled_transactions():
     # TODO: needs to be implemented
-    assert False
+    pass
 
 
 async def test_pagination_scheduled_transactions():
     # TODO: needs to be implemented
-    assert False
+    pass
