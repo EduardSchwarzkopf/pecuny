@@ -137,6 +137,25 @@ async def test_update_scheduled_transaction(
     assert updated_transaction.information.category_id == category_id
 
 
+async def test_delete_scheduled_transaction(
+    test_user: models.User,
+    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+    repository: Repository,
+):
+
+    transaction = test_account_scheduled_transaction_list[0]
+    transaction_id = transaction.id
+
+    res = await make_http_request(
+        ENDPOINT + str(transaction_id), as_user=test_user, method=RequestMethod.DELETE
+    )
+
+    assert res.status_code == HTTP_204_NO_CONTENT
+
+    db_transaction = await repository.get(models.TransactionScheduled, transaction_id)
+
+    assert db_transaction is None
+
 
 # Tests for unauthorized access
 async def test_create_scheduled_transaction_unauthorized():
