@@ -7,15 +7,13 @@ from starlette.status import (
     HTTP_201_CREATED,
     HTTP_204_NO_CONTENT,
     HTTP_401_UNAUTHORIZED,
-    HTTP_404_NOT_FOUND,
 )
 
 from app import models, schemas
 from app.date_manager import get_day_delta, get_tomorrow, get_yesterday, now
 from app.repository import Repository
-from app.utils.classes import RoundedDecimal
-from app.utils.enums import DatabaseFilterOperator, RequestMethod
-from tests.utils import make_http_request
+from app.utils.enums import RequestMethod
+from tests.utils import get_other_user_account, make_http_request
 
 ENDPOINT = "/api/scheduled-transactions/"
 
@@ -158,8 +156,29 @@ async def test_delete_scheduled_transaction(
 
 
 # Tests for unauthorized access
-async def test_create_scheduled_transaction_unauthorized():
-    assert False
+async def test_create_scheduled_transaction_unauthorized(
+    test_user: models.User,
+    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+    repository: Repository,
+):
+    transaction = test_account_scheduled_transaction_list[0]
+    other_account = await get_other_user_account(test_user, repository)
+
+    res = await make_http_request(
+        ENDPOINT + str(transaction.id),
+        json={
+            "account_id": other_account.id,
+            "amount": 999,
+            "reference": "unautherized",
+            "date_start": now().isoformat(),
+            "date_end": get_tomorrow().isoformat(),
+            "category_id": 1,
+            "frequency_id": 2,
+        },
+        as_user=test_user,
+    )
+
+    assert res.status_code == HTTP_401_UNAUTHORIZED
 
 
 async def test_read_scheduled_transaction_unauthorized():
