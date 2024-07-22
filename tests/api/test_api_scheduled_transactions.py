@@ -8,6 +8,7 @@ from starlette.status import (
     HTTP_204_NO_CONTENT,
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
+    HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
 from app import models, schemas
@@ -331,13 +332,56 @@ async def test_delete_scheduled_transaction_unauthenticated(
 
 
 # Tests for handling non-existent entities
-async def test_read_scheduled_transaction_not_found():
-    assert False
+async def test_read_scheduled_transaction_not_found(
+    test_user: models.User,
+):
+
+    res = await make_http_request(
+        ENDPOINT + str(9999), as_user=test_user, method=RequestMethod.GET
+    )
+
+    assert res.status_code == HTTP_404_NOT_FOUND
 
 
 # Additional tests for enhanced functionality
-async def test_create_scheduled_transaction_with_missing_fields():
-    assert False
+@pytest.mark.parametrize(
+    "key_to_remove",
+    [
+        ("account_id"),
+        ("amount"),
+        ("reference"),
+        ("date_start"),
+        ("date_end"),
+        ("category_id"),
+        ("frequency_id"),
+    ],
+)
+async def test_create_scheduled_transaction_with_missing_fields(
+    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+    test_user: models.User,
+    key_to_remove: str,
+):
+    transaction = test_account_scheduled_transaction_list[0]
+
+    payload = {
+        "account_id": transaction.account_id,
+        "amount": 999,
+        "reference": "unautherized",
+        "date_start": now().isoformat(),
+        "date_end": get_tomorrow().isoformat(),
+        "category_id": 1,
+        "frequency_id": 2,
+    }
+
+    del payload[key_to_remove]
+
+    res = await make_http_request(
+        ENDPOINT,
+        json=payload,
+        as_user=test_user,
+    )
+
+    assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY
 
 
 async def test_create_scheduled_transaction_with_invalid_data():
