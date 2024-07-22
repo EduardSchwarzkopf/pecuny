@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List
+from typing import Any, List
 
 import pytest
 from starlette.status import (
@@ -384,8 +384,71 @@ async def test_create_scheduled_transaction_with_missing_fields(
     assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY
 
 
-async def test_create_scheduled_transaction_with_invalid_data():
-    assert False
+@pytest.mark.parametrize(
+    "key, value",
+    [
+        ("account_id", "test"),
+        ("account_id", 3.5),
+        ("account_id", True),
+        ("account_id", False),
+        ("account_id", None),
+        ("amount", "test"),
+        ("amount", True),
+        ("amount", False),
+        ("amount", None),
+        ("reference", True),
+        ("reference", False),
+        ("reference", None),
+        ("date_start", True),
+        ("date_start", False),
+        ("date_start", "test"),
+        ("date_start", None),
+        ("date_start", 4),
+        ("date_start", 4.5),
+        ("date_end", True),
+        ("date_end", False),
+        ("date_end", "test"),
+        ("date_end", None),
+        ("date_end", 4),
+        ("date_end", 4.5),
+        ("category_id", "test"),
+        ("category_id", 3.5),
+        ("category_id", False),
+        ("category_id", True),
+        ("category_id", None),
+        ("frequency_id", "test"),
+        ("frequency_id", 3.5),
+        ("frequency_id", False),
+        ("frequency_id", True),
+        ("frequency_id", None),
+    ],
+)
+async def test_create_scheduled_transaction_with_invalid_data(
+    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+    test_user: models.User,
+    key: str,
+    value: Any,
+):
+    transaction = test_account_scheduled_transaction_list[0]
+    payload = {
+        "account_id": transaction.account_id,
+        "amount": 999,
+        "reference": "unautherized",
+        "date_start": now().isoformat(),
+        "date_end": get_tomorrow().isoformat(),
+        "category_id": 1,
+        "frequency_id": 2,
+    }
+
+    payload[key] = value
+
+    res = await make_http_request(
+        ENDPOINT,
+        json=payload,
+        as_user=test_user,
+    )
+
+    assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY
 
 
 async def test_update_scheduled_transaction_with_invalid_data():
