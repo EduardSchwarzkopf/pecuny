@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional
 
 from app.logger import get_logger
@@ -254,13 +255,15 @@ class ScheduledTransactionService(BaseService):
         )
 
         if len(created_transaction_list) > 0:
-
             # TODO: add user decision to delete created transaction or not
-            # TODO: make it async?
-            for created_transaction in created_transaction_list:
-                created_transaction.scheduled_transaction_id = None
+            async def update_transaction(transaction):
+                transaction.scheduled_transaction_id = None
 
-            self.repository.save(created_transaction_list)
+            update_tasks = [update_transaction(tx) for tx in created_transaction_list]
+            await asyncio.gather(*update_tasks)
+
+            # Save the updated transactions
+            await self.repository.save(created_transaction_list)
 
         await self.repository.delete(transaction)
 
