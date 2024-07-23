@@ -37,6 +37,7 @@ from wtforms.widgets import Input
 
 from app.date_manager import string_to_datetime
 from app.utils.classes import RoundedDecimal
+from app.utils.fields import IdField
 
 StringContr = Annotated[
     str, StringConstraints(min_length=3, max_length=36, strip_whitespace=True)
@@ -94,7 +95,7 @@ class TransactionInformationBase(BaseModel):
         example=100.00,
     )
     reference: str
-    category_id: int
+    category_id: IdField = Field(..., description="The category ID.")
 
     model_config = ConfigDict(json_encoders={Decimal: float})
 
@@ -148,33 +149,12 @@ class CategoryData(Base):
 
 
 class TransactionInformationCreate(TransactionInformation):
-    account_id: int
-    offset_account_id: Optional[int] = Field(None, description="The offset account ID.")
-
-    @field_validator("offset_account_id", mode="before")
-    def parse_offset_account_id(cls, v):  # pylint: disable=no-self-argument
-        """
-        Validates and parses an offset account ID.
-
-        Args:
-            cls: The class.
-            v: The offset account ID to parse.
-
-        Returns:
-            int or None: The parsed offset account ID or None if the input is an empty string.
-        """
-
-        if v is None or v == "":
-            return None
-
-        try:
-            return int(v)
-        except ValueError as e:
-            raise ValueError(f"Invalid value {v} for offset_account_id") from e
+    account_id: IdField = Field(...)
+    offset_account_id: Optional[IdField] = Field(None)
 
 
 class TransactionData(TransactionInformationCreate):
-    scheduled_transaction_id: Optional[int] = None
+    scheduled_transaction_id: Optional[IdField] = Field(None)
 
 
 class TransactionInformtionUpdate(TransactionInformationCreate):
@@ -183,14 +163,12 @@ class TransactionInformtionUpdate(TransactionInformationCreate):
 
 class ScheduledTransactionInformationCreate(TransactionInformationBase):
     date_start: dt
-    frequency_id: int
+    frequency_id: IdField = Field(..., description="The frequency ID.")
     date_end: dt
-    account_id: int
-    offset_account_id: Optional[int] = None
-
-    @field_validator("offset_account_id", mode="before")
-    def parse_offset_account_id(cls, value: Optional[int]):
-        return None if value == 0 else value
+    account_id: IdField = Field(..., description="The account ID.")
+    offset_account_id: Optional[IdField] = Field(
+        None, description="The offset account ID."
+    )
 
 
 class ScheduledTransactionInformtionUpdate(ScheduledTransactionInformationCreate):
@@ -203,20 +181,20 @@ class TransactionInformationData(TransactionInformation):
 
 class TransactionBase(Base):
     id: int
-    account_id: int
+    account_id: IdField = Field(...)
     information: TransactionInformationData
 
 
 class Transaction(TransactionBase):
-    offset_transactions_id: Optional[int]
+    offset_transactions_id: Optional[IdField] = Field(None)
 
 
 class ScheduledTransaction(TransactionBase):
     date_start: dt
     frequency: FrequencyData
     date_end: dt
-    account_id: int
-    offset_account_id: Optional[int]
+    account_id: IdField = Field(...)
+    offset_account_id: Optional[IdField] = Field(None)
 
 
 class Account(Base):
@@ -228,7 +206,7 @@ class Account(Base):
 
 
 class AccountData(Account):
-    id: int
+    id: IdField = Field(...)
 
 
 class LoginForm(StarletteForm):
