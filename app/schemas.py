@@ -87,7 +87,7 @@ class TransactionInformationBase(BaseModel):
         example=100.00,
     )
     reference: str
-    category_id: IdField = Field(...)
+    category_id: IdField
 
     model_config = ConfigDict(json_encoders={Decimal: float})
 
