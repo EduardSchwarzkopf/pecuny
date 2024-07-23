@@ -16,6 +16,10 @@ class BaseField(ABC):
             cls._validate, core_schema.decimal_schema()
         )
 
+    @classmethod
+    def _serialize(cls, value):
+        return value
+
 
 class IdField(BaseField, int):
     @classmethod
@@ -24,7 +28,3 @@ class IdField(BaseField, int):
             return value
 
         raise ValueError("Invalid Id provided")
-
-    @classmethod
-    def _serialize(cls, value):
-        return value
