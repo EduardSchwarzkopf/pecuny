@@ -67,8 +67,6 @@ async def fixture_create_test_users(user_service: UserService):
     create_user_list = [
         ["user00@pytest.de", password, "User00"],
         ["user01@pytest.de", password, "User01"],
-        ["user02@pytest.de", password, "User02"],
-        ["user03@pytest.de", password, "User03"],
         ["hello123@pytest.de", password, "LoginUser"],
     ]
 
@@ -232,21 +230,6 @@ async def fixture_create_test_accounts(
             "label": "account_01",
             "description": "description_01",
             "balance": 200,
-        },
-        {
-            "label": "account_02",
-            "description": "description_02",
-            "balance": 500,
-        },
-        {
-            "label": "account_03",
-            "description": "description_03",
-            "balance": 1000,
-        },
-        {
-            "label": "account_04",
-            "description": "description_04",
-            "balance": 2000,
         },
     ]
 
@@ -500,7 +483,7 @@ async def fixture_create_scheduled_transactions(
     service = ScheduledTransactionService()
     create_task = []
 
-    for account in [test_accounts[0], test_accounts[-1]]:
+    for account in test_accounts:
 
         create_task.extend(
             [
