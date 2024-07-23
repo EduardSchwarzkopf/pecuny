@@ -6,14 +6,7 @@ from decimal import Decimal
 from typing import Annotated, Any, Optional
 
 from fastapi_users import schemas
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    EmailStr,
-    Field,
-    StringConstraints,
-    field_validator,
-)
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 from starlette_wtf import StarletteForm
 from wtforms import (
     BooleanField,
@@ -35,9 +28,8 @@ from wtforms.validators import (
 )
 from wtforms.widgets import Input
 
-from app.date_manager import string_to_datetime
 from app.utils.classes import RoundedDecimal
-from app.utils.fields import IdField
+from app.utils.fields import DateField, IdField
 
 StringContr = Annotated[
     str, StringConstraints(min_length=3, max_length=36, strip_whitespace=True)
@@ -95,37 +87,13 @@ class TransactionInformationBase(BaseModel):
         example=100.00,
     )
     reference: str
-    category_id: IdField = Field(..., description="The category ID.")
+    category_id: IdField = Field(...)
 
     model_config = ConfigDict(json_encoders={Decimal: float})
 
 
 class TransactionInformation(TransactionInformationBase):
-    date: dt
-
-    @field_validator("date", mode="before")
-    def parse_date(cls, v) -> dt:  # pylint: disable=no-self-argument
-        """
-        Validates and parses a date string into a datetime object.
-
-        Args:
-            cls: The class.
-            v: The date string to parse.
-
-        Returns:192gg
-            datetime: The parsed datetime object.
-
-        Raises:
-            ValueError: If the date format is not recognized.
-        """
-
-        if isinstance(v, dt):
-            return v
-
-        try:
-            return string_to_datetime(v)
-        except ValueError as e:
-            raise ValueError("Date format not recognized") from e
+    date: DateField
 
 
 class MinimalResponse(Base):
@@ -149,12 +117,12 @@ class CategoryData(Base):
 
 
 class TransactionInformationCreate(TransactionInformation):
-    account_id: IdField = Field(...)
-    offset_account_id: Optional[IdField] = Field(None)
+    account_id: IdField
+    offset_account_id: Optional[IdField] = None
 
 
 class TransactionData(TransactionInformationCreate):
-    scheduled_transaction_id: Optional[IdField] = Field(None)
+    scheduled_transaction_id: Optional[IdField] = None
 
 
 class TransactionInformtionUpdate(TransactionInformationCreate):
@@ -162,9 +130,9 @@ class TransactionInformtionUpdate(TransactionInformationCreate):
 
 
 class ScheduledTransactionInformationCreate(TransactionInformationBase):
-    date_start: dt
+    date_start: DateField
     frequency_id: IdField = Field(..., description="The frequency ID.")
-    date_end: dt
+    date_end: DateField
     account_id: IdField = Field(..., description="The account ID.")
     offset_account_id: Optional[IdField] = Field(
         None, description="The offset account ID."
@@ -181,32 +149,32 @@ class TransactionInformationData(TransactionInformation):
 
 class TransactionBase(Base):
     id: int
-    account_id: IdField = Field(...)
+    account_id: IdField
     information: TransactionInformationData
 
 
 class Transaction(TransactionBase):
-    offset_transactions_id: Optional[IdField] = Field(None)
+    offset_transactions_id: Optional[IdField] = None
 
 
 class ScheduledTransaction(TransactionBase):
-    date_start: dt
+    date_start: DateField
     frequency: FrequencyData
-    date_end: dt
-    account_id: IdField = Field(...)
-    offset_account_id: Optional[IdField] = Field(None)
+    date_end: DateField
+    account_id: IdField
+    offset_account_id: Optional[IdField] = None
 
 
 class Account(Base):
     label: StringContr
     description: Optional[str] = None
-    balance: Optional[RoundedDecimal] = Field(...)
+    balance: Optional[RoundedDecimal]
 
     model_config = ConfigDict(json_encoders={Decimal: float})
 
 
 class AccountData(Account):
-    id: IdField = Field(...)
+    id: IdField
 
 
 class LoginForm(StarletteForm):
