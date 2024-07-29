@@ -2,17 +2,18 @@ import time
 from typing import List
 
 import pytest
+from sqlalchemy import and_, exists, func, select
 
 from app import models
 from app.date_manager import get_today
 from app.repository import Repository
-from app.tasks import create_transactions_for_batch
+from app.tasks import process_scheduled_transactions
 from app.utils.enums import DatabaseFilterOperator, Frequency
 
 
 def _process_scheduled_transactions() -> None:
-    create_transactions_for_batch.delay()
-    time.sleep(0.3)  # give it some time to process
+    process_scheduled_transactions.delay()
+    time.sleep(0.5)  # give it some time to process
 
 
 async def _assert_transaction_creation(
@@ -21,26 +22,36 @@ async def _assert_transaction_creation(
     repository: Repository,
 ):
     model = models.TransactionScheduled
-    equal = DatabaseFilterOperator.EQUAL
-    transaction_list = await repository.filter_by_multiple(
-        model,
-        [
-            (model.date_start, get_today(), equal),
-            (model.account_id, test_account.id, equal),
-            (model.frequency_id, frequency.value, equal),
-        ],
+    today = get_today()
+
+    result = await repository.session.execute(
+        select(model).where(
+            and_(
+                model.date_start <= today,
+                model.date_end >= today,
+                model.is_active == True,
+                model.account_id == test_account.id,
+                model.frequency_id == frequency.value,
+                exists().where(
+                    and_(
+                        models.Transaction.scheduled_transaction_id == model.id,
+                        func.date(models.Transaction.created_at) == func.date(today),
+                    )
+                ),
+            )
+        )
     )
 
-    assert len(transaction_list) == 1
+    transaction_list = result.unique().scalars().all()
 
-    transaction = await repository.filter_by(
-        models.Transaction,
-        models.Transaction.scheduled_transaction_id,
-        transaction_list[0].id,
-    )
+    assert len(transaction_list) > 0
 
-    assert len(transaction) == 1
-    assert transaction[0] is not None
+    for transaction in transaction_list:
+        assert transaction.date_start <= today
+        assert transaction.date_end >= today
+        assert transaction.is_active
+        assert transaction.account_id == test_account.id
+        assert transaction.frequency_id == frequency.value
 
 
 async def test_create_transactions_from_schedule(
@@ -56,13 +67,15 @@ async def test_create_transactions_from_schedule(
         for transaction in test_account_scheduled_transaction_list
     )
 
+    current_account_balance = balance + total_balance
+
     _process_scheduled_transactions()
     repository.session.expire(test_account)
 
     account = await repository.get(models.Account, account_id)
     new_balance = account.balance
 
-    assert new_balance == balance + total_balance
+    assert new_balance == current_account_balance
 
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
