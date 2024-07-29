@@ -4,6 +4,7 @@ import itertools
 from typing import List
 
 import pytest
+from sqlalchemy import and_, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas
@@ -538,27 +539,27 @@ async def fixture_test_account_scheduled_transaction_list(
     """
 
     today = get_today()
+    model = models.TransactionScheduled
 
-    yield await repository.filter_by_multiple(
-        models.TransactionScheduled,
-        [
-            (
-                models.TransactionScheduled.account_id,
-                test_account.id,
-                DatabaseFilterOperator.EQUAL,
-            ),
-            (
-                models.TransactionScheduled.date_start,
-                today,
-                DatabaseFilterOperator.EQUAL,
-            ),
-            (
-                models.TransactionScheduled.date_end,
-                today,
-                DatabaseFilterOperator.GREATER_THAN_OR_EQUAL,
-            ),
-        ],
+    result = await repository.session.execute(
+        select(model).where(
+            and_(
+                model.date_start <= today,
+                model.date_end >= today,
+                model.is_active == True,
+                model.account_id == test_account.id,
+                ~exists().where(
+                    and_(
+                        models.Transaction.scheduled_transaction_id == model.id,
+                        func.date(models.Transaction.created_at) == func.date(today),
+                    )
+                ),
+            )
+        )
     )
+
+    scheduled_transaction_list = result.scalars().all()
+    return scheduled_transaction_list
 
 
 @pytest.fixture(name="test_account_transaction_list")
