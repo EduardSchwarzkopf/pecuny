@@ -141,7 +141,7 @@ async def test_scheduled_transaction_not_started(
     scheduled_transaction_list = await repository.filter_by_multiple(
         model,
         [
-            (model.date_start, get_today(), DatabaseFilterOperator.LESS_THAN),
+            (model.date_start, get_today(), DatabaseFilterOperator.GREATER_THAN),
             (model.account_id, test_account.id, DatabaseFilterOperator.EQUAL),
         ],
     )
