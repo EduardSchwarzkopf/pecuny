@@ -1,7 +1,7 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.logger import get_logger
-from app.tasks import create_transactions_for_batch
+from app.tasks import process_scheduled_transactions
 
 logger = get_logger(__name__)
 job_registry = []
@@ -23,4 +23,4 @@ def register_job(trigger, **kwargs):
 
 @register_job("interval", days=1)
 async def create_scheduled_transactions():
-    create_transactions_for_batch.delay()
+    process_scheduled_transactions.delay()
