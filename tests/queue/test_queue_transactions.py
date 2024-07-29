@@ -2,7 +2,6 @@ import time
 from typing import List
 
 import pytest
-from sqlalchemy import and_, exists, func, select
 
 from app import models
 from app.date_manager import get_today
@@ -24,34 +23,36 @@ async def _assert_transaction_creation(
     model = models.TransactionScheduled
     today = get_today()
 
-    result = await repository.session.execute(
-        select(model).where(
-            and_(
-                model.date_start <= today,
-                model.date_end >= today,
-                model.is_active == True,
-                model.account_id == test_account.id,
-                model.frequency_id == frequency.value,
-                exists().where(
-                    and_(
-                        models.Transaction.scheduled_transaction_id == model.id,
-                        func.date(models.Transaction.created_at) == func.date(today),
-                    )
-                ),
-            )
-        )
+    scheduled_transaction_list = await repository.filter_by_multiple(
+        model,
+        [
+            (model.account_id, test_account.id, DatabaseFilterOperator.EQUAL),
+            (model.frequency_id, frequency.value, DatabaseFilterOperator.EQUAL),
+            (model.date_start, today, DatabaseFilterOperator.LESS_THAN_OR_EQUAL),
+            (model.date_end, today, DatabaseFilterOperator.GREATER_THAN_OR_EQUAL),
+        ],
     )
 
-    transaction_list = result.unique().scalars().all()
+    assert len(scheduled_transaction_list) > 0
 
-    assert len(transaction_list) > 0
+    for scheduled_transaction in scheduled_transaction_list:
+        transaction_list = await repository.filter_by(
+            models.Transaction,
+            models.Transaction.scheduled_transaction_id,
+            scheduled_transaction.id,
+        )
 
-    for transaction in transaction_list:
-        assert transaction.date_start <= today
-        assert transaction.date_end >= today
-        assert transaction.is_active
-        assert transaction.account_id == test_account.id
-        assert transaction.frequency_id == frequency.value
+        assert len(transaction_list) > 0
+        for transaction in transaction_list:
+            assert transaction.account_id == scheduled_transaction.account_id
+            assert (
+                transaction.information.amount
+                == scheduled_transaction.information.amount
+            )
+            assert (
+                transaction.information.reference
+                == scheduled_transaction.information.reference
+            )
 
 
 async def test_create_transactions_from_schedule(
