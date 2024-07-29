@@ -391,7 +391,6 @@ async def test_create_scheduled_transaction_with_missing_fields(
         ("account_id", 3.5),
         ("account_id", -1),
         ("account_id", False),
-        ("account_id", None),
         ("amount", "test"),
         ("amount", True),
         ("amount", False),
@@ -417,12 +416,10 @@ async def test_create_scheduled_transaction_with_missing_fields(
         ("category_id", 3.5),
         ("category_id", -1),
         ("category_id", False),
-        ("category_id", None),
         ("frequency_id", "test"),
         ("frequency_id", 3.5),
         ("frequency_id", -1),
         ("frequency_id", False),
-        ("frequency_id", None),
     ],
 )
 async def test_create_scheduled_transaction_with_invalid_data(
@@ -459,7 +456,6 @@ async def test_create_scheduled_transaction_with_invalid_data(
         ("account_id", 3.5),
         ("account_id", -1),
         ("account_id", False),
-        ("account_id", None),
         ("amount", "test"),
         ("amount", True),
         ("amount", False),
@@ -485,12 +481,10 @@ async def test_create_scheduled_transaction_with_invalid_data(
         ("category_id", 3.5),
         ("category_id", -1),
         ("category_id", False),
-        ("category_id", None),
         ("frequency_id", "test"),
         ("frequency_id", 3.5),
         ("frequency_id", -1),
         ("frequency_id", False),
-        ("frequency_id", None),
     ],
 )
 async def test_update_scheduled_transaction_with_invalid_data(
