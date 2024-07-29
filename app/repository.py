@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, List, Optional, Tuple, Type, TypeVar, Union
 
-from sqlalchemy import Select, text
+from sqlalchemy import Select, and_, exists, func, text
 from sqlalchemy import update as sql_update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -11,7 +11,7 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from app import models
 from app.database import db
 from app.models import BaseModel
-from app.utils.enums import DatabaseFilterOperator
+from app.utils.enums import DatabaseFilterOperator, Frequency
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
@@ -165,33 +165,50 @@ class Repository:
 
         return result.scalars().unique().all()
 
-    async def get_scheduled_transactions_from_period(
+    async def get_scheduled_transactions_by_frequency(
         self,
-        account_id: int,
-        start_date: datetime,
-        end_date: datetime,
+        frequency_id: int,
+        today: datetime,
     ) -> list[models.TransactionScheduled]:
-        """Retrieve scheduled transactions for a specific account within a given period.
+        """
+        Retrieve all scheduled transactions for a specific frequency that are active and not yet processed today.
 
         Args:
-            account_id: The ID of the account.
-            start_date: The start date of the period.
-            end_date: The end date of the period.
+            frequency_id (int): The frequency ID to filter by.
+            today (datetime): The current date to use for filtering.
+            date_filter_func (Callable[[datetime], datetime]): A date transformation function to filter creation dates in the `Transaction` table.
 
         Returns:
-            list[models.TransactionScheduled]:
-                A list of scheduled transactions within the specified period.
-
-        Raises:
-            None
+            list[models.TransactionScheduled]: A list of scheduled transactions.
         """
-        transaction = models.TransactionScheduled
+        model = models.TransactionScheduled
 
-        query = (
-            select(transaction)
-            .filter(transaction.date_end <= end_date)
-            .filter(transaction.date_start >= start_date)
-            .filter(account_id == transaction.account_id)
+        def get_period_start_date(frequency_id: int) -> datetime:
+            match frequency_id:
+                case Frequency.DAILY.value | Frequency.ONCE.value:
+                    return today
+                case Frequency.WEEKLY.value:
+                    return today - timedelta(days=7)
+                case Frequency.MONTHLY.value:
+                    return today.replace(month=today.month - 1)
+                case Frequency.YEARLY.value:
+                    return today.replace(year=today.year - 1)
+
+        transaction_exists_condition = ~exists().where(
+            and_(
+                models.Transaction.scheduled_transaction_id == model.id,
+                func.date(models.Transaction.created_at) == func.date(today),
+                func.date(models.Transaction.created_at)
+                >= get_period_start_date(frequency_id),
+            )
+        )
+
+        query = select(model).where(
+            model.date_start <= today,
+            model.date_end >= today,
+            model.is_active == True,
+            model.frequency_id == frequency_id,
+            transaction_exists_condition,
         )
 
         result = await self.session.execute(query)
