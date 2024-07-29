@@ -1,27 +1,34 @@
 from enum import Enum
 
 
-class EmailVerificationStatus(Enum):
+class ExtendedEnum(Enum):
+
+    @classmethod
+    def get_list(cls):
+        return [c.value for c in cls]
+
+
+class EmailVerificationStatus(ExtendedEnum):
     VERIFIED = 1
     INVALID_TOKEN = 0
     ALREADY_VERIFIED = -1
 
 
-class FeedbackType(Enum):
+class FeedbackType(ExtendedEnum):
     ERROR = "error"
     SUCCESS = "success"
     INFO = "info"
     WARNING = "warning"
 
 
-class RequestMethod(Enum):
+class RequestMethod(ExtendedEnum):
     GET = "get"
     POST = "post"
     PATCH = "patch"
     DELETE = "delete"
 
 
-class DatabaseFilterOperator(Enum):
+class DatabaseFilterOperator(ExtendedEnum):
     EQUAL = "="
     NOT_EQUAL = "<>"
     LESS_THAN = "<"
@@ -32,7 +39,7 @@ class DatabaseFilterOperator(Enum):
     IS_NOT = "!="
 
 
-class Frequency(Enum):
+class Frequency(ExtendedEnum):
     ONCE = 1
     DAILY = 2
     WEEKLY = 3
