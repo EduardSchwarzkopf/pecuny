@@ -1,12 +1,12 @@
 import csv
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import InvalidOperation
 from io import StringIO
 from typing import List, Optional
 
 from fastapi import HTTPException
 from pydantic import ValidationError
-from sqlalchemy import and_, desc, select
+from sqlalchemy import and_, desc, exists, func, select, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas, transaction_manager
@@ -98,7 +98,9 @@ async def _process_transaction_row(
 
     try:
         transaction_data = schemas.TransactionData(
-            account_id=account_id, category_id=category.id, **row
+            account_id=account_id,
+            category_id=category.id,
+            **row,
         )
     except ValidationError as e:
         first_error = e.errors()[0]
@@ -108,6 +110,10 @@ async def _process_transaction_row(
         failed_transaction.reason = (
             f"Invalid value on line {line_num} on value {failed_transaction.amount}"
         )
+        return failed_transaction
+
+    except Exception as e:
+        failed_transaction.reason = str(e)
         return failed_transaction
 
     transaction = await transaction_manager.transaction(
@@ -164,6 +170,7 @@ async def import_transactions_from_csv(
             )
             if failed_transaction:
                 failed_transaction_list.append(failed_transaction)
+                logger.error(failed_transaction.reason)
 
     if settings.environment != "test":
         await send_transaction_import_report(
@@ -198,92 +205,121 @@ async def _create_transaction(
     )
 
 
-# TODO: Refactor this function before merge into main
 @celery.task
-async def create_transactions_for_batch():
+async def process_scheduled_transactions():
     async with await db.get_session() as session:
         repo = Repository(session)
         service = TransactionService(repo)
         today = get_today()
+        model = models.TransactionScheduled
 
-        offset = 0
-        batch_size = settings.batch_size
+        scheduled_transaction_list = []
 
-        while True:
-
-            result = await session.execute(
-                select(models.TransactionScheduled)
-                .where(
+        once_scheduled_transactions = select(model).where(
+            and_(
+                model.date_start <= today,
+                model.date_end >= today,
+                model.is_active == True,
+                model.frequency_id == Frequency.ONCE.value,
+                ~exists().where(
                     and_(
-                        models.TransactionScheduled.date_start <= today,
-                        models.TransactionScheduled.date_end >= today,
-                        models.TransactionScheduled.is_active == True,
+                        models.Transaction.scheduled_transaction_id == model.id,
+                        func.date(models.Transaction.created_at) == func.date(today),
                     )
-                )
-                .offset(offset)
-                .limit(batch_size)
+                ),
             )
-            scheduled_transaction_list = result.unique().scalars().all()
+        )
 
-            if not scheduled_transaction_list:
-                break
+        result = await repo.session.execute(once_scheduled_transactions)
+        scheduled_transaction_list += result.scalars().all()
 
-            for scheduled in scheduled_transaction_list:
-
-                latest_transaction = (
-                    (
-                        await session.execute(
-                            select(models.Transaction)
-                            .filter(
-                                models.Transaction.scheduled_transaction_id
-                                == scheduled.id
-                            )
-                            .order_by(desc(models.Transaction.created_at))
-                        )
+        daily_scheduled_transactions = select(model).where(
+            and_(
+                model.date_start <= today,
+                model.date_end >= today,
+                model.is_active == True,
+                model.frequency_id == Frequency.DAILY.value,
+                ~exists().where(
+                    and_(
+                        models.Transaction.scheduled_transaction_id == model.id,
+                        func.date(models.Transaction.created_at) == func.date(today),
                     )
-                    .scalars()
-                    .first()
-                )
+                ),
+            )
+        )
 
-                if latest_transaction:
+        result = await repo.session.execute(daily_scheduled_transactions)
+        scheduled_transaction_list += result.scalars().all()
 
-                    created_date: datetime = latest_transaction.created_at
+        weekly_scheduled_transactions = select(model).where(
+            and_(
+                model.date_start <= today,
+                model.date_end >= today,
+                model.is_active == True,
+                model.frequency_id == Frequency.WEEKLY.value,
+                ~exists().where(
+                    and_(
+                        models.Transaction.scheduled_transaction_id == model.id,
+                        func.date(models.Transaction.created_at)
+                        >= func.date(today - timedelta(days=7)),
+                        func.date(models.Transaction.created_at) == func.date(today),
+                    )
+                ),
+            )
+        )
 
-                    if (
-                        scheduled.frequency_id == Frequency.DAILY.value
-                        and created_date.date() == today.date()
-                    ):
-                        continue
+        result = await repo.session.execute(weekly_scheduled_transactions)
+        scheduled_transaction_list += result.scalars().all()
 
-                    # TODO: is a frequency of "once" necessary?
-                    if (
-                        latest_transaction
-                        and scheduled.frequency_id == Frequency.ONCE.value
-                    ):
-                        continue
+        monthly_scheduled_transactions = select(model).where(
+            and_(
+                model.date_start <= today,
+                model.date_end >= today,
+                model.is_active == True,
+                model.frequency_id == Frequency.MONTHLY.value,
+                ~exists().where(
+                    and_(
+                        models.Transaction.scheduled_transaction_id == model.id,
+                        func.date(models.Transaction.created_at)
+                        >= func.date(today.replace(month=today.month - 1)),
+                        func.date(models.Transaction.created_at) == func.date(today),
+                    )
+                ),
+            )
+        )
 
-                    if scheduled.frequency_id == Frequency.WEEKLY.value:
-                        # Weekly frequency, check if today is in the next week from the last transaction
-                        if (today - created_date).days < 7:
-                            continue
-                    elif scheduled.frequency_id == Frequency.MONTHLY.value:
-                        # Monthly frequency, check if today is in the next month from the last transaction
-                        if (
-                            created_date.year == today.year
-                            and created_date.month == today.month
-                        ):
-                            continue
-                    elif scheduled.frequency_id == Frequency.YEARLY.value:
-                        # Yearly frequency, check if today is in the next year from the last transaction
-                        if created_date.year == today.year:
-                            continue
+        result = await repo.session.execute(monthly_scheduled_transactions)
+        scheduled_transaction_list += result.scalars().all()
 
-                await _create_transaction(
-                    session=session,
-                    repo=repo,
-                    today=today,
-                    service=service,
-                    scheduled_transaction=scheduled,
-                )
+        yearly_scheduled_transactions = select(model).where(
+            and_(
+                model.date_start <= today,
+                model.date_end >= today,
+                model.is_active == True,
+                model.frequency_id == Frequency.YEARLY.value,
+                ~exists().where(
+                    and_(
+                        models.Transaction.scheduled_transaction_id == model.id,
+                        func.date(models.Transaction.created_at)
+                        >= func.date(today.replace(year=today.year - 1)),
+                        func.date(models.Transaction.created_at) == func.date(today),
+                    )
+                ),
+            )
+        )
 
-            offset += batch_size
+        result = await repo.session.execute(yearly_scheduled_transactions)
+        scheduled_transaction_list += result.scalars().all()
+
+        if not scheduled_transaction_list:
+            return
+
+        for scheduled in scheduled_transaction_list:
+
+            await _create_transaction(
+                session=session,
+                repo=repo,
+                today=today,
+                service=service,
+                scheduled_transaction=scheduled,
+            )
