@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Type
+from typing import Type, Union
 
 from pydantic_core import core_schema
 
@@ -26,7 +26,18 @@ class BaseField(ABC):
 
 class IdField(BaseField, int):
     @classmethod
-    def _validate(cls, value: int):
+    def _validate(cls, value: Union[int, str, None]):
+        if value is None:
+            return value
+
+        if isinstance(value, str):
+            if value.strip() == "":
+                return None
+            try:
+                value = int(value)
+            except ValueError:
+                raise ValueError("Invalid Id provided")
+
         if isinstance(value, int) and value > 0:
             return value
 
