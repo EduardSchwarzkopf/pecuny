@@ -277,8 +277,8 @@ async def test_import_transaction(
     section_label = section.label
 
     transactions = [
-        ImportedTransaction(date, description, amount, section_label, category_label)
-        for date, description, amount in [
+        ImportedTransaction(date, reference, amount, section_label, category_label)
+        for date, reference, amount in [
             ("08.03.2024", "VISA OPENAI", -0.23),
             ("08.03.2024", "VISA OPENAI", -11.69),
             ("07.03.2024", "Restaurant", -11.95),
