@@ -211,111 +211,19 @@ async def process_scheduled_transactions():
         repo = Repository(session)
         service = TransactionService(repo)
         today = get_today()
-        model = models.TransactionScheduled
 
         scheduled_transaction_list = []
 
-        once_scheduled_transactions = select(model).where(
-            and_(
-                model.date_start <= today,
-                model.date_end >= today,
-                model.is_active == True,
-                model.frequency_id == Frequency.ONCE.value,
-                ~exists().where(
-                    and_(
-                        models.Transaction.scheduled_transaction_id == model.id,
-                        func.date(models.Transaction.created_at) == func.date(today),
-                    )
-                ),
+        for frequency_id in Frequency.get_list():
+            transactions = await repo.get_scheduled_transactions_by_frequency(
+                frequency_id, today
             )
-        )
-
-        result = await repo.session.execute(once_scheduled_transactions)
-        scheduled_transaction_list += result.scalars().all()
-
-        daily_scheduled_transactions = select(model).where(
-            and_(
-                model.date_start <= today,
-                model.date_end >= today,
-                model.is_active == True,
-                model.frequency_id == Frequency.DAILY.value,
-                ~exists().where(
-                    and_(
-                        models.Transaction.scheduled_transaction_id == model.id,
-                        func.date(models.Transaction.created_at) == func.date(today),
-                    )
-                ),
-            )
-        )
-
-        result = await repo.session.execute(daily_scheduled_transactions)
-        scheduled_transaction_list += result.scalars().all()
-
-        weekly_scheduled_transactions = select(model).where(
-            and_(
-                model.date_start <= today,
-                model.date_end >= today,
-                model.is_active == True,
-                model.frequency_id == Frequency.WEEKLY.value,
-                ~exists().where(
-                    and_(
-                        models.Transaction.scheduled_transaction_id == model.id,
-                        func.date(models.Transaction.created_at)
-                        >= func.date(today - timedelta(days=7)),
-                        func.date(models.Transaction.created_at) == func.date(today),
-                    )
-                ),
-            )
-        )
-
-        result = await repo.session.execute(weekly_scheduled_transactions)
-        scheduled_transaction_list += result.scalars().all()
-
-        monthly_scheduled_transactions = select(model).where(
-            and_(
-                model.date_start <= today,
-                model.date_end >= today,
-                model.is_active == True,
-                model.frequency_id == Frequency.MONTHLY.value,
-                ~exists().where(
-                    and_(
-                        models.Transaction.scheduled_transaction_id == model.id,
-                        func.date(models.Transaction.created_at)
-                        >= func.date(today.replace(month=today.month - 1)),
-                        func.date(models.Transaction.created_at) == func.date(today),
-                    )
-                ),
-            )
-        )
-
-        result = await repo.session.execute(monthly_scheduled_transactions)
-        scheduled_transaction_list += result.scalars().all()
-
-        yearly_scheduled_transactions = select(model).where(
-            and_(
-                model.date_start <= today,
-                model.date_end >= today,
-                model.is_active == True,
-                model.frequency_id == Frequency.YEARLY.value,
-                ~exists().where(
-                    and_(
-                        models.Transaction.scheduled_transaction_id == model.id,
-                        func.date(models.Transaction.created_at)
-                        >= func.date(today.replace(year=today.year - 1)),
-                        func.date(models.Transaction.created_at) == func.date(today),
-                    )
-                ),
-            )
-        )
-
-        result = await repo.session.execute(yearly_scheduled_transactions)
-        scheduled_transaction_list += result.scalars().all()
+            scheduled_transaction_list += transactions
 
         if not scheduled_transaction_list:
             return
 
         for scheduled in scheduled_transaction_list:
-
             await _create_transaction(
                 session=session,
                 repo=repo,
