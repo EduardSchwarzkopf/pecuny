@@ -126,6 +126,19 @@ async def get_user_offset_account(
 async def get_other_user_account(
     user: models.User, repository: Repository
 ) -> models.Account:
+    """
+    Returns an account belonging to a user other than the specified user.
+
+    Args:
+        user: The user for whom to find another account.
+        repository: The repository to query for account information.
+
+    Returns:
+        models.Account: An account belonging to a user other than the specified user.
+
+    Raises:
+        ValueError: If no accounts are found for the user.
+    """
 
     account_list = await repository.filter_by(
         models.Account,
