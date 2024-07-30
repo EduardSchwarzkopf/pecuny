@@ -11,6 +11,10 @@ from app.utils.enums import DatabaseFilterOperator, Frequency
 
 
 def _process_scheduled_transactions() -> None:
+    """
+    Process scheduled transactions asynchronously and wait for a short duration for processing to complete.
+    """
+
     process_scheduled_transactions.delay()
     time.sleep(0.5)  # give it some time to process
 
@@ -20,6 +24,15 @@ async def _assert_transaction_creation(
     test_account: models.Account,
     repository: Repository,
 ):
+    """
+    Asserts the creation of transactions based on the specified frequency for a test account.
+
+    Args:
+        frequency: The frequency of the transactions to be created.
+        test_account: The test account for the transactions.
+        repository: The repository for database operations.
+    """
+
     model = models.TransactionScheduled
     today = get_today()
 
@@ -60,6 +73,15 @@ async def test_create_transactions_from_schedule(
     test_account_scheduled_transaction_list: List[models.TransactionScheduled],
     repository: Repository,
 ):
+    """
+    Test the creation of transactions from a list of scheduled transactions for a test account.
+
+    Args:
+        test_account: The test account for the transactions.
+        test_account_scheduled_transaction_list: List of scheduled transactions for the test account.
+        repository: The repository for database operations.
+    """
+
     balance = test_account.balance
     account_id = test_account.id
 
@@ -86,6 +108,14 @@ async def test_create_transactions_from_schedule(
 async def test_create_daily_transaction(
     test_account: models.Account, repository: Repository
 ):
+    """
+    Test the creation of daily transactions for a test account.
+
+    Args:
+        test_account: The test account for the transaction.
+        repository: The repository for database operations.
+    """
+
     _process_scheduled_transactions()
     await _assert_transaction_creation(Frequency.DAILY, test_account, repository)
 
@@ -94,6 +124,14 @@ async def test_create_daily_transaction(
 async def test_create_weekly_transaction(
     test_account: models.Account, repository: Repository
 ):
+    """
+    Test the creation of weekly transactions for a test account.
+
+    Args:
+        test_account: The test account for the transaction.
+        repository: The repository for database operations.
+    """
+
     _process_scheduled_transactions()
     await _assert_transaction_creation(Frequency.WEEKLY, test_account, repository)
 
@@ -102,6 +140,14 @@ async def test_create_weekly_transaction(
 async def test_create_yearly_transaction(
     test_account: models.Account, repository: Repository
 ):
+    """
+    Test the creation of yearly transactions for a test account.
+
+    Args:
+        test_account: The test account for the transaction.
+        repository: The repository for database operations.
+    """
+
     _process_scheduled_transactions()
     await _assert_transaction_creation(Frequency.YEARLY, test_account, repository)
 
@@ -110,6 +156,14 @@ async def test_create_yearly_transaction(
 async def test_scheduled_transaction_ended(
     test_account: models.Account, repository: Repository
 ):
+    """
+    Test that scheduled transactions that have ended do not have corresponding created transactions.
+
+    Args:
+        test_account: The test account for the transaction.
+        repository: The repository for database operations.
+    """
+
     _process_scheduled_transactions()
 
     model = models.TransactionScheduled
@@ -137,6 +191,14 @@ async def test_scheduled_transaction_ended(
 async def test_scheduled_transaction_not_started(
     test_account: models.Account, repository: Repository
 ):
+    """
+    Test that scheduled transactions not yet started do not have corresponding created transactions.
+
+    Args:
+        test_account: The test account for the transaction.
+        repository: The repository for database operations.
+    """
+
     _process_scheduled_transactions()
 
     model = models.TransactionScheduled
