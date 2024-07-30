@@ -242,6 +242,7 @@ async def test_delete_scheduled_transaction_unauthorized(
     repository: Repository,
 ):
     other_account = await get_other_user_account(test_user, repository)
+
     transaction_list = await repository.filter_by(
         models.TransactionScheduled,
         models.TransactionScheduled.account_id,

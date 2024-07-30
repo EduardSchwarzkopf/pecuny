@@ -10,9 +10,7 @@ logger = get_logger(__name__)
 
 class AccountService(BaseService):
 
-    async def get_accounts(
-        self, current_user: models.User
-    ) -> list[Optional[models.Account]]:
+    async def get_accounts(self, current_user: models.User) -> list[models.Account]:
         """
         Retrieves a list of accounts.
 

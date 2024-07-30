@@ -217,21 +217,24 @@ async def page_get_account(
     total = 0
 
     for transaction in transaction_list:
-        if transaction.information.amount < 0:
-            expenses += transaction.information.amount
-        else:
-            income += transaction.information.amount
+        if transaction is not None and hasattr(transaction, "information"):
+            if transaction.information.amount < 0:
+                expenses += transaction.information.amount
+            else:
+                income += transaction.information.amount
 
-        total += transaction.information.amount
+            total += transaction.information.amount
 
-    transaction_list.sort(key=lambda x: x.information.date, reverse=True)
+    filtered_transaction_list = [tx for tx in transaction_list if tx is not None]
+    filtered_transaction_list.sort(key=lambda x: x.information.date, reverse=True)
 
     transaction_list_grouped = [
         {"date": date, "transactions": list(transactions)}
         for date, transactions in groupby(
-            transaction_list, key=lambda x: x.information.date
+            filtered_transaction_list, key=lambda x: x.information.date
         )
     ]
+
     return render_template(
         "pages/dashboard/page_single_account.html",
         request,

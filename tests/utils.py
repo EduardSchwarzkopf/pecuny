@@ -125,7 +125,7 @@ async def get_user_offset_account(
 
 async def get_other_user_account(
     user: models.User, repository: Repository
-) -> Optional[models.Account]:
+) -> models.Account:
 
     account_list = await repository.filter_by(
         models.Account,

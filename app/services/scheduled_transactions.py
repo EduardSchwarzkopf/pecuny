@@ -29,7 +29,7 @@ class ScheduledTransactionService(BaseService):
         self,
         user: User,
         account_id: int,
-    ) -> list[Optional[SERVICE_MODEL]]:
+    ) -> list[SERVICE_MODEL]:
         """
         Retrieves a list of transactions within a specified period for a given account.
 
@@ -51,14 +51,14 @@ class ScheduledTransactionService(BaseService):
         if account is None:
             return []
 
-        if account.user_id == user.id:
-            return await self.repository.filter_by(
-                SERVICE_MODEL,
-                SERVICE_MODEL.account_id,
-                account.id,
-            )
+        if account.user_id != user.id:
+            return []
 
-        return []
+        return await self.repository.filter_by(
+            SERVICE_MODEL,
+            SERVICE_MODEL.account_id,
+            account.id,
+        )
 
     async def get_transaction(
         self, user: User, transaction_id: int
@@ -170,6 +170,9 @@ class ScheduledTransactionService(BaseService):
 
         account = await self.repository.get(Account, transaction_information.account_id)
 
+        if account is None:
+            return None
+
         if not AccountService.has_user_access_to_account(  # pylint: disable=duplicate-code
             user, account
         ):
@@ -179,9 +182,12 @@ class ScheduledTransactionService(BaseService):
             logger.warning(ACCOUNT_USER_ID_MISMATCH)
             return None
 
-        offset_account_id = transaction_information.offset_account_id
-
         if transaction.offset_account_id:
+
+            offset_account_id = transaction_information.offset_account_id
+
+            if offset_account_id is None:
+                return None
 
             offset_account = await self.repository.get(Account, offset_account_id)
 
@@ -192,7 +198,7 @@ class ScheduledTransactionService(BaseService):
                 raise AccessDeniedError(
                     (
                         f"User[id: {user.id}] not allowed to access "
-                        f"offset_account[id: {transaction_information.offset_account_id}]"
+                        f"offset_account[id: {offset_account_id}]"
                     )
                 )
 

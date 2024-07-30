@@ -2,6 +2,7 @@ import datetime
 from contextlib import suppress
 from datetime import datetime as dt
 from datetime import timedelta, timezone
+from typing import Optional
 
 
 def get_today():
@@ -28,14 +29,14 @@ def get_day_delta(date: dt, days: int) -> dt:
     return date + timedelta(days=days)
 
 
-def get_tomorrow(date: dt = None) -> dt:
+def get_tomorrow(date: Optional[dt] = None) -> dt:
     if date is None:
         date = get_today()
 
     return get_day_delta(date, 1)
 
 
-def get_yesterday(date: dt = None) -> dt:
+def get_yesterday(date: Optional[dt] = None) -> dt:
     if date is None:
         date = get_today()
 

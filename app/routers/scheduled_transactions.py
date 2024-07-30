@@ -57,7 +57,7 @@ async def populate_transaction_form_account_choices(
         + [
             (account.id, account.label)
             for account in account_list
-            if account.id != account_id
+            if account is not None and account.id != account_id
         ]
         if account_list_length > 1
         else [(0, "No other accounts found")]
@@ -159,19 +159,20 @@ async def page_list_scheduled_transactions(
     transaction_list = await service.get_transaction_list(user, account_id)
     account = await handle_account_route(request, user, account_id)
 
-    add_breadcrumb(request, "Scheduled Transactions", None)
+    add_breadcrumb(request, "Scheduled Transactions", "")
 
     expenses = 0
     income = 0
     total = 0
 
     for transaction in transaction_list:
-        if transaction.information.amount < 0:
-            expenses += transaction.information.amount
-        else:
-            income += transaction.information.amount
+        if transaction is not None and hasattr(transaction, "information"):
+            if transaction.information.amount < 0:
+                expenses += transaction.information.amount
+            else:
+                income += transaction.information.amount
 
-        total += transaction.information.amount
+            total += transaction.information.amount
 
     return render_template(
         "pages/dashboard/page_scheduled_transactions.html",

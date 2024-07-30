@@ -74,6 +74,9 @@ async def test_create_transactions_from_schedule(
     repository.session.expire(test_account)
 
     account = await repository.get(models.Account, account_id)
+
+    assert isinstance(account, models.Account)
+
     new_balance = account.balance
 
     assert new_balance == current_account_balance

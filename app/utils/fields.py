@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Type, Union
+from typing import Any, Type, Union
 
 from pydantic_core import core_schema
 
@@ -10,7 +10,7 @@ from app.date_manager import string_to_datetime
 class BaseField(ABC):
 
     @abstractmethod
-    def _validate(self) -> Type:
+    def _validate(cls, value: Any) -> Type[Any]:
         pass
 
     @classmethod

@@ -1,10 +1,12 @@
+from typing import Any, List, Tuple
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.logger import get_logger
 from app.tasks import process_scheduled_transactions
 
 logger = get_logger(__name__)
-job_registry = []
+job_registry: List[Tuple[Any, Any, dict]] = []
 
 
 def add_jobs_to_scheduler(scheduler: AsyncIOScheduler):

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Optional
+from typing import Optional, Union
 
 from fastapi import Request
 from fastapi.responses import HTMLResponse
@@ -113,7 +113,7 @@ def group_categories_by_section(categorie_list: list[schemas.CategoryData]):
     return grouped_data
 
 
-def add_breadcrumb(request: Request, label: str, url: str):
+def add_breadcrumb(request: Request, label: str, url: Union[str, None]):
     """Add a breadcrumb to the request state.
 
     Args:

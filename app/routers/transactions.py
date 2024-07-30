@@ -78,7 +78,7 @@ async def populate_transaction_form_account_choices(
         + [
             (account.id, account.label)
             for account in account_list
-            if account.id != account_id
+            if account is not None and account.id != account_id
         ]
         if account_list_length > 1
         else [(0, "No other accounts found")]

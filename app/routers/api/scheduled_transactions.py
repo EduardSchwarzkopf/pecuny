@@ -42,9 +42,7 @@ async def api_get_scheduled_transactions(
         HTTPException: If the account is not found.
     """
 
-    return await service.get_transaction_list(
-        current_user, account_id, date_start, date_end
-    )
+    return await service.get_transaction_list(current_user, account_id)
 
 
 @router.get("/{transaction_id}", response_model=ResponseModel)

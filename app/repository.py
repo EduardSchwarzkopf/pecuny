@@ -12,6 +12,7 @@ from app import models
 from app.database import db
 from app.models import BaseModel
 from app.utils.enums import DatabaseFilterOperator, Frequency
+from app.utils.fields import IdField
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
@@ -61,7 +62,7 @@ class Repository:
     async def get(
         self,
         cls: Type[ModelT],
-        instance_id: int,
+        instance_id: Union[int, IdField],
         load_relationships_list: Optional[list[InstrumentedAttribute]] = None,
     ) -> Optional[ModelT]:
         """Retrieve an instance of the specified model by its ID.
@@ -193,6 +194,8 @@ class Repository:
                     return today.replace(month=today.month - 1)
                 case Frequency.YEARLY.value:
                     return today.replace(year=today.year - 1)
+
+            return today
 
         transaction_exists_condition = ~exists().where(
             and_(

@@ -504,7 +504,7 @@ async def fixture_create_scheduled_transactions(
             ]
         )
 
-    scheduled_transaction_list: List[models.TransactionScheduled] = (
+    scheduled_transaction_list: List[models.TransactionScheduled | None] = (
         await asyncio.gather(*create_task)
     )
     await repository.session.commit()
@@ -513,7 +513,15 @@ async def fixture_create_scheduled_transactions(
 
     delete_task = []
     for scheduled_transaction in scheduled_transaction_list:
+
+        if scheduled_transaction is None:
+            continue
+
         user = await repository.get(models.User, scheduled_transaction.account.user_id)
+
+        if user is None:
+            raise ValueError("No user found")
+
         delete_task.extend(
             [service.delete_scheduled_transaction(user, scheduled_transaction.id)]
         )
