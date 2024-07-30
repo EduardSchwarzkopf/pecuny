@@ -401,6 +401,20 @@ async def fixture_create_scheduled_transactions(
     test_accounts: list[models.Account],
     repository: Repository,
 ):
+    """
+    Fixture to create a list of scheduled transactions for testing purposes.
+
+    Args:
+        test_accounts: List of test accounts for which scheduled transactions will be created.
+        repository: The repository for database operations.
+
+    Yields:
+        List[models.TransactionScheduled | None]: List of created scheduled transactions or None.
+
+    Raises:
+        ValueError: If no user is found for a scheduled transaction.
+    """
+
     today = get_today()
     tomorrow = get_tomorrow(today)
     yesterday = get_yesterday(today)
