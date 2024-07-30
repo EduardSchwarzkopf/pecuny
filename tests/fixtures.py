@@ -568,7 +568,7 @@ async def fixture_test_account_scheduled_transaction_list(
             and_(
                 model.date_start <= today,
                 model.date_end >= today,
-                model.is_active == True,
+                model.is_active is True,
                 model.account_id == test_account.id,
                 ~exists().where(
                     and_(
