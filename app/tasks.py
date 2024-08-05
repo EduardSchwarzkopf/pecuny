@@ -59,14 +59,20 @@ async def _process_transaction_row(
         section=row.get("section"),
     )
 
-    section_list = await repo.filter_by(
-        models.TransactionSection,
-        models.TransactionSection.label,
-        failed_transaction.section,
-        DatabaseFilterOperator.LIKE,
-    )
+    try:
+        section_id = int(failed_transaction.section)
+        section = await repo.get(models.TransactionSection, section_id)
+    except ValueError as e:
+        section_list = await repo.filter_by(
+            models.TransactionSection,
+            models.TransactionSection.label,
+            failed_transaction.section,
+            DatabaseFilterOperator.LIKE,
+        )
 
-    if not section_list:
+        section = section_list[0] if section_list else None
+
+    if section is None:
         failed_transaction.reason = f"Section {failed_transaction.section} not found"
         return failed_transaction
 
@@ -80,7 +86,7 @@ async def _process_transaction_row(
             ),
             (
                 models.TransactionCategory.section_id,
-                section_list[0],
+                section.id,
                 DatabaseFilterOperator.EQUAL,
             ),
         ],
