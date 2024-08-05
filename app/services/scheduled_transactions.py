@@ -20,7 +20,7 @@ from app.utils.log_messages import ACCOUNT_USER_ID_MISMATCH
 
 logger = get_logger(__name__)
 
-SERVICE_MODEL = TransactionScheduled
+ServiceModel = TransactionScheduled
 
 
 class ScheduledTransactionService(BaseService):
@@ -29,7 +29,7 @@ class ScheduledTransactionService(BaseService):
         self,
         user: User,
         account_id: int,
-    ) -> list[SERVICE_MODEL]:
+    ) -> list[ServiceModel]:
         """
         Retrieves a list of transactions within a specified period for a given account.
 
@@ -40,29 +40,31 @@ class ScheduledTransactionService(BaseService):
             date_end: The end date of the period.
 
         Returns:
-            list[Transaction]: A list of transactions within the specified period.
+            list[TransactionScheduled]: A list of transactions within the specified period.
 
         Raises:
             None
         """
 
+        logger.info(
+            "Starting scheduled transaction list retrieval for user %s and account %s",
+            user.id,
+            account_id,
+        )
         account = await self.repository.get(Account, account_id)
 
-        if account is None:
-            return []
-
-        if account.user_id != user.id:
+        if account is None or account.user_id != user.id:
             return []
 
         return await self.repository.filter_by(
-            SERVICE_MODEL,
-            SERVICE_MODEL.account_id,
+            ServiceModel,
+            ServiceModel.account_id,
             account.id,
         )
 
     async def get_transaction(
         self, user: User, transaction_id: int
-    ) -> Optional[SERVICE_MODEL]:
+    ) -> Optional[ServiceModel]:
         """
         Retrieves a transaction by ID.
 
@@ -77,7 +79,13 @@ class ScheduledTransactionService(BaseService):
             None
         """
 
-        transaction = await self.repository.get(SERVICE_MODEL, transaction_id)
+        logger.info(
+            "Retrieving scheduled transaction with ID %s for user %s",
+            transaction_id,
+            user.id,
+        )
+
+        transaction = await self.repository.get(ServiceModel, transaction_id)
 
         if transaction is None:
             return None
@@ -93,7 +101,7 @@ class ScheduledTransactionService(BaseService):
         self,
         user: User,
         transaction_information: ScheduledTransactionInformationCreate,
-    ) -> Optional[SERVICE_MODEL]:
+    ) -> Optional[ServiceModel]:
         """
         Creates a scheduled transaction.
 
@@ -103,9 +111,8 @@ class ScheduledTransactionService(BaseService):
 
         Returns:
             TransactionScheduled: The created scheduled transaction.
-
-        Raises:
-            None
+            None: If the transaction is not found or
+                the user is not allowed to access the account.
         """
 
         account = await self.repository.get(Account, transaction_information.account_id)
@@ -139,7 +146,7 @@ class ScheduledTransactionService(BaseService):
             transaction_information.model_dump()
         )
 
-        transaction = SERVICE_MODEL(
+        transaction = ServiceModel(
             frequency_id=transaction_information.frequency_id,
             date_start=transaction_information.date_start,
             date_end=transaction_information.date_end,
@@ -157,28 +164,35 @@ class ScheduledTransactionService(BaseService):
         user: User,
         transaction_id: int,
         transaction_information: ScheduledTransactionInformtionUpdate,
-    ) -> Optional[SERVICE_MODEL]:
+    ) -> Optional[ServiceModel]:
+        """
+        Update a scheduled transaction with new information.
+
+        Args:
+            user: The user updating the transaction.
+            transaction_id: The ID of the transaction to update.
+            transaction_information: The updated information
+
+        Returns:
+            TransactionScheduled: The updated scheduled transaction.
+            None: If the transaction is not found or
+                the user is not allowed to access the account.
+        """
 
         transaction = await self.repository.get(
-            SERVICE_MODEL,
+            ServiceModel,
             transaction_id,
-            load_relationships_list=[SERVICE_MODEL.account],
+            load_relationships_list=[ServiceModel.account],
         )
-
-        if transaction is None:
-            return None
 
         account = await self.repository.get(Account, transaction_information.account_id)
 
-        if account is None:
+        if transaction is None or account is None:
             return None
 
         if not AccountService.has_user_access_to_account(  # pylint: disable=duplicate-code
             user, account
         ):
-            return None
-
-        if user.id != account.user_id:
             logger.warning(ACCOUNT_USER_ID_MISMATCH)
             return None
 
@@ -240,7 +254,7 @@ class ScheduledTransactionService(BaseService):
         )
 
         transaction = await self.repository.get(
-            SERVICE_MODEL,
+            ServiceModel,
             transaction_id,
         )
 

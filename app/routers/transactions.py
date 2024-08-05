@@ -111,7 +111,7 @@ async def populate_transaction_form_category_choices(
 
 
 async def populate_transaction_form_frequency_choices(
-    user: models.User, form: schemas.CreateTransactionForm
+    form: schemas.CreateTransactionForm,
 ) -> None:
     """
     Populates the category choices in the transaction form.

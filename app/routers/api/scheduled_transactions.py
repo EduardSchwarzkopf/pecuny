@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from fastapi import Depends, Response, status
 from fastapi.exceptions import HTTPException
 
@@ -19,8 +17,6 @@ ResponseModel = schemas.ScheduledTransaction
 @router.get("/", response_model=list[ResponseModel])
 async def api_get_scheduled_transactions(
     account_id: int,
-    date_start: datetime,
-    date_end: datetime,
     current_user: User = Depends(current_active_verified_user),
     service: ScheduledTransactionService = Depends(
         ScheduledTransactionService.get_instance
@@ -121,6 +117,21 @@ async def api_update_scheduled_transaction(
         ScheduledTransactionService.get_instance
     ),
 ):
+    """
+    Update a scheduled transaction via the API.
+
+    Args:
+        transaction_id: The ID of the transaction to update.
+        transaction_information: The updated information for the transaction.
+        current_user: The current authenticated user.
+        service: The service for handling scheduled transactions.
+
+    Returns:
+        The updated scheduled transaction if successful.
+
+    Raises:
+        HTTPException: If the scheduled transaction update fails.
+    """
 
     transaction = await tm.transaction(
         service.update_scheduled_transaction,

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Type, Union
+from typing import Any, Union
 
 from pydantic_core import core_schema
 
@@ -9,9 +9,13 @@ from app.date_manager import string_to_datetime
 
 class BaseField(ABC):
 
+    @classmethod
     @abstractmethod
-    def _validate(cls, value: Any) -> Type[Any]:
-        pass
+    def _validate(cls, value: Any) -> Any:
+        """
+        Define an abstract method to validate a value and
+        return the validated type.
+        """
 
     @classmethod
     def __get_pydantic_core_schema__(cls, _source, _handler):
@@ -26,7 +30,7 @@ class BaseField(ABC):
 
 class IdField(BaseField, int):
     @classmethod
-    def _validate(cls, value: Union[int, str, None]):
+    def _validate(cls, value: Union[int, str, None]) -> int:
         if value is None:
             return value
 
@@ -35,8 +39,8 @@ class IdField(BaseField, int):
                 return None
             try:
                 value = int(value)
-            except ValueError:
-                raise ValueError("Invalid Id provided")
+            except ValueError as e:
+                raise ValueError("Invalid Id provided") from e
 
         if isinstance(value, int) and value > 0:
             return value
@@ -46,7 +50,7 @@ class IdField(BaseField, int):
 
 class DateField(BaseField, datetime):
     @classmethod
-    def _validate(cls, value):
+    def _validate(cls, value: Union[str, datetime]) -> datetime:
         """
         Validates and parses a date string into a datetime object.
 

@@ -5,6 +5,10 @@ class ExtendedEnum(Enum):
 
     @classmethod
     def get_list(cls):
+        """
+        Return a list of values from the enum class.
+        """
+
         return [c.value for c in cls]
 
 

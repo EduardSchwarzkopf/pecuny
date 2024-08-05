@@ -16,7 +16,9 @@ class FrequencyService(BaseService):
         Get a list of transaction categories based on frequency.
 
         Returns:
-            Optional[list[models.TransactionCategory]]: A list of transaction categories based on frequency, or None if not found.
+            Optional[list[models.TransactionCategory]]:
+                A list of transaction categories based on frequency,
+                or None if not found.
         """
 
         return await self.repository.get_all(models.Frequency)
@@ -29,7 +31,8 @@ class FrequencyService(BaseService):
             frequency_id (int): The ID of the frequency to retrieve.
 
         Returns:
-            Optional[models.Frequency]: The transaction category corresponding to the given frequency ID, or None if not found.
+            Optional[models.Frequency]: The transaction category corresponding
+                 to the given frequency ID, or None if not found.
         """
 
         return await self.repository.get(models.Frequency, frequency_id)

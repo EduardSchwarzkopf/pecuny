@@ -22,14 +22,39 @@ def get_today():
 
 
 def now():
+    """
+    Get the current date and time in UTC timezone.
+    """
+
     return dt.now(timezone.utc)
 
 
 def get_day_delta(date: dt, days: int) -> dt:
+    """
+    Get the date by adding a specified number of days to the given date.
+
+    Args:
+        date: The reference date.
+        days: The number of days to add to the reference date.
+
+    Returns:
+        The resulting date after adding the specified number of days.
+    """
+
     return date + timedelta(days=days)
 
 
 def get_tomorrow(date: Optional[dt] = None) -> dt:
+    """
+    Get the date for tomorrow.
+
+    Args:
+        date: The reference date. Defaults to today if not provided.
+
+    Returns:
+        The date for tomorrow.
+    """
+
     if date is None:
         date = get_today()
 
@@ -37,6 +62,16 @@ def get_tomorrow(date: Optional[dt] = None) -> dt:
 
 
 def get_yesterday(date: Optional[dt] = None) -> dt:
+    """
+    Get the date for tomorrow.
+
+    Args:
+        date: The reference date. Defaults to today if not provided.
+
+    Returns:
+        The date for tomorrow.
+    """
+
     if date is None:
         date = get_today()
 

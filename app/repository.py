@@ -172,12 +172,15 @@ class Repository:
         today: datetime,
     ) -> list[models.TransactionScheduled]:
         """
-        Retrieve all scheduled transactions for a specific frequency that are active and not yet processed today.
+        Retrieve all scheduled transactions for a specific frequency
+        that are active and not yet processed today.
 
         Args:
             frequency_id (int): The frequency ID to filter by.
             today (datetime): The current date to use for filtering.
-            date_filter_func (Callable[[datetime], datetime]): A date transformation function to filter creation dates in the `Transaction` table.
+            date_filter_func (Callable[[datetime], datetime]):
+                A date transformation function to filter creation dates
+                in the `Transaction` table.
 
         Returns:
             list[models.TransactionScheduled]: A list of scheduled transactions.
@@ -209,7 +212,7 @@ class Repository:
         query = select(model).where(
             model.date_start <= today,
             model.date_end >= today,
-            model.is_active == True,
+            model.is_active is True,
             model.frequency_id == frequency_id,
             transaction_exists_condition,
         )

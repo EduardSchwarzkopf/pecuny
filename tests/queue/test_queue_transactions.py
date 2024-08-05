@@ -12,7 +12,8 @@ from app.utils.enums import DatabaseFilterOperator, Frequency
 
 def _process_scheduled_transactions() -> None:
     """
-    Process scheduled transactions asynchronously and wait for a short duration for processing to complete.
+    Process scheduled transactions asynchronously and
+    wait for a short duration for processing to complete.
     """
 
     process_scheduled_transactions.delay()
@@ -78,7 +79,8 @@ async def test_create_transactions_from_schedule(
 
     Args:
         test_account: The test account for the transactions.
-        test_account_scheduled_transaction_list: List of scheduled transactions for the test account.
+        test_account_scheduled_transaction_list:
+            List of scheduled transactions for the test account.
         repository: The repository for database operations.
     """
 

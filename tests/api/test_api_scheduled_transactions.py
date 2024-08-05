@@ -39,6 +39,18 @@ async def test_create_scheduled_transaction(
     test_account: models.Account,
     test_user: models.User,
 ):
+    """
+    Test creating scheduled transactions with different amounts,
+    references, category IDs, and frequency IDs.
+
+    Args:
+        amount: The amount of the transaction.
+        reference: The reference for the transaction.
+        category_id: The category ID of the transaction.
+        frequency_id: The frequency ID of the transaction.
+        test_account: The account for which the transaction is created.
+        test_user: The user creating the transaction.
+    """
 
     yesterday = get_yesterday()
     tomorrow = get_tomorrow()
@@ -75,6 +87,15 @@ async def test_read_scheduled_transaction(
     test_user: models.User,
     test_account_scheduled_transaction_list: List[models.TransactionScheduled],
 ):
+    """
+    Test reading a scheduled transaction.
+
+    Args:
+        test_account: The account associated with the transaction.
+        test_user: The user performing the read operation.
+        test_account_scheduled_transaction_list: List of scheduled transactions for testing.
+    """
+
     transaction = test_account_scheduled_transaction_list[0]
 
     res = await make_http_request(
@@ -100,6 +121,14 @@ async def test_update_scheduled_transaction(
     test_user: models.User,
     test_account_scheduled_transaction_list: List[models.TransactionScheduled],
 ):
+    """
+    Test updating a scheduled transaction with new information.
+
+    Args:
+        test_user: The user performing the update.
+        test_account_scheduled_transaction_list: List of scheduled transactions for testing.
+    """
+
     transaction = test_account_scheduled_transaction_list[0]
 
     now_ = now()
@@ -142,6 +171,14 @@ async def test_delete_scheduled_transaction(
     test_account_scheduled_transaction_list: List[models.TransactionScheduled],
     repository: Repository,
 ):
+    """
+    Test deleting a scheduled transaction.
+
+    Args:
+        test_user: The user performing the deletion.
+        test_account_scheduled_transaction_list: List of scheduled transactions for testing.
+        repository: The repository for database operations.
+    """
 
     transaction = test_account_scheduled_transaction_list[0]
     transaction_id = transaction.id
@@ -158,11 +195,20 @@ async def test_delete_scheduled_transaction(
 
 
 # Tests for unauthorized access
+@pytest.mark.usefixtures("test_account_scheduled_transaction_list")
 async def test_create_scheduled_transaction_unauthorized(
     test_user: models.User,
-    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
     repository: Repository,
 ):
+    """
+    Tests unauthorized creation of a scheduled transaction.
+
+    Args:
+        test_user: The unauthorized user attempting the creation.
+        repository: The repository for database operations.
+
+    """
+
     other_account = await get_other_user_account(test_user, repository)
 
     res = await make_http_request(
@@ -187,6 +233,15 @@ async def test_read_scheduled_transaction_unauthorized(
     test_user: models.User,
     repository: Repository,
 ):
+    """
+    Test reading a scheduled transaction by an unauthorized user.
+
+    Args:
+        test_user: The unauthorized user attempting the read operation.
+        repository: The repository for database operations.
+
+    """
+
     other_account = await get_other_user_account(test_user, repository)
     transaction_list = await repository.filter_by(
         models.TransactionScheduled,
@@ -209,6 +264,15 @@ async def test_update_scheduled_transaction_unauthorized(
     test_user: models.User,
     repository: Repository,
 ):
+    """
+    Test updating a scheduled transaction by an unauthorized user.
+
+    Args:
+        test_user: The unauthorized user attempting the update.
+        repository: The repository for database operations.
+
+    """
+
     other_account = await get_other_user_account(test_user, repository)
     transaction_list = await repository.filter_by(
         models.TransactionScheduled,
@@ -241,6 +305,14 @@ async def test_delete_scheduled_transaction_unauthorized(
     test_user: models.User,
     repository: Repository,
 ):
+    """
+    Test deleting a scheduled transaction by an unauthorized user.
+
+    Args:
+        test_user: The unauthorized user attempting the deletion.
+        repository: The repository for database operations.
+    """
+
     other_account = await get_other_user_account(test_user, repository)
 
     transaction_list = await repository.filter_by(
@@ -268,6 +340,13 @@ async def test_delete_scheduled_transaction_unauthorized(
 async def test_create_scheduled_transaction_unauthenticated(
     test_account_scheduled_transaction_list: List[models.TransactionScheduled],
 ):
+    """
+    Test creating a scheduled transaction without authentication.
+
+    Args:
+        test_account_scheduled_transaction_list: List of scheduled transactions for testing.
+    """
+
     transaction = test_account_scheduled_transaction_list[0]
 
     res = await make_http_request(
@@ -289,6 +368,13 @@ async def test_create_scheduled_transaction_unauthenticated(
 async def test_read_scheduled_transaction_unauthenticated(
     test_account_scheduled_transaction_list: List[models.TransactionScheduled],
 ):
+    """
+    Test reading a scheduled transaction without authentication.
+
+    Args:
+        test_account_scheduled_transaction_list: List of scheduled transactions for testing.
+    """
+
     transaction = test_account_scheduled_transaction_list[0]
 
     res = await make_http_request(
@@ -301,6 +387,13 @@ async def test_read_scheduled_transaction_unauthenticated(
 async def test_update_scheduled_transaction_unauthenticated(
     test_account_scheduled_transaction_list: List[models.TransactionScheduled],
 ):
+    """
+    Test updating a scheduled transaction without authentication.
+
+    Args:
+        test_account_scheduled_transaction_list: List of scheduled transactions for testing.
+    """
+
     transaction = test_account_scheduled_transaction_list[0]
 
     res = await make_http_request(
@@ -323,6 +416,14 @@ async def test_update_scheduled_transaction_unauthenticated(
 async def test_delete_scheduled_transaction_unauthenticated(
     test_account_scheduled_transaction_list: List[models.TransactionScheduled],
 ):
+    """
+    Test deleting a scheduled transaction without authentication.
+
+    Args:
+        test_account_scheduled_transaction_list(fixture):
+            Fixture to get a list of scheduled transactions
+    """
+
     transaction = test_account_scheduled_transaction_list[0]
 
     res = await make_http_request(
@@ -336,6 +437,12 @@ async def test_delete_scheduled_transaction_unauthenticated(
 async def test_read_scheduled_transaction_not_found(
     test_user: models.User,
 ):
+    """
+    Test reading a scheduled transaction that is not found.
+
+    Args:
+        test_user: The user it should be tested with.
+    """
 
     res = await make_http_request(
         ENDPOINT + str(9999), as_user=test_user, method=RequestMethod.GET
@@ -362,6 +469,16 @@ async def test_create_scheduled_transaction_with_missing_fields(
     test_user: models.User,
     key_to_remove: str,
 ):
+    """
+    Test creation of scheduled transactions with missing data.
+
+    Args:
+        test_account_scheduled_transaction_list(fixture):
+            Fixture to get a list of scheduled transactions
+        test_user: The user it should be tested with.
+        key: The key that should be removed from the payload.
+    """
+
     transaction = test_account_scheduled_transaction_list[0]
 
     payload = {
@@ -429,6 +546,16 @@ async def test_create_scheduled_transaction_with_invalid_data(
     key: str,
     value: Any,
 ):
+    """
+    Test creation of scheduled transactions with invalid data.
+
+    Args:
+        test_user: The user it should be tested with.
+        test_account: The test account for the transactions.
+        key: The key that should be updated in the payload.
+        value: The value that should be placed on the key.
+    """
+
     payload = {
         "account_id": test_account.id,
         "amount": 999,
@@ -494,6 +621,15 @@ async def test_update_scheduled_transaction_with_invalid_data(
     key: str,
     value: Any,
 ):
+    """
+    Test updating of scheduled transactions with invalid data.
+
+    Args:
+        test_user: The user it should be tested with.
+        test_account: The test account for the transactions.
+        key: The key that should be updated in the payload.
+        value: The value that should be placed on the key.
+    """
 
     transaction = test_account_scheduled_transaction_list[0]
     payload = {
@@ -521,6 +657,13 @@ async def test_update_scheduled_transaction_with_invalid_data(
 async def test_update_scheduled_transaction_non_existent(
     test_user: models.User, test_account: models.Account
 ):
+    """
+    Test updating of scheduled transactions that does not exist.
+
+    Args:
+        test_user: The user it should be tested with.
+        test_account: The test account for the transactions.
+    """
 
     payload = {
         "account_id": test_account.id,
@@ -540,15 +683,24 @@ async def test_update_scheduled_transaction_non_existent(
 
 
 async def test_delete_scheduled_transactions_keep_transactions():
+    """
+    Test the deletion of scheduled transactions while keeping associated transactions.
+    """
+
     # TODO: needs to be implemented
-    pass
 
 
 async def test_rate_limiting_scheduled_transactions():
+    """
+    Test the rate limiting functionality for scheduled transactions in the API.
+    """
+
     # TODO: needs to be implemented
-    pass
 
 
 async def test_pagination_scheduled_transactions():
+    """
+    Test the pagination of scheduled transactions in the API.
+    """
+
     # TODO: needs to be implemented
-    pass

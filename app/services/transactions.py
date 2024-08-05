@@ -1,4 +1,3 @@
-from ctypes import Union
 from datetime import datetime
 from typing import Optional
 
@@ -45,14 +44,9 @@ class TransactionService(BaseService):
         )
         account = await self.repository.get(models.Account, account_id)
 
-        if account is None:
+        if account is None or account.user_id != user.id:
             return []
 
-        if account.user_id != user.id:
-            logger.warning(ACCOUNT_USER_ID_MISMATCH)
-            return []
-
-        logger.info("User ID verified. Retrieving transactions.")
         return await self.repository.get_transactions_from_period(
             account_id, date_start, date_end
         )

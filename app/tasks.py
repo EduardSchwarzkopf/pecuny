@@ -1,12 +1,11 @@
 import csv
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import InvalidOperation
 from io import StringIO
 from typing import List, Optional
 
 from fastapi import HTTPException
 from pydantic import ValidationError
-from sqlalchemy import and_, desc, exists, func, select, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas, transaction_manager
@@ -71,23 +70,20 @@ async def _process_transaction_row(
         failed_transaction.reason = f"Section {failed_transaction.section} not found"
         return failed_transaction
 
-    section = section_list[0]
-
-    conditions = [
-        (
-            models.TransactionCategory.label,
-            failed_transaction.category,
-            DatabaseFilterOperator.LIKE,
-        ),
-        (
-            models.TransactionCategory.section_id,
-            section.id,
-            DatabaseFilterOperator.EQUAL,
-        ),
-    ]
-
     category_list = await repo.filter_by_multiple(
-        models.TransactionCategory, conditions
+        models.TransactionCategory,
+        [
+            (
+                models.TransactionCategory.label,
+                failed_transaction.category,
+                DatabaseFilterOperator.LIKE,
+            ),
+            (
+                models.TransactionCategory.section_id,
+                section_list[0],
+                DatabaseFilterOperator.EQUAL,
+            ),
+        ],
     )
 
     if not category_list:
@@ -102,18 +98,19 @@ async def _process_transaction_row(
             category_id=category.id,
             **row,
         )
-    except ValidationError as e:
-        first_error = e.errors()[0]
-        failed_transaction.reason = f"{first_error['loc'][0]}: {first_error['msg']}"
-        return failed_transaction
-    except InvalidOperation:
-        failed_transaction.reason = (
-            f"Invalid value on line {line_num} on value {failed_transaction.amount}"
-        )
-        return failed_transaction
+    except (ValidationError, Exception) as e:
+        error_message = ""
+        if isinstance(e, ValidationError):
+            first_error = e.errors()[0]
+            error_message = f"{first_error['loc'][0]}: {first_error['msg']}"
+        elif isinstance(e, InvalidOperation):
+            error_message = (
+                f"Invalid value on line {line_num} on value {failed_transaction.amount}"
+            )
+        else:
+            error_message = str(e)
 
-    except Exception as e:
-        failed_transaction.reason = str(e)
+        failed_transaction.reason = error_message
         return failed_transaction
 
     transaction = await transaction_manager.transaction(
@@ -187,6 +184,17 @@ async def _create_transaction(
     repo: Repository,
     scheduled_transaction: models.TransactionScheduled,
 ):
+    """
+    Create a transaction based on a scheduled transaction.
+
+        Args:
+            session: The database session.
+            today: The current date.
+            service: The transaction service.
+            repo: The repository for database operations.
+            scheduled_transaction:
+                The scheduled transaction to create a transaction from.
+    """
 
     user = await repo.get(models.User, scheduled_transaction.account.user_id)
 
@@ -207,6 +215,11 @@ async def _create_transaction(
 
 @celery.task
 async def process_scheduled_transactions():
+    """
+    Process scheduled transactions by fetching them based on frequency and
+    creating corresponding transactions.
+    """
+
     async with await db.get_session() as session:
         repo = Repository(session)
         service = TransactionService(repo)
