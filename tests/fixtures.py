@@ -566,10 +566,10 @@ async def fixture_test_account_scheduled_transaction_list(
     result = await repository.session.execute(
         select(model).where(
             and_(
+                model.account_id == test_account.id,
                 model.date_start <= today,
                 model.date_end >= today,
-                model.is_active is True,
-                model.account_id == test_account.id,
+                model.is_active == True,
                 ~exists().where(
                     and_(
                         models.Transaction.scheduled_transaction_id == model.id,
@@ -580,8 +580,8 @@ async def fixture_test_account_scheduled_transaction_list(
         )
     )
 
-    scheduled_transaction_list = result.scalars().all()
-    return scheduled_transaction_list
+    li = result.scalars().all()
+    return li
 
 
 @pytest.fixture(name="test_account_transaction_list")

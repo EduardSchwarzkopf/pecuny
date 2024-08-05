@@ -212,7 +212,7 @@ class Repository:
         query = select(model).where(
             model.date_start <= today,
             model.date_end >= today,
-            model.is_active is True,
+            model.is_active == True,
             model.frequency_id == frequency_id,
             transaction_exists_condition,
         )
