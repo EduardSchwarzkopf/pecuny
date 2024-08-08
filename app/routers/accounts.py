@@ -18,7 +18,12 @@ from app.utils import PageRouter
 from app.utils.account_utils import get_account_list_template
 from app.utils.enums import FeedbackType
 from app.utils.file_utils import process_csv_file
-from app.utils.template_utils import add_breadcrumb, render_template, set_feedback
+from app.utils.template_utils import (
+    add_breadcrumb,
+    calculate_financial_summary,
+    render_template,
+    set_feedback,
+)
 
 PREFIX = f"{dashboard_router.prefix}/accounts"
 router = PageRouter(prefix=PREFIX, tags=["Accounts"])
@@ -210,20 +215,12 @@ async def page_get_account(
         await transaction_service.get_transaction_list(
             user, account_id, date_start, date_end
         )
-    ) or []
+    )
 
-    expenses = 0
-    income = 0
-    total = 0
-
-    for transaction in transaction_list:
-        if transaction is not None and hasattr(transaction, "information"):
-            if transaction.information.amount < 0:
-                expenses += transaction.information.amount
-            else:
-                income += transaction.information.amount
-
-            total += transaction.information.amount
+    financial_summary = calculate_financial_summary(transaction_list)
+    expenses = financial_summary.expenses
+    income = financial_summary.income
+    total = financial_summary.total
 
     filtered_transaction_list = [tx for tx in transaction_list if tx is not None]
     filtered_transaction_list.sort(key=lambda x: x.information.date, reverse=True)
