@@ -25,29 +25,15 @@ class BaseTransactionService(BaseService):
 
         super().__init__(repository)
 
-    async def get_transaction_list(
-        self,
-        user: models.User,
-        account_id: int,
-        date_start: Optional[datetime] = None,
-        date_end: Optional[datetime] = None,
-    ) -> List[models.Transaction]:
-        logger.info(
-            "Starting transaction list retrieval for user %s and account %s",
-            user.id,
-            account_id,
-        )
-        account = await self.repository.get(models.Account, account_id)
+        """
+        Retrieves a transaction by ID.
 
-        if account is None or account.user_id != user.id:
-            return []
+        Args:
+            transaction_id: The ID of the transaction to retrieve.
 
-        if date_start and date_end:
-            return await self.repository.get_transactions_from_period(
-                account_id, date_start, date_end
-            )
-        else:
-            return await self.repository.filter_by(
+        Returns:
+            The transaction if found, None otherwise.
+        """
                 self.service_model,
                 self.service_model.account_id,
                 account.id,
@@ -56,6 +42,16 @@ class BaseTransactionService(BaseService):
     async def get_transaction(
         self, user: models.User, transaction_id: int
     ) -> Optional[models.Transaction]:
+        """
+        Retrieves a transaction for a specific user by ID.
+
+        Args:
+            user: The user for whom the transaction is being retrieved.
+            transaction_id: The ID of the transaction to retrieve.
+
+        Returns:
+            The transaction if found, None otherwise.
+        """
         logger.info(
             "Retrieving transaction with ID %s for user %s", transaction_id, user.id
         )
@@ -80,6 +76,16 @@ class BaseTransactionService(BaseService):
     async def delete_transaction(
         self, current_user: models.User, transaction_id: int
     ) -> Optional[bool]:
+        """
+        Deletes a transaction for the current user by ID.
+
+        Args:
+            current_user: The current user performing the deletion.
+            transaction_id: The ID of the transaction to delete.
+
+        Returns:
+            True if the transaction is successfully deleted, None otherwise.
+        """
         logger.info(
             "Deleting transaction with ID %s for user %s",
             transaction_id,
@@ -126,6 +132,16 @@ class BaseTransactionService(BaseService):
         user: models.User,
         transaction_data: schemas.TransactionData,
     ) -> Optional[models.Transaction]:
+        """
+        Creates a new transaction for a user based on the provided transaction data.
+
+        Args:
+            user: The user for whom the transaction is being created.
+            transaction_data: The data for the new transaction.
+
+        Returns:
+            The created transaction if successful, None otherwise.
+        """
         logger.info("Creating new transaction for user %s", user.id)
         account = await self.repository.get(models.Account, transaction_data.account_id)
 
@@ -179,6 +195,16 @@ class BaseTransactionService(BaseService):
         user: models.User,
         transaction_data: schemas.TransactionData,
     ) -> Optional[models.Transaction]:
+        """
+        Handles the creation of an offset transaction for a user based on the provided data.
+
+        Args:
+            user: The user for whom the offset transaction is being handled.
+            transaction_data: The data for the offset transaction.
+
+        Returns:
+            The created offset transaction if successful, None otherwise.
+        """
         logger.info("Handling offset transaction for user %s", user.id)
         offset_account_id = transaction_data.offset_account_id
         if offset_account_id is None:
@@ -214,17 +240,17 @@ class BaseTransactionService(BaseService):
         transaction_id: int,
         transaction_information: schemas.TransactionInformtionUpdate,
     ) -> Optional[models.Transaction]:
-        logger.info(
-            "Updating transaction with ID %s for user %s",
-            transaction_id,
-            current_user.id,
-        )
+        """
+        Updates a transaction for the current user by ID with the provided information.
 
-        transaction = await self.repository.get(
-            self.service_model,
-            transaction_id,
-            load_relationships_list=[self.service_model.account],
-        )
+        Args:
+            current_user: The current user updating the transaction.
+            transaction_id: The ID of the transaction to update.
+            transaction_information: The updated information for the transaction.
+
+        Returns:
+            The updated transaction if successful, None otherwise.
+        """
 
         if transaction is None:
             return None
