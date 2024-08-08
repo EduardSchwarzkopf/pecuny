@@ -9,126 +9,19 @@ from app import transaction_manager as tm
 from app.auth_manager import current_active_verified_user
 from app.routers.accounts import handle_account_route
 from app.routers.accounts import router as account_router
-from app.services.accounts import AccountService
-from app.services.categories import CategoryService
-from app.services.frequency import FrequencyService
 from app.services.transactions import TransactionService
 from app.utils import PageRouter
 from app.utils.account_utils import get_account_list_template
-from app.utils.template_utils import group_categories_by_section, render_template
+from app.utils.template_utils import (
+    populate_transaction_form_choices,
+    render_transaction_form_template,
+)
 
 PREFIX = account_router.prefix + "/{account_id}/transactions"
 
 router = PageRouter(prefix=PREFIX, tags=["Transactions"])
 
-
-async def populate_transaction_form_choices(
-    account_id: int,
-    user: models.User,
-    form: schemas.CreateTransactionForm,
-    first_select_label: str = "Select target account for transfers",
-) -> None:
-    """
-    Populates the choices in the transaction form.
-
-    Args:
-        account_id: The ID of the account.
-        user: The current active user.
-        form: The create transaction form.
-        first_select_label: The label for the first select option.
-
-    Returns:
-        None
-    """
-
-    await populate_transaction_form_category_choices(user, form)
-    await populate_transaction_form_account_choices(
-        account_id, user, form, first_select_label
-    )
-
-
-async def populate_transaction_form_account_choices(
-    account_id: int,
-    user: models.User,
-    form: schemas.CreateTransactionForm,
-    first_select_label,
-) -> None:
-    """
-    Populates the account choices in the transaction form.
-
-    Args:
-        account_id: The ID of the account.
-        user: The current active user.
-        form: The create transaction form.
-        first_select_label: The label for the first select option.
-
-    Returns:
-        None
-    """
-    service = AccountService()
-    account_list = await service.get_accounts(user)
-
-    if account_list is None:
-        return None
-
-    account_list_length = len(account_list)
-
-    account_choices = (
-        [(0, first_select_label)]
-        + [
-            (account.id, account.label)
-            for account in account_list
-            if account is not None and account.id != account_id
-        ]
-        if account_list_length > 1
-        else [(0, "No other accounts found")]
-    )
-
-    form.offset_account_id.choices = account_choices
-    if account_list_length == 1:
-        form.offset_account_id.data = 0
-
-
-async def populate_transaction_form_category_choices(
-    user: models.User, form: schemas.CreateTransactionForm
-) -> None:
-    """
-    Populates the category choices in the transaction form.
-
-    Args:
-        user: The current active user.
-        form: The create transaction form.
-
-    Returns:
-        None
-    """
-    category_service = CategoryService()
-    category_list = await category_service.get_categories(user) or []
-    category_data_list = [
-        schemas.CategoryData(**category.__dict__) for category in category_list
-    ]
-    form.category_id.choices = group_categories_by_section(category_data_list)
-
-
-async def populate_transaction_form_frequency_choices(
-    form: schemas.CreateTransactionForm,
-) -> None:
-    """
-    Populates the category choices in the transaction form.
-
-    Args:
-        user: The current active user.
-        form: The create transaction form.
-
-    Returns:
-        None
-    """
-    category_service = FrequencyService()
-    category_list = await category_service.get_frequency_list() or []
-    category_data_list = [
-        schemas.CategoryData(**category.__dict__) for category in category_list
-    ]
-    form.category_id.choices = group_categories_by_section(category_data_list)
+# pylint: disable=duplicate-code
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -175,16 +68,8 @@ async def page_create_transaction_form(
     form = schemas.CreateTransactionForm(request)
     await populate_transaction_form_choices(account_id, user, form)
 
-    return render_template(
-        "pages/dashboard/page_form_transaction.html",
-        request,
-        {
-            "form": form,
-            "account_id": account_id,
-            "action_url": request.url_for(
-                "page_create_transaction", account_id=account_id
-            ),
-        },
+    return render_transaction_form_template(
+        request, form, account_id, "page_create_transaction"
     )
 
 
@@ -213,16 +98,8 @@ async def page_create_transaction(
     await populate_transaction_form_choices(account_id, user, form)
 
     if not await form.validate_on_submit():
-        return render_template(
-            "pages/dashboard/page_form_transaction.html",
-            request,
-            {
-                "form": form,
-                "account_id": account_id,
-                "action_url": router.url_path_for(
-                    "page_create_transaction", account_id=account_id
-                ),
-            },
+        return render_transaction_form_template(
+            request, form, account_id, "page_create_transaction"
         )
 
     if form.is_expense.data:
@@ -292,20 +169,12 @@ async def page_update_transaction_get(
 
         if offset_transaction is not None:
             form.offset_account_id.data = offset_transaction.account_id
-
-    return render_template(
-        "pages/dashboard/page_form_transaction.html",
+    return render_transaction_form_template(
         request,
-        {
-            "form": form,
-            "account_id": account_id,
-            "transaction": transaction,
-            "action_url": router.url_path_for(
-                "page_update_transaction_get",
-                account_id=account_id,
-                transaction_id=transaction.id,
-            ),
-        },
+        form,
+        account_id,
+        "page_update_transaction_get",
+        transaction,
     )
 
 
@@ -345,19 +214,12 @@ async def page_update_transaction_post(
 
     if not await form.validate_on_submit():
         form.date.data = transaction.information.date.strftime("%Y-%m-%d")
-        return render_template(
-            "pages/dashboard/page_form_transaction.html",
+        return render_transaction_form_template(
             request,
-            {
-                "form": form,
-                "account_id": account_id,
-                "transaction": transaction,
-                "action_url": router.url_path_for(
-                    "page_update_transaction_get",
-                    account_id=account_id,
-                    transaction_id=transaction.id,
-                ),
-            },
+            form,
+            account_id,
+            "page_update_transaction_get",
+            transaction,
         )
 
     if form.is_expense.data:
