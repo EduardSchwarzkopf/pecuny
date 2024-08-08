@@ -18,6 +18,8 @@ from tests.utils import get_user_offset_account, make_http_request
 
 ENDPOINT = "/api/transactions/"
 
+# pylint: disable=duplicate-code
+
 
 @pytest.mark.parametrize(
     "amount, reference, category_id",

@@ -19,8 +19,9 @@ from tests.utils import get_other_user_account, make_http_request
 
 ENDPOINT = "/api/scheduled-transactions/"
 
+# pylint: disable=duplicate-code
 
-# Tests for basic CRUD operations
+
 @pytest.mark.parametrize(
     "amount, reference, category_id, frequency_id",
     [
@@ -297,7 +298,7 @@ async def test_update_scheduled_transaction_unauthorized(
         as_user=test_user,
     )
 
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTP_404_NOT_FOUND
 
 
 @pytest.mark.usefixtures("test_account_scheduled_transaction_list")
@@ -679,7 +680,7 @@ async def test_update_scheduled_transaction_non_existent(
         ENDPOINT + str(99999), as_user=test_user, json=payload
     )
 
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTP_404_NOT_FOUND
 
 
 async def test_delete_scheduled_transactions_keep_transactions():
