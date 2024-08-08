@@ -1,7 +1,4 @@
-# base_transaction_service.py
-import asyncio
-from datetime import datetime
-from typing import List, Optional, Type
+from typing import Optional, Type, Union
 
 from app import models, schemas
 from app.logger import get_logger
@@ -18,13 +15,16 @@ logger = get_logger(__name__)
 class BaseTransactionService(BaseService):
     def __init__(
         self,
-        service_model: Type[models.Transaction],
+        service_model: Type[Union[models.Transaction, models.TransactionScheduled]],
         repository: Optional[Repository] = None,
     ):
         self.service_model = service_model
 
         super().__init__(repository)
 
+    async def _get_transaction_by_id(
+        self, transaction_id: int
+    ) -> Optional[Union[models.Transaction, models.TransactionScheduled]]:
         """
         Retrieves a transaction by ID.
 
@@ -34,10 +34,17 @@ class BaseTransactionService(BaseService):
         Returns:
             The transaction if found, None otherwise.
         """
+        if self.service_model is models.Transaction:
+            return await self.repository.get(
                 self.service_model,
-                self.service_model.account_id,
-                account.id,
+                transaction_id,
+                load_relationships_list=[self.service_model.offset_transaction],
             )
+
+        return await self.repository.get(
+            self.service_model,
+            transaction_id,
+        )
 
     async def get_transaction(
         self, user: models.User, transaction_id: int
@@ -55,7 +62,7 @@ class BaseTransactionService(BaseService):
         logger.info(
             "Retrieving transaction with ID %s for user %s", transaction_id, user.id
         )
-        transaction = await self.repository.get(self.service_model, transaction_id)
+        transaction = await self._get_transaction_by_id(transaction_id)
 
         if transaction is None:
             logger.warning("Transaction with ID %s not found.", transaction_id)
@@ -92,11 +99,7 @@ class BaseTransactionService(BaseService):
             current_user.id,
         )
 
-        transaction = await self.repository.get(
-            self.service_model,
-            transaction_id,
-            load_relationships_list=[self.service_model.offset_transaction],
-        )
+        transaction = await self._get_transaction_by_id(transaction_id)
 
         if transaction is None:
             logger.warning("Transaction with ID %s not found.", transaction_id)
@@ -251,6 +254,8 @@ class BaseTransactionService(BaseService):
         Returns:
             The updated transaction if successful, None otherwise.
         """
+
+        transaction = await self._get_transaction_by_id(transaction_id)
 
         if transaction is None:
             return None
