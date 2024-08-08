@@ -32,14 +32,32 @@ class ScheduledTransactionService(BaseTransactionService):
         self,
         user: User,
         account_id: int,
-    ) -> list[TransactionScheduled]:
-        return await super().get_transaction_list(user, account_id)
+        """
+        Retrieves a list of transactions for a specific user and account.
+
+        Args:
+            user: The user for whom transactions are being retrieved.
+            account_id: The ID of the account for which transactions are being retrieved.
+
+        Returns:
+            A list of transactions that match the criteria.
+        """
+        logger.info(
 
     async def create_scheduled_transaction(
         self,
         user: User,
         transaction_information: ScheduledTransactionInformationCreate,
-    ) -> Optional[TransactionScheduled]:
+        """
+        Creates a new scheduled transaction for a user based on the provided information.
+
+        Args:
+            user: The user for whom the scheduled transaction is being created.
+            transaction_information: The information for the new scheduled transaction.
+
+        Returns:
+            The created scheduled transaction if successful, None otherwise.
+        """
         logger.info("Creating new scheduled transaction for user %s", user.id)
         account = await self.repository.get(Account, transaction_information.account_id)
 
@@ -86,18 +104,17 @@ class ScheduledTransactionService(BaseTransactionService):
         user: User,
         transaction_id: int,
         transaction_information: ScheduledTransactionInformtionUpdate,
-    ) -> Optional[TransactionScheduled]:
-        logger.info(
-            "Updating scheduled transaction with ID %s for user %s",
-            transaction_id,
-            user.id,
-        )
+        """
+        Updates a scheduled transaction for a user with the provided information.
 
-        transaction = await self.repository.get(
-            self.service_model,
-            transaction_id,
-            load_relationships_list=[self.service_model.account],
-        )
+        Args:
+            user: The user for whom the scheduled transaction is being updated.
+            transaction_id: The ID of the scheduled transaction to update.
+            transaction_information: The updated information for the scheduled transaction.
+
+        Returns:
+            The updated scheduled transaction if successful, None otherwise.
+        """
 
         if transaction is None:
             return None
