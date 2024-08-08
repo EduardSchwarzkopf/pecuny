@@ -163,3 +163,31 @@ def add_breadcrumb(request: Request, label: str, url: Union[str, None]):
         None
     """
     request.state.breadcrumb_builder.add(label, url)
+
+
+def calculate_financial_summary(
+    transaction_list: List[Union[models.Transaction, models.TransactionScheduled]],
+) -> FinancialSummary:
+    """
+    Calculates the financial summary based on a list of transactions.
+
+    Args:
+        transaction_list: A list of transactions to calculate the summary.
+
+    Returns:
+        A FinancialSummary object containing total expenses, total income, and overall total.
+    """
+    expenses = 0
+    income = 0
+    total = 0
+
+    for transaction in transaction_list:
+        if transaction.information.amount < 0:
+            expenses += transaction.information.amount
+        else:
+            income += transaction.information.amount
+
+        total += transaction.information.amount
+
+    return FinancialSummary(expenses=expenses, income=income, total=total)
+
