@@ -93,6 +93,41 @@ def render_form_template(template: str, request: Request, form: StarletteForm):
     return render_template(template, request, {"form": form})
 
 
+def render_transaction_form_template(
+    request: Request,
+    form: StarletteForm,
+    account_id: int,
+    page_name: str,
+    transaction: Optional[models.Transaction] = None,
+) -> HTMLResponse:
+    """
+    Renders a transaction form template for display.
+
+    Args:
+        request: The request object.
+        form: The form to render.
+        account_id: The ID of the account.
+        page_name: The name of the page.
+
+    Returns:
+        The rendered transaction form template.
+    """
+
+    url_params = {"transaction_id": transaction.id} if transaction else {}
+    return render_template(
+        "pages/dashboard/page_form_transaction.html",
+        request,
+        {
+            "form": form,
+            "account_id": account_id,
+            "transaction": transaction,
+            "action_url": request.url_for(
+                page_name, account_id=account_id, **url_params
+            ),
+        },
+    )
+
+
 def group_categories_by_section(categorie_list: list[schemas.CategoryData]):
     """Group categories by section.
 
