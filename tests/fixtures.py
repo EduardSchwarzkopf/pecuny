@@ -569,7 +569,7 @@ async def fixture_test_account_scheduled_transaction_list(
                 model.account_id == test_account.id,
                 model.date_start <= today,
                 model.date_end >= today,
-                model.is_active == True,
+                model.is_active == True,  # pylint: disable=singleton-comparison
                 ~exists().where(
                     and_(
                         models.Transaction.scheduled_transaction_id == model.id,
