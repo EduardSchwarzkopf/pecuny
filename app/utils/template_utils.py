@@ -1,11 +1,15 @@
 from collections import defaultdict
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 from fastapi import Request
 from fastapi.responses import HTMLResponse
 from starlette_wtf import StarletteForm
 
-from app import schemas, templates
+from app import models, schemas, templates
+from app.services.accounts import AccountService
+from app.services.categories import CategoryService
+from app.services.frequency import FrequencyService
+from app.utils.dataclasses_utils import FinancialSummary
 from app.utils.enums import FeedbackType
 
 
@@ -191,3 +195,112 @@ def calculate_financial_summary(
 
     return FinancialSummary(expenses=expenses, income=income, total=total)
 
+
+async def populate_transaction_form_account_choices(
+    account_id: int,
+    user: models.User,
+    form: schemas.CreateScheduledTransactionForm,
+    first_select_label,
+) -> None:
+    """
+    Populates the account choices in the transaction form.
+
+    Args:
+        account_id: The ID of the account.
+        user: The current active user.
+        form: The create transaction form.
+        first_select_label: The label for the first select option.
+
+    Returns:
+        None
+    """
+    service = AccountService()
+    account_list = await service.get_accounts(user)
+
+    if account_list is None:
+        return None
+
+    account_list_length = len(account_list)
+
+    account_choices = (
+        [(0, first_select_label)]
+        + [
+            (account.id, account.label)
+            for account in account_list
+            if account is not None and account.id != account_id
+        ]
+        if account_list_length > 1
+        else [(0, "No other accounts found")]
+    )
+
+    form.offset_account_id.choices = account_choices
+    if account_list_length == 1:
+        form.offset_account_id.data = 0
+
+
+async def populate_transaction_form_category_choices(
+    user: models.User, form: schemas.CreateScheduledTransactionForm
+) -> None:
+    """
+    Populates the category choices in the transaction form.
+
+    Args:
+        user: The current active user.
+        form: The create transaction form.
+
+    Returns:
+        None
+    """
+    category_service = CategoryService()
+    category_list = await category_service.get_categories(user) or []
+    category_data_list = [
+        schemas.CategoryData(**category.__dict__) for category in category_list
+    ]
+    form.category_id.choices = group_categories_by_section(category_data_list)
+
+
+async def populate_transaction_form_frequency_choices(
+    form: schemas.CreateScheduledTransactionForm,
+) -> None:
+    """
+    Populates the frequency choices in the transaction form.
+
+    Args:
+        user: The current active user.
+        form: The create transaction form.
+
+    Returns:
+        None
+    """
+    service = FrequencyService()
+    frequency_list = await service.get_frequency_list() or []
+
+    choices = [(frequency.id, frequency.label) for frequency in frequency_list]
+
+    form.frequency_id.choices = choices
+
+
+async def populate_transaction_form_choices(
+    account_id: int,
+    user: models.User,
+    form: schemas.CreateScheduledTransactionForm,
+    first_select_label: str = "Select target account for transfers",
+) -> None:
+    """
+    Populates the choices in the transaction form.
+
+    Args:
+        account_id: The ID of the account.
+        user: The current active user.
+        form: The create transaction form.
+        first_select_label: The label for the first select option.
+
+    Returns:
+        None
+    """
+
+    await populate_transaction_form_category_choices(user, form)
+    await populate_transaction_form_frequency_choices(form)
+    await populate_transaction_form_account_choices(
+        account_id, user, form, first_select_label
+    )
