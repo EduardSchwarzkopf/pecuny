@@ -21,9 +21,18 @@ class TransactionService(
         account_id: int,
         date_start: datetime,
         date_end: datetime,
-    ) -> list[models.Transaction]:
-        return await super().get_transaction_list(
-            user, account_id, date_start, date_end
+        """
+        Retrieves a list of transactions for a specific user and account within a given date range.
+
+        Args:
+            user: The user for whom transactions are being retrieved.
+            account_id: The ID of the account for which transactions are being retrieved.
+            date_start: Optional start date for filtering transactions.
+            date_end: Optional end date for filtering transactions.
+
+        Returns:
+            A list of transactions that match the criteria.
+        """
         )
 
     async def get_transaction(
