@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from app import models, schemas
 from app.logger import get_logger
 from app.repository import Repository
+from app.services.accounts import AccountService
 from app.services.base_transaction import BaseTransactionService
 
 logger = get_logger(__name__)
@@ -21,6 +22,7 @@ class TransactionService(
         account_id: int,
         date_start: datetime,
         date_end: datetime,
+    ) -> List[models.Transaction]:
         """
         Retrieves a list of transactions for a specific user and account within a given date range.
 
@@ -33,6 +35,18 @@ class TransactionService(
         Returns:
             A list of transactions that match the criteria.
         """
+        logger.info(
+            "Starting transaction list retrieval for user %s and account %s",
+            user.id,
+            account_id,
+        )
+        account = await self.repository.get(models.Account, account_id)
+
+        if account and AccountService.has_user_access_to_account(user, account):
+            return []
+
+        return await self.repository.get_transactions_from_period(
+            account_id, date_start, date_end
         )
 
     async def get_transaction(
