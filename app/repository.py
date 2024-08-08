@@ -212,7 +212,7 @@ class Repository:
         query = select(model).where(
             model.date_start <= today,
             model.date_end >= today,
-            model.is_active == True,
+            model.is_active == True,  # pylint: disable=singleton-comparison
             model.frequency_id == frequency_id,
             transaction_exists_condition,
         )
