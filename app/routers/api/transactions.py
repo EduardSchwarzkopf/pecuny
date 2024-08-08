@@ -13,6 +13,8 @@ from app.utils import APIRouterExtended
 router = APIRouterExtended(prefix="/transactions", tags=["Transactions"])
 ResponseModel = schemas.Transaction
 
+# pylint: disable=duplicate-code
+
 
 @router.get("/", response_model=list[ResponseModel])
 async def api_get_transactions(
