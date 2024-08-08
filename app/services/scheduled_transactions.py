@@ -17,7 +17,6 @@ from app.schemas import (
 from app.services.accounts import AccountService
 from app.services.base_transaction import BaseTransactionService
 from app.utils.exceptions import AccessDeniedError
-from app.utils.log_messages import ACCOUNT_USER_ID_MISMATCH
 
 logger = get_logger(__name__)
 
@@ -26,12 +25,13 @@ ServiceModel = TransactionScheduled
 
 class ScheduledTransactionService(BaseTransactionService):
     def __init__(self, repository: Optional[Repository] = None):
-        super().__init__(TransactionScheduled)
+        super().__init__(ServiceModel, repository)
 
     async def get_transaction_list(
         self,
         user: User,
         account_id: int,
+    ) -> list[ServiceModel]:
         """
         Retrieves a list of transactions for a specific user and account.
 
@@ -43,11 +43,29 @@ class ScheduledTransactionService(BaseTransactionService):
             A list of transactions that match the criteria.
         """
         logger.info(
+            "Starting transaction list retrieval for user %s and account %s",
+            user.id,
+            account_id,
+        )
+        account = await self.repository.get(Account, account_id)
+
+        if account is None:
+            return []
+
+        if AccountService.has_user_access_to_account(user, account):
+            return []
+
+        return await self.repository.filter_by(
+            self.service_model,
+            self.service_model.account_id,
+            account.id,
+        )
 
     async def create_scheduled_transaction(
         self,
         user: User,
         transaction_information: ScheduledTransactionInformationCreate,
+    ) -> Optional[ServiceModel]:
         """
         Creates a new scheduled transaction for a user based on the provided information.
 
@@ -104,6 +122,7 @@ class ScheduledTransactionService(BaseTransactionService):
         user: User,
         transaction_id: int,
         transaction_information: ScheduledTransactionInformtionUpdate,
+    ) -> Optional[ServiceModel]:
         """
         Updates a scheduled transaction for a user with the provided information.
 
@@ -116,18 +135,18 @@ class ScheduledTransactionService(BaseTransactionService):
             The updated scheduled transaction if successful, None otherwise.
         """
 
+        transaction = await self._get_transaction_by_id(transaction_id)
+
         if transaction is None:
             return None
 
         account = await self.repository.get(Account, transaction_information.account_id)
-        if (
-            transaction is None
-            or account is None
-            or not AccountService.has_user_access_to_account(user, account)
+        if account is None or not AccountService.has_user_access_to_account(
+            user, account
         ):
             return None
 
-        if transaction.offset_account_id:
+        if transaction.offset_account_id and transaction_information.offset_account_id:
             offset_account = await self.repository.get(
                 Account, transaction_information.offset_account_id
             )
@@ -179,7 +198,7 @@ class ScheduledTransactionService(BaseTransactionService):
             current_user.id,
         )
 
-        transaction = await self.repository.get(self.service_model, transaction_id)
+        transaction = await self._get_transaction_by_id(transaction_id)
 
         if transaction is None:
             logger.warning(
