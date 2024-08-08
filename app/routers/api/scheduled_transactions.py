@@ -13,6 +13,8 @@ router = APIRouterExtended(
 )
 ResponseModel = schemas.ScheduledTransaction
 
+# pylint: disable=duplicate-code
+
 
 @router.get("/", response_model=list[ResponseModel])
 async def api_get_scheduled_transactions(
