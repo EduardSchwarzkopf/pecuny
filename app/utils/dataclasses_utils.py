@@ -28,3 +28,10 @@ class ImportedTransaction:
 @dataclass
 class FailedImportedTransaction(ImportedTransaction):
     reason: str = ""
+
+
+@dataclass
+class FinancialSummary:
+    expenses: int
+    income: int
+    total: int
