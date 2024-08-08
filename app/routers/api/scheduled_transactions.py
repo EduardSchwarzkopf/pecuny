@@ -146,8 +146,7 @@ async def api_update_scheduled_transaction(
         return transaction
 
     raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Scheduled transaction not created",
+        status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled transaction not found"
     )
 
 
@@ -179,9 +178,9 @@ async def api_delete_scheduled_transaction(
     if result:
         return Response(
             status_code=status.HTTP_204_NO_CONTENT,
-            content="Transaction deleted successfully",
+            content="Schheduled Transaction deleted successfully",
         )
 
     raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
+        status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled Transaction not found"
     )
