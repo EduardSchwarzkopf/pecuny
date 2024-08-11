@@ -42,7 +42,9 @@ class TransactionService(
         )
         account = await self.repository.get(models.Account, account_id)
 
-        if account and AccountService.has_user_access_to_account(user, account):
+        if account is None or not AccountService.has_user_access_to_account(
+            user, account
+        ):
             return []
 
         return await self.repository.get_transactions_from_period(
