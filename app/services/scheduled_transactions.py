@@ -52,7 +52,9 @@ class ScheduledTransactionService(BaseTransactionService):
         if account is None:
             return []
 
-        if AccountService.has_user_access_to_account(user, account):
+        if account is None or not AccountService.has_user_access_to_account(
+            user, account
+        ):
             return []
 
         return await self.repository.filter_by(
