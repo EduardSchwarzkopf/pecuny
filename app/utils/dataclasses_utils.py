@@ -37,4 +37,10 @@ class FinancialSummary:
 
     @property
     def total(self) -> int:
+        """
+        Calculates the total amount by subtracting expenses from income.
+
+        Returns:
+            The total amount.
+        """
         return self.income - self.expenses
