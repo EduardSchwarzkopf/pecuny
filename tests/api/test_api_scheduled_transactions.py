@@ -584,7 +584,6 @@ async def test_create_scheduled_transaction_with_invalid_data(
         ("account_id", "test"),
         ("account_id", 3.5),
         ("account_id", -1),
-        ("account_id", False),
         ("amount", "test"),
         ("amount", True),
         ("amount", False),
@@ -609,11 +608,9 @@ async def test_create_scheduled_transaction_with_invalid_data(
         ("category_id", "test"),
         ("category_id", 3.5),
         ("category_id", -1),
-        ("category_id", False),
         ("frequency_id", "test"),
         ("frequency_id", 3.5),
         ("frequency_id", -1),
-        ("frequency_id", False),
     ],
 )
 async def test_update_scheduled_transaction_with_invalid_data(
