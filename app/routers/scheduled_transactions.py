@@ -191,8 +191,9 @@ async def page_update_scheduled_transaction_get(
         )
     )
     await populate_transaction_form_choices(account_id, user, form)
-    form.date_start.data = transaction.information.date.strftime("%Y-%m-%d")
-    form.date_end.data = transaction.information.date.strftime("%Y-%m-%d")
+
+    form.date_start.data = transaction.date_start.strftime("%Y-%m-%d")
+    form.date_end.data = transaction.date_end.strftime("%Y-%m-%d")
 
     form_amount = form.amount.data
     if form_amount < 0:
