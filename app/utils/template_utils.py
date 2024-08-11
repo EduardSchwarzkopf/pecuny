@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Optional, Union
+from typing import List, Optional, Type, Union
 
 from fastapi import Request
 from fastapi.responses import HTMLResponse
@@ -197,7 +197,14 @@ def calculate_financial_summary(
 async def populate_transaction_form_account_choices(
     account_id: int,
     user: models.User,
-    form: schemas.CreateScheduledTransactionForm,
+    form: Type[
+        Union[
+            schemas.CreateScheduledTransactionForm,
+            schemas.UpdateScheduledTransactionForm,
+            schemas.UpdateTransactionForm,
+            schemas.CreateTransactionForm,
+        ]
+    ],
     first_select_label,
 ) -> None:
     """
@@ -237,7 +244,15 @@ async def populate_transaction_form_account_choices(
 
 
 async def populate_transaction_form_category_choices(
-    user: models.User, form: schemas.CreateScheduledTransactionForm
+    user: models.User,
+    form: Type[
+        Union[
+            schemas.CreateScheduledTransactionForm,
+            schemas.UpdateScheduledTransactionForm,
+            schemas.UpdateTransactionForm,
+            schemas.CreateTransactionForm,
+        ]
+    ],
 ) -> None:
     """
     Populates the category choices in the transaction form.
@@ -281,7 +296,14 @@ async def populate_transaction_form_frequency_choices(
 async def populate_transaction_form_choices(
     account_id: int,
     user: models.User,
-    form: schemas.CreateScheduledTransactionForm,
+    form: Type[
+        Union[
+            schemas.CreateScheduledTransactionForm,
+            schemas.UpdateScheduledTransactionForm,
+            schemas.UpdateTransactionForm,
+            schemas.CreateTransactionForm,
+        ]
+    ],
     first_select_label: str = "Select target account for transfers",
 ) -> None:
     """
@@ -298,7 +320,16 @@ async def populate_transaction_form_choices(
     """
 
     await populate_transaction_form_category_choices(user, form)
-    await populate_transaction_form_frequency_choices(form)
+
+    if isinstance(
+        form,
+        (
+            schemas.CreateScheduledTransactionForm,
+            schemas.UpdateScheduledTransactionForm,
+        ),
+    ):
+        await populate_transaction_form_frequency_choices(form)
+
     await populate_transaction_form_account_choices(
         account_id, user, form, first_select_label
     )
