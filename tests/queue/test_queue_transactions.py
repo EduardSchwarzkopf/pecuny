@@ -1,11 +1,14 @@
+import datetime
 import time
 from typing import List
 
 import pytest
 
 from app import models
-from app.date_manager import get_today
+from app.date_manager import get_today, get_yesterday
 from app.repository import Repository
+from app.schemas import TransactionData
+from app.services.transactions import TransactionService
 from app.tasks import process_scheduled_transactions
 from app.utils.enums import DatabaseFilterOperator, Frequency
 
@@ -17,7 +20,7 @@ def _process_scheduled_transactions() -> None:
     """
 
     process_scheduled_transactions.delay()
-    time.sleep(0.5)  # give it some time to process
+    time.sleep(1)  # give it some time to process
 
 
 async def _assert_transaction_creation(
@@ -92,7 +95,7 @@ async def test_create_transactions_from_schedule(
         for transaction in test_account_scheduled_transaction_list
     )
 
-    current_account_balance = balance + total_balance
+    expected_account_balance = balance + total_balance
 
     _process_scheduled_transactions()
     repository.session.expire(test_account)
@@ -103,7 +106,7 @@ async def test_create_transactions_from_schedule(
 
     new_balance = account.balance
 
-    assert new_balance == current_account_balance
+    assert new_balance == expected_account_balance
 
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
@@ -222,3 +225,141 @@ async def test_scheduled_transaction_not_started(
             scheduled_transaction.id,
         )
         assert len(created_transaction) == 0
+
+
+async def _assert_scheduled_transaction_already_exist(
+    frequency: Frequency,
+    test_account: models.Account,
+    test_user: models.User,
+    repository: Repository,
+    date: datetime = get_yesterday(),
+):
+    """
+    Asserts that a scheduled transaction already exists for the specified frequency and test account.
+
+    Args:
+        frequency: The frequency of the scheduled transaction.
+        test_account: The test account for the scheduled transaction.
+        repository: The repository for database operations.
+    """
+
+    scheduled_transaction_list = await repository.filter_by_multiple(
+        models.TransactionScheduled,
+        [
+            (
+                models.TransactionScheduled.account_id,
+                test_account.id,
+                DatabaseFilterOperator.EQUAL,
+            ),
+            (
+                models.TransactionScheduled.frequency_id,
+                frequency.value,
+                DatabaseFilterOperator.EQUAL,
+            ),
+        ],
+    )
+
+    assert len(scheduled_transaction_list) > 0
+
+    scheduled_transaction = None
+    for transaction in scheduled_transaction_list:
+        if (
+            transaction.information.reference
+            == f"scheduled_transaction_{frequency.name}".lower()
+        ):
+            scheduled_transaction = transaction
+            break
+
+    assert scheduled_transaction is not None
+
+    service = TransactionService(repository)
+
+    information = scheduled_transaction.information
+
+    reference = "transaction already exists"
+
+    transaction = await service.create_transaction(
+        test_user,
+        TransactionData(
+            account_id=scheduled_transaction.account.id,
+            amount=information.amount,
+            reference=reference,
+            date=date,
+            category_id=information.category_id,
+            scheduled_transaction_id=scheduled_transaction.id,
+        ),
+    )
+
+    await repository.session.commit()
+
+    _process_scheduled_transactions()
+
+    transaction_list = await repository.filter_by_multiple(
+        models.Transaction,
+        [
+            (
+                models.Transaction.account_id,
+                test_account.id,
+                DatabaseFilterOperator.EQUAL,
+            ),
+            (
+                models.Transaction.scheduled_transaction_id,
+                scheduled_transaction.id,
+                DatabaseFilterOperator.EQUAL,
+            ),
+        ],
+    )
+
+    assert len(transaction_list) == 1
+
+    transaction = transaction_list[0]
+
+    assert transaction.information.reference == reference
+    assert transaction.scheduled_transaction_id == scheduled_transaction.id
+
+
+@pytest.mark.usefixtures("create_scheduled_transactions")
+async def test_scheduled_transaction_daily_already_exist(
+    test_account: models.Account,
+    test_user: models.User,
+    repository: Repository,
+):
+
+    await _assert_scheduled_transaction_already_exist(
+        Frequency.DAILY, test_account, test_user, repository, get_today()
+    )
+
+
+@pytest.mark.usefixtures("create_scheduled_transactions")
+async def test_scheduled_transaction_weekly_already_exist(
+    test_account: models.Account,
+    test_user: models.User,
+    repository: Repository,
+):
+    await _assert_scheduled_transaction_already_exist(
+        Frequency.WEEKLY, test_account, test_user, repository
+    )
+
+
+@pytest.mark.usefixtures("create_scheduled_transactions")
+async def test_scheduled_transaction_monthly_already_exist(
+    test_account: models.Account,
+    test_user: models.User,
+    repository: Repository,
+):
+
+    await _assert_scheduled_transaction_already_exist(
+        Frequency.MONTHLY, test_account, test_user, repository
+    )
+
+
+@pytest.mark.usefixtures("create_scheduled_transactions")
+async def test_scheduled_transaction_yearly_already_exist(
+    test_account: models.Account,
+    test_user: models.User,
+    repository: Repository,
+):
+
+    await _assert_scheduled_transaction_already_exist(
+        Frequency.YEARLY, test_account, test_user, repository
+    )
