@@ -181,19 +181,17 @@ def calculate_financial_summary(
     Returns:
         A FinancialSummary object containing total expenses, total income, and overall total.
     """
-    expenses = 0
-    income = 0
-    total = 0
+    summary = FinancialSummary()
 
     for transaction in transaction_list:
+
         if transaction.information.amount < 0:
-            expenses += transaction.information.amount
-        else:
-            income += transaction.information.amount
+            summary.expenses += transaction.information.amount
+            continue
 
-        total += transaction.information.amount
+        summary.income += transaction.information.amount
 
-    return FinancialSummary(expenses=expenses, income=income, total=total)
+    return summary
 
 
 async def populate_transaction_form_account_choices(
