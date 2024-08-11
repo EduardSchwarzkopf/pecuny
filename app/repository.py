@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Any, List, Optional, Tuple, Type, TypeVar, Union
 
-from sqlalchemy import Select, and_, exists, func, text
+from sqlalchemy import Select, exists, func, text
 from sqlalchemy import update as sql_update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -212,7 +212,7 @@ class Repository:
         query = select(model).where(
             model.date_start <= today,
             model.date_end >= today,
-            model.is_active == True,
+            model.is_active == True,  # pylint: disable=singleton-comparison
             model.frequency_id == frequency_id,
             transaction_exists_condition,
         )
