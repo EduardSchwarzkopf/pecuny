@@ -229,9 +229,9 @@ async def process_scheduled_transactions():
 
         scheduled_transaction_list = []
 
-        for frequency_id in Frequency.get_list():
+        for frequency in Frequency.get_list():
             transactions = await repo.get_scheduled_transactions_by_frequency(
-                frequency_id, today
+                frequency.value, today
             )
             scheduled_transaction_list += transactions
 
