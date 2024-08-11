@@ -178,9 +178,6 @@ class Repository:
         Args:
             frequency_id (int): The frequency ID to filter by.
             today (datetime): The current date to use for filtering.
-            date_filter_func (Callable[[datetime], datetime]):
-                A date transformation function to filter creation dates
-                in the `Transaction` table.
 
         Returns:
             list[models.TransactionScheduled]: A list of scheduled transactions.
@@ -197,22 +194,25 @@ class Repository:
                     return today.replace(month=today.month - 1)
                 case Frequency.YEARLY.value:
                     return today.replace(year=today.year - 1)
+                case _:
+                    raise ValueError("Invalid frequency_id")
 
-            return today
+        period_start_date = get_period_start_date(frequency_id)
 
-        transaction_exists_condition = ~exists().where(
-            and_(
+        transaction_exists_condition = ~exists(
+            select(models.Transaction)
+            .join(models.TransactionInformation)
+            .where(
                 models.Transaction.scheduled_transaction_id == model.id,
-                func.date(models.Transaction.created_at) == func.date(today),
-                func.date(models.Transaction.created_at)
-                >= get_period_start_date(frequency_id),
+                func.date(models.TransactionInformation.date) >= period_start_date,
             )
+            .correlate(model)
         )
 
         query = select(model).where(
             model.date_start <= today,
             model.date_end >= today,
-            model.is_active == True,  # pylint: disable=singleton-comparison
+            model.is_active == True,
             model.frequency_id == frequency_id,
             transaction_exists_condition,
         )
