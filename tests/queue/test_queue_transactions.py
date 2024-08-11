@@ -262,12 +262,12 @@ async def _assert_scheduled_transaction_already_exist(
     assert len(scheduled_transaction_list) > 0
 
     scheduled_transaction = None
-    for transaction in scheduled_transaction_list:
+    for scheduled_transaction in scheduled_transaction_list:
         if (
-            transaction.information.reference
+            scheduled_transaction.information.reference
             == f"scheduled_transaction_{frequency.name}".lower()
         ):
-            scheduled_transaction = transaction
+            scheduled_transaction = scheduled_transaction
             break
 
     assert scheduled_transaction is not None
