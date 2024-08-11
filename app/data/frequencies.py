@@ -10,6 +10,6 @@ def get_frequency_list():
     """
 
     return [
-        {"id": frequency.value, "label": str(frequency.name).lower}
+        {"id": frequency.value, "label": str(frequency.name).lower()}
         for frequency in Frequency.get_list()
     ]
