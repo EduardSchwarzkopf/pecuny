@@ -262,15 +262,17 @@ async def _assert_scheduled_transaction_already_exist(
 
     assert len(scheduled_transaction_list) > 0
 
-    scheduled_transaction = None
-    for scheduled_transaction in scheduled_transaction_list:
-        if (
-            scheduled_transaction.information.reference
-            == f"scheduled_transaction_{frequency.name}".lower()
-        ):
-            scheduled_transaction = scheduled_transaction
-            break
-
+    scheduled_transaction = next(
+        (
+            transaction_element
+            for transaction_element in scheduled_transaction_list
+            if (
+                transaction_element.information.reference
+                == f"scheduled_transaction_{frequency.name}".lower()
+            )
+        ),
+        None,
+    )
     assert scheduled_transaction is not None
 
     service = TransactionService(repository)
