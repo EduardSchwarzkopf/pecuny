@@ -27,4 +27,4 @@ def upgrade():
 
 
 def downgrade():
-    op.alter_column("your_table_name", "is_active", server_default=None)
+    op.alter_column("transactions_scheduled", "is_active", server_default=None)
