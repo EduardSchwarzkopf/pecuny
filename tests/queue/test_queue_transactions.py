@@ -235,7 +235,8 @@ async def _assert_scheduled_transaction_already_exist(
     date: datetime.datetime = get_yesterday(),
 ):
     """
-    Asserts that a scheduled transaction already exists for the specified frequency and test account.
+    Asserts that a scheduled transaction already exists for
+    the specified frequency and test account.
 
     Args:
         frequency: The frequency of the scheduled transaction.
