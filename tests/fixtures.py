@@ -1,17 +1,21 @@
 import asyncio
 import datetime
 import itertools
+from typing import List
 
 import pytest
+from sqlalchemy import and_, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas
+from app.date_manager import get_day_delta, get_today, get_tomorrow, get_yesterday
 from app.repository import Repository
 from app.services.accounts import AccountService
+from app.services.scheduled_transactions import ScheduledTransactionService
 from app.services.transactions import TransactionService
 from app.services.users import UserService
 from app.utils.dataclasses_utils import CreateUserData
-from app.utils.enums import DatabaseFilterOperator
+from app.utils.enums import DatabaseFilterOperator, Frequency
 
 # Reference: https://github.com/EduardSchwarzkopf/pecuny/issues/88
 # pylint: disable=unused-argument
@@ -64,8 +68,6 @@ async def fixture_create_test_users(user_service: UserService):
     create_user_list = [
         ["user00@pytest.de", password, "User00"],
         ["user01@pytest.de", password, "User01"],
-        ["user02@pytest.de", password, "User02"],
-        ["user03@pytest.de", password, "User03"],
         ["hello123@pytest.de", password, "LoginUser"],
     ]
 
@@ -230,21 +232,6 @@ async def fixture_create_test_accounts(
             "description": "description_01",
             "balance": 200,
         },
-        {
-            "label": "account_02",
-            "description": "description_02",
-            "balance": 500,
-        },
-        {
-            "label": "account_03",
-            "description": "description_03",
-            "balance": 1000,
-        },
-        {
-            "label": "account_04",
-            "description": "description_04",
-            "balance": 2000,
-        },
     ]
 
     service = AccountService()
@@ -261,11 +248,11 @@ async def fixture_create_test_accounts(
             ),
         )
         create_task_list.append(task)
-    await asyncio.gather(*create_task_list)
 
+    account_list = await asyncio.gather(*create_task_list)
     await session.commit()
 
-    yield
+    yield account_list
 
 
 @pytest.fixture(name="test_account")
@@ -391,7 +378,7 @@ async def fixture_create_transactions(
             [
                 service.create_transaction(
                     account.user,
-                    schemas.TransactionInformationCreate(
+                    schemas.TransactionData(
                         account_id=account.id,
                         amount=transaction["amount"],
                         reference=transaction["reference"],
@@ -403,10 +390,221 @@ async def fixture_create_transactions(
             ]
         )
 
-    await asyncio.gather(*create_task)
+    transaction_list = await asyncio.gather(*create_task)
     await session.commit()
 
-    yield
+    yield transaction_list
+
+
+@pytest.fixture(name="create_scheduled_transactions")
+async def fixture_create_scheduled_transactions(
+    test_accounts: list[models.Account],
+    repository: Repository,
+):
+    """
+    Fixture to create a list of scheduled transactions for testing purposes.
+
+    Args:
+        test_accounts: List of test accounts for which scheduled transactions will be created.
+        repository: The repository for database operations.
+
+    Yields:
+        List[models.TransactionScheduled | None]: List of created scheduled transactions or None.
+
+    Raises:
+        ValueError: If no user is found for a scheduled transaction.
+    """
+
+    today = get_today()
+    tomorrow = get_tomorrow(today)
+    yesterday = get_yesterday(today)
+    reference_prefix = "scheduled_transaction"
+
+    transaction_data_list = [
+        {
+            "amount": 100,
+            "reference": f"{reference_prefix}_daily",
+            "category_id": 1,
+            "date_start": today,
+            "frequency_id": Frequency.DAILY.value,
+            "date_end": tomorrow,
+        },
+        {
+            "amount": 1000,
+            "reference": f"{reference_prefix}_weekly",
+            "category_id": 1,
+            "date_start": today,
+            "frequency_id": Frequency.WEEKLY.value,
+            "date_end": (today + datetime.timedelta(weeks=2)),
+        },
+        {
+            "amount": 5000,
+            "reference": f"{reference_prefix}_monthly",
+            "category_id": 1,
+            "date_start": today,
+            "frequency_id": Frequency.MONTHLY.value,
+            "date_end": (today + datetime.timedelta(weeks=8)),
+        },
+        {
+            "amount": 10000,
+            "reference": f"{reference_prefix}_yearly",
+            "category_id": 1,
+            "date_start": today,
+            "frequency_id": Frequency.YEARLY.value,
+            "date_end": (today + datetime.timedelta(weeks=52)),
+        },
+        {
+            "amount": 100,
+            "reference": f"{reference_prefix}_daily_not_started",
+            "category_id": 1,
+            "date_start": tomorrow,
+            "frequency_id": Frequency.DAILY.value,
+            "date_end": (tomorrow + datetime.timedelta(weeks=48)),
+        },
+        {
+            "amount": 1000,
+            "reference": f"{reference_prefix}_weekly_not_started",
+            "category_id": 1,
+            "date_start": tomorrow,
+            "frequency_id": Frequency.WEEKLY.value,
+            "date_end": (tomorrow + datetime.timedelta(weeks=1)),
+        },
+        {
+            "amount": 5000,
+            "reference": f"{reference_prefix}_monthly_not_started",
+            "category_id": 1,
+            "date_start": tomorrow,
+            "frequency_id": Frequency.MONTHLY.value,
+            "date_end": (tomorrow + datetime.timedelta(weeks=8)),
+        },
+        {
+            "amount": 10000,
+            "reference": f"{reference_prefix}_yearly_not_started",
+            "category_id": 1,
+            "date_start": tomorrow,
+            "frequency_id": Frequency.YEARLY.value,
+            "date_end": (tomorrow + datetime.timedelta(weeks=52)),
+        },
+        {
+            "amount": 100,
+            "reference": f"{reference_prefix}_daily_ended",
+            "category_id": 1,
+            "date_start": (today - datetime.timedelta(weeks=2)),
+            "frequency_id": Frequency.DAILY.value,
+            "date_end": yesterday,
+        },
+        {
+            "amount": 1000,
+            "reference": f"{reference_prefix}_weekly_ended",
+            "category_id": 1,
+            "date_start": get_day_delta(today, -7),
+            "frequency_id": Frequency.WEEKLY.value,
+            "date_end": yesterday,
+        },
+        {
+            "amount": 5000,
+            "reference": f"{reference_prefix}_monthly_ended",
+            "category_id": 1,
+            "date_start": get_day_delta(today, -30),
+            "frequency_id": Frequency.MONTHLY.value,
+            "date_end": yesterday,
+        },
+        {
+            "amount": 10000,
+            "reference": f"{reference_prefix}_yearly_ended",
+            "category_id": 1,
+            "date_start": get_day_delta(today, -365),
+            "frequency_id": Frequency.YEARLY.value,
+            "date_end": yesterday,
+        },
+    ]
+
+    service = ScheduledTransactionService()
+    create_task = []
+
+    for account in test_accounts:
+
+        create_task.extend(
+            [
+                service.create_scheduled_transaction(
+                    account.user,
+                    schemas.ScheduledTransactionInformationCreate(
+                        account_id=account.id,
+                        amount=transaction["amount"],
+                        reference=transaction["reference"],
+                        category_id=transaction["category_id"],
+                        date_start=transaction["date_start"],
+                        frequency_id=transaction["frequency_id"],
+                        date_end=transaction["date_end"],
+                    ),
+                )
+                for transaction in transaction_data_list
+            ]
+        )
+
+    scheduled_transaction_list: List[models.TransactionScheduled | None] = (
+        await asyncio.gather(*create_task)
+    )
+    await repository.session.commit()
+
+    yield scheduled_transaction_list
+
+    delete_task = []
+    for scheduled_transaction in scheduled_transaction_list:
+
+        if scheduled_transaction is None:
+            continue
+
+        user = await repository.get(models.User, scheduled_transaction.account.user_id)
+
+        if user is None:
+            raise ValueError("No user found")
+
+        delete_task.extend(
+            [service.delete_scheduled_transaction(user, scheduled_transaction.id)]
+        )
+
+    await asyncio.gather(*delete_task)
+    await repository.session.commit()
+
+
+@pytest.fixture(name="test_account_scheduled_transaction_list")
+async def fixture_test_account_scheduled_transaction_list(
+    create_scheduled_transactions, test_account, repository: Repository
+):
+    """
+    Fixture for retrieving a list of scheduled transactions for a test account.
+
+    Args:
+        create_scheduled_transactions: A fixture for creating scheduled transactions.
+        test_account: The test account for which transactions are retrieved.
+        repository: The repository to filter transactions from.
+
+    Returns:
+        A list of scheduled transactions filtered by the test account.
+    """
+
+    today = get_today()
+    model = models.TransactionScheduled
+
+    result = await repository.session.execute(
+        select(model).where(
+            and_(
+                model.account_id == test_account.id,
+                model.date_start <= today,
+                model.date_end >= today,
+                model.is_active == True,  # pylint: disable=singleton-comparison
+                ~exists().where(
+                    and_(
+                        models.Transaction.scheduled_transaction_id == model.id,
+                        func.date(models.Transaction.created_at) == func.date(today),
+                    )
+                ),
+            )
+        )
+    )
+
+    return result.scalars().all()
 
 
 @pytest.fixture(name="test_account_transaction_list")

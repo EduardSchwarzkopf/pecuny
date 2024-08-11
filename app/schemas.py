@@ -6,14 +6,7 @@ from decimal import Decimal
 from typing import Annotated, Any, Optional
 
 from fastapi_users import schemas
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    EmailStr,
-    Field,
-    StringConstraints,
-    field_validator,
-)
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 from starlette_wtf import StarletteForm
 from wtforms import (
     BooleanField,
@@ -35,8 +28,8 @@ from wtforms.validators import (
 )
 from wtforms.widgets import Input
 
-from app.date_manager import string_to_datetime
 from app.utils.classes import RoundedDecimal
+from app.utils.fields import DateField, IdField
 
 StringContr = Annotated[
     str, StringConstraints(min_length=3, max_length=36, strip_whitespace=True)
@@ -94,37 +87,13 @@ class TransactionInformationBase(BaseModel):
         example=100.00,
     )
     reference: str
-    category_id: int
+    category_id: IdField
 
     model_config = ConfigDict(json_encoders={Decimal: float})
 
 
 class TransactionInformation(TransactionInformationBase):
-    date: dt
-
-    @field_validator("date", mode="before")
-    def parse_date(cls, v) -> dt:  # pylint: disable=no-self-argument
-        """
-        Validates and parses a date string into a datetime object.
-
-        Args:
-            cls: The class.
-            v: The date string to parse.
-
-        Returns:192gg
-            datetime: The parsed datetime object.
-
-        Raises:
-            ValueError: If the date format is not recognized.
-        """
-
-        if isinstance(v, dt):
-            return v
-
-        try:
-            return string_to_datetime(v)
-        except ValueError as e:
-            raise ValueError("Date format not recognized") from e
+    date: DateField
 
 
 class MinimalResponse(Base):
@@ -136,8 +105,9 @@ class SectionData(MinimalResponse):
     pass
 
 
-class FrequencyData(MinimalResponse):
-    pass
+class FrequencyData(Base):
+    id: int
+    label: StringContr
 
 
 class CategoryData(Base):
@@ -147,23 +117,12 @@ class CategoryData(Base):
 
 
 class TransactionInformationCreate(TransactionInformation):
-    account_id: int
-    offset_account_id: Optional[int] = Field(None, description="The offset account ID.")
+    account_id: IdField
+    offset_account_id: Optional[IdField] = None
 
-    @field_validator("offset_account_id", mode="before")
-    def parse_offset_account_id(cls, v):  # pylint: disable=no-self-argument
-        """
-        Validates and parses an offset account ID.
 
-        Args:
-            cls: The class.
-            v: The offset account ID to parse.
-
-        Returns:
-            int or None: The parsed offset account ID or None if the input is an empty string.
-        """
-
-        return None if v == "" else int(v)
+class TransactionData(TransactionInformationCreate):
+    scheduled_transaction_id: Optional[IdField] = None
 
 
 class TransactionInformtionUpdate(TransactionInformationCreate):
@@ -171,11 +130,15 @@ class TransactionInformtionUpdate(TransactionInformationCreate):
 
 
 class ScheduledTransactionInformationCreate(TransactionInformationBase):
-    date_start: dt
-    frequency_id: int
-    date_end: dt
-    account_id: int
-    offset_account_id: Optional[int]
+    date_start: DateField
+    frequency_id: IdField
+    date_end: DateField
+    account_id: IdField
+    offset_account_id: Optional[IdField] = None
+
+
+class ScheduledTransactionInformtionUpdate(ScheduledTransactionInformationCreate):
+    pass
 
 
 class TransactionInformationData(TransactionInformation):
@@ -184,32 +147,32 @@ class TransactionInformationData(TransactionInformation):
 
 class TransactionBase(Base):
     id: int
-    account_id: int
+    account_id: IdField
     information: TransactionInformationData
 
 
 class Transaction(TransactionBase):
-    offset_transactions_id: Optional[int]
+    offset_transactions_id: Optional[IdField] = None
 
 
-class ScheduledTransactionData(TransactionBase):
-    date_start: dt
+class ScheduledTransaction(TransactionBase):
+    date_start: DateField
     frequency: FrequencyData
-    date_end: dt
-    account_id: int
-    offset_account_id: Optional[int]
+    date_end: DateField
+    account_id: IdField
+    offset_account_id: Optional[IdField] = None
 
 
 class Account(Base):
     label: StringContr
     description: Optional[str] = None
-    balance: Optional[RoundedDecimal] = Field(...)
+    balance: Optional[RoundedDecimal]
 
     model_config = ConfigDict(json_encoders={Decimal: float})
 
 
 class AccountData(Account):
-    id: int
+    id: IdField
 
 
 class LoginForm(StarletteForm):
@@ -355,6 +318,66 @@ class UpdateTransactionForm(StarletteForm):
     offset_account_id = SelectField(
         "Linked Account", coerce=int, render_kw={"disabled": "disabled"}, default=0
     )
+
+
+class CreateScheduledTransactionForm(StarletteForm):
+    reference = StringField(
+        "Reference",
+        validators=[InputRequired(), Length(max=128)],
+        render_kw={"placeholder": "e.g. 'Rent payment for March'"},
+    )
+    amount = DecimalField(
+        "Amount",
+        validators=[InputRequired(), NumberRange(min=0)],
+        render_kw={"placeholder": "500"},
+    )
+    is_expense = BooleanField("Is this an expense?", default=True)
+    category_id = SelectField(
+        "Category",
+        validators=[InputRequired()],
+        coerce=int,
+        render_kw={"placeholder": "Select the appropriate category"},
+    )
+    frequency_id = SelectField(
+        "Frequency",
+        validators=[InputRequired()],
+        coerce=int,
+        render_kw={"placeholder": "Select the appropriate frequency"},
+    )
+    date_start = DatetimeLocalFieldWithoutTime(
+        "Date Start",
+        validators=[InputRequired()],
+    )
+    date_end = DatetimeLocalFieldWithoutTime(
+        "Date End",
+        validators=[InputRequired()],
+    )
+    offset_account_id = SelectField(
+        "Linked Account",
+        coerce=int,
+        render_kw={
+            "placeholder": (
+                "Select an account if this transaction is "
+                "transferring funds between accounts"
+            ),
+        },
+    )
+
+
+class UpdateScheduledTransactionForm(StarletteForm):
+    reference = StringField("Reference", validators=[InputRequired(), Length(max=128)])
+    amount = DecimalField(
+        "Amount",
+        validators=[InputRequired(), NumberRange(min=0)],
+    )
+    is_expense = BooleanField("Is this an expense?")
+    category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
+    date_start = DatetimeLocalFieldWithoutTime(
+        "Date Start", validators=[InputRequired()]
+    )
+    date_end = DatetimeLocalFieldWithoutTime("Date End", validators=[InputRequired()])
+    offset_account_id = SelectField("Linked Account", coerce=int, default=0)
+    frequency_id = SelectField("Frequency", coerce=int, default=0)
 
 
 class DatePickerForm(StarletteForm):

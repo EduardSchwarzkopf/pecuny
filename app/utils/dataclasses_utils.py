@@ -28,3 +28,19 @@ class ImportedTransaction:
 @dataclass
 class FailedImportedTransaction(ImportedTransaction):
     reason: str = ""
+
+
+@dataclass
+class FinancialSummary:
+    expenses: int = 0
+    income: int = 0
+
+    @property
+    def total(self) -> int:
+        """
+        Calculates the total amount by subtracting expenses from income.
+
+        Returns:
+            The total amount.
+        """
+        return self.income - self.expenses

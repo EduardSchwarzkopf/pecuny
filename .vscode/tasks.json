@@ -4,12 +4,12 @@
     {
       "label": "start-docker-compose",
       "type": "shell",
-      "command": "docker compose -f ${workspaceFolder}/docker-compose.dev.yml up -d"
+      "command": "docker compose --env-file ${workspaceFolder}/.env.dev -f ${workspaceFolder}/docker-compose.dev.yml up -d"
     },
     {
       "label": "stop-docker-compose",
       "type": "shell",
-      "command": "docker compose -f ${workspaceFolder}/docker-compose.dev.yml down"
+      "command": "docker compose --env-file ${workspaceFolder}/.env.dev -f ${workspaceFolder}/docker-compose.dev.yml down"
     },
     {
       "label": "start-test-suite",

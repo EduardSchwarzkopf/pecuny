@@ -2,7 +2,7 @@ from fastapi_users.db import (
     SQLAlchemyBaseOAuthAccountTableUUID,
     SQLAlchemyBaseUserTableUUID,
 )
-from sqlalchemy import DECIMAL, Column, Integer, String, text
+from sqlalchemy import DECIMAL, Boolean, Column, Integer, String, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship
@@ -94,9 +94,19 @@ class Transaction(BaseModel):
     __tablename__ = "transactions"
 
     account_id = Column(
-        Integer, ForeignKey("accounts.id", ondelete="CASCADE", onupdate="CASCADE")
+        Integer,
+        ForeignKey("accounts.id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False,
     )
-    information_id = Column(Integer, ForeignKey("transactions_information.id"))
+    information_id = Column(
+        Integer, ForeignKey("transactions_information.id"), nullable=False
+    )
+    scheduled_transaction_id = Column(
+        Integer,
+        ForeignKey("transactions_scheduled.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
     information = relationship(
         "TransactionInformation",
         backref="transactions",
@@ -127,10 +137,23 @@ class Transaction(BaseModel):
 
     account = relationship("Account", back_populates="transactions", lazy="selectin")
 
+    scheduled_transaction = relationship(
+        "TransactionScheduled", back_populates="created_transactions"
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "scheduled_transaction_id",
+            "information_id",
+            name="uq_scheduled_transaction_date",
+        ),
+    )
+
 
 class TransactionScheduled(BaseModel):
     __tablename__ = "transactions_scheduled"
 
+    is_active = Column(Boolean, default=True, server_default=text("true"))
     account_id = Column(
         Integer, ForeignKey("accounts.id", ondelete="CASCADE", onupdate="CASCADE")
     )
@@ -149,12 +172,25 @@ class TransactionScheduled(BaseModel):
         lazy="selectin",
     )
     information_id = Column(Integer, ForeignKey("transactions_information.id"))
-    offset_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
 
-    frequency = relationship("Frequency", cascade="all,delete", lazy="selectin")
+    offset_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
+    offset_account = relationship(
+        "Account",
+        lazy="selectin",
+        foreign_keys=[offset_account_id],
+    )
+
+    frequency = relationship("Frequency", lazy="selectin")
     frequency_id = Column(Integer, ForeignKey("frequencies.id", ondelete="CASCADE"))
     date_start = Column(type_=TIMESTAMP(timezone=True))
     date_end = Column(type_=TIMESTAMP(timezone=True))
+
+    created_transactions = relationship(
+        "Transaction",
+        back_populates="scheduled_transaction",
+        lazy="selectin",
+        foreign_keys=[Transaction.scheduled_transaction_id],
+    )
 
 
 class Account(BaseModel, UserId):

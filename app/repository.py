@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, List, Optional, Tuple, Type, TypeVar, Union
 
-from sqlalchemy import Select, text
+from sqlalchemy import Select, exists, func, text
 from sqlalchemy import update as sql_update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -11,7 +11,8 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from app import models
 from app.database import db
 from app.models import BaseModel
-from app.utils.enums import DatabaseFilterOperator
+from app.utils.enums import DatabaseFilterOperator, Frequency
+from app.utils.fields import IdField
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
@@ -61,7 +62,7 @@ class Repository:
     async def get(
         self,
         cls: Type[ModelT],
-        instance_id: int,
+        instance_id: Union[int, IdField],
         load_relationships_list: Optional[list[InstrumentedAttribute]] = None,
     ) -> Optional[ModelT]:
         """Retrieve an instance of the specified model by its ID.
@@ -106,6 +107,8 @@ class Repository:
         """
         if operator == DatabaseFilterOperator.LIKE:
             condition = attribute.ilike(f"%{value}%")
+        elif operator == DatabaseFilterOperator.IS_NOT:
+            condition = attribute.is_not(value)
         else:
             condition = text(f"{attribute.key} {operator.value} :val")
 
@@ -133,59 +136,85 @@ class Repository:
             load_relationships_list: Optional list of relationships to load.
 
         Returns:
-            list[Model]: The filtered records.
+            list[ModelT]: The filtered records.
         """
 
         where_conditions = []
         params = {}
         for i, (attribute, value, operator) in enumerate(conditions):
             param_name = f"val{i}"
+
             if operator == DatabaseFilterOperator.LIKE:
                 condition = attribute.ilike(f"%{value}%")
+            elif operator == DatabaseFilterOperator.IS_NOT:
+                condition = attribute.is_not(value)
             else:
                 condition = text(f"{attribute.key} {operator.value} :{param_name}")
                 params[param_name] = value
+
             where_conditions.append(condition)
 
         q = select(cls)
         if where_conditions:
             for condition in where_conditions:
                 q = q.where(condition)
-        q = q.params(**params)
 
+        q = q.params(**params)
         q = self._load_relationships(q, load_relationships_list)
 
         result = await self.session.execute(q)
 
         return result.scalars().unique().all()
 
-    async def get_scheduled_transactions_from_period(
+    async def get_scheduled_transactions_by_frequency(
         self,
-        account_id: int,
-        start_date: datetime,
-        end_date: datetime,
+        frequency_id: int,
+        today: datetime,
     ) -> list[models.TransactionScheduled]:
-        """Retrieve scheduled transactions for a specific account within a given period.
+        """
+        Retrieve all scheduled transactions for a specific frequency
+        that are active and not yet processed today.
 
         Args:
-            account_id: The ID of the account.
-            start_date: The start date of the period.
-            end_date: The end date of the period.
+            frequency_id (int): The frequency ID to filter by.
+            today (datetime): The current date to use for filtering.
 
         Returns:
-            list[models.TransactionScheduled]:
-                A list of scheduled transactions within the specified period.
-
-        Raises:
-            None
+            list[models.TransactionScheduled]: A list of scheduled transactions.
         """
-        transaction = models.TransactionScheduled
+        model = models.TransactionScheduled
 
-        query = (
-            select(transaction)
-            .filter(transaction.date_end <= end_date)
-            .filter(transaction.date_start >= start_date)
-            .filter(account_id == transaction.account_id)
+        def get_period_start_date(frequency_id: int) -> datetime:
+            match frequency_id:
+                case Frequency.DAILY.value | Frequency.ONCE.value:
+                    return today
+                case Frequency.WEEKLY.value:
+                    return today - timedelta(days=7)
+                case Frequency.MONTHLY.value:
+                    return today.replace(month=today.month - 1)
+                case Frequency.YEARLY.value:
+                    return today.replace(year=today.year - 1)
+                case _:
+                    raise ValueError("Invalid frequency_id")
+
+        period_start_date = get_period_start_date(frequency_id)
+
+        transaction_exists_condition = ~exists(
+            select(models.Transaction)
+            .join(models.TransactionInformation)
+            .where(
+                models.Transaction.scheduled_transaction_id == model.id,
+                func.date(models.TransactionInformation.date) >= period_start_date,
+            )
+            .correlate(model)
+        )
+
+        query = select(model).where(
+            model.date_start <= today,
+            model.date_end >= today,
+            model.is_active == True,  # pylint: disable=singleton-comparison
+            model.frequency_id == frequency_id,
+            transaction_exists_condition,
         )
 
         result = await self.session.execute(query)

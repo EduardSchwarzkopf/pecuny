@@ -5,6 +5,7 @@ from urllib.parse import parse_qs
 
 import arel
 import jwt
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
@@ -25,10 +26,12 @@ from app.logger import get_logger
 from app.middleware import HeaderLinkMiddleware
 from app.repository import Repository
 from app.routes import router_list
+from app.scheduled_tasks import add_jobs_to_scheduler
 from app.utils import BreadcrumbBuilder
 from app.utils.exceptions import UnauthorizedPageException
 
 logger = get_logger(__name__)
+scheduler = AsyncIOScheduler()
 
 
 @asynccontextmanager
@@ -46,13 +49,16 @@ async def lifespan(_api_app: FastAPI):
 
     try:
         await db.init()
+        add_jobs_to_scheduler(scheduler)
         yield
     finally:
+        scheduler.shutdown()
         if db.session is not None:
             await db.session.close()
 
 
 app = FastAPI(lifespan=lifespan)
+
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

@@ -4,7 +4,15 @@ import fastapi_users
 from fastapi import APIRouter
 
 from app.auth_manager import auth_backend, fastapi_users
-from app.routers import accounts, auth, dashboard, index, transactions, users
+from app.routers import (
+    accounts,
+    auth,
+    dashboard,
+    index,
+    scheduled_transactions,
+    transactions,
+    users,
+)
 from app.routers.api import accounts as api_accounts
 from app.routers.api import auth as api_auth
 from app.routers.api import categories as api_categories
@@ -45,6 +53,7 @@ router_list: RouterList = [
     {"router": auth.router},
     {"router": users.router},
     {"router": transactions.router},
+    {"router": scheduled_transactions.router},
     ## Api
     {
         "router": api_users.router,

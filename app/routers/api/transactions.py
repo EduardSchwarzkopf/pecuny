@@ -13,6 +13,8 @@ from app.utils import APIRouterExtended
 router = APIRouterExtended(prefix="/transactions", tags=["Transactions"])
 ResponseModel = schemas.Transaction
 
+# pylint: disable=duplicate-code
+
 
 @router.get("/", response_model=list[ResponseModel])
 async def api_get_transactions(
@@ -95,8 +97,9 @@ async def api_create_transaction(
         HTTPException: If the transaction is not created.
     """
 
+    transaction_data = schemas.TransactionData(**transaction_information.model_dump())
     transaction = await tm.transaction(
-        service.create_transaction, current_user, transaction_information
+        service.create_transaction, current_user, transaction_data
     )
 
     if transaction:
@@ -173,7 +176,6 @@ async def api_delete_transaction(
             content="Transaction deleted successfully",
         )
 
-    if result is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
-        )
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
+    )

@@ -1,6 +1,4 @@
-from datetime import datetime
-
-from fastapi import Depends, status
+from fastapi import Depends, Response, status
 from fastapi.exceptions import HTTPException
 
 from app import schemas
@@ -11,16 +9,16 @@ from app.services.scheduled_transactions import ScheduledTransactionService
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(
-    prefix="/scheduled_transactions", tags=["Scheduled Transactions"]
+    prefix="/scheduled-transactions", tags=["Scheduled Transactions"]
 )
-ResponseModel = schemas.ScheduledTransactionData
+ResponseModel = schemas.ScheduledTransaction
+
+# pylint: disable=duplicate-code
 
 
 @router.get("/", response_model=list[ResponseModel])
-async def api_get_transactions(
+async def api_get_scheduled_transactions(
     account_id: int,
-    date_start: datetime,
-    date_end: datetime,
     current_user: User = Depends(current_active_verified_user),
     service: ScheduledTransactionService = Depends(
         ScheduledTransactionService.get_instance
@@ -42,13 +40,11 @@ async def api_get_transactions(
         HTTPException: If the account is not found.
     """
 
-    return await service.get_transaction_list(
-        current_user, account_id, date_start, date_end
-    )
+    return await service.get_transaction_list(current_user, account_id)
 
 
 @router.get("/{transaction_id}", response_model=ResponseModel)
-async def api_get_transaction(
+async def api_get_scheduled_transaction(
     transaction_id: int,
     current_user: User = Depends(current_active_verified_user),
     service: ScheduledTransactionService = Depends(
@@ -80,7 +76,7 @@ async def api_get_transaction(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ResponseModel)
-async def api_create_transaction(
+async def api_create_scheduled_transaction(
     transaction_information: schemas.ScheduledTransactionInformationCreate,
     current_user: User = Depends(current_active_verified_user),
     service: ScheduledTransactionService = Depends(
@@ -111,4 +107,80 @@ async def api_create_transaction(
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Scheduled transaction not created",
+    )
+
+
+@router.post("/{transaction_id}", response_model=ResponseModel)
+async def api_update_scheduled_transaction(
+    transaction_id: int,
+    transaction_information: schemas.ScheduledTransactionInformtionUpdate,
+    current_user: User = Depends(current_active_verified_user),
+    service: ScheduledTransactionService = Depends(
+        ScheduledTransactionService.get_instance
+    ),
+):
+    """
+    Update a scheduled transaction via the API.
+
+    Args:
+        transaction_id: The ID of the transaction to update.
+        transaction_information: The updated information for the transaction.
+        current_user: The current authenticated user.
+        service: The service for handling scheduled transactions.
+
+    Returns:
+        The updated scheduled transaction if successful.
+
+    Raises:
+        HTTPException: If the scheduled transaction update fails.
+    """
+
+    transaction = await tm.transaction(
+        service.update_scheduled_transaction,
+        current_user,
+        transaction_id,
+        transaction_information,
+    )
+
+    if transaction:
+        return transaction
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled transaction not found"
+    )
+
+
+@router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def api_delete_scheduled_transaction(
+    transaction_id: int,
+    current_user: User = Depends(current_active_verified_user),
+    service: ScheduledTransactionService = Depends(
+        ScheduledTransactionService.get_instance
+    ),
+):
+    """
+    Deletes a transaction.
+
+    Args:
+        transaction_id: The ID of the transaction.
+        current_user: The current active user.
+
+    Returns:
+        Response: A response indicating the success or failure of the deletion.
+
+    Raises:
+        HTTPException: If the transaction is not found.
+    """
+
+    result = await tm.transaction(
+        service.delete_scheduled_transaction, current_user, transaction_id
+    )
+    if result:
+        return Response(
+            status_code=status.HTTP_204_NO_CONTENT,
+            content="Schheduled Transaction deleted successfully",
+        )
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled Transaction not found"
     )

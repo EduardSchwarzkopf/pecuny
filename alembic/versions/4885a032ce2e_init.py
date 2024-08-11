@@ -5,13 +5,15 @@ Revises:
 Create Date: 2023-05-09 12:49:37.994900
 
 """
-from alembic import op
+
+import fastapi_users_db_sqlalchemy
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
-import fastapi_users_db_sqlalchemy
+
+from alembic import op
+from app import models
 from app.data import categories
 from app.data.frequencies import get_frequency_list
-from app import models
 
 # revision identifiers, used by Alembic.
 revision = "4885a032ce2e"

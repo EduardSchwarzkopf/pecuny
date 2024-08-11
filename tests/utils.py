@@ -1,4 +1,3 @@
-import datetime
 from io import BufferedReader
 from typing import Optional
 
@@ -10,7 +9,7 @@ from app.auth_manager import get_strategy
 from app.config import settings
 from app.main import app
 from app.repository import Repository
-from app.utils.enums import RequestMethod
+from app.utils.enums import DatabaseFilterOperator, RequestMethod
 
 
 async def authorized_httpx_client(client: AsyncClient, user: models.User):
@@ -88,7 +87,9 @@ async def make_http_request(  # pylint: disable=too-many-arguments
         return await response
 
 
-async def get_user_offset_account(account: models.Account) -> Optional[models.Account]:
+async def get_user_offset_account(
+    account: models.Account, repository: Repository
+) -> Optional[models.Account]:
     """
     Returns the offset account for a given account within a list of accounts.
 
@@ -99,26 +100,54 @@ async def get_user_offset_account(account: models.Account) -> Optional[models.Ac
     Returns:
         models.Account or None: The offset account if found, otherwise None.
     """
-    repository = Repository()
-    account_list = await repository.get_all(models.Account)
-    return next(
-        (
-            account_element
-            for account_element in account_list
-            if (
-                account_element.user_id == account.user_id
-                and account.id != account_element.id
-            )
-        ),
-        None,
+
+    account_list = await repository.filter_by_multiple(
+        models.Account,
+        [
+            (
+                models.Account.user_id,
+                account.user.id,
+                DatabaseFilterOperator.EQUAL,
+            ),
+            (
+                models.Account.id,
+                account.id,
+                DatabaseFilterOperator.NOT_EQUAL,
+            ),
+        ],
     )
 
+    if account_list is None:
+        raise ValueError("No accounts found")
 
-def get_iso_timestring() -> str:
+    return account_list[0]
+
+
+async def get_other_user_account(
+    user: models.User, repository: Repository
+) -> models.Account:
     """
-    Returns the current time in ISO 8601 format.
+    Returns an account belonging to a user other than the specified user.
+
+    Args:
+        user: The user for whom to find another account.
+        repository: The repository to query for account information.
 
     Returns:
-        str: The current time in ISO 8601 format.
+        models.Account: An account belonging to a user other than the specified user.
+
+    Raises:
+        ValueError: If no accounts are found for the user.
     """
-    return datetime.datetime.now().isoformat()
+
+    account_list = await repository.filter_by(
+        models.Account,
+        models.Account.user_id,
+        user.id,
+        DatabaseFilterOperator.NOT_EQUAL,
+    )
+
+    if account_list is None:
+        raise ValueError("No accounts found")
+
+    return account_list[0]

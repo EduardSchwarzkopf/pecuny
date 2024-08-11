@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.data import categories
+from app.data import categories, frequencies
 from app.database import db
 from app.models import Base
 from app.repository import Repository
@@ -20,9 +20,7 @@ async def populate_db(session: AsyncSession):
 
     section_list = categories.get_section_list()
     category_list = categories.get_category_list()
-
-    section_list = categories.get_section_list()
-    category_list = categories.get_category_list()
+    frequency_list = frequencies.get_frequency_list()
 
     transaction_section_list = [
         models.TransactionSection(**section) for section in section_list
@@ -30,8 +28,15 @@ async def populate_db(session: AsyncSession):
     transaction_category_list = [
         models.TransactionCategory(**category) for category in category_list
     ]
+    transaction_frequency_list = [
+        models.Frequency(**frequency) for frequency in frequency_list
+    ]
 
-    session.add_all(transaction_category_list + transaction_section_list)
+    session.add_all(
+        transaction_category_list
+        + transaction_section_list
+        + transaction_frequency_list
+    )
     await session.commit()
 
 

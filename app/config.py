@@ -53,6 +53,8 @@ class Settings(BaseSettings):
     celery_broker_url: str = "redis://127.0.0.1:6379/0"
     celery_result_backend: str = "redis://127.0.0.1:6379/0"
 
+    batch_size: int = 1000
+
     def __init__(self, **values):
         super().__init__(**values)
         self.configure_settings()

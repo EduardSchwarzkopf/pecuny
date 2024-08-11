@@ -10,12 +10,15 @@ from starlette.status import (
 )
 
 from app import models, schemas
+from app.date_manager import get_iso_timestring
 from app.repository import Repository
 from app.utils.classes import RoundedDecimal
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
-from tests.utils import get_iso_timestring, get_user_offset_account, make_http_request
+from tests.utils import get_user_offset_account, make_http_request
 
 ENDPOINT = "/api/transactions/"
+
+# pylint: disable=duplicate-code
 
 
 @pytest.mark.parametrize(
@@ -292,7 +295,7 @@ async def test_create_offset_transaction(
     """
 
     account_id = test_account.id
-    offset_account = await get_user_offset_account(test_account)
+    offset_account = await get_user_offset_account(test_account, repository)
 
     assert offset_account is not None
 
@@ -433,7 +436,7 @@ async def test_updated_offset_transaction(
 
     """
 
-    offset_account = await get_user_offset_account(test_account)
+    offset_account = await get_user_offset_account(test_account, repository)
 
     assert offset_account is not None
 
@@ -526,7 +529,7 @@ async def test_delete_offset_transaction(
         AssertionError: If the test fails.
     """
 
-    offset_account = await get_user_offset_account(test_account)
+    offset_account = await get_user_offset_account(test_account, repository)
 
     assert offset_account is not None
 

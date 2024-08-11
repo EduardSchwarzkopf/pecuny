@@ -1,0 +1,35 @@
+{% import 'macros/icons.html' as icon %}
+
+<div
+    class="flex flex-col py-4 px-6 rounded-lg hover:bg-primary-50 bg-white">
+    <div class="grid grid-cols-3 gap-4 w-full">
+        <div class="col-span-2">
+            <h4>
+                {{ transaction.information.reference }}
+            </h4>
+        </div>
+        <div class="flex justify-end col-span-1">
+            <h4
+                class="px-2 py-1 rounded-lg {{ 'bg-success-light text-success-dark' if transaction.information.amount > 0 else 'bg-error-light text-error-dark' }}">
+                {{ '%0.2f' % transaction.information.amount }}
+            </h4>
+        </div>
+    </div>
+    <div class="flex text-xs flex-col text-gray">
+            <div>
+                {% if transaction.date_start <= now and transaction.date_end >= now %}
+                Active
+                {% elif transaction.date_end < now %}
+                Completed
+                {% elif transaction.date_start > now %}
+                Pending
+                {% endif %}
+            </div>
+        {% if transaction.offset_account %}
+            <div class="flex items-center">
+                <span class="mr-1">{{ transaction.offset_account.label }}</span>
+                <i class="fa-solid fa-arrow-right {% if transaction.information.amount < 0 %}fa-rotate-180{% endif %}"></i>
+            </div>
+        {% endif %}
+    </div>
+</div>

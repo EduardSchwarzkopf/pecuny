@@ -1,3 +1,6 @@
+from app.utils.enums import Frequency
+
+
 def get_frequency_list():
     """
     Returns a list of all available frequencies.
@@ -6,6 +9,7 @@ def get_frequency_list():
         Each dictionary contains the id and label of a frequency.
     """
 
-    frequencies = ["once", "daily", "weekly", "monthly", "yearly"]
-
-    return [{"id": i + 1, "label": frequencies[i]} for i in range(len(frequencies))]
+    return [
+        {"id": frequency.value, "label": str(frequency.name).lower()}
+        for frequency in Frequency.get_list()
+    ]

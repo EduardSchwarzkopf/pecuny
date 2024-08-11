@@ -2,10 +2,12 @@ import datetime
 from contextlib import suppress
 from datetime import datetime as dt
 from datetime import timedelta, timezone
+from typing import Optional
 
 
-def today():
-    """Get the current UTC date with time set to 00:00:00.
+def get_today():
+    """
+    Get the current UTC date with time set to 00:00:00.
 
     Args:
         None
@@ -19,8 +21,66 @@ def today():
     return dt.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
 
 
+def now():
+    """
+    Get the current date and time in UTC timezone.
+    """
+
+    return dt.now(timezone.utc)
+
+
+def get_day_delta(date: dt, days: int) -> dt:
+    """
+    Get the date by adding a specified number of days to the given date.
+
+    Args:
+        date: The reference date.
+        days: The number of days to add to the reference date.
+
+    Returns:
+        The resulting date after adding the specified number of days.
+    """
+
+    return date + timedelta(days=days)
+
+
+def get_tomorrow(date: Optional[dt] = None) -> dt:
+    """
+    Get the date for tomorrow.
+
+    Args:
+        date: The reference date. Defaults to today if not provided.
+
+    Returns:
+        The date for tomorrow.
+    """
+
+    if date is None:
+        date = get_today()
+
+    return get_day_delta(date, 1)
+
+
+def get_yesterday(date: Optional[dt] = None) -> dt:
+    """
+    Get the date for tomorrow.
+
+    Args:
+        date: The reference date. Defaults to today if not provided.
+
+    Returns:
+        The date for tomorrow.
+    """
+
+    if date is None:
+        date = get_today()
+
+    return get_day_delta(date, -1)
+
+
 def get_datetime_from_timestamp(timestamp):
-    """Convert a timestamp to a datetime object.
+    """
+    Convert a timestamp to a datetime object.
 
     Args:
         timestamp: The timestamp to convert.
@@ -43,7 +103,8 @@ def get_datetime_from_timestamp(timestamp):
 
 
 def string_to_datetime(str_date: str):
-    """Convert a string date to a datetime object.
+    """
+    Convert a string date to a datetime object.
 
     Args:
         str_date: The string date to convert.
@@ -104,7 +165,8 @@ def _extracted_from_string_to_datetime(str_date: str):
 
 
 def get_last_day_of_month(date: dt):
-    """Returns last day of month
+    """
+    Returns last day of month
 
     Args:
         dt (datetime): date to get the last day of month
@@ -120,3 +182,13 @@ def get_last_day_of_month(date: dt):
     last_day_of_month = next_month - timedelta(days=next_month.day)
 
     return last_day_of_month.day
+
+
+def get_iso_timestring() -> str:
+    """
+    Returns the current time in ISO 8601 format.
+
+    Returns:
+        str: The current time in ISO 8601 format.
+    """
+    return datetime.datetime.now().isoformat()

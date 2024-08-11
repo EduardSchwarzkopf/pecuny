@@ -134,3 +134,4 @@ logs/
 !.env.test
 
 start-dev.sh
+docker-compose.db.yml

@@ -1,0 +1,30 @@
+{% extends "layouts/dashboard.html" %} {% import 'macros/buttons.html' as btn %}
+{% import 'macros/icons.html' as icon %} {% block content %}
+
+<div
+  class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full mb-6"
+>
+  <div class="grow w-full md:w-auto">
+    <div class="flex flex-row space-x-4 items-center">
+      <p class="text-xl text-gray-700 font-medium">{{account.label}}</p>
+    </div>
+  </div>
+  <div class="flex justify-end space-x-2 ">
+    {{ btn.link("Create Scheduled Transaction", url_for('page_create_scheduled_transaction_form', account_id=account.id)) }}
+  </div>
+</div>
+
+
+<div id="transactions" class="grid gap-4 mb-12">
+
+    <div class="grid gap-3">
+      {% for transaction in scheduled_transaction_list %}
+      <a
+        href="{{ url_for('page_update_scheduled_transaction_get', account_id=account.id, transaction_id=transaction.id)}}"
+      >
+        {% include 'fragments/accounts/scheduled_transaction.html' %} 
+      </a>
+      {% endfor %}
+    </div>
+</div>
+{% endblock %}
