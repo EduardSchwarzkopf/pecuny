@@ -131,12 +131,10 @@ class TransactionInformtionUpdate(TransactionInformationCreate):
 
 class ScheduledTransactionInformationCreate(TransactionInformationBase):
     date_start: DateField
-    frequency_id: IdField = Field(..., description="The frequency ID.")
+    frequency_id: IdField
     date_end: DateField
-    account_id: IdField = Field(..., description="The account ID.")
-    offset_account_id: Optional[IdField] = Field(
-        None, description="The offset account ID."
-    )
+    account_id: IdField
+    offset_account_id: Optional[IdField] = None
 
 
 class ScheduledTransactionInformtionUpdate(ScheduledTransactionInformationCreate):
