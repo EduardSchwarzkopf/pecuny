@@ -31,8 +31,8 @@ class BaseField(ABC):
 class IdField(BaseField, int):
     @classmethod
     def _validate(cls, value: Union[int, str, None]) -> Optional[int]:
-        if value is None:
-            return value
+        if value is None or value is 0:
+            return None
 
         if isinstance(value, str):
             if value.strip() == "":
