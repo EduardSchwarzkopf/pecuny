@@ -9,7 +9,7 @@ class ExtendedEnum(Enum):
         Return a list of values from the enum class.
         """
 
-        return [c.value for c in cls]
+        return list(cls)
 
 
 class EmailVerificationStatus(ExtendedEnum):
