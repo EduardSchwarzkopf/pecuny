@@ -393,6 +393,7 @@ async def test_scheduled_transaction_yearly_already_exist(
         repository: The repository for database operations.
     """
 
+    date = get_today() - datetime.timedelta(days=180)
     await _assert_scheduled_transaction_already_exist(
-        Frequency.YEARLY, test_account, test_user, repository
+        Frequency.YEARLY, test_account, test_user, repository, date
     )
