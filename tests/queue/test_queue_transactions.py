@@ -324,6 +324,14 @@ async def test_scheduled_transaction_daily_already_exist(
     test_user: models.User,
     repository: Repository,
 ):
+    """
+    Test if a daily scheduled transaction already exists.
+
+    Args:
+        test_account: The test account for the transaction.
+        test_user: The test user for the transaction.
+        repository: The repository for database operations.
+    """
 
     await _assert_scheduled_transaction_already_exist(
         Frequency.DAILY, test_account, test_user, repository, get_today()
@@ -336,6 +344,15 @@ async def test_scheduled_transaction_weekly_already_exist(
     test_user: models.User,
     repository: Repository,
 ):
+    """
+    Test if a weekly scheduled transaction already exists.
+
+    Args:
+        test_account: The test account for the transaction.
+        test_user: The test user for the transaction.
+        repository: The repository for database operations.
+    """
+
     await _assert_scheduled_transaction_already_exist(
         Frequency.WEEKLY, test_account, test_user, repository
     )
@@ -347,6 +364,14 @@ async def test_scheduled_transaction_monthly_already_exist(
     test_user: models.User,
     repository: Repository,
 ):
+    """
+    Test if a monthly scheduled transaction already exists.
+
+    Args:
+        test_account: The test account for the transaction.
+        test_user: The test user for the transaction.
+        repository: The repository for database operations.
+    """
 
     await _assert_scheduled_transaction_already_exist(
         Frequency.MONTHLY, test_account, test_user, repository
@@ -359,6 +384,14 @@ async def test_scheduled_transaction_yearly_already_exist(
     test_user: models.User,
     repository: Repository,
 ):
+    """
+    Test if a yearly scheduled transaction already exists.
+
+    Args:
+        test_account: The test account for the transaction.
+        test_user: The test user for the transaction.
+        repository: The repository for database operations.
+    """
 
     await _assert_scheduled_transaction_already_exist(
         Frequency.YEARLY, test_account, test_user, repository
