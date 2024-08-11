@@ -32,6 +32,9 @@ class FailedImportedTransaction(ImportedTransaction):
 
 @dataclass
 class FinancialSummary:
-    expenses: int
-    income: int
-    total: int
+    expenses: int = 0
+    income: int = 0
+
+    @property
+    def total(self) -> int:
+        return self.income - self.expenses
