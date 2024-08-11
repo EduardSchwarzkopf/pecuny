@@ -438,6 +438,14 @@ async def fixture_create_scheduled_transactions(
             "date_end": (today + datetime.timedelta(weeks=2)),
         },
         {
+            "amount": 5000,
+            "reference": f"{reference_prefix}_monthly",
+            "category_id": 1,
+            "date_start": today,
+            "frequency_id": Frequency.MONTHLY.value,
+            "date_end": (today + datetime.timedelta(weeks=8)),
+        },
+        {
             "amount": 10000,
             "reference": f"{reference_prefix}_yearly",
             "category_id": 1,
@@ -462,11 +470,19 @@ async def fixture_create_scheduled_transactions(
             "date_end": (tomorrow + datetime.timedelta(weeks=1)),
         },
         {
+            "amount": 5000,
+            "reference": f"{reference_prefix}_monthly_not_started",
+            "category_id": 1,
+            "date_start": tomorrow,
+            "frequency_id": Frequency.MONTHLY.value,
+            "date_end": (tomorrow + datetime.timedelta(weeks=8)),
+        },
+        {
             "amount": 10000,
             "reference": f"{reference_prefix}_yearly_not_started",
             "category_id": 1,
             "date_start": tomorrow,
-            "frequency_id": Frequency.DAILY.value,
+            "frequency_id": Frequency.YEARLY.value,
             "date_end": (tomorrow + datetime.timedelta(weeks=52)),
         },
         {
@@ -483,6 +499,14 @@ async def fixture_create_scheduled_transactions(
             "category_id": 1,
             "date_start": get_day_delta(today, -7),
             "frequency_id": Frequency.WEEKLY.value,
+            "date_end": yesterday,
+        },
+        {
+            "amount": 5000,
+            "reference": f"{reference_prefix}_monthly_ended",
+            "category_id": 1,
+            "date_start": get_day_delta(today, -30),
+            "frequency_id": Frequency.MONTHLY.value,
             "date_end": yesterday,
         },
         {
@@ -580,8 +604,7 @@ async def fixture_test_account_scheduled_transaction_list(
         )
     )
 
-    li = result.scalars().all()
-    return li
+    return result.scalars().all()
 
 
 @pytest.fixture(name="test_account_transaction_list")
