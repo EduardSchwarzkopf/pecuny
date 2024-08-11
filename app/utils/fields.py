@@ -31,7 +31,7 @@ class BaseField(ABC):
 class IdField(BaseField, int):
     @classmethod
     def _validate(cls, value: Union[int, str, None]) -> Optional[int]:
-        if value is None or value is 0:
+        if value is None or value is 0:  # pylint: disable=literal-comparison
             return None
 
         if isinstance(value, str):
