@@ -232,7 +232,7 @@ async def _assert_scheduled_transaction_already_exist(
     test_account: models.Account,
     test_user: models.User,
     repository: Repository,
-    date: datetime = get_yesterday(),
+    date: datetime.datetime = get_yesterday(),
 ):
     """
     Asserts that a scheduled transaction already exists for the specified frequency and test account.
