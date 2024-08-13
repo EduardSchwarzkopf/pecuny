@@ -25,15 +25,15 @@ def _process_scheduled_transactions() -> None:
 
 async def _assert_transaction_creation(
     frequency: Frequency,
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     repository: Repository,
 ):
     """
-    Asserts the creation of transactions based on the specified frequency for a test account.
+    Asserts the creation of transactions based on the specified frequency for a test wallet.
 
     Args:
         frequency: The frequency of the transactions to be created.
-        test_account: The test account for the transactions.
+        test_wallet: The test wallet for the transactions.
         repository: The repository for database operations.
     """
 
@@ -43,7 +43,7 @@ async def _assert_transaction_creation(
     scheduled_transaction_list = await repository.filter_by_multiple(
         model,
         [
-            (model.account_id, test_account.id, DatabaseFilterOperator.EQUAL),
+            (model.wallet_id, test_wallet.id, DatabaseFilterOperator.EQUAL),
             (model.frequency_id, frequency.value, DatabaseFilterOperator.EQUAL),
             (model.date_start, today, DatabaseFilterOperator.LESS_THAN_OR_EQUAL),
             (model.date_end, today, DatabaseFilterOperator.GREATER_THAN_OR_EQUAL),
@@ -61,7 +61,7 @@ async def _assert_transaction_creation(
 
         assert len(transaction_list) > 0
         for transaction in transaction_list:
-            assert transaction.account_id == scheduled_transaction.account_id
+            assert transaction.wallet_id == scheduled_transaction.wallet_id
             assert (
                 transaction.information.amount
                 == scheduled_transaction.information.amount
@@ -73,99 +73,99 @@ async def _assert_transaction_creation(
 
 
 async def test_create_transactions_from_schedule(
-    test_account: models.Account,
-    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+    test_wallet: models.Wallet,
+    test_wallet_scheduled_transaction_list: List[models.TransactionScheduled],
     repository: Repository,
 ):
     """
-    Test the creation of transactions from a list of scheduled transactions for a test account.
+    Test the creation of transactions from a list of scheduled transactions for a test wallet.
 
     Args:
-        test_account: The test account for the transactions.
-        test_account_scheduled_transaction_list:
-            List of scheduled transactions for the test account.
+        test_wallet: The test wallet for the transactions.
+        test_wallet_scheduled_transaction_list:
+            List of scheduled transactions for the test wallet.
         repository: The repository for database operations.
     """
 
-    balance = test_account.balance
-    account_id = test_account.id
+    balance = test_wallet.balance
+    wallet_id = test_wallet.id
 
     total_balance = sum(
         transaction.information.amount
-        for transaction in test_account_scheduled_transaction_list
+        for transaction in test_wallet_scheduled_transaction_list
     )
 
-    expected_account_balance = balance + total_balance
+    expected_wallet_balance = balance + total_balance
 
     _process_scheduled_transactions()
-    repository.session.expire(test_account)
+    repository.session.expire(test_wallet)
 
-    account = await repository.get(models.Account, account_id)
+    wallet = await repository.get(models.Wallet, wallet_id)
 
-    assert isinstance(account, models.Account)
+    assert isinstance(wallet, models.Wallet)
 
-    new_balance = account.balance
+    new_balance = wallet.balance
 
-    assert new_balance == expected_account_balance
+    assert new_balance == expected_wallet_balance
 
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
 async def test_create_daily_transaction(
-    test_account: models.Account, repository: Repository
+    test_wallet: models.Wallet, repository: Repository
 ):
     """
-    Test the creation of daily transactions for a test account.
+    Test the creation of daily transactions for a test wallet.
 
     Args:
-        test_account: The test account for the transaction.
+        test_wallet: The test wallet for the transaction.
         repository: The repository for database operations.
     """
 
     _process_scheduled_transactions()
-    await _assert_transaction_creation(Frequency.DAILY, test_account, repository)
+    await _assert_transaction_creation(Frequency.DAILY, test_wallet, repository)
 
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
 async def test_create_weekly_transaction(
-    test_account: models.Account, repository: Repository
+    test_wallet: models.Wallet, repository: Repository
 ):
     """
-    Test the creation of weekly transactions for a test account.
+    Test the creation of weekly transactions for a test wallet.
 
     Args:
-        test_account: The test account for the transaction.
+        test_wallet: The test wallet for the transaction.
         repository: The repository for database operations.
     """
 
     _process_scheduled_transactions()
-    await _assert_transaction_creation(Frequency.WEEKLY, test_account, repository)
+    await _assert_transaction_creation(Frequency.WEEKLY, test_wallet, repository)
 
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
 async def test_create_yearly_transaction(
-    test_account: models.Account, repository: Repository
+    test_wallet: models.Wallet, repository: Repository
 ):
     """
-    Test the creation of yearly transactions for a test account.
+    Test the creation of yearly transactions for a test wallet.
 
     Args:
-        test_account: The test account for the transaction.
+        test_wallet: The test wallet for the transaction.
         repository: The repository for database operations.
     """
 
     _process_scheduled_transactions()
-    await _assert_transaction_creation(Frequency.YEARLY, test_account, repository)
+    await _assert_transaction_creation(Frequency.YEARLY, test_wallet, repository)
 
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
 async def test_scheduled_transaction_ended(
-    test_account: models.Account, repository: Repository
+    test_wallet: models.Wallet, repository: Repository
 ):
     """
     Test that scheduled transactions that have ended do not have corresponding created transactions.
 
     Args:
-        test_account: The test account for the transaction.
+        test_wallet: The test wallet for the transaction.
         repository: The repository for database operations.
     """
 
@@ -177,7 +177,7 @@ async def test_scheduled_transaction_ended(
         model,
         [
             (model.date_end, get_today(), DatabaseFilterOperator.LESS_THAN),
-            (model.account_id, test_account.id, DatabaseFilterOperator.EQUAL),
+            (model.wallet_id, test_wallet.id, DatabaseFilterOperator.EQUAL),
         ],
     )
 
@@ -194,13 +194,13 @@ async def test_scheduled_transaction_ended(
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
 async def test_scheduled_transaction_not_started(
-    test_account: models.Account, repository: Repository
+    test_wallet: models.Wallet, repository: Repository
 ):
     """
     Test that scheduled transactions not yet started do not have corresponding created transactions.
 
     Args:
-        test_account: The test account for the transaction.
+        test_wallet: The test wallet for the transaction.
         repository: The repository for database operations.
     """
 
@@ -212,7 +212,7 @@ async def test_scheduled_transaction_not_started(
         model,
         [
             (model.date_start, get_today(), DatabaseFilterOperator.GREATER_THAN),
-            (model.account_id, test_account.id, DatabaseFilterOperator.EQUAL),
+            (model.wallet_id, test_wallet.id, DatabaseFilterOperator.EQUAL),
         ],
     )
 
@@ -229,18 +229,18 @@ async def test_scheduled_transaction_not_started(
 
 async def _assert_scheduled_transaction_already_exist(
     frequency: Frequency,
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     test_user: models.User,
     repository: Repository,
     date: datetime.datetime = get_yesterday(),
 ):
     """
     Asserts that a scheduled transaction already exists for
-    the specified frequency and test account.
+    the specified frequency and test wallet.
 
     Args:
         frequency: The frequency of the scheduled transaction.
-        test_account: The test account for the scheduled transaction.
+        test_wallet: The test wallet for the scheduled transaction.
         repository: The repository for database operations.
     """
 
@@ -248,8 +248,8 @@ async def _assert_scheduled_transaction_already_exist(
         models.TransactionScheduled,
         [
             (
-                models.TransactionScheduled.account_id,
-                test_account.id,
+                models.TransactionScheduled.wallet_id,
+                test_wallet.id,
                 DatabaseFilterOperator.EQUAL,
             ),
             (
@@ -284,7 +284,7 @@ async def _assert_scheduled_transaction_already_exist(
     transaction = await service.create_transaction(
         test_user,
         TransactionData(
-            account_id=scheduled_transaction.account.id,
+            wallet_id=scheduled_transaction.wallet.id,
             amount=information.amount,
             reference=reference,
             date=date,
@@ -301,8 +301,8 @@ async def _assert_scheduled_transaction_already_exist(
         models.Transaction,
         [
             (
-                models.Transaction.account_id,
-                test_account.id,
+                models.Transaction.wallet_id,
+                test_wallet.id,
                 DatabaseFilterOperator.EQUAL,
             ),
             (
@@ -323,7 +323,7 @@ async def _assert_scheduled_transaction_already_exist(
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
 async def test_scheduled_transaction_daily_already_exist(
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     test_user: models.User,
     repository: Repository,
 ):
@@ -331,19 +331,19 @@ async def test_scheduled_transaction_daily_already_exist(
     Test if a daily scheduled transaction already exists.
 
     Args:
-        test_account: The test account for the transaction.
+        test_wallet: The test wallet for the transaction.
         test_user: The test user for the transaction.
         repository: The repository for database operations.
     """
 
     await _assert_scheduled_transaction_already_exist(
-        Frequency.DAILY, test_account, test_user, repository, get_today()
+        Frequency.DAILY, test_wallet, test_user, repository, get_today()
     )
 
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
 async def test_scheduled_transaction_weekly_already_exist(
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     test_user: models.User,
     repository: Repository,
 ):
@@ -351,19 +351,19 @@ async def test_scheduled_transaction_weekly_already_exist(
     Test if a weekly scheduled transaction already exists.
 
     Args:
-        test_account: The test account for the transaction.
+        test_wallet: The test wallet for the transaction.
         test_user: The test user for the transaction.
         repository: The repository for database operations.
     """
 
     await _assert_scheduled_transaction_already_exist(
-        Frequency.WEEKLY, test_account, test_user, repository
+        Frequency.WEEKLY, test_wallet, test_user, repository
     )
 
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
 async def test_scheduled_transaction_monthly_already_exist(
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     test_user: models.User,
     repository: Repository,
 ):
@@ -371,19 +371,19 @@ async def test_scheduled_transaction_monthly_already_exist(
     Test if a monthly scheduled transaction already exists.
 
     Args:
-        test_account: The test account for the transaction.
+        test_wallet: The test wallet for the transaction.
         test_user: The test user for the transaction.
         repository: The repository for database operations.
     """
 
     await _assert_scheduled_transaction_already_exist(
-        Frequency.MONTHLY, test_account, test_user, repository
+        Frequency.MONTHLY, test_wallet, test_user, repository
     )
 
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
 async def test_scheduled_transaction_yearly_already_exist(
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     test_user: models.User,
     repository: Repository,
 ):
@@ -391,12 +391,12 @@ async def test_scheduled_transaction_yearly_already_exist(
     Test if a yearly scheduled transaction already exists.
 
     Args:
-        test_account: The test account for the transaction.
+        test_wallet: The test wallet for the transaction.
         test_user: The test user for the transaction.
         repository: The repository for database operations.
     """
 
     date = get_today() - datetime.timedelta(days=180)
     await _assert_scheduled_transaction_already_exist(
-        Frequency.YEARLY, test_account, test_user, repository, date
+        Frequency.YEARLY, test_wallet, test_user, repository, date
     )

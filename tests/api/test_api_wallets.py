@@ -24,12 +24,12 @@ from app.utils.dataclasses_utils import ImportedTransaction
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
 from tests.utils import make_http_request
 
-ENDPOINT = "/api/accounts/"
+ENDPOINT = "/api/wallets/"
 
 
-async def test_create_account(test_user: models.User):
+async def test_create_wallet(test_user: models.User):
     """
-    Test case for creating an account.
+    Test case for creating an wallet.
 
     Args:
         test_user (fixture): The test user.
@@ -44,17 +44,17 @@ async def test_create_account(test_user: models.User):
 
     res = await make_http_request(
         ENDPOINT,
-        json={"label": "test_account", "description": "test", "balance": 500},
+        json={"label": "test_wallet", "description": "test", "balance": 500},
         as_user=test_user,
     )
 
     assert res.status_code == HTTP_201_CREATED
 
-    new_account = schemas.Account(**res.json())
+    new_wallet = schemas.Wallet(**res.json())
 
-    assert new_account.label == "test_account"
-    assert new_account.balance == 500
-    assert new_account.description == "test"
+    assert new_wallet.label == "test_wallet"
+    assert new_wallet.balance == 500
+    assert new_wallet.description == "test"
 
 
 @pytest.mark.parametrize(
@@ -65,13 +65,13 @@ async def test_create_account(test_user: models.User):
         (True),
     ],
 )
-async def test_invalid_title_create_account(test_user: models.User, label: Any):
+async def test_invalid_title_create_wallet(test_user: models.User, label: Any):
     """
-    Test case for creating an account with an invalid label.
+    Test case for creating an wallet with an invalid label.
 
     Args:
         test_user (fixture): The test user.
-        label (Any): The label of the account.
+        label (Any): The label of the wallet.
 
     Returns:
         None
@@ -90,12 +90,12 @@ async def test_invalid_title_create_account(test_user: models.User, label: Any):
     assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY
 
 
-async def test_delete_account(test_account: models.Account, repository: Repository):
+async def test_delete_wallet(test_wallet: models.Wallet, repository: Repository):
     """
-    Test case for deleting an account.
+    Test case for deleting an wallet.
 
     Args:
-        test_account (fixture): The test account.
+        test_wallet (fixture): The test wallet.
 
     Returns:
         None
@@ -106,27 +106,27 @@ async def test_delete_account(test_account: models.Account, repository: Reposito
     """
 
     res = await make_http_request(
-        f"{ENDPOINT}{test_account.id}",
-        as_user=test_account.user,
+        f"{ENDPOINT}{test_wallet.id}",
+        as_user=test_wallet.user,
         method=RequestMethod.DELETE,
     )
 
     assert res.status_code == HTTP_204_NO_CONTENT
 
-    account = await repository.get(models.Account, test_account.id)
+    wallet = await repository.get(models.Wallet, test_wallet.id)
 
-    assert account is None
+    assert wallet is None
 
 
-async def test_invalid_delete_account(
-    test_user: models.User, test_accounts: List[models.Account], repository: Repository
+async def test_invalid_delete_wallet(
+    test_user: models.User, test_wallets: List[models.Wallet], repository: Repository
 ):
     """
-    Test case for deleting an account.
+    Test case for deleting an wallet.
 
     Args:
         test_user (fixture): The test user.
-        test_accounts (fixture): The list of test accounts.
+        test_wallets (fixture): The list of test wallets.
 
     Returns:
         None
@@ -136,20 +136,20 @@ async def test_invalid_delete_account(
 
     """
 
-    for account in test_accounts:
+    for wallet in test_wallets:
 
-        if account.user_id == test_user.id:
+        if wallet.user_id == test_user.id:
             continue
 
         res = await make_http_request(
-            f"{ENDPOINT}{account.id}", as_user=test_user, method=RequestMethod.DELETE
+            f"{ENDPOINT}{wallet.id}", as_user=test_user, method=RequestMethod.DELETE
         )
 
         assert res.status_code == HTTP_404_NOT_FOUND
 
-        account_refresh = await repository.get(models.Account, account.id)
+        wallet_refresh = await repository.get(models.Wallet, wallet.id)
 
-        assert account_refresh == account
+        assert wallet_refresh == wallet
 
 
 @pytest.mark.parametrize(
@@ -177,19 +177,19 @@ async def test_invalid_delete_account(
         },
     ],
 )
-async def test_update_account(
-    test_account: models.Account,
+async def test_update_wallet(
+    test_wallet: models.Wallet,
     test_user: models.User,
     values: dict,
     repository: Repository,
 ):
     """
-    Test case for updating an account.
+    Test case for updating an wallet.
 
     Args:
-        test_account (fixture): The test account.
+        test_wallet (fixture): The test wallet.
         test_user (fixture): The test user.
-        values (dict): The updated values for the account.
+        values (dict): The updated values for the wallet.
 
     Returns:
         None
@@ -199,33 +199,33 @@ async def test_update_account(
 
     """
     response = await make_http_request(
-        f"{ENDPOINT}{test_account.id}", json=values, as_user=test_user
+        f"{ENDPOINT}{test_wallet.id}", json=values, as_user=test_user
     )
 
     assert response.status_code == HTTP_200_OK
-    account = schemas.AccountData(**response.json())
+    wallet = schemas.WalletData(**response.json())
 
-    db_account = await repository.get(models.Account, account.id)
+    db_wallet = await repository.get(models.Wallet, wallet.id)
     for key, value in values.items():
-        account_val = getattr(account, key)
-        db_account_val = getattr(db_account, key)
-        print(f"key: {key} | value: {value} | account_val: {account_val}")
+        wallet_val = getattr(wallet, key)
+        db_wallet_val = getattr(db_wallet, key)
+        print(f"key: {key} | value: {value} | wallet_val: {wallet_val}")
         if isinstance(value, float):
 
-            assert db_account_val == RoundedDecimal(value)
-            assert account_val == RoundedDecimal(value)
+            assert db_wallet_val == RoundedDecimal(value)
+            assert wallet_val == RoundedDecimal(value)
 
         else:
-            assert db_account_val == value
-            assert account_val == value
+            assert db_wallet_val == value
+            assert wallet_val == value
 
 
-async def test_get_account_response(test_account):
+async def test_get_wallet_response(test_wallet):
     """
     Tests if the transaction amount in the JSON response is a float.
 
     Args:
-        test_account_transaction_list (fixture): The list of account transactions.
+        test_wallet_transaction_list (fixture): The list of wallet transactions.
         test_user (fixture): The test user.
     Returns:
         None
@@ -235,30 +235,30 @@ async def test_get_account_response(test_account):
     """
 
     res = await make_http_request(
-        f"{ENDPOINT}{test_account.id}",
-        as_user=test_account.user,
+        f"{ENDPOINT}{test_wallet.id}",
+        as_user=test_wallet.user,
         method=RequestMethod.GET,
     )
 
     json_response = res.json()
 
-    assert json_response["label"] == test_account.label
-    assert json_response["description"] == test_account.description
-    assert json_response["id"] == test_account.id
+    assert json_response["label"] == test_wallet.label
+    assert json_response["description"] == test_wallet.description
+    assert json_response["id"] == test_wallet.id
     assert isinstance(json_response["balance"], float)
 
 
 async def test_import_transaction(
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     test_user: models.User,
     tmp_path: Path,
     repository: Repository,
 ):
     """
-    Test case for importing transactions into an account.
+    Test case for importing transactions into an wallet.
 
     Args:
-        test_account: The account to import transactions into.
+        test_wallet: The wallet to import transactions into.
         test_user: The user performing the import.
         tmp_path: Path to a temporary directory for file operations.
 
@@ -266,7 +266,7 @@ async def test_import_transaction(
         None
     """
 
-    account_id = test_account.id
+    wallet_id = test_wallet.id
     category = await repository.get(models.TransactionCategory, 1)
     assert category is not None
 
@@ -293,12 +293,12 @@ async def test_import_transaction(
     csv_file: Path = tmp_path / "transactions.csv"
     csv_file.write_text(csv_content)
 
-    account_balance = test_account.balance
+    wallet_balance = test_wallet.balance
 
     with open(csv_file, "rb") as f:
         files = {"file": (csv_file.name, f, "text/csv")}
         response = await make_http_request(
-            url=f"{ENDPOINT}{account_id}/import", files=files, as_user=test_user
+            url=f"{ENDPOINT}{wallet_id}/import", files=files, as_user=test_user
         )
 
     assert response.status_code == HTTP_202_ACCEPTED
@@ -307,10 +307,10 @@ async def test_import_transaction(
 
     # because the import is done in another session we also need a new one
     repository.session.expire_all()
-    account_refresh = await repository.get(models.Account, account_id)
-    assert account_refresh is not None
-    new_balance = account_balance + total_amount
-    assert new_balance == account_refresh.balance
+    wallet_refresh = await repository.get(models.Wallet, wallet_id)
+    assert wallet_refresh is not None
+    new_balance = wallet_balance + total_amount
+    assert new_balance == wallet_refresh.balance
 
 
 @pytest.mark.parametrize(
@@ -323,7 +323,7 @@ async def test_import_transaction(
 )
 async def test_import_transaction_fail(
     test_user: models.User,
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     tmp_path: Path,
     date: str,
     amount: float | str,
@@ -331,10 +331,10 @@ async def test_import_transaction_fail(
     repository: Repository,
 ):
     """
-    Test case for importing transactions into an account.
+    Test case for importing transactions into an wallet.
 
     Args:
-        test_account: The account to import transactions into.
+        test_wallet: The wallet to import transactions into.
         test_user: The user performing the import.
         tmp_path: Path to a temporary directory for file operations.
 
@@ -354,8 +354,8 @@ async def test_import_transaction_fail(
         category_label = category.label
         section_label = section.label
 
-    account_id = test_account.id
-    balance = test_account.balance
+    wallet_id = test_wallet.id
+    balance = test_wallet.balance
 
     transaction_data = [
         ImportedTransaction(
@@ -373,28 +373,28 @@ async def test_import_transaction_fail(
 
     with open(csv_file, "rb") as f:
         response = await make_http_request(
-            url=f"{ENDPOINT}{test_account.id}/import",
+            url=f"{ENDPOINT}{test_wallet.id}/import",
             files={"file": (csv_file.name, f, "text/csv")},
             as_user=test_user,
         )
 
     assert response.status_code == HTTP_202_ACCEPTED
     repository.session.expire_all()
-    account_refresh = await repository.get(models.Account, account_id)
-    assert account_refresh is not None
-    assert balance == account_refresh.balance
+    wallet_refresh = await repository.get(models.Wallet, wallet_id)
+    assert wallet_refresh is not None
+    assert balance == wallet_refresh.balance
 
 
 async def test_invalid_import_transaction_file(
     test_user: models.User,
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     tmp_path: Path,
 ):
     """
-    Test case for importing transactions into an account.
+    Test case for importing transactions into an wallet.
 
     Args:
-        test_account: The account to import transactions into.
+        test_wallet: The wallet to import transactions into.
         test_user: The user performing the import.
         tmp_path: Path to a temporary directory for file operations.
 
@@ -402,13 +402,13 @@ async def test_invalid_import_transaction_file(
         None
     """
 
-    account_id = test_account.id
+    wallet_id = test_wallet.id
     empty_file: Path = tmp_path / "empty.csv"
     empty_file.write_text("")
 
     with open(empty_file, "rb") as f:
         response = await make_http_request(
-            url=f"{ENDPOINT}{account_id}/import",
+            url=f"{ENDPOINT}{wallet_id}/import",
             files={"file": (empty_file.name, f, "text/csv")},
             as_user=test_user,
         )
@@ -423,7 +423,7 @@ async def test_invalid_import_transaction_file(
 
     with open(wrong_file, "rb") as f:
         response = await make_http_request(
-            url=f"{ENDPOINT}{account_id}/import",
+            url=f"{ENDPOINT}{wallet_id}/import",
             files={"file": (wrong_file.name, f, "text/csv")},
             as_user=test_user,
         )
@@ -436,16 +436,16 @@ async def test_invalid_import_transaction_file(
 
 
 async def test_example_import_file(
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     test_user: models.User,
     tmp_path: Path,
     repository: Repository,
 ):
     """
-    Test case for importing transactions into an account.
+    Test case for importing transactions into an wallet.
 
     Args:
-        test_account: The account to import transactions into.
+        test_wallet: The wallet to import transactions into.
         test_user: The user performing the import.
         tmp_path: Path to a temporary directory for file operations.
 
@@ -475,7 +475,7 @@ async def test_example_import_file(
 
         files = {"file": (file_path.name, file, "text/csv")}
         response = await make_http_request(
-            url=f"{ENDPOINT}{test_account.id}/import", files=files, as_user=test_user
+            url=f"{ENDPOINT}{test_wallet.id}/import", files=files, as_user=test_user
         )
 
         assert response.status_code == HTTP_202_ACCEPTED

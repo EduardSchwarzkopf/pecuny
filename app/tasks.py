@@ -26,7 +26,7 @@ logger = get_logger(__name__)
 async def _process_transaction_row(
     row: dict,
     line_num: int,
-    account_id: int,
+    wallet_id: int,
     user: models.User,
     repo: Repository,
     service: TransactionService,
@@ -36,7 +36,7 @@ async def _process_transaction_row(
 
     Args:
         row: A dictionary representing a row from the CSV file.
-        account_id: The account ID to associate with the transaction.
+        wallet_id: The wallet ID to associate with the transaction.
         session: The database session.
         user: The user object.
         repo: The repository for database operations.
@@ -45,17 +45,17 @@ async def _process_transaction_row(
         A FailedImportedTransaction instance if the transaction fails, otherwise None.
     """
     row_amount = row.get("amount")
-    row_offset_account_id = row.get("offset_account_id")
+    row_offset_wallet_id = row.get("offset_wallet_id")
 
     amount = float(row_amount) if row_amount else None
-    offset_account_id = int(row_offset_account_id) if row_offset_account_id else None
+    offset_wallet_id = int(row_offset_wallet_id) if row_offset_wallet_id else None
 
     failed_transaction = FailedImportedTransaction(
         date=row.get("date"),
         amount=amount,
         reference=row.get("reference"),
         category=row.get("category"),
-        offset_account_id=offset_account_id,
+        offset_wallet_id=offset_wallet_id,
         section=row.get("section"),
     )
 
@@ -96,7 +96,7 @@ async def _process_transaction_row(
 
     try:
         transaction_data = schemas.TransactionData(
-            account_id=account_id,
+            wallet_id=wallet_id,
             category_id=category.id,
             **row,
         )
@@ -131,14 +131,14 @@ async def _process_transaction_row(
 
 @celery.task
 async def import_transactions_from_csv(
-    user_id: int, account_id: int, contents: bytes
+    user_id: int, wallet_id: int, contents: bytes
 ) -> None:
     """
     Imports transactions for a user from a CSV file.
 
     Args:
         user: The user for whom the transactions are being imported.
-        account_id: The ID of the account where transactions will be recorded.
+        wallet_id: The ID of the wallet where transactions will be recorded.
         reader: A DictReader object containing transaction rows from a CSV file.
 
     Returns:
@@ -165,7 +165,7 @@ async def import_transactions_from_csv(
 
         for row in reader:
             failed_transaction = await _process_transaction_row(
-                row, reader.line_num, account_id, user, repo, service
+                row, reader.line_num, wallet_id, user, repo, service
             )
             if failed_transaction:
                 failed_transaction_list.append(failed_transaction)
@@ -198,11 +198,11 @@ async def _create_transaction(
                 The scheduled transaction to create a transaction from.
     """
 
-    user = await repo.get(models.User, scheduled_transaction.account.user_id)
+    user = await repo.get(models.User, scheduled_transaction.wallet.user_id)
 
     information: models.TransactionInformation = scheduled_transaction.information
     new_transaction = schemas.TransactionData(
-        account_id=scheduled_transaction.account.id,
+        wallet_id=scheduled_transaction.wallet.id,
         amount=information.amount,
         reference=information.reference,
         date=today,

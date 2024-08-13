@@ -18,7 +18,7 @@ ResponseModel = schemas.ScheduledTransaction
 
 @router.get("/", response_model=list[ResponseModel])
 async def api_get_scheduled_transactions(
-    account_id: int,
+    wallet_id: int,
     current_user: User = Depends(current_active_verified_user),
     service: ScheduledTransactionService = Depends(
         ScheduledTransactionService.get_instance
@@ -28,7 +28,7 @@ async def api_get_scheduled_transactions(
     Retrieves a list of transactions.
 
     Args:
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         date_start: The start date for filtering transactions.
         date_end: The end date for filtering transactions.
         current_user: The current active user.
@@ -37,10 +37,10 @@ async def api_get_scheduled_transactions(
         list[response_model]: A list of transaction information.
 
     Raises:
-        HTTPException: If the account is not found.
+        HTTPException: If the wallet is not found.
     """
 
-    return await service.get_transaction_list(current_user, account_id)
+    return await service.get_transaction_list(current_user, wallet_id)
 
 
 @router.get("/{transaction_id}", response_model=ResponseModel)

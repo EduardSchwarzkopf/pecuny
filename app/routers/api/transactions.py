@@ -18,7 +18,7 @@ ResponseModel = schemas.Transaction
 
 @router.get("/", response_model=list[ResponseModel])
 async def api_get_transactions(
-    account_id: int,
+    wallet_id: int,
     date_start: datetime,
     date_end: datetime,
     current_user: User = Depends(current_active_verified_user),
@@ -28,7 +28,7 @@ async def api_get_transactions(
     Retrieves a list of transactions.
 
     Args:
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         date_start: The start date for filtering transactions.
         date_end: The end date for filtering transactions.
         current_user: The current active user.
@@ -37,11 +37,11 @@ async def api_get_transactions(
         list[ResponseModel]: A list of transaction information.
 
     Raises:
-        HTTPException: If the account is not found.
+        HTTPException: If the wallet is not found.
     """
 
     return await service.get_transaction_list(
-        current_user, account_id, date_start, date_end
+        current_user, wallet_id, date_start, date_end
     )
 
 

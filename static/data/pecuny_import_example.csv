@@ -1,4 +1,4 @@
-date;amount;reference;category;section;offset_account_id
+date;amount;reference;category;section;offset_wallet_id
 2024-04-21;100.00;VISA;Course fees;Education;
 2024-04-20;50.00;CASH;Groceries;Household;
 2024-04-19;-200.50;BANK TRANSFER;Rent;Housing;

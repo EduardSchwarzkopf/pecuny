@@ -1,1 +1,1 @@
-ACCOUNT_USER_ID_MISMATCH = "Account User ID does not match the User ID."
+WALLET_USER_ID_MISMATCH = "Wallet user ID does not match the user ID."

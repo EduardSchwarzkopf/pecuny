@@ -5,7 +5,7 @@ from app.tasks import import_transactions_from_csv
 
 
 async def process_csv_file(
-    account_id: int,
+    wallet_id: int,
     file: UploadFile,
     current_user: User,
 ):
@@ -13,7 +13,7 @@ async def process_csv_file(
     Processes a CSV file upload.
 
     Args:
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         file: The uploaded CSV file.
         current_user: The current authenticated and verified user.
         background_tasks: Background tasks to add tasks to.
@@ -29,4 +29,4 @@ async def process_csv_file(
     if not contents:
         raise HTTPException(status_code=400, detail="File is empty")
 
-    import_transactions_from_csv.delay(current_user.id, account_id, contents)
+    import_transactions_from_csv.delay(current_user.id, wallet_id, contents)

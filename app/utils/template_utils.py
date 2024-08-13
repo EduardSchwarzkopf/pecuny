@@ -6,9 +6,9 @@ from fastapi.responses import HTMLResponse
 from starlette_wtf import StarletteForm
 
 from app import models, schemas, templates
-from app.services.accounts import AccountService
 from app.services.categories import CategoryService
 from app.services.frequency import FrequencyService
+from app.services.wallets import WalletService
 from app.utils.dataclasses_utils import FinancialSummary
 from app.utils.enums import FeedbackType
 
@@ -100,7 +100,7 @@ def render_form_template(template: str, request: Request, form: StarletteForm):
 def render_transaction_form_template(
     request: Request,
     form: StarletteForm,
-    account_id: int,
+    wallet_id: int,
     page_name: str,
     transaction: Optional[models.Transaction] = None,
 ) -> HTMLResponse:
@@ -110,7 +110,7 @@ def render_transaction_form_template(
     Args:
         request: The request object.
         form: The form to render.
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         page_name: The name of the page.
 
     Returns:
@@ -123,11 +123,9 @@ def render_transaction_form_template(
         request,
         {
             "form": form,
-            "account_id": account_id,
+            "wallet_id": wallet_id,
             "transaction": transaction,
-            "action_url": request.url_for(
-                page_name, account_id=account_id, **url_params
-            ),
+            "action_url": request.url_for(page_name, wallet_id=wallet_id, **url_params),
         },
     )
 
@@ -194,8 +192,8 @@ def calculate_financial_summary(
     return summary
 
 
-async def populate_transaction_form_account_choices(
-    account_id: int,
+async def populate_transaction_form_wallet_choices(
+    wallet_id: int,
     user: models.User,
     form: Type[
         Union[
@@ -208,10 +206,10 @@ async def populate_transaction_form_account_choices(
     first_select_label,
 ) -> None:
     """
-    Populates the account choices in the transaction form.
+    Populates the wallet choices in the transaction form.
 
     Args:
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         user: The current active user.
         form: The create transaction form.
         first_select_label: The label for the first select option.
@@ -219,28 +217,28 @@ async def populate_transaction_form_account_choices(
     Returns:
         None
     """
-    service = AccountService()
-    account_list = await service.get_accounts(user)
+    service = WalletService()
+    wallet_list = await service.get_wallets(user)
 
-    if account_list is None:
+    if wallet_list is None:
         return None
 
-    account_list_length = len(account_list)
+    wallet_list_length = len(wallet_list)
 
-    account_choices = (
+    wallet_choices = (
         [(0, first_select_label)]
         + [
-            (account.id, account.label)
-            for account in account_list
-            if account is not None and account.id != account_id
+            (wallet.id, wallet.label)
+            for wallet in wallet_list
+            if wallet is not None and wallet.id != wallet_id
         ]
-        if account_list_length > 1
-        else [(0, "No other accounts found")]
+        if wallet_list_length > 1
+        else [(0, "No other wallets found")]
     )
 
-    form.offset_account_id.choices = account_choices
-    if account_list_length == 1:
-        form.offset_account_id.data = 0
+    form.offset_wallet_id.choices = wallet_choices
+    if wallet_list_length == 1:
+        form.offset_wallet_id.data = 0
 
 
 async def populate_transaction_form_category_choices(
@@ -294,7 +292,7 @@ async def populate_transaction_form_frequency_choices(
 
 
 async def populate_transaction_form_choices(
-    account_id: int,
+    wallet_id: int,
     user: models.User,
     form: Type[
         Union[
@@ -304,13 +302,13 @@ async def populate_transaction_form_choices(
             schemas.CreateTransactionForm,
         ]
     ],
-    first_select_label: str = "Select target account for transfers",
+    first_select_label: str = "Select target wallet for transfers",
 ) -> None:
     """
     Populates the choices in the transaction form.
 
     Args:
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         user: The current active user.
         form: The create transaction form.
         first_select_label: The label for the first select option.
@@ -330,6 +328,6 @@ async def populate_transaction_form_choices(
     ):
         await populate_transaction_form_frequency_choices(form)
 
-    await populate_transaction_form_account_choices(
-        account_id, user, form, first_select_label
+    await populate_transaction_form_wallet_choices(
+        wallet_id, user, form, first_select_label
     )

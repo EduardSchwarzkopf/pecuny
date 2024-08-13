@@ -93,9 +93,9 @@ class UserId(Base):
 class Transaction(BaseModel):
     __tablename__ = "transactions"
 
-    account_id = Column(
+    wallet_id = Column(
         Integer,
-        ForeignKey("accounts.id", ondelete="CASCADE", onupdate="CASCADE"),
+        ForeignKey("wallets.id", ondelete="CASCADE", onupdate="CASCADE"),
         nullable=False,
     )
     information_id = Column(
@@ -135,7 +135,7 @@ class Transaction(BaseModel):
         lazy="selectin",
     )
 
-    account = relationship("Account", back_populates="transactions", lazy="selectin")
+    wallet = relationship("Wallet", back_populates="transactions", lazy="selectin")
 
     scheduled_transaction = relationship(
         "TransactionScheduled", back_populates="created_transactions"
@@ -154,14 +154,14 @@ class TransactionScheduled(BaseModel):
     __tablename__ = "transactions_scheduled"
 
     is_active = Column(Boolean, default=True, server_default=text("true"))
-    account_id = Column(
-        Integer, ForeignKey("accounts.id", ondelete="CASCADE", onupdate="CASCADE")
+    wallet_id = Column(
+        Integer, ForeignKey("wallets.id", ondelete="CASCADE", onupdate="CASCADE")
     )
-    account = relationship(
-        "Account",
+    wallet = relationship(
+        "Wallet",
         back_populates="scheduled_transactions",
         lazy="selectin",
-        foreign_keys=[account_id],
+        foreign_keys=[wallet_id],
     )
 
     information = relationship(
@@ -173,11 +173,11 @@ class TransactionScheduled(BaseModel):
     )
     information_id = Column(Integer, ForeignKey("transactions_information.id"))
 
-    offset_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
-    offset_account = relationship(
-        "Account",
+    offset_wallet_id = Column(Integer, ForeignKey("wallets.id"), nullable=True)
+    offset_wallet = relationship(
+        "Wallet",
         lazy="selectin",
-        foreign_keys=[offset_account_id],
+        foreign_keys=[offset_wallet_id],
     )
 
     frequency = relationship("Frequency", lazy="selectin")
@@ -193,19 +193,19 @@ class TransactionScheduled(BaseModel):
     )
 
 
-class Account(BaseModel, UserId):
-    __tablename__ = "accounts"
+class Wallet(BaseModel, UserId):
+    __tablename__ = "wallets"
 
     label = Column(String(36))
     description = Column(String(128))
     balance = Column(DECIMAL(10, 2), default=0)
     transactions = relationship(
-        "Transaction", back_populates="account", cascade="all,delete", lazy=True
+        "Transaction", back_populates="wallet", cascade="all,delete", lazy=True
     )
     scheduled_transactions = relationship(
         "TransactionScheduled",
         cascade="all,delete",
-        foreign_keys=[TransactionScheduled.account_id],
+        foreign_keys=[TransactionScheduled.wallet_id],
         lazy=True,
     )
 

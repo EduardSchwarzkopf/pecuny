@@ -14,7 +14,7 @@ from app.date_manager import get_iso_timestring
 from app.repository import Repository
 from app.utils.classes import RoundedDecimal
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
-from tests.utils import get_user_offset_account, make_http_request
+from tests.utils import get_user_offset_wallet, make_http_request
 
 ENDPOINT = "/api/transactions/"
 
@@ -34,7 +34,7 @@ async def test_create_transaction(
     amount: float | int,
     reference: str,
     category_id: int,
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     test_user: models.User,
 ):
     """
@@ -44,7 +44,7 @@ async def test_create_transaction(
         amount (float | int): The amount of the transaction.
         reference (str): The reference of the transaction.
         category_id (int): The category ID of the transaction.
-        test_account (models.Account): The test account.
+        test_wallet (models.Wallet): The test wallet.
         test_user (models.User): The test user.
 
     Returns:
@@ -54,12 +54,12 @@ async def test_create_transaction(
         AssertionError: If the test fails.
 
     """
-    account_balance = test_account.balance
+    wallet_balance = test_wallet.balance
 
     res = await make_http_request(
         ENDPOINT,
         json={
-            "account_id": test_account.id,
+            "wallet_id": test_wallet.id,
             "amount": amount,
             "reference": reference,
             "date": get_iso_timestring(),
@@ -72,8 +72,8 @@ async def test_create_transaction(
     new_transaction = schemas.Transaction(**json_response)
 
     assert res.status_code == HTTP_201_CREATED
-    assert account_balance + Decimal(amount) == test_account.balance
-    assert new_transaction.account_id == test_account.id
+    assert wallet_balance + Decimal(amount) == test_wallet.balance
+    assert new_transaction.wallet_id == test_wallet.id
     assert new_transaction.information.amount == amount
     assert isinstance(json_response["information"]["amount"], float)
     assert isinstance(new_transaction.information.amount, Decimal)
@@ -97,7 +97,7 @@ async def test_create_transaction(
 async def test_updated_transaction(
     category_id: int,
     amount: int | float | RoundedDecimal,
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     test_user: models.User,
     repository: Repository,
 ):
@@ -107,7 +107,7 @@ async def test_updated_transaction(
     Args:
         category_id (int): The category ID of the transaction.
         amount (int | float): The amount of the transaction.
-        test_account (models.Account): The test account.
+        test_wallet (models.Wallet): The test wallet.
         test_user (models.User): The test user.
 
     Returns:
@@ -120,17 +120,17 @@ async def test_updated_transaction(
     reference = f"Updated Val {amount}"
 
     json = {
-        "account_id": test_account.id,
+        "wallet_id": test_wallet.id,
         "amount": amount,
         "reference": f"Updated Val {amount}",
         "date": get_iso_timestring(),
         "category_id": category_id,
     }
 
-    account_balance = test_account.balance
+    wallet_balance = test_wallet.balance
 
     transaction_list = await repository.filter_by(
-        models.Transaction, models.Transaction.account_id, test_account.id
+        models.Transaction, models.Transaction.wallet_id, test_wallet.id
     )
 
     transaction = transaction_list[0]
@@ -147,22 +147,22 @@ async def test_updated_transaction(
 
     assert transaction is not None
 
-    updated_test_account = await repository.get(models.Account, test_account.id)
+    updated_test_wallet = await repository.get(models.Wallet, test_wallet.id)
 
-    assert updated_test_account is not None
+    assert updated_test_wallet is not None
 
     amount = RoundedDecimal(amount)
     difference = RoundedDecimal(transaction_amount_before - amount)
 
-    assert updated_test_account.balance == account_balance - difference
+    assert updated_test_wallet.balance == wallet_balance - difference
     assert transaction.information.amount == amount
     assert transaction.information.reference == reference
     assert transaction.information.category_id == category_id
 
 
 async def test_delete_transactions(
-    test_account: models.Account,
-    test_account_transaction_list: list[models.Transaction],
+    test_wallet: models.Wallet,
+    test_wallet_transaction_list: list[models.Transaction],
     test_user: models.User,
     repository: Repository,
 ):
@@ -170,8 +170,8 @@ async def test_delete_transactions(
     Test case for deleting transactions.
 
     Args:
-        test_account (fixture): The test account.
-        test_account_transaction_list (fixture): The list of test account transactions.
+        test_wallet (fixture): The test wallet.
+        test_wallet_transaction_list (fixture): The list of test wallet transactions.
         test_user (fixture): The test user.
 
     Returns:
@@ -181,9 +181,9 @@ async def test_delete_transactions(
         AssertionError: If the test fails.
     """
 
-    for transaction in test_account_transaction_list:
+    for transaction in test_wallet_transaction_list:
 
-        account_balance = test_account.balance
+        wallet_balance = test_wallet.balance
         amount = transaction.information.amount
         transaction_id = transaction.id
 
@@ -197,27 +197,27 @@ async def test_delete_transactions(
 
         assert result is None
 
-        account = await repository.get(models.Account, test_account.id)
+        wallet = await repository.get(models.Wallet, test_wallet.id)
 
-        assert account is not None
+        assert wallet is not None
 
-        account_balance_after = account.balance
+        wallet_balance_after = wallet.balance
 
-        expected_balance = account_balance - amount
-        assert account_balance_after == expected_balance
+        expected_balance = wallet_balance - amount
+        assert wallet_balance_after == expected_balance
 
         assert await repository.get(models.Transaction, transaction_id) is None
 
 
 @pytest.mark.usefixtures("create_transactions")
 async def test_delete_transactions_fail(
-    test_account: models.Account, test_user: models.User, repository: Repository
+    test_wallet: models.Wallet, test_user: models.User, repository: Repository
 ):
     """
     Test case for failing to delete transactions.
 
     Args:
-        test_account (models.Account): The test account.
+        test_wallet (models.Wallet): The test wallet.
         test_user (models.User): The test user.
 
     Returns:
@@ -228,17 +228,17 @@ async def test_delete_transactions_fail(
     """
 
     result = await repository.filter_by(
-        models.Account,
-        models.Account.user_id,
-        test_account.user_id,
+        models.Wallet,
+        models.Wallet.user_id,
+        test_wallet.user_id,
         DatabaseFilterOperator.NOT_EQUAL,
-        load_relationships_list=[models.Account.transactions],
+        load_relationships_list=[models.Wallet.transactions],
     )
-    account = result[0]
+    wallet = result[0]
 
-    account_balance = account.balance
+    wallet_balance = wallet.balance
 
-    for transaction in account.transactions:
+    for transaction in wallet.transactions:
 
         res = await make_http_request(
             f"{ENDPOINT}{transaction.id}",
@@ -248,13 +248,13 @@ async def test_delete_transactions_fail(
 
         assert res.status_code == HTTP_404_NOT_FOUND
 
-        account_refresh = await repository.get(models.Account, account.id)
+        wallet_refresh = await repository.get(models.Wallet, wallet.id)
 
-        assert account_refresh is not None
+        assert wallet_refresh is not None
 
-        account_balance_after = account_refresh.balance
+        wallet_balance_after = wallet_refresh.balance
 
-        assert account_balance_after == account_balance
+        assert wallet_balance_after == wallet_balance
 
 
 @pytest.mark.parametrize(
@@ -269,7 +269,7 @@ async def test_delete_transactions_fail(
     ],
 )
 async def test_create_offset_transaction(
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     test_user: models.User,
     amount: int | float,
     expected_offset_amount: int | float,
@@ -280,7 +280,7 @@ async def test_create_offset_transaction(
     Test case for creating an offset transaction.
 
     Args:
-        test_account (models.Account): The test account.
+        test_wallet (models.Wallet): The test wallet.
         test_user (models.User): The test user.
         amount (int | float): The amount of the transaction.
         expected_offset_amount (int | float): The expected amount of the offset transaction.
@@ -294,21 +294,21 @@ async def test_create_offset_transaction(
 
     """
 
-    account_id = test_account.id
-    offset_account = await get_user_offset_account(test_account, repository)
+    wallet_id = test_wallet.id
+    offset_wallet = await get_user_offset_wallet(test_wallet, repository)
 
-    assert offset_account is not None
+    assert offset_wallet is not None
 
     reference = f"test_create_offset_transaction - {amount}"
     res = await make_http_request(
         ENDPOINT,
         json={
-            "account_id": account_id,
+            "wallet_id": wallet_id,
             "amount": amount,
             "reference": reference,
             "date": get_iso_timestring(),
             "category_id": category_id,
-            "offset_account_id": offset_account.id,
+            "offset_wallet_id": offset_wallet.id,
         },
         as_user=test_user,
     )
@@ -326,8 +326,8 @@ async def test_create_offset_transaction(
 
     assert new_offset_transaction is not None
 
-    assert new_transaction.account_id == account_id
-    assert new_offset_transaction.account_id == offset_account.id
+    assert new_transaction.wallet_id == wallet_id
+    assert new_offset_transaction.wallet_id == offset_wallet.id
 
     assert new_transaction.information.amount == round(amount, 2)
     assert new_offset_transaction.information.amount == round(expected_offset_amount, 2)
@@ -339,15 +339,15 @@ async def test_create_offset_transaction(
     assert new_offset_transaction.information.reference == reference
 
 
-async def test_create_offset_transaction_other_account_fail(
-    test_account: models.Account, test_user: models.User, repository: Repository
+async def test_create_offset_transaction_other_wallet_fail(
+    test_wallet: models.Wallet, test_user: models.User, repository: Repository
 ):
     """
-    Test case for failing to create an offset transaction with another account.
+    Test case for failing to create an offset transaction with another wallet.
 
     Args:
-        test_account (models.Account): The test account.
-        test_accounts (list[models.Account]): The list of test accounts.
+        test_wallet (models.Wallet): The test wallet.
+        test_wallets (list[models.Wallet]): The list of test wallets.
         test_user (models.User): The test user.
 
     Returns:
@@ -355,50 +355,50 @@ async def test_create_offset_transaction_other_account_fail(
 
     Raises:
         AssertionError: If the test fails.
-        ValueError: If no offset account is found.
+        ValueError: If no offset wallet is found.
 
     """
 
-    offset_account_list = await repository.filter_by(
-        models.Account,
-        models.Account.user_id,
+    offset_wallet_list = await repository.filter_by(
+        models.Wallet,
+        models.Wallet.user_id,
         test_user.id,
         DatabaseFilterOperator.NOT_EQUAL,
     )
 
-    if offset_account_list is None:
-        raise ValueError("No offset account found")
+    if offset_wallet_list is None:
+        raise ValueError("No offset wallet found")
 
-    offset_account = offset_account_list[0]
+    offset_wallet = offset_wallet_list[0]
 
-    account_balance = test_account.balance
-    offset_account_balance = offset_account.balance
-    account_id = test_account.id
-    offset_account_id = offset_account.id
+    wallet_balance = test_wallet.balance
+    offset_wallet_balance = offset_wallet.balance
+    wallet_id = test_wallet.id
+    offset_wallet_id = offset_wallet.id
 
     res = await make_http_request(
         ENDPOINT,
         json={
-            "account_id": account_id,
+            "wallet_id": wallet_id,
             "amount": 42,
             "reference": "Not allowed",
             "date": get_iso_timestring(),
             "category_id": 1,
-            "offset_account_id": offset_account_id,
+            "offset_wallet_id": offset_wallet_id,
         },
         as_user=test_user,
     )
 
     assert res.status_code == HTTP_401_UNAUTHORIZED
 
-    account_refreshed = await repository.get(models.Account, account_id)
-    offset_account_refreshed = await repository.get(models.Account, offset_account_id)
+    wallet_refreshed = await repository.get(models.Wallet, wallet_id)
+    offset_wallet_refreshed = await repository.get(models.Wallet, offset_wallet_id)
 
-    assert account_refreshed is not None
-    assert offset_account_refreshed is not None
+    assert wallet_refreshed is not None
+    assert offset_wallet_refreshed is not None
 
-    assert account_balance == account_refreshed.balance
-    assert offset_account_balance == offset_account_refreshed.balance
+    assert wallet_balance == wallet_refreshed.balance
+    assert offset_wallet_balance == offset_wallet_refreshed.balance
 
 
 @pytest.mark.parametrize(
@@ -415,7 +415,7 @@ async def test_create_offset_transaction_other_account_fail(
     ],
 )
 async def test_updated_offset_transaction(
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     category_id: int,
     amount: int | float | RoundedDecimal,
     repository: Repository,
@@ -424,7 +424,7 @@ async def test_updated_offset_transaction(
     Test case for updating an offset transaction.
 
     Args:
-        test_account (models.Account): The test account.
+        test_wallet (models.Wallet): The test wallet.
         category_id (int): The category ID of the transaction.
         amount (int | float): The amount of the transaction.
 
@@ -436,26 +436,26 @@ async def test_updated_offset_transaction(
 
     """
 
-    offset_account = await get_user_offset_account(test_account, repository)
+    offset_wallet = await get_user_offset_wallet(test_wallet, repository)
 
-    assert offset_account is not None
+    assert offset_wallet is not None
 
-    account_balance = test_account.balance
-    offset_account_balance = offset_account.balance
-    account_id = test_account.id
-    offset_account_id = offset_account.id
+    wallet_balance = test_wallet.balance
+    offset_wallet_balance = offset_wallet.balance
+    wallet_id = test_wallet.id
+    offset_wallet_id = offset_wallet.id
 
     transaction_res = await make_http_request(
         ENDPOINT,
         json={
-            "account_id": account_id,
+            "wallet_id": wallet_id,
             "amount": 5,
             "reference": "creation",
             "date": get_iso_timestring(),
             "category_id": category_id,
-            "offset_account_id": offset_account_id,
+            "offset_wallet_id": offset_wallet_id,
         },
-        as_user=test_account.user,
+        as_user=test_wallet.user,
     )
 
     transaction_before = schemas.Transaction(**transaction_res.json())
@@ -464,13 +464,13 @@ async def test_updated_offset_transaction(
     res = await make_http_request(
         f"{ENDPOINT}{transaction_before.id}",
         json={
-            "account_id": account_id,
+            "wallet_id": wallet_id,
             "amount": amount,
             "reference": reference,
             "date": get_iso_timestring(),
             "category_id": category_id,
         },
-        as_user=test_account.user,
+        as_user=test_wallet.user,
     )
 
     assert res.status_code == HTTP_200_OK
@@ -483,14 +483,14 @@ async def test_updated_offset_transaction(
     assert transaction.information.reference == reference
     assert transaction.information.category_id == category_id
 
-    account_refreshed = await repository.get(models.Account, account_id)
-    offset_account_refreshed = await repository.get(models.Account, offset_account_id)
+    wallet_refreshed = await repository.get(models.Wallet, wallet_id)
+    offset_wallet_refreshed = await repository.get(models.Wallet, offset_wallet_id)
 
-    assert account_refreshed is not None
-    assert offset_account_refreshed is not None
+    assert wallet_refreshed is not None
+    assert offset_wallet_refreshed is not None
 
-    assert account_refreshed.balance == account_balance + amount
-    assert offset_account_refreshed.balance == offset_account_balance - amount
+    assert wallet_refreshed.balance == wallet_balance + amount
+    assert offset_wallet_refreshed.balance == offset_wallet_balance - amount
 
 
 @pytest.mark.parametrize(
@@ -507,7 +507,7 @@ async def test_updated_offset_transaction(
     ],
 )
 async def test_delete_offset_transaction(
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     test_user: models.User,
     category_id: int,
     amount: int | float,
@@ -517,7 +517,7 @@ async def test_delete_offset_transaction(
     Test case for deleting an offset transaction.
 
     Args:
-        test_account (models.Account): The test account.
+        test_wallet (models.Wallet): The test wallet.
         test_user (models.User): The test user.
         category_id (int): The category ID of the transaction.
         amount (int | float): The amount of the transaction.
@@ -529,22 +529,22 @@ async def test_delete_offset_transaction(
         AssertionError: If the test fails.
     """
 
-    offset_account = await get_user_offset_account(test_account, repository)
+    offset_wallet = await get_user_offset_wallet(test_wallet, repository)
 
-    assert offset_account is not None
+    assert offset_wallet is not None
 
-    account_balance = test_account.balance
-    offset_account_balance = offset_account.balance
+    wallet_balance = test_wallet.balance
+    offset_wallet_balance = offset_wallet.balance
 
     transaction_res = await make_http_request(
         ENDPOINT,
         json={
-            "account_id": test_account.id,
+            "wallet_id": test_wallet.id,
             "amount": amount,
             "reference": "creation",
             "date": get_iso_timestring(),
             "category_id": category_id,
-            "offset_account_id": offset_account.id,
+            "offset_wallet_id": offset_wallet.id,
         },
         as_user=test_user,
     )
@@ -563,24 +563,24 @@ async def test_delete_offset_transaction(
     assert res.status_code == HTTP_204_NO_CONTENT
     assert offset_transaction_res.status_code == HTTP_404_NOT_FOUND
 
-    account_refresh = await repository.get(models.Account, test_account.id)
-    offset_account_refresh = await repository.get(models.Account, offset_account.id)
+    wallet_refresh = await repository.get(models.Wallet, test_wallet.id)
+    offset_wallet_refresh = await repository.get(models.Wallet, offset_wallet.id)
 
-    assert account_refresh is not None
-    assert offset_account_refresh is not None
+    assert wallet_refresh is not None
+    assert offset_wallet_refresh is not None
 
-    assert offset_account_balance == offset_account_refresh.balance
-    assert account_balance == account_refresh.balance
+    assert offset_wallet_balance == offset_wallet_refresh.balance
+    assert wallet_balance == wallet_refresh.balance
 
 
 async def test_transaction_amount_is_number(
-    test_account_transaction_list: list[models.Transaction], repository: Repository
+    test_wallet_transaction_list: list[models.Transaction], repository: Repository
 ):
     """
     Tests if the transaction amount in the JSON response is a float.
 
     Args:
-        test_account_transaction_list (fixture): The list of account transactions.
+        test_wallet_transaction_list (fixture): The list of wallet transactions.
         test_user (fixture): The test user.
     Returns:
         None
@@ -589,16 +589,16 @@ async def test_transaction_amount_is_number(
         AssertionError: If the test fails.
     """
 
-    transaction = test_account_transaction_list[0]
-    account = await repository.get(
-        models.Account, transaction.account_id, [models.Account.user]
+    transaction = test_wallet_transaction_list[0]
+    wallet = await repository.get(
+        models.Wallet, transaction.wallet_id, [models.Wallet.user]
     )
 
-    assert account is not None
+    assert wallet is not None
 
     res = await make_http_request(
         f"{ENDPOINT}{transaction.id}",
-        as_user=account.user,
+        as_user=wallet.user,
         method=RequestMethod.GET,
     )
 

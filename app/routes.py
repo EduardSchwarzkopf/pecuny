@@ -5,20 +5,20 @@ from fastapi import APIRouter
 
 from app.auth_manager import auth_backend, fastapi_users
 from app.routers import (
-    accounts,
     auth,
     dashboard,
     index,
     scheduled_transactions,
     transactions,
     users,
+    wallets,
 )
-from app.routers.api import accounts as api_accounts
 from app.routers.api import auth as api_auth
 from app.routers.api import categories as api_categories
 from app.routers.api import scheduled_transactions as api_scheduled_transactions
 from app.routers.api import transactions as api_transactions
 from app.routers.api import users as api_users
+from app.routers.api import wallets as api_wallets
 from app.schemas import UserRead, UserUpdate
 
 RouterConfig = dict[str, Union[APIRouter, str, list[str]]]
@@ -49,7 +49,7 @@ router_list: RouterList = [
     ## Pages
     {"router": index.router},
     {"router": dashboard.router},
-    {"router": accounts.router},
+    {"router": wallets.router},
     {"router": auth.router},
     {"router": users.router},
     {"router": transactions.router},
@@ -61,7 +61,7 @@ router_list: RouterList = [
     {"router": api_categories.router},
     {"router": api_auth.router},
     {
-        "router": api_accounts.router,
+        "router": api_wallets.router,
     },
     {
         "router": api_transactions.router,

@@ -4,8 +4,8 @@ from typing import List, Optional
 from app import models, schemas
 from app.logger import get_logger
 from app.repository import Repository
-from app.services.accounts import AccountService
 from app.services.base_transaction import BaseTransactionService
+from app.services.wallets import WalletService
 
 logger = get_logger(__name__)
 
@@ -19,16 +19,16 @@ class TransactionService(
     async def get_transaction_list(
         self,
         user: models.User,
-        account_id: int,
+        wallet_id: int,
         date_start: datetime,
         date_end: datetime,
     ) -> List[models.Transaction]:
         """
-        Retrieves a list of transactions for a specific user and account within a given date range.
+        Retrieves a list of transactions for a specific user and wallet within a given date range.
 
         Args:
             user: The user for whom transactions are being retrieved.
-            account_id: The ID of the account for which transactions are being retrieved.
+            wallet_id: The ID of the wallet for which transactions are being retrieved.
             date_start: Optional start date for filtering transactions.
             date_end: Optional end date for filtering transactions.
 
@@ -36,19 +36,17 @@ class TransactionService(
             A list of transactions that match the criteria.
         """
         logger.info(
-            "Starting transaction list retrieval for user %s and account %s",
+            "Starting transaction list retrieval for user %s and wallet %s",
             user.id,
-            account_id,
+            wallet_id,
         )
-        account = await self.repository.get(models.Account, account_id)
+        wallet = await self.repository.get(models.Wallet, wallet_id)
 
-        if account is None or not AccountService.has_user_access_to_account(
-            user, account
-        ):
+        if wallet is None or not WalletService.has_user_access_to_wallet(user, wallet):
             return []
 
         return await self.repository.get_transactions_from_period(
-            account_id, date_start, date_end
+            wallet_id, date_start, date_end
         )
 
     async def get_transaction(

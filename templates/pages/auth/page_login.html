@@ -1,7 +1,7 @@
 {% extends "layouts/auth.html" %}
 {% import 'macros/form_controls.html' as form_ctrl %}
 
-{% set title = 'Sign in to your account' %}
+{% set title = 'Sign in to your wallet' %}
 {% set action_url = url_for('login') %}
 {% set button_text = "Login" %}
 
@@ -12,7 +12,7 @@
     <a href="{{ url_for('forgot_password') }}">Reset</a>
 </div>
 <div class="text-sm text-center">
-    Need an account?
+    Need an wallet?
     <a href="{{ url_for('register') }}">Sign up</a>
 </div>
 {% endblock %}

@@ -12,10 +12,9 @@ from app import models, schemas
 from app import transaction_manager as tm
 from app.auth_manager import current_active_verified_user
 from app.routers.dashboard import router as dashboard_router
-from app.services.accounts import AccountService
 from app.services.transactions import TransactionService
+from app.services.wallets import WalletService
 from app.utils import PageRouter
-from app.utils.account_utils import get_account_list_template
 from app.utils.enums import FeedbackType
 from app.utils.file_utils import process_csv_file
 from app.utils.template_utils import (
@@ -24,181 +23,182 @@ from app.utils.template_utils import (
     render_template,
     set_feedback,
 )
+from app.utils.wallet_utils import get_wallet_list_template
 
-PREFIX = f"{dashboard_router.prefix}/accounts"
-router = PageRouter(prefix=PREFIX, tags=["Accounts"])
+PREFIX = f"{dashboard_router.prefix}/wallets"
+router = PageRouter(prefix=PREFIX, tags=["Wallets"])
 
 
-async def handle_account_route(
-    request: Request, user: models.User, account_id: int, create_link=True
-) -> models.Account:
+async def handle_wallet_route(
+    request: Request, user: models.User, wallet_id: int, create_link=True
+) -> models.Wallet:
     """
-    Handles the account route.
+    Handles the wallet route.
 
     Args:
         request: The request object.
         user: The current active user.
-        account_id: The ID of the account.
-        create_link: Whether to create a link for the account breadcrumb (default is True).
+        wallet_id: The ID of the wallet.
+        create_link: Whether to create a link for the wallet breadcrumb (default is True).
 
     Returns:
-        Account: The account object.
+        Wallet: The wallet object.
 
     Raises:
-        HTTPException: If the account is not found.
+        HTTPException: If the wallet is not found.
     """
 
-    service = AccountService()
-    account = await service.get_account(user, account_id)
+    service = WalletService()
+    wallet = await service.get_wallet(user, wallet_id)
 
-    if account is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Account not found")
+    if wallet is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Wallet not found")
 
-    add_breadcrumb(request, "Accounts", PREFIX)
-    account_url = f"{PREFIX}/{account_id}" if create_link else ""
-    add_breadcrumb(request, account.label, account_url)
+    add_breadcrumb(request, "Wallets", PREFIX)
+    wallet_url = f"{PREFIX}/{wallet_id}" if create_link else ""
+    add_breadcrumb(request, wallet.label, wallet_url)
 
-    return account
+    return wallet
 
 
 @router.get("/", response_class=HTMLResponse)
-async def page_list_accounts(
+async def page_list_wallets(
     request: Request,
     user: models.User = Depends(current_active_verified_user),
 ):
     """
-    Renders the list accounts page.
+    Renders the list wallets page.
 
     Args:
         request: The request object.
         user: The current active user.
 
     Returns:
-        TemplateResponse: The rendered list accounts page.
+        TemplateResponse: The rendered list wallets page.
     """
 
-    return await get_account_list_template(
-        user, "pages/dashboard/page_list_accounts.html", request
+    return await get_wallet_list_template(
+        user, "pages/dashboard/page_list_wallets.html", request
     )
 
 
-async def max_accounts_reached(
-    user: models.User, request: Request, service: AccountService
+async def max_wallets_reached(
+    user: models.User, request: Request, service: WalletService
 ) -> RedirectResponse:
     """
-    Checks if the maximum number of accounts has been reached for a user.
+    Checks if the maximum number of wallets has been reached for a user.
 
     Args:
         user: The user object.
         request: The request object.
 
     Returns:
-        RedirectResponse: A redirect response to the list accounts page
-            if the maximum number of accounts has been reached.
+        RedirectResponse: A redirect response to the list wallets page
+            if the maximum number of wallets has been reached.
     """
 
-    if await service.check_max_accounts(user):
-        set_feedback(request, FeedbackType.ERROR, "Maximum number of accounts reached")
+    if await service.check_max_wallets(user):
+        set_feedback(request, FeedbackType.ERROR, "Maximum number of wallets reached")
         return RedirectResponse(
-            router.url_path_for("page_list_accounts"),
+            router.url_path_for("page_list_wallets"),
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
 
 @csrf_protect
 @router.get("/add", response_class=HTMLResponse)
-async def page_create_account_form(
+async def page_create_wallet_form(
     request: Request,
     user: models.User = Depends(current_active_verified_user),
-    service: AccountService = Depends(AccountService.get_instance),
+    service: WalletService = Depends(WalletService.get_instance),
 ):
     """
-    Renders the create account form page.
+    Renders the create wallet form page.
 
     Args:
         request: The request object.
         user: The current active user.
 
     Returns:
-        TemplateResponse: The rendered create account form page.
+        TemplateResponse: The rendered create wallet form page.
     """
 
-    if response := await max_accounts_reached(user, request, service):
+    if response := await max_wallets_reached(user, request, service):
         return response
 
-    form = schemas.CreateAccountForm(request)
+    form = schemas.CreateWalletForm(request)
 
     return render_template(
-        "pages/dashboard/page_form_account.html",
+        "pages/dashboard/page_form_wallet.html",
         request,
-        {"form": form, "action_url": router.url_path_for("page_create_account")},
+        {"form": form, "action_url": router.url_path_for("page_create_wallet")},
     )
 
 
 @csrf_protect
 @router.post("/add")
-async def page_create_account(
+async def page_create_wallet(
     request: Request,
     user: models.User = Depends(current_active_verified_user),
-    service: AccountService = Depends(AccountService.get_instance),
+    service: WalletService = Depends(WalletService.get_instance),
 ):
     """
-    Creates a new account.
+    Creates a new wallet.
 
     Args:
         request: The request object.
         user: The current active user.
 
     Returns:
-        RedirectResponse: A redirect response to the list accounts page.
+        RedirectResponse: A redirect response to the list wallets page.
     """
 
-    if response := await max_accounts_reached(user, request, service):
+    if response := await max_wallets_reached(user, request, service):
         return response
 
-    form = await schemas.CreateAccountForm.from_formdata(request)
+    form = await schemas.CreateWalletForm.from_formdata(request)
 
     if not await form.validate_on_submit():
         return render_template(
-            "pages/dashboard/page_form_account.html",
+            "pages/dashboard/page_form_wallet.html",
             request,
-            {"form": form, "action_url": router.url_path_for("page_create_account")},
+            {"form": form, "action_url": router.url_path_for("page_create_wallet")},
         )
 
-    account = schemas.Account(**form.data)
+    wallet = schemas.Wallet(**form.data)
 
-    response = await tm.transaction(service.create_account, user, account)
+    response = await tm.transaction(service.create_wallet, user, wallet)
 
     if not response:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
-    return RedirectResponse(router.url_path_for("page_list_accounts"), status_code=302)
+    return RedirectResponse(router.url_path_for("page_list_wallets"), status_code=302)
 
 
-@router.get("/{account_id}")
-async def page_get_account(
+@router.get("/{wallet_id}")
+async def page_get_wallet(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     user: models.User = Depends(current_active_verified_user),
     date_start: datetime = Cookie(None),
     date_end: datetime = Cookie(None),
     transaction_service: TransactionService = Depends(TransactionService.get_instance),
 ):
     """
-    Renders the account details page.
+    Renders the wallet details page.
 
     Args:
         request: The request object.
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         user: The current active user.
         date_start: The start date for filtering transactions (optional).
         date_end: The end date for filtering transactions (optional).
 
     Returns:
-        TemplateResponse: The rendered account details page.
+        TemplateResponse: The rendered wallet details page.
     """
 
-    account = await handle_account_route(request, user, account_id, False)
+    wallet = await handle_wallet_route(request, user, wallet_id, False)
 
     if date_start is None:
         date_start = datetime.now().replace(
@@ -213,7 +213,7 @@ async def page_get_account(
 
     transaction_list: list[models.Transaction] = (
         await transaction_service.get_transaction_list(
-            user, account_id, date_start, date_end
+            user, wallet_id, date_start, date_end
         )
     )
 
@@ -233,10 +233,10 @@ async def page_get_account(
     ]
 
     return render_template(
-        "pages/dashboard/page_single_account.html",
+        "pages/dashboard/page_single_wallet.html",
         request,
         {
-            "account": account,
+            "wallet": wallet,
             "transaction_list_grouped": transaction_list_grouped,
             "date_picker_form": schemas.DatePickerForm(request),
             "expenses": expenses,
@@ -246,132 +246,132 @@ async def page_get_account(
     )
 
 
-@router.get("/{account_id}/edit")
-async def page_update_account_form(
+@router.get("/{wallet_id}/edit")
+async def page_update_wallet_form(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     user: models.User = Depends(current_active_verified_user),
 ):
     """
-    Renders the update account form page.
+    Renders the update wallet form page.
 
     Args:
         request: The request object.
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         user: The current active user.
 
     Returns:
-        TemplateResponse: The rendered update account form page.
+        TemplateResponse: The rendered update wallet form page.
     """
 
-    account = await handle_account_route(request, user, account_id)
+    wallet = await handle_wallet_route(request, user, wallet_id)
 
-    form = schemas.UpdateAccountForm(request, data=account.__dict__)
+    form = schemas.UpdateWalletForm(request, data=wallet.__dict__)
 
     return render_template(
-        "pages/dashboard/page_form_account.html",
+        "pages/dashboard/page_form_wallet.html",
         request,
         {
-            "account_id": account_id,
+            "wallet_id": wallet_id,
             "form": form,
             "action_url": router.url_path_for(
-                "page_update_account", account_id=account_id
+                "page_update_wallet", wallet_id=wallet_id
             ),
         },
     )
 
 
 @csrf_protect
-@router.post("/{account_id}/delete")
-async def page_delete_account(
+@router.post("/{wallet_id}/delete")
+async def page_delete_wallet(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     user: models.User = Depends(current_active_verified_user),
-    service: AccountService = Depends(AccountService.get_instance),
+    service: WalletService = Depends(WalletService.get_instance),
 ):
     """
-    Handles the deletion of an account.
+    Handles the deletion of an wallet.
 
     Args:
         request: The request object.
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         user: The current active user.
 
     Returns:
-        RedirectResponse: A redirect response to the list accounts page.
+        RedirectResponse: A redirect response to the list wallets page.
     """
 
-    await handle_account_route(request, user, account_id)
+    await handle_wallet_route(request, user, wallet_id)
 
-    response = await tm.transaction(service.delete_account, user, account_id)
+    response = await tm.transaction(service.delete_wallet, user, wallet_id)
 
     if not response:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
-    return RedirectResponse(router.url_path_for("page_list_accounts"), status_code=302)
+    return RedirectResponse(router.url_path_for("page_list_wallets"), status_code=302)
 
 
 @csrf_protect
-@router.post("/{account_id}/edit")
-async def page_update_account(
+@router.post("/{wallet_id}/edit")
+async def page_update_wallet(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     user: models.User = Depends(current_active_verified_user),
-    service: AccountService = Depends(AccountService.get_instance),
+    service: WalletService = Depends(WalletService.get_instance),
 ):
     """
-    Handles the update of an account.
+    Handles the update of an wallet.
 
     Args:
         request: The request object.
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         user: The current active user.
 
     Returns:
-        RedirectResponse: A redirect response to the account page.
+        RedirectResponse: A redirect response to the wallet page.
     """
 
-    account = await handle_account_route(request, user, account_id)
+    wallet = await handle_wallet_route(request, user, wallet_id)
 
-    form = await schemas.UpdateAccountForm.from_formdata(request)
+    form = await schemas.UpdateWalletForm.from_formdata(request)
 
     if not await form.validate_on_submit():
         return render_template(
-            "pages/dashboard/page_form_account.html",
+            "pages/dashboard/page_form_wallet.html",
             request,
             {
-                "account_id": account_id,
+                "wallet_id": wallet_id,
                 "form": form,
                 "action_url": router.url_path_for(
-                    "page_update_account", account_id=account_id
+                    "page_update_wallet", wallet_id=wallet_id
                 ),
             },
         )
 
-    account = schemas.Account(**form.data, balance=account.balance)
+    wallet = schemas.Wallet(**form.data, balance=wallet.balance)
 
-    response = await tm.transaction(service.update_account, user, account_id, account)
+    response = await tm.transaction(service.update_wallet, user, wallet_id, wallet)
 
     if not response:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
-        router.url_path_for("page_get_account", account_id=account_id), status_code=302
+        router.url_path_for("page_get_wallet", wallet_id=wallet_id), status_code=302
     )
 
 
-@router.get("/{account_id}/import")
+@router.get("/{wallet_id}/import")
 async def page_import_transactions_get(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     user: models.User = Depends(current_active_verified_user),
 ):
     """
-    Handles GET requests to import transactions for a specific account.
+    Handles GET requests to import transactions for a specific wallet.
 
     Args:
         request: The incoming request object.
-        account_id: The ID of the account for which transactions are being imported.
+        wallet_id: The ID of the wallet for which transactions are being imported.
         _user: The current active and verified user.
 
     Returns:
@@ -380,7 +380,7 @@ async def page_import_transactions_get(
 
     form = schemas.ImportTransactionsForm(request)
 
-    await handle_account_route(request, user, account_id)
+    await handle_wallet_route(request, user, wallet_id)
 
     return render_template(
         "pages/dashboard/page_form_import_transactions.html",
@@ -388,16 +388,16 @@ async def page_import_transactions_get(
         {
             "form": form,
             "action_url": router.url_path_for(
-                "page_import_transactions_post", account_id=account_id
+                "page_import_transactions_post", wallet_id=wallet_id
             ),
         },
     )
 
 
-@router.post("/{account_id}/import")
+@router.post("/{wallet_id}/import")
 async def page_import_transactions_post(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     file: UploadFile = File(...),
     current_user: models.User = Depends(current_active_verified_user),
 ):
@@ -424,13 +424,13 @@ async def page_import_transactions_post(
             {
                 "form": form,
                 "action_url": router.url_path_for(
-                    "page_import_transactions_get", account_id=account_id
+                    "page_import_transactions_get", wallet_id=wallet_id
                 ),
             },
         )
 
-    await process_csv_file(account_id, file, current_user)
+    await process_csv_file(wallet_id, file, current_user)
 
     return RedirectResponse(
-        router.url_path_for("page_get_account", account_id=account_id), status_code=302
+        router.url_path_for("page_get_wallet", wallet_id=wallet_id), status_code=302
     )
