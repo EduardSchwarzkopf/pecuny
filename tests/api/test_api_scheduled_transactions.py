@@ -15,7 +15,7 @@ from app import models, schemas
 from app.date_manager import get_day_delta, get_tomorrow, get_yesterday, now
 from app.repository import Repository
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
-from tests.utils import get_other_user_account, make_http_request
+from tests.utils import get_other_user_wallet, make_http_request
 
 ENDPOINT = "/api/scheduled-transactions/"
 
@@ -37,7 +37,7 @@ async def test_create_scheduled_transaction(
     reference: str,
     category_id: int,
     frequency_id: int,
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     test_user: models.User,
 ):
     """
@@ -49,7 +49,7 @@ async def test_create_scheduled_transaction(
         reference: The reference for the transaction.
         category_id: The category ID of the transaction.
         frequency_id: The frequency ID of the transaction.
-        test_account: The account for which the transaction is created.
+        test_wallet: The wallet for which the transaction is created.
         test_user: The user creating the transaction.
     """
 
@@ -59,7 +59,7 @@ async def test_create_scheduled_transaction(
     res = await make_http_request(
         ENDPOINT,
         json={
-            "account_id": test_account.id,
+            "wallet_id": test_wallet.id,
             "amount": amount,
             "reference": reference,
             "date_start": yesterday.isoformat(),
@@ -74,7 +74,7 @@ async def test_create_scheduled_transaction(
     new_transaction = schemas.ScheduledTransaction(**json_response)
 
     assert res.status_code == HTTP_201_CREATED
-    assert new_transaction.account_id == test_account.id
+    assert new_transaction.wallet_id == test_wallet.id
     assert new_transaction.information.amount == amount
     assert isinstance(json_response["information"]["amount"], float)
     assert isinstance(new_transaction.information.amount, Decimal)
@@ -84,20 +84,20 @@ async def test_create_scheduled_transaction(
 
 
 async def test_read_scheduled_transaction(
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     test_user: models.User,
-    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+    test_wallet_scheduled_transaction_list: List[models.TransactionScheduled],
 ):
     """
     Test reading a scheduled transaction.
 
     Args:
-        test_account: The account associated with the transaction.
+        test_wallet: The wallet associated with the transaction.
         test_user: The user performing the read operation.
-        test_account_scheduled_transaction_list: List of scheduled transactions for testing.
+        test_wallet_scheduled_transaction_list: List of scheduled transactions for testing.
     """
 
-    transaction = test_account_scheduled_transaction_list[0]
+    transaction = test_wallet_scheduled_transaction_list[0]
 
     res = await make_http_request(
         ENDPOINT + str(transaction.id), as_user=test_user, method=RequestMethod.GET
@@ -107,7 +107,7 @@ async def test_read_scheduled_transaction(
     read_transaction = schemas.ScheduledTransaction(**json_response)
 
     assert res.status_code == HTTP_200_OK
-    assert read_transaction.account_id == test_account.id
+    assert read_transaction.wallet_id == test_wallet.id
     assert read_transaction.information.amount == transaction.information.amount
     assert read_transaction.information.reference == transaction.information.reference
     assert read_transaction.date_start == transaction.date_start
@@ -120,17 +120,17 @@ async def test_read_scheduled_transaction(
 
 async def test_update_scheduled_transaction(
     test_user: models.User,
-    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+    test_wallet_scheduled_transaction_list: List[models.TransactionScheduled],
 ):
     """
     Test updating a scheduled transaction with new information.
 
     Args:
         test_user: The user performing the update.
-        test_account_scheduled_transaction_list: List of scheduled transactions for testing.
+        test_wallet_scheduled_transaction_list: List of scheduled transactions for testing.
     """
 
-    transaction = test_account_scheduled_transaction_list[0]
+    transaction = test_wallet_scheduled_transaction_list[0]
 
     now_ = now()
 
@@ -145,7 +145,7 @@ async def test_update_scheduled_transaction(
         ENDPOINT + str(transaction.id),
         as_user=test_user,
         json={
-            "account_id": transaction.account_id,
+            "wallet_id": transaction.wallet_id,
             "amount": amount,
             "reference": reference,
             "date_start": date_start.isoformat(),
@@ -169,7 +169,7 @@ async def test_update_scheduled_transaction(
 
 async def test_delete_scheduled_transaction(
     test_user: models.User,
-    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+    test_wallet_scheduled_transaction_list: List[models.TransactionScheduled],
     repository: Repository,
 ):
     """
@@ -177,11 +177,11 @@ async def test_delete_scheduled_transaction(
 
     Args:
         test_user: The user performing the deletion.
-        test_account_scheduled_transaction_list: List of scheduled transactions for testing.
+        test_wallet_scheduled_transaction_list: List of scheduled transactions for testing.
         repository: The repository for database operations.
     """
 
-    transaction = test_account_scheduled_transaction_list[0]
+    transaction = test_wallet_scheduled_transaction_list[0]
     transaction_id = transaction.id
 
     res = await make_http_request(
@@ -196,7 +196,7 @@ async def test_delete_scheduled_transaction(
 
 
 # Tests for unauthorized access
-@pytest.mark.usefixtures("test_account_scheduled_transaction_list")
+@pytest.mark.usefixtures("test_wallet_scheduled_transaction_list")
 async def test_create_scheduled_transaction_unauthorized(
     test_user: models.User,
     repository: Repository,
@@ -210,12 +210,12 @@ async def test_create_scheduled_transaction_unauthorized(
 
     """
 
-    other_account = await get_other_user_account(test_user, repository)
+    other_wallet = await get_other_user_wallet(test_user, repository)
 
     res = await make_http_request(
         ENDPOINT,
         json={
-            "account_id": other_account.id,
+            "wallet_id": other_wallet.id,
             "amount": 999,
             "reference": "unautherized",
             "date_start": now().isoformat(),
@@ -229,7 +229,7 @@ async def test_create_scheduled_transaction_unauthorized(
     assert res.status_code == HTTP_401_UNAUTHORIZED
 
 
-@pytest.mark.usefixtures("test_account_scheduled_transaction_list")
+@pytest.mark.usefixtures("test_wallet_scheduled_transaction_list")
 async def test_read_scheduled_transaction_unauthorized(
     test_user: models.User,
     repository: Repository,
@@ -243,11 +243,11 @@ async def test_read_scheduled_transaction_unauthorized(
 
     """
 
-    other_account = await get_other_user_account(test_user, repository)
+    other_wallet = await get_other_user_wallet(test_user, repository)
     transaction_list = await repository.filter_by(
         models.TransactionScheduled,
-        models.TransactionScheduled.account_id,
-        other_account.id,
+        models.TransactionScheduled.wallet_id,
+        other_wallet.id,
         DatabaseFilterOperator.EQUAL,
     )
 
@@ -260,7 +260,7 @@ async def test_read_scheduled_transaction_unauthorized(
     assert res.status_code == HTTP_404_NOT_FOUND
 
 
-@pytest.mark.usefixtures("test_account_scheduled_transaction_list")
+@pytest.mark.usefixtures("test_wallet_scheduled_transaction_list")
 async def test_update_scheduled_transaction_unauthorized(
     test_user: models.User,
     repository: Repository,
@@ -274,11 +274,11 @@ async def test_update_scheduled_transaction_unauthorized(
 
     """
 
-    other_account = await get_other_user_account(test_user, repository)
+    other_wallet = await get_other_user_wallet(test_user, repository)
     transaction_list = await repository.filter_by(
         models.TransactionScheduled,
-        models.TransactionScheduled.account_id,
-        other_account.id,
+        models.TransactionScheduled.wallet_id,
+        other_wallet.id,
         DatabaseFilterOperator.EQUAL,
     )
 
@@ -287,7 +287,7 @@ async def test_update_scheduled_transaction_unauthorized(
     res = await make_http_request(
         ENDPOINT + str(transaction.id),
         json={
-            "account_id": other_account.id,
+            "wallet_id": other_wallet.id,
             "amount": 999,
             "reference": "unautherized",
             "date_start": now().isoformat(),
@@ -301,7 +301,7 @@ async def test_update_scheduled_transaction_unauthorized(
     assert res.status_code == HTTP_404_NOT_FOUND
 
 
-@pytest.mark.usefixtures("test_account_scheduled_transaction_list")
+@pytest.mark.usefixtures("test_wallet_scheduled_transaction_list")
 async def test_delete_scheduled_transaction_unauthorized(
     test_user: models.User,
     repository: Repository,
@@ -314,12 +314,12 @@ async def test_delete_scheduled_transaction_unauthorized(
         repository: The repository for database operations.
     """
 
-    other_account = await get_other_user_account(test_user, repository)
+    other_wallet = await get_other_user_wallet(test_user, repository)
 
     transaction_list = await repository.filter_by(
         models.TransactionScheduled,
-        models.TransactionScheduled.account_id,
-        other_account.id,
+        models.TransactionScheduled.wallet_id,
+        other_wallet.id,
         DatabaseFilterOperator.EQUAL,
     )
 
@@ -339,21 +339,21 @@ async def test_delete_scheduled_transaction_unauthorized(
 
 # Tests for unauthenticated access
 async def test_create_scheduled_transaction_unauthenticated(
-    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+    test_wallet_scheduled_transaction_list: List[models.TransactionScheduled],
 ):
     """
     Test creating a scheduled transaction without authentication.
 
     Args:
-        test_account_scheduled_transaction_list: List of scheduled transactions for testing.
+        test_wallet_scheduled_transaction_list: List of scheduled transactions for testing.
     """
 
-    transaction = test_account_scheduled_transaction_list[0]
+    transaction = test_wallet_scheduled_transaction_list[0]
 
     res = await make_http_request(
         ENDPOINT,
         json={
-            "account_id": transaction.account_id,
+            "wallet_id": transaction.wallet_id,
             "amount": 999,
             "reference": "unautherized",
             "date_start": now().isoformat(),
@@ -367,16 +367,16 @@ async def test_create_scheduled_transaction_unauthenticated(
 
 
 async def test_read_scheduled_transaction_unauthenticated(
-    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+    test_wallet_scheduled_transaction_list: List[models.TransactionScheduled],
 ):
     """
     Test reading a scheduled transaction without authentication.
 
     Args:
-        test_account_scheduled_transaction_list: List of scheduled transactions for testing.
+        test_wallet_scheduled_transaction_list: List of scheduled transactions for testing.
     """
 
-    transaction = test_account_scheduled_transaction_list[0]
+    transaction = test_wallet_scheduled_transaction_list[0]
 
     res = await make_http_request(
         ENDPOINT + str(transaction.id), method=RequestMethod.GET
@@ -386,21 +386,21 @@ async def test_read_scheduled_transaction_unauthenticated(
 
 
 async def test_update_scheduled_transaction_unauthenticated(
-    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+    test_wallet_scheduled_transaction_list: List[models.TransactionScheduled],
 ):
     """
     Test updating a scheduled transaction without authentication.
 
     Args:
-        test_account_scheduled_transaction_list: List of scheduled transactions for testing.
+        test_wallet_scheduled_transaction_list: List of scheduled transactions for testing.
     """
 
-    transaction = test_account_scheduled_transaction_list[0]
+    transaction = test_wallet_scheduled_transaction_list[0]
 
     res = await make_http_request(
         ENDPOINT + str(transaction.id),
         json={
-            "account_id": transaction.account_id,
+            "wallet_id": transaction.wallet_id,
             "amount": 999,
             "reference": "unautherized",
             "date_start": now().isoformat(),
@@ -415,17 +415,17 @@ async def test_update_scheduled_transaction_unauthenticated(
 
 
 async def test_delete_scheduled_transaction_unauthenticated(
-    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+    test_wallet_scheduled_transaction_list: List[models.TransactionScheduled],
 ):
     """
     Test deleting a scheduled transaction without authentication.
 
     Args:
-        test_account_scheduled_transaction_list(fixture):
+        test_wallet_scheduled_transaction_list(fixture):
             Fixture to get a list of scheduled transactions
     """
 
-    transaction = test_account_scheduled_transaction_list[0]
+    transaction = test_wallet_scheduled_transaction_list[0]
 
     res = await make_http_request(
         ENDPOINT + str(transaction.id), method=RequestMethod.DELETE
@@ -456,7 +456,7 @@ async def test_read_scheduled_transaction_not_found(
 @pytest.mark.parametrize(
     "key_to_remove",
     [
-        ("account_id"),
+        ("wallet_id"),
         ("amount"),
         ("reference"),
         ("date_start"),
@@ -466,7 +466,7 @@ async def test_read_scheduled_transaction_not_found(
     ],
 )
 async def test_create_scheduled_transaction_with_missing_fields(
-    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+    test_wallet_scheduled_transaction_list: List[models.TransactionScheduled],
     test_user: models.User,
     key_to_remove: str,
 ):
@@ -474,16 +474,16 @@ async def test_create_scheduled_transaction_with_missing_fields(
     Test creation of scheduled transactions with missing data.
 
     Args:
-        test_account_scheduled_transaction_list(fixture):
+        test_wallet_scheduled_transaction_list(fixture):
             Fixture to get a list of scheduled transactions
         test_user: The user it should be tested with.
         key: The key that should be removed from the payload.
     """
 
-    transaction = test_account_scheduled_transaction_list[0]
+    transaction = test_wallet_scheduled_transaction_list[0]
 
     payload = {
-        "account_id": transaction.account_id,
+        "wallet_id": transaction.wallet_id,
         "amount": 999,
         "reference": "unautherized",
         "date_start": now().isoformat(),
@@ -506,9 +506,9 @@ async def test_create_scheduled_transaction_with_missing_fields(
 @pytest.mark.parametrize(
     "key, value",
     [
-        ("account_id", "test"),
-        ("account_id", 3.5),
-        ("account_id", -1),
+        ("wallet_id", "test"),
+        ("wallet_id", 3.5),
+        ("wallet_id", -1),
         ("amount", "test"),
         ("amount", True),
         ("amount", False),
@@ -539,7 +539,7 @@ async def test_create_scheduled_transaction_with_missing_fields(
     ],
 )
 async def test_create_scheduled_transaction_with_invalid_data(
-    test_account: models.Account,
+    test_wallet: models.Wallet,
     test_user: models.User,
     key: str,
     value: Any,
@@ -549,13 +549,13 @@ async def test_create_scheduled_transaction_with_invalid_data(
 
     Args:
         test_user: The user it should be tested with.
-        test_account: The test account for the transactions.
+        test_wallet: The test wallet for the transactions.
         key: The key that should be updated in the payload.
         value: The value that should be placed on the key.
     """
 
     payload = {
-        "account_id": test_account.id,
+        "wallet_id": test_wallet.id,
         "amount": 999,
         "reference": "unautherized",
         "date_start": now().isoformat(),
@@ -578,9 +578,9 @@ async def test_create_scheduled_transaction_with_invalid_data(
 @pytest.mark.parametrize(
     "key, value",
     [
-        ("account_id", "test"),
-        ("account_id", 3.5),
-        ("account_id", -1),
+        ("wallet_id", "test"),
+        ("wallet_id", 3.5),
+        ("wallet_id", -1),
         ("amount", "test"),
         ("amount", True),
         ("amount", False),
@@ -611,7 +611,7 @@ async def test_create_scheduled_transaction_with_invalid_data(
     ],
 )
 async def test_update_scheduled_transaction_with_invalid_data(
-    test_account_scheduled_transaction_list: List[models.TransactionScheduled],
+    test_wallet_scheduled_transaction_list: List[models.TransactionScheduled],
     test_user: models.User,
     key: str,
     value: Any,
@@ -621,14 +621,14 @@ async def test_update_scheduled_transaction_with_invalid_data(
 
     Args:
         test_user: The user it should be tested with.
-        test_account: The test account for the transactions.
+        test_wallet: The test wallet for the transactions.
         key: The key that should be updated in the payload.
         value: The value that should be placed on the key.
     """
 
-    transaction = test_account_scheduled_transaction_list[0]
+    transaction = test_wallet_scheduled_transaction_list[0]
     payload = {
-        "account_id": transaction.account_id,
+        "wallet_id": transaction.wallet_id,
         "amount": 999,
         "reference": "unautherized",
         "date_start": now().isoformat(),
@@ -648,20 +648,20 @@ async def test_update_scheduled_transaction_with_invalid_data(
     assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY
 
 
-@pytest.mark.usefixtures("test_account_scheduled_transaction_list")
+@pytest.mark.usefixtures("test_wallet_scheduled_transaction_list")
 async def test_update_scheduled_transaction_non_existent(
-    test_user: models.User, test_account: models.Account
+    test_user: models.User, test_wallet: models.Wallet
 ):
     """
     Test updating of scheduled transactions that does not exist.
 
     Args:
         test_user: The user it should be tested with.
-        test_account: The test account for the transactions.
+        test_wallet: The test wallet for the transactions.
     """
 
     payload = {
-        "account_id": test_account.id,
+        "wallet_id": test_wallet.id,
         "amount": 999,
         "reference": "unautherized",
         "date_start": now().isoformat(),

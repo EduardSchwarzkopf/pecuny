@@ -10,10 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app import models, schemas
 from app.date_manager import get_day_delta, get_today, get_tomorrow, get_yesterday
 from app.repository import Repository
-from app.services.accounts import AccountService
 from app.services.scheduled_transactions import ScheduledTransactionService
 from app.services.transactions import TransactionService
 from app.services.users import UserService
+from app.services.wallets import WalletService
 from app.utils.dataclasses_utils import CreateUserData
 from app.utils.enums import DatabaseFilterOperator, Frequency
 
@@ -205,12 +205,12 @@ async def fixture_inactive_user(
         yield user
 
 
-@pytest.fixture(name="create_test_accounts", scope="session")
-async def fixture_create_test_accounts(
+@pytest.fixture(name="create_test_wallets", scope="session")
+async def fixture_create_test_wallets(
     session: AsyncSession, create_test_users: list[models.User]
 ):
     """
-    Fixture that creates test accounts.
+    Fixture that creates test wallets.
 
     Args:
         session (fixture): The session fixture.
@@ -218,83 +218,83 @@ async def fixture_create_test_accounts(
         test_users (fixuter): Fixture to get a list of test users.
 
     Returns:
-        list[Account]: A list of test accounts.
+        list[Wallet]: A list of test wallets.
     """
 
-    account_data_list: list[dict[str, str | int]] = [
+    wallet_data_list: list[dict[str, str | int]] = [
         {
-            "label": "account_00",
+            "label": "wallet_00",
             "description": "description_00",
             "balance": 100,
         },
         {
-            "label": "account_01",
+            "label": "wallet_01",
             "description": "description_01",
             "balance": 200,
         },
     ]
 
-    service = AccountService()
+    service = WalletService()
 
     create_task_list = []
 
-    for user, account_data in itertools.product(create_test_users, account_data_list):
-        task = service.create_account(
+    for user, wallet_data in itertools.product(create_test_users, wallet_data_list):
+        task = service.create_wallet(
             user,
-            schemas.Account(
-                label=account_data["label"],
-                description=account_data["description"],
-                balance=account_data["balance"],
+            schemas.Wallet(
+                label=wallet_data["label"],
+                description=wallet_data["description"],
+                balance=wallet_data["balance"],
             ),
         )
         create_task_list.append(task)
 
-    account_list = await asyncio.gather(*create_task_list)
+    wallet_list = await asyncio.gather(*create_task_list)
     await session.commit()
 
-    yield account_list
+    yield wallet_list
 
 
-@pytest.fixture(name="test_account")
-async def fixture_test_account(
-    test_user: models.User, create_test_accounts, repository: Repository
+@pytest.fixture(name="test_wallet")
+async def fixture_test_wallet(
+    test_user: models.User, create_test_wallets, repository: Repository
 ):
     """
-    Fixture for retrieving a test account.
+    Fixture for retrieving a test wallet.
 
     Args:
         test_user (fixture): The test user.
-        create_test_accounts (fixture): The fixture for creating test accounts.
+        create_test_wallets (fixture): The fixture for creating test wallets.
 
     Yields:
-        models.Account: The test account.
+        models.Wallet: The test wallet.
 
     """
 
-    account = await repository.filter_by(
-        models.Account,
-        models.Account.user_id,
+    wallet = await repository.filter_by(
+        models.Wallet,
+        models.Wallet.user_id,
         test_user.id,
-        load_relationships_list=[models.Account.user],
+        load_relationships_list=[models.Wallet.user],
     )
-    yield account[0]
+    yield wallet[0]
 
 
-@pytest.fixture(name="test_accounts")
-async def fixture_get_test_account_list(create_test_accounts, repository: Repository):
+@pytest.fixture(name="test_wallets")
+async def fixture_get_test_wallet_list(create_test_wallets, repository: Repository):
     """
-    Fixture for retrieving a list of test accounts.
+    Fixture for retrieving a list of test wallets.
 
     Args:
-        create_test_accounts (fixuter): The fixture for creating test accounts.
+        create_test_wallets (fixuter): The fixture for creating test wallets.
 
     Yields:
-        list[models.Account]: A list of test accounts.
+        list[models.Wallet]: A list of test wallets.
 
     """
 
     yield await repository.get_all(
-        models.Account, load_relationships_list=[models.Account.user]
+        models.Wallet, load_relationships_list=[models.Wallet.user]
     )
 
 
@@ -315,14 +315,14 @@ def get_date_range(date_start, days=5):
 
 @pytest.fixture(name="create_transactions")
 async def fixture_create_transactions(
-    test_accounts: list[models.Account],
+    test_wallets: list[models.Wallet],
     session: AsyncSession,
 ):
     """
     Fixture that creates test transactions.
 
     Args:
-        test_accounts (fixture): The test accounts fixture.
+        test_wallets (fixture): The test wallets fixture.
         session (fixture): The session fixture.
 
     Returns:
@@ -373,13 +373,13 @@ async def fixture_create_transactions(
     service = TransactionService()
     create_task = []
 
-    for account in test_accounts:
+    for wallet in test_wallets:
         create_task.extend(
             [
                 service.create_transaction(
-                    account.user,
+                    wallet.user,
                     schemas.TransactionData(
-                        account_id=account.id,
+                        wallet_id=wallet.id,
                         amount=transaction["amount"],
                         reference=transaction["reference"],
                         date=transaction["date"],
@@ -398,14 +398,14 @@ async def fixture_create_transactions(
 
 @pytest.fixture(name="create_scheduled_transactions")
 async def fixture_create_scheduled_transactions(
-    test_accounts: list[models.Account],
+    test_wallets: list[models.Wallet],
     repository: Repository,
 ):
     """
     Fixture to create a list of scheduled transactions for testing purposes.
 
     Args:
-        test_accounts: List of test accounts for which scheduled transactions will be created.
+        test_wallets: List of test wallets for which scheduled transactions will be created.
         repository: The repository for database operations.
 
     Yields:
@@ -522,14 +522,14 @@ async def fixture_create_scheduled_transactions(
     service = ScheduledTransactionService()
     create_task = []
 
-    for account in test_accounts:
+    for wallet in test_wallets:
 
         create_task.extend(
             [
                 service.create_scheduled_transaction(
-                    account.user,
+                    wallet.user,
                     schemas.ScheduledTransactionInformationCreate(
-                        account_id=account.id,
+                        wallet_id=wallet.id,
                         amount=transaction["amount"],
                         reference=transaction["reference"],
                         category_id=transaction["category_id"],
@@ -555,7 +555,7 @@ async def fixture_create_scheduled_transactions(
         if scheduled_transaction is None:
             continue
 
-        user = await repository.get(models.User, scheduled_transaction.account.user_id)
+        user = await repository.get(models.User, scheduled_transaction.wallet.user_id)
 
         if user is None:
             raise ValueError("No user found")
@@ -568,20 +568,20 @@ async def fixture_create_scheduled_transactions(
     await repository.session.commit()
 
 
-@pytest.fixture(name="test_account_scheduled_transaction_list")
-async def fixture_test_account_scheduled_transaction_list(
-    create_scheduled_transactions, test_account, repository: Repository
+@pytest.fixture(name="test_wallet_scheduled_transaction_list")
+async def fixture_test_wallet_scheduled_transaction_list(
+    create_scheduled_transactions, test_wallet, repository: Repository
 ):
     """
-    Fixture for retrieving a list of scheduled transactions for a test account.
+    Fixture for retrieving a list of scheduled transactions for a test wallet.
 
     Args:
         create_scheduled_transactions: A fixture for creating scheduled transactions.
-        test_account: The test account for which transactions are retrieved.
+        test_wallet: The test wallet for which transactions are retrieved.
         repository: The repository to filter transactions from.
 
     Returns:
-        A list of scheduled transactions filtered by the test account.
+        A list of scheduled transactions filtered by the test wallet.
     """
 
     today = get_today()
@@ -590,7 +590,7 @@ async def fixture_test_account_scheduled_transaction_list(
     result = await repository.session.execute(
         select(model).where(
             and_(
-                model.account_id == test_account.id,
+                model.wallet_id == test_wallet.id,
                 model.date_start <= today,
                 model.date_end >= today,
                 model.is_active == True,  # pylint: disable=singleton-comparison
@@ -607,23 +607,23 @@ async def fixture_test_account_scheduled_transaction_list(
     return result.scalars().all()
 
 
-@pytest.fixture(name="test_account_transaction_list")
-async def fixture_test_account_transaction_list(
-    create_transactions, test_account, repository: Repository
+@pytest.fixture(name="test_wallet_transaction_list")
+async def fixture_test_wallet_transaction_list(
+    create_transactions, test_wallet, repository: Repository
 ):
     """
-    Fixture for retrieving a list of transactions associated with a test account.
+    Fixture for retrieving a list of transactions associated with a test wallet.
 
     Args:
         create_transactions (fixture): The fixture for creating transactions.
-        test_account (fixture): The test account.
+        test_wallet (fixture): The test wallet.
 
     Yields:
-        list[models.Transaction]: A list of transactions associated with the test account.
+        list[models.Transaction]: A list of transactions associated with the test wallet.
     """
 
     yield await repository.filter_by(
-        models.Transaction, models.Transaction.account_id, test_account.id
+        models.Transaction, models.Transaction.wallet_id, test_wallet.id
     )
 
 

@@ -221,12 +221,12 @@ class Repository:
         return result.scalars().all()
 
     async def get_transactions_from_period(
-        self, account_id: int, start_date: datetime, end_date: datetime
+        self, wallet_id: int, start_date: datetime, end_date: datetime
     ) -> list[models.Transaction]:
-        """Retrieve transactions for a specific account within a given period.
+        """Retrieve transactions for a specific wallet within a given period.
 
         Args:
-            account_id: The ID of the account.
+            wallet_id: The ID of the wallet.
             start_date: The start date of the period.
             end_date: The end date of the period.
 
@@ -246,7 +246,7 @@ class Repository:
             .join(transaction.information)
             .filter(class_date <= end_date)
             .filter(class_date >= start_date)
-            .filter(account_id == transaction.account_id)
+            .filter(wallet_id == transaction.wallet_id)
         )
 
         result = await self.session.execute(query)

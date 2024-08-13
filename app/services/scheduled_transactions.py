@@ -3,19 +3,19 @@ from typing import Optional
 
 from app.logger import get_logger
 from app.models import (
-    Account,
     Transaction,
     TransactionInformation,
     TransactionScheduled,
     User,
+    Wallet,
 )
 from app.repository import Repository
 from app.schemas import (
     ScheduledTransactionInformationCreate,
     ScheduledTransactionInformtionUpdate,
 )
-from app.services.accounts import AccountService
 from app.services.base_transaction import BaseTransactionService
+from app.services.wallets import WalletService
 from app.utils.exceptions import AccessDeniedError
 
 logger = get_logger(__name__)
@@ -30,37 +30,35 @@ class ScheduledTransactionService(BaseTransactionService):
     async def get_transaction_list(
         self,
         user: User,
-        account_id: int,
+        wallet_id: int,
     ) -> list[ServiceModel]:
         """
-        Retrieves a list of transactions for a specific user and account.
+        Retrieves a list of transactions for a specific user and wallet.
 
         Args:
             user: The user for whom transactions are being retrieved.
-            account_id: The ID of the account for which transactions are being retrieved.
+            wallet_id: The ID of the wallet for which transactions are being retrieved.
 
         Returns:
             A list of transactions that match the criteria.
         """
         logger.info(
-            "Starting transaction list retrieval for user %s and account %s",
+            "Starting transaction list retrieval for user %s and wallet %s",
             user.id,
-            account_id,
+            wallet_id,
         )
-        account = await self.repository.get(Account, account_id)
+        wallet = await self.repository.get(Wallet, wallet_id)
 
-        if account is None:
+        if wallet is None:
             return []
 
-        if account is None or not AccountService.has_user_access_to_account(
-            user, account
-        ):
+        if wallet is None or not WalletService.has_user_access_to_wallet(user, wallet):
             return []
 
         return await self.repository.filter_by(
             self.service_model,
-            self.service_model.account_id,
-            account.id,
+            self.service_model.wallet_id,
+            wallet.id,
         )
 
     async def create_scheduled_transaction(
@@ -79,11 +77,9 @@ class ScheduledTransactionService(BaseTransactionService):
             The created scheduled transaction if successful, None otherwise.
         """
         logger.info("Creating new scheduled transaction for user %s", user.id)
-        account = await self.repository.get(Account, transaction_information.account_id)
+        wallet = await self.repository.get(Wallet, transaction_information.wallet_id)
 
-        if account is None or not AccountService.has_user_access_to_account(
-            user, account
-        ):
+        if wallet is None or not WalletService.has_user_access_to_wallet(user, wallet):
             return None
 
         db_transaction_information = TransactionInformation()
@@ -96,22 +92,22 @@ class ScheduledTransactionService(BaseTransactionService):
             date_start=transaction_information.date_start,
             date_end=transaction_information.date_end,
             information=db_transaction_information,
-            account_id=account.id,
-            offset_account_id=transaction_information.offset_account_id,
+            wallet_id=wallet.id,
+            offset_wallet_id=transaction_information.offset_wallet_id,
         )
 
-        if transaction_information.offset_account_id:
-            offset_account = await self.repository.get(
-                Account, transaction_information.offset_account_id
+        if transaction_information.offset_wallet_id:
+            offset_wallet = await self.repository.get(
+                Wallet, transaction_information.offset_wallet_id
             )
 
-            if offset_account is None or not AccountService.has_user_access_to_account(
-                user, offset_account
+            if offset_wallet is None or not WalletService.has_user_access_to_wallet(
+                user, offset_wallet
             ):
                 raise AccessDeniedError(
                     (
                         f"User[id: {user.id}] not allowed to access "
-                        f"offset_account[id: {transaction_information.offset_account_id}]"
+                        f"offset_wallet[id: {transaction_information.offset_wallet_id}]"
                     )
                 )
 
@@ -142,24 +138,22 @@ class ScheduledTransactionService(BaseTransactionService):
         if transaction is None:
             return None
 
-        account = await self.repository.get(Account, transaction_information.account_id)
-        if account is None or not AccountService.has_user_access_to_account(
-            user, account
-        ):
+        wallet = await self.repository.get(Wallet, transaction_information.wallet_id)
+        if wallet is None or not WalletService.has_user_access_to_wallet(user, wallet):
             return None
 
-        if transaction.offset_account_id and transaction_information.offset_account_id:
-            offset_account = await self.repository.get(
-                Account, transaction_information.offset_account_id
+        if transaction.offset_wallet_id and transaction_information.offset_wallet_id:
+            offset_wallet = await self.repository.get(
+                Wallet, transaction_information.offset_wallet_id
             )
 
-            if offset_account is None or not AccountService.has_user_access_to_account(
-                user, offset_account
+            if offset_wallet is None or not WalletService.has_user_access_to_wallet(
+                user, offset_wallet
             ):
                 raise AccessDeniedError(
                     (
                         f"User[id: {user.id}] not allowed to access "
-                        f"offset_account[id: {transaction_information.offset_account_id}]"
+                        f"offset_wallet[id: {transaction_information.offset_wallet_id}]"
                     )
                 )
 
@@ -208,8 +202,8 @@ class ScheduledTransactionService(BaseTransactionService):
             )
             return None
 
-        account = await self.repository.get(Account, transaction.account_id)
-        if account is None or current_user.id != account.user_id:
+        wallet = await self.repository.get(Wallet, transaction.wallet_id)
+        if wallet is None or current_user.id != wallet.user_id:
             return None
 
         created_transaction_list = await self.repository.filter_by(

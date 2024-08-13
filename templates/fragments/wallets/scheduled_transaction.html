@@ -25,9 +25,9 @@
                 Pending
                 {% endif %}
             </div>
-        {% if transaction.offset_account %}
+        {% if transaction.offset_wallet %}
             <div class="flex items-center">
-                <span class="mr-1">{{ transaction.offset_account.label }}</span>
+                <span class="mr-1">{{ transaction.offset_wallet.label }}</span>
                 <i class="fa-solid fa-arrow-right {% if transaction.information.amount < 0 %}fa-rotate-180{% endif %}"></i>
             </div>
         {% endif %}

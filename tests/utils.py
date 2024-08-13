@@ -87,67 +87,67 @@ async def make_http_request(  # pylint: disable=too-many-arguments
         return await response
 
 
-async def get_user_offset_account(
-    account: models.Account, repository: Repository
-) -> Optional[models.Account]:
+async def get_user_offset_wallet(
+    wallet: models.Wallet, repository: Repository
+) -> Optional[models.Wallet]:
     """
-    Returns the offset account for a given account within a list of accounts.
+    Returns the offset wallet for a given wallet within a list of wallets.
 
     Args:
-        account (models.Account): The account for which to find the offset account.
-        account_list (list[models.Account]): The list of accounts to search within.
+        wallet (models.Wallet): The wallet for which to find the offset wallet.
+        wallet_list (list[models.Wallet]): The list of wallets to search within.
 
     Returns:
-        models.Account or None: The offset account if found, otherwise None.
+        models.Wallet or None: The offset wallet if found, otherwise None.
     """
 
-    account_list = await repository.filter_by_multiple(
-        models.Account,
+    wallet_list = await repository.filter_by_multiple(
+        models.Wallet,
         [
             (
-                models.Account.user_id,
-                account.user.id,
+                models.Wallet.user_id,
+                wallet.user.id,
                 DatabaseFilterOperator.EQUAL,
             ),
             (
-                models.Account.id,
-                account.id,
+                models.Wallet.id,
+                wallet.id,
                 DatabaseFilterOperator.NOT_EQUAL,
             ),
         ],
     )
 
-    if account_list is None:
-        raise ValueError("No accounts found")
+    if wallet_list is None:
+        raise ValueError("No wallets found")
 
-    return account_list[0]
+    return wallet_list[0]
 
 
-async def get_other_user_account(
+async def get_other_user_wallet(
     user: models.User, repository: Repository
-) -> models.Account:
+) -> models.Wallet:
     """
-    Returns an account belonging to a user other than the specified user.
+    Returns an wallet belonging to a user other than the specified user.
 
     Args:
-        user: The user for whom to find another account.
-        repository: The repository to query for account information.
+        user: The user for whom to find another wallet.
+        repository: The repository to query for wallet information.
 
     Returns:
-        models.Account: An account belonging to a user other than the specified user.
+        models.Wallet: An wallet belonging to a user other than the specified user.
 
     Raises:
-        ValueError: If no accounts are found for the user.
+        ValueError: If no wallets are found for the user.
     """
 
-    account_list = await repository.filter_by(
-        models.Account,
-        models.Account.user_id,
+    wallet_list = await repository.filter_by(
+        models.Wallet,
+        models.Wallet.user_id,
         user.id,
         DatabaseFilterOperator.NOT_EQUAL,
     )
 
-    if account_list is None:
-        raise ValueError("No accounts found")
+    if wallet_list is None:
+        raise ValueError("No wallets found")
 
-    return account_list[0]
+    return wallet_list[0]

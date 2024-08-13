@@ -69,13 +69,13 @@ class TokenData(BaseModel):
     id: Optional[str]
 
 
-class AccountUpdate(Base):
+class WalletUpdate(Base):
     label: Optional[StringContr]
     description: Optional[str]
     balance: Optional[RoundedDecimal] = Field(
         default=None,
         example=0.00,
-        description="The account balance rounded to two decimal places.",
+        description="The wallet balance rounded to two decimal places.",
     )
     model_config = ConfigDict(json_encoders={Decimal: float})
 
@@ -117,8 +117,8 @@ class CategoryData(Base):
 
 
 class TransactionInformationCreate(TransactionInformation):
-    account_id: IdField
-    offset_account_id: Optional[IdField] = None
+    wallet_id: IdField
+    offset_wallet_id: Optional[IdField] = None
 
 
 class TransactionData(TransactionInformationCreate):
@@ -133,8 +133,8 @@ class ScheduledTransactionInformationCreate(TransactionInformationBase):
     date_start: DateField
     frequency_id: IdField
     date_end: DateField
-    account_id: IdField
-    offset_account_id: Optional[IdField] = None
+    wallet_id: IdField
+    offset_wallet_id: Optional[IdField] = None
 
 
 class ScheduledTransactionInformtionUpdate(ScheduledTransactionInformationCreate):
@@ -147,7 +147,7 @@ class TransactionInformationData(TransactionInformation):
 
 class TransactionBase(Base):
     id: int
-    account_id: IdField
+    wallet_id: IdField
     information: TransactionInformationData
 
 
@@ -159,11 +159,11 @@ class ScheduledTransaction(TransactionBase):
     date_start: DateField
     frequency: FrequencyData
     date_end: DateField
-    account_id: IdField
-    offset_account_id: Optional[IdField] = None
+    wallet_id: IdField
+    offset_wallet_id: Optional[IdField] = None
 
 
-class Account(Base):
+class Wallet(Base):
     label: StringContr
     description: Optional[str] = None
     balance: Optional[RoundedDecimal]
@@ -171,7 +171,7 @@ class Account(Base):
     model_config = ConfigDict(json_encoders={Decimal: float})
 
 
-class AccountData(Account):
+class WalletData(Wallet):
     id: IdField
 
 
@@ -180,7 +180,7 @@ class LoginForm(StarletteForm):
     password = PasswordField("Password", validators=[InputRequired()])
 
 
-class CreateAccountForm(StarletteForm):
+class CreateWalletForm(StarletteForm):
     label = StringField(
         "Name",
         validators=[
@@ -195,7 +195,7 @@ class CreateAccountForm(StarletteForm):
         validators=[
             Length(max=128),
         ],
-        render_kw={"placeholder": "e.g. 'My primary savings account'"},
+        render_kw={"placeholder": "e.g. 'My primary savings wallet'"},
     )
 
     balance = DecimalField(
@@ -204,7 +204,7 @@ class CreateAccountForm(StarletteForm):
     )
 
 
-class UpdateAccountForm(StarletteForm):
+class UpdateWalletForm(StarletteForm):
     label = StringField(
         "Name",
         validators=[
@@ -294,13 +294,13 @@ class CreateTransactionForm(StarletteForm):
         "Date",
         validators=[InputRequired()],
     )
-    offset_account_id = SelectField(
-        "Linked Account",
+    offset_wallet_id = SelectField(
+        "Linked Wallet",
         coerce=int,
         render_kw={
             "placeholder": (
-                "Select an account if this transaction is "
-                "transferring funds between accounts"
+                "Select an wallet if this transaction is "
+                "transferring funds between wallets"
             ),
         },
     )
@@ -315,8 +315,8 @@ class UpdateTransactionForm(StarletteForm):
     is_expense = BooleanField("Is this an expense?")
     category_id = SelectField("Category", validators=[InputRequired()], coerce=int)
     date = DatetimeLocalFieldWithoutTime("Date", validators=[InputRequired()])
-    offset_account_id = SelectField(
-        "Linked Account", coerce=int, render_kw={"disabled": "disabled"}, default=0
+    offset_wallet_id = SelectField(
+        "Linked Wallet", coerce=int, render_kw={"disabled": "disabled"}, default=0
     )
 
 
@@ -352,13 +352,13 @@ class CreateScheduledTransactionForm(StarletteForm):
         "Date End",
         validators=[InputRequired()],
     )
-    offset_account_id = SelectField(
-        "Linked Account",
+    offset_wallet_id = SelectField(
+        "Linked Wallet",
         coerce=int,
         render_kw={
             "placeholder": (
-                "Select an account if this transaction is "
-                "transferring funds between accounts"
+                "Select an wallet if this transaction is "
+                "transferring funds between wallets"
             ),
         },
     )
@@ -376,7 +376,7 @@ class UpdateScheduledTransactionForm(StarletteForm):
         "Date Start", validators=[InputRequired()]
     )
     date_end = DatetimeLocalFieldWithoutTime("Date End", validators=[InputRequired()])
-    offset_account_id = SelectField("Linked Account", coerce=int, default=0)
+    offset_wallet_id = SelectField("Linked Wallet", coerce=int, default=0)
     frequency_id = SelectField("Frequency", coerce=int, default=0)
 
 

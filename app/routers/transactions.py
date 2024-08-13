@@ -7,17 +7,17 @@ from starlette_wtf import csrf_protect
 from app import models, schemas
 from app import transaction_manager as tm
 from app.auth_manager import current_active_verified_user
-from app.routers.accounts import handle_account_route
-from app.routers.accounts import router as account_router
+from app.routers.wallets import handle_wallet_route
+from app.routers.wallets import router as wallet_router
 from app.services.transactions import TransactionService
 from app.utils import PageRouter
-from app.utils.account_utils import get_account_list_template
 from app.utils.template_utils import (
     populate_transaction_form_choices,
     render_transaction_form_template,
 )
+from app.utils.wallet_utils import get_wallet_list_template
 
-PREFIX = account_router.prefix + "/{account_id}/transactions"
+PREFIX = wallet_router.prefix + "/{wallet_id}/transactions"
 
 router = PageRouter(prefix=PREFIX, tags=["Transactions"])
 
@@ -25,23 +25,23 @@ router = PageRouter(prefix=PREFIX, tags=["Transactions"])
 
 
 @router.get("/", response_class=HTMLResponse)
-async def page_list_accounts(
+async def page_list_wallets(
     request: Request,
     user: models.User = Depends(current_active_verified_user),
 ):
     """
-    Renders the list accounts page.
+    Renders the list wallets page.
 
     Args:
         request: The request object.
         user: The current active user.
 
     Returns:
-        TemplateResponse: The rendered list accounts page.
+        TemplateResponse: The rendered list wallets page.
     """
 
-    return await get_account_list_template(
-        user, "pages/dashboard/page_list_accounts.html", request
+    return await get_wallet_list_template(
+        user, "pages/dashboard/page_list_wallets.html", request
     )
 
 
@@ -49,7 +49,7 @@ async def page_list_accounts(
 @router.get("/add")
 async def page_create_transaction_form(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     user: models.User = Depends(current_active_verified_user),
 ):
     """
@@ -57,26 +57,26 @@ async def page_create_transaction_form(
 
     Args:
         request: The request object.
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         user: The current active user.
 
     Returns:
         TemplateResponse: The rendered create transaction
     """
-    await handle_account_route(request, user, account_id)
+    await handle_wallet_route(request, user, wallet_id)
 
     form = schemas.CreateTransactionForm(request)
-    await populate_transaction_form_choices(account_id, user, form)
+    await populate_transaction_form_choices(wallet_id, user, form)
 
     return render_transaction_form_template(
-        request, form, account_id, "page_create_transaction"
+        request, form, wallet_id, "page_create_transaction"
     )
 
 
 @router.post("/add")
 async def page_create_transaction(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     user: models.User = Depends(current_active_verified_user),
     transaction_service: TransactionService = Depends(TransactionService.get_instance),
 ):
@@ -85,27 +85,27 @@ async def page_create_transaction(
 
     Args:
         request: The request object.
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         user: The current active user.
 
     Returns:
-        RedirectResponse: A redirect response to the account page.
+        RedirectResponse: A redirect response to the wallet page.
     """
 
-    await handle_account_route(request, user, account_id)
+    await handle_wallet_route(request, user, wallet_id)
 
     form = await schemas.CreateTransactionForm.from_formdata(request)
-    await populate_transaction_form_choices(account_id, user, form)
+    await populate_transaction_form_choices(wallet_id, user, form)
 
     if not await form.validate_on_submit():
         return render_transaction_form_template(
-            request, form, account_id, "page_create_transaction"
+            request, form, wallet_id, "page_create_transaction"
         )
 
     if form.is_expense.data:
         form.amount.data *= -1
 
-    transaction = schemas.TransactionData(account_id=account_id, **form.data)
+    transaction = schemas.TransactionData(wallet_id=wallet_id, **form.data)
 
     response = await tm.transaction(
         transaction_service.create_transaction, user, transaction
@@ -115,7 +115,7 @@ async def page_create_transaction(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
-        account_router.url_path_for("page_get_account", account_id=account_id),
+        wallet_router.url_path_for("page_get_wallet", wallet_id=wallet_id),
         status_code=302,
     )
 
@@ -123,7 +123,7 @@ async def page_create_transaction(
 @router.get("/{transaction_id}")
 async def page_update_transaction_get(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     transaction_id: int,
     user: models.User = Depends(current_active_verified_user),
     transaction_service: TransactionService = Depends(TransactionService.get_instance),
@@ -133,7 +133,7 @@ async def page_update_transaction_get(
 
     Args:
         request: The request object.
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         transaction_id: The ID of the transaction.
         user: The current active user.
 
@@ -141,7 +141,7 @@ async def page_update_transaction_get(
         TemplateResponse: The rendered transaction update form page.
     """
 
-    await handle_account_route(request, user, account_id)
+    await handle_wallet_route(request, user, wallet_id)
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
 
@@ -152,7 +152,7 @@ async def page_update_transaction_get(
         request, data=transaction.information.__dict__
     )
     await populate_transaction_form_choices(
-        account_id, user, form, "Linked account (not editable)"
+        wallet_id, user, form, "Linked wallet (not editable)"
     )
     form.date.data = transaction.information.date.strftime("%Y-%m-%d")
 
@@ -168,11 +168,11 @@ async def page_update_transaction_get(
         )
 
         if offset_transaction is not None:
-            form.offset_account_id.data = offset_transaction.account_id
+            form.offset_wallet_id.data = offset_transaction.wallet_id
     return render_transaction_form_template(
         request,
         form,
-        account_id,
+        wallet_id,
         "page_update_transaction_get",
         transaction,
     )
@@ -181,7 +181,7 @@ async def page_update_transaction_get(
 @router.post("/{transaction_id}")
 async def page_update_transaction_post(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     transaction_id: int,
     user: models.User = Depends(current_active_verified_user),
     transaction_service: TransactionService = Depends(TransactionService.get_instance),
@@ -191,7 +191,7 @@ async def page_update_transaction_post(
 
     Args:
         request: The request object.
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         transaction_id: The ID of the transaction.
         user: The current active user.
 
@@ -200,7 +200,7 @@ async def page_update_transaction_post(
             The rendered transaction update form page or a redirect response.
     """
 
-    await handle_account_route(request, user, account_id)
+    await handle_wallet_route(request, user, wallet_id)
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
 
@@ -209,7 +209,7 @@ async def page_update_transaction_post(
 
     form = await schemas.UpdateTransactionForm.from_formdata(request)
     await populate_transaction_form_choices(
-        account_id, user, form, "Linked account (not editable)"
+        wallet_id, user, form, "Linked wallet (not editable)"
     )
 
     if not await form.validate_on_submit():
@@ -217,7 +217,7 @@ async def page_update_transaction_post(
         return render_transaction_form_template(
             request,
             form,
-            account_id,
+            wallet_id,
             "page_update_transaction_get",
             transaction,
         )
@@ -226,7 +226,7 @@ async def page_update_transaction_post(
         form.amount.data *= -1
 
     transaction_information = schemas.TransactionInformtionUpdate(
-        account_id=account_id, **form.data
+        wallet_id=wallet_id, **form.data
     )
 
     response = await tm.transaction(
@@ -240,7 +240,7 @@ async def page_update_transaction_post(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
-        account_router.url_path_for("page_get_account", account_id=account_id),
+        wallet_router.url_path_for("page_get_wallet", wallet_id=wallet_id),
         status_code=302,
     )
 
@@ -248,7 +248,7 @@ async def page_update_transaction_post(
 @csrf_protect
 @router.post("/{transaction_id}/delete")
 async def page_delete_transaction(
-    account_id: int,
+    wallet_id: int,
     transaction_id: int,
     user: models.User = Depends(current_active_verified_user),
     transaction_service: TransactionService = Depends(TransactionService.get_instance),
@@ -257,12 +257,12 @@ async def page_delete_transaction(
     Handles the deletion of a transaction.
 
     Args:
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         transaction_id: The ID of the transaction.
         user: The current active user.
 
     Returns:
-        RedirectResponse: A redirect response to the account page.
+        RedirectResponse: A redirect response to the wallet page.
     """
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
@@ -278,6 +278,6 @@ async def page_delete_transaction(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
-        account_router.url_path_for("page_get_account", account_id=account_id),
+        wallet_router.url_path_for("page_get_wallet", wallet_id=wallet_id),
         status_code=302,
     )

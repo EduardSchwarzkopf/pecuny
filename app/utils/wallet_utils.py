@@ -2,15 +2,15 @@ from fastapi import Request
 
 from app import models
 from app.config import settings
-from app.services.accounts import AccountService
+from app.services.wallets import WalletService
 from app.utils.template_utils import render_template
 
 
-async def get_account_list_template(
+async def get_wallet_list_template(
     user: models.User, template_name: str, request: Request
 ):
     """
-    Renders an account list template.
+    Renders an wallet list template.
 
     Args:
         user: The user object.
@@ -24,17 +24,17 @@ async def get_account_list_template(
         None
     """
 
-    service = AccountService()
-    account_list = await service.get_accounts(user)
+    service = WalletService()
+    wallet_list = await service.get_wallets(user)
 
-    total_balance = service.calculate_total_balance(account_list)
+    total_balance = service.calculate_total_balance(wallet_list)
 
     return render_template(
         template_name,
         request,
         {
-            "account_list": account_list,
-            "max_allowed_accounts": settings.max_allowed_accounts,
+            "wallet_list": wallet_list,
+            "max_allowed_wallets": settings.max_allowed_wallets,
             "total_balance": total_balance,
         },
     )

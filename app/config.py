@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore")
 
     app_name: str = "pecuny"
-    max_allowed_accounts: int = 5
+    max_allowed_wallets: int = 5
     environment: str = "dev"
     domain: str
     db_host: str

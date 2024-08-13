@@ -8,8 +8,8 @@ from app import models, schemas
 from app import transaction_manager as tm
 from app.auth_manager import current_active_verified_user
 from app.date_manager import now
-from app.routers.accounts import handle_account_route
-from app.routers.accounts import router as account_router
+from app.routers.wallets import handle_wallet_route
+from app.routers.wallets import router as wallet_router
 from app.services.scheduled_transactions import ScheduledTransactionService
 from app.utils import PageRouter
 from app.utils.template_utils import (
@@ -20,7 +20,7 @@ from app.utils.template_utils import (
     render_transaction_form_template,
 )
 
-PREFIX = account_router.prefix + "/{account_id}/scheduled-transactions"
+PREFIX = wallet_router.prefix + "/{wallet_id}/scheduled-transactions"
 
 router = PageRouter(prefix=PREFIX, tags=["Scheduled Transactions"])
 
@@ -30,25 +30,25 @@ router = PageRouter(prefix=PREFIX, tags=["Scheduled Transactions"])
 @router.get("/", response_class=HTMLResponse)
 async def page_list_scheduled_transactions(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     user: models.User = Depends(current_active_verified_user),
     service: ScheduledTransactionService = Depends(
         ScheduledTransactionService.get_instance
     ),
 ):
     """
-    Renders the list accounts page.
+    Renders the list wallets page.
 
     Args:
         request: The request object.
         user: The current active user.
 
     Returns:
-        TemplateResponse: The rendered list accounts page.
+        TemplateResponse: The rendered list wallets page.
     """
 
-    transaction_list = await service.get_transaction_list(user, account_id)
-    account = await handle_account_route(request, user, account_id)
+    transaction_list = await service.get_transaction_list(user, wallet_id)
+    wallet = await handle_wallet_route(request, user, wallet_id)
 
     add_breadcrumb(request, "Scheduled Transactions", "")
 
@@ -61,7 +61,7 @@ async def page_list_scheduled_transactions(
         "pages/dashboard/page_scheduled_transactions.html",
         request,
         {
-            "account": account,
+            "wallet": wallet,
             "scheduled_transaction_list": transaction_list,
             "expenses": expenses,
             "income": income,
@@ -75,7 +75,7 @@ async def page_list_scheduled_transactions(
 @router.get("/add")
 async def page_create_scheduled_transaction_form(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     user: models.User = Depends(current_active_verified_user),
 ):
     """
@@ -83,31 +83,31 @@ async def page_create_scheduled_transaction_form(
 
     Args:
         request: The request object.
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         user: The current active user.
 
     Returns:
         TemplateResponse: The rendered create transaction
     """
-    await handle_account_route(request, user, account_id)
+    await handle_wallet_route(request, user, wallet_id)
     add_breadcrumb(
         request,
         "Scheduled Transactions",
-        url=request.url_for("page_list_scheduled_transactions", account_id=account_id),
+        url=request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),
     )
 
     form = schemas.CreateScheduledTransactionForm(request)
-    await populate_transaction_form_choices(account_id, user, form)
+    await populate_transaction_form_choices(wallet_id, user, form)
 
     return render_transaction_form_template(
-        request, form, account_id, "page_create_scheduled_transaction"
+        request, form, wallet_id, "page_create_scheduled_transaction"
     )
 
 
 @router.post("/add")
 async def page_create_scheduled_transaction(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     user: models.User = Depends(current_active_verified_user),
     transaction_service: ScheduledTransactionService = Depends(
         ScheduledTransactionService.get_instance
@@ -118,28 +118,28 @@ async def page_create_scheduled_transaction(
 
     Args:
         request: The request object.
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         user: The current active user.
 
     Returns:
-        RedirectResponse: A redirect response to the account page.
+        RedirectResponse: A redirect response to the wallet page.
     """
 
-    await handle_account_route(request, user, account_id)
+    await handle_wallet_route(request, user, wallet_id)
 
     form = await schemas.CreateScheduledTransactionForm.from_formdata(request)
-    await populate_transaction_form_choices(account_id, user, form)
+    await populate_transaction_form_choices(wallet_id, user, form)
 
     if not await form.validate_on_submit():
         return render_transaction_form_template(
-            request, form, account_id, "page_create_scheduled_transaction"
+            request, form, wallet_id, "page_create_scheduled_transaction"
         )
 
     if form.is_expense.data:
         form.amount.data *= -1
 
     transaction = schemas.ScheduledTransactionInformationCreate(
-        account_id=account_id, **form.data
+        wallet_id=wallet_id, **form.data
     )
 
     response = await tm.transaction(
@@ -150,7 +150,7 @@ async def page_create_scheduled_transaction(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
-        request.url_for("page_list_scheduled_transactions", account_id=account_id),
+        request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),
         status_code=302,
     )
 
@@ -158,7 +158,7 @@ async def page_create_scheduled_transaction(
 @router.get("/{transaction_id}")
 async def page_update_scheduled_transaction_get(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     transaction_id: int,
     user: models.User = Depends(current_active_verified_user),
     transaction_service: ScheduledTransactionService = Depends(
@@ -170,7 +170,7 @@ async def page_update_scheduled_transaction_get(
 
     Args:
         request: The request object.
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         transaction_id: The ID of the transaction.
         user: The current active user.
 
@@ -178,7 +178,7 @@ async def page_update_scheduled_transaction_get(
         TemplateResponse: The rendered transaction update form page.
     """
 
-    await handle_account_route(request, user, account_id)
+    await handle_wallet_route(request, user, wallet_id)
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
 
@@ -190,7 +190,7 @@ async def page_update_scheduled_transaction_get(
             request, data=transaction.information.__dict__
         )
     )
-    await populate_transaction_form_choices(account_id, user, form)
+    await populate_transaction_form_choices(wallet_id, user, form)
 
     form.date_start.data = transaction.date_start.strftime("%Y-%m-%d")
     form.date_end.data = transaction.date_end.strftime("%Y-%m-%d")
@@ -205,13 +205,13 @@ async def page_update_scheduled_transaction_get(
     add_breadcrumb(
         request,
         "Scheduled Transactions",
-        url=request.url_for("page_list_scheduled_transactions", account_id=account_id),
+        url=request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),
     )
 
     return render_transaction_form_template(
         request,
         form,
-        account_id,
+        wallet_id,
         "page_update_scheduled_transaction_get",
         transaction,
     )
@@ -220,7 +220,7 @@ async def page_update_scheduled_transaction_get(
 @router.post("/{transaction_id}")
 async def page_update_scheduled_transaction_post(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     transaction_id: int,
     user: models.User = Depends(current_active_verified_user),
     transaction_service: ScheduledTransactionService = Depends(
@@ -232,7 +232,7 @@ async def page_update_scheduled_transaction_post(
 
     Args:
         request: The request object.
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         transaction_id: The ID of the transaction.
         user: The current active user.
 
@@ -241,7 +241,7 @@ async def page_update_scheduled_transaction_post(
             The rendered transaction update form page or a redirect response.
     """
 
-    await handle_account_route(request, user, account_id)
+    await handle_wallet_route(request, user, wallet_id)
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
 
@@ -249,14 +249,14 @@ async def page_update_scheduled_transaction_post(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
     form = await schemas.UpdateScheduledTransactionForm.from_formdata(request)
-    await populate_transaction_form_choices(account_id, user, form)
+    await populate_transaction_form_choices(wallet_id, user, form)
 
     if not await form.validate_on_submit():
         form.date.data = transaction.information.date.strftime("%Y-%m-%d")
         return render_transaction_form_template(
             request,
             form,
-            account_id,
+            wallet_id,
             "page_update_scheduled_transaction_get",
             transaction,
         )
@@ -265,7 +265,7 @@ async def page_update_scheduled_transaction_post(
         form.amount.data *= -1
 
     transaction_information = schemas.ScheduledTransactionInformtionUpdate(
-        account_id=account_id, **form.data
+        wallet_id=wallet_id, **form.data
     )
 
     await tm.transaction(
@@ -276,7 +276,7 @@ async def page_update_scheduled_transaction_post(
     )
 
     return RedirectResponse(
-        request.url_for("page_list_scheduled_transactions", account_id=account_id),
+        request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),
         status_code=302,
     )
 
@@ -285,7 +285,7 @@ async def page_update_scheduled_transaction_post(
 @router.post("/{transaction_id}/delete")
 async def page_delete_scheduled_transaction(
     request: Request,
-    account_id: int,
+    wallet_id: int,
     transaction_id: int,
     user: models.User = Depends(current_active_verified_user),
     transaction_service: ScheduledTransactionService = Depends(
@@ -296,12 +296,12 @@ async def page_delete_scheduled_transaction(
     Handles the deletion of a transaction.
 
     Args:
-        account_id: The ID of the account.
+        wallet_id: The ID of the wallet.
         transaction_id: The ID of the transaction.
         user: The current active user.
 
     Returns:
-        RedirectResponse: A redirect response to the account page.
+        RedirectResponse: A redirect response to the wallet page.
     """
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
@@ -314,6 +314,6 @@ async def page_delete_scheduled_transaction(
     )
 
     return RedirectResponse(
-        request.url_for("page_list_scheduled_transactions", account_id=account_id),
+        request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),
         status_code=302,
     )

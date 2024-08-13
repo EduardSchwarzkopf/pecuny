@@ -145,7 +145,7 @@ leading-tight focus:outline-none focus:border-primary" %}
 </div>
 {% endmacro %}
 
-{% macro transaction_form(request, form, action_url, account_id, transaction=None) %}
+{% macro transaction_form(request, form, action_url, wallet_id, transaction=None) %}
 <div class="container mx-auto py-8">
     <form class="space-y-4 w-full mx-auto bg-white p-8 rounded-lg shadow-md " action="{{ action_url }}" method="POST">
         {{ form.csrf_token }}
@@ -174,7 +174,7 @@ leading-tight focus:outline-none focus:border-primary" %}
         {{ modal.delete_object(
             request.url_for(
                 'page_delete_scheduled_transaction' if transaction.frequency_id else 'page_delete_transaction', 
-                account_id=account_id, 
+                wallet_id=wallet_id, 
                 transaction_id=transaction.id
             ), 
             title="Delete Transaction"
@@ -184,7 +184,7 @@ leading-tight focus:outline-none focus:border-primary" %}
 </div>
 {% endmacro %}
 
-{% macro account_form(request, form, action_url, account_id=false) %}
+{% macro wallet_form(request, form, action_url, wallet_id=false) %}
 {# TODO: request param is not in use #}
 <div class="container mx-auto py-8">
     <form class="space-y-4 w-full mx-auto bg-white p-8 rounded-lg shadow-md " action="{{ action_url }}" method="POST">
@@ -196,12 +196,12 @@ leading-tight focus:outline-none focus:border-primary" %}
         {% endif %}
         {% endfor %}
 
-        {{ submit_button('Update' if account_id else 'Add') }}
+        {{ submit_button('Update' if wallet_id else 'Add') }}
     </form>
     {% include 'fragments/forms/handler.html' %}
 </div>
 
-{% if account_id %}
+{% if wallet_id %}
 
 {% set delete_title = 'Delete ' ~ form.data['label'] ~ '?' %}
 
@@ -211,18 +211,18 @@ leading-tight focus:outline-none focus:border-primary" %}
         class="border border-danger p-6 color-danger flex flex-col items-center md:flex-row md:space-x-4 space-y-4 md:space-y-0 w-full rounded">
         <div class="w-full md:w-auto grow">
             <p class="font-bold">
-                Delete this account?
+                Delete this wallet?
             </p>
             <span class="font-grey">
-                Once you delete a account, there is no going back. Please be certain.
+                Once you delete a wallet, there is no going back. Please be certain.
             </span>
         </div>
         <div class="w-full md:w-auto">
             <div>
-                {{ modal.button("Delete this account") }}
+                {{ modal.button("Delete this wallet") }}
             </div>
         </div>
-        {{ modal.delete_object(request.url_for('page_delete_account', account_id=account_id), title=delete_title) }}
+        {{ modal.delete_object(request.url_for('page_delete_wallet', wallet_id=wallet_id), title=delete_title) }}
     </div>
 </div>
 {% endif %}

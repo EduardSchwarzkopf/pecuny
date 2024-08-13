@@ -22,7 +22,7 @@ class ImportedTransaction:
     amount: Optional[Union[float, str]]
     section: Optional[Union[str, int]]
     category: Optional[Union[str, int]]
-    offset_account_id: Optional[int] = None
+    offset_wallet_id: Optional[int] = None
 
 
 @dataclass

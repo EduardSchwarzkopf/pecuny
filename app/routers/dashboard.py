@@ -19,9 +19,9 @@ async def page_dashboard(
         user: The current active user.
 
     Returns:
-        RedirectResponse: A redirect response to the accounts page.
+        RedirectResponse: A redirect response to the wallets page.
     """
 
     # TODO: Create a usueful dashboard page
 
-    return RedirectResponse(f"{router.prefix}/accounts", status_code=302)
+    return RedirectResponse(f"{router.prefix}/wallets", status_code=302)

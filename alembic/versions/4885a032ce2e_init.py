@@ -72,7 +72,7 @@ def upgrade():
     )
     op.create_index(op.f("ix_user_email"), "user", ["email"], unique=True)
     op.create_table(
-        "accounts",
+        "wallets",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column(
             "created_at",
@@ -189,12 +189,12 @@ def upgrade():
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.Column("account_id", sa.Integer(), nullable=True),
+        sa.Column("wallet_id", sa.Integer(), nullable=True),
         sa.Column("information_id", sa.Integer(), nullable=True),
         sa.Column("offset_transactions_id", sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(
-            ["account_id"],
-            ["accounts.id"],
+            ["wallet_id"],
+            ["wallets.id"],
         ),
         sa.ForeignKeyConstraint(
             ["information_id"],
@@ -223,13 +223,13 @@ def upgrade():
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.Column("account_id", sa.Integer(), nullable=True),
+        sa.Column("wallet_id", sa.Integer(), nullable=True),
         sa.Column("information_id", sa.Integer(), nullable=True),
-        sa.Column("offset_account_id", sa.Integer(), nullable=True),
+        sa.Column("offset_wallet_id", sa.Integer(), nullable=True),
         sa.Column("frequency_id", sa.Integer(), nullable=True),
         sa.Column("date_start", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("date_end", sa.TIMESTAMP(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(["account_id"], ["accounts.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["wallet_id"], ["wallets.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
             ["frequency_id"], ["frequencies.id"], ondelete="CASCADE"
         ),
@@ -238,8 +238,8 @@ def upgrade():
             ["transactions_information.id"],
         ),
         sa.ForeignKeyConstraint(
-            ["offset_account_id"],
-            ["accounts.id"],
+            ["offset_wallet_id"],
+            ["wallets.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -281,7 +281,7 @@ def downgrade():
     op.drop_index(op.f("ix_oauth_account_oauth_name"), table_name="oauth_account")
     op.drop_index(op.f("ix_oauth_account_account_id"), table_name="oauth_account")
     op.drop_table("oauth_account")
-    op.drop_table("accounts")
+    op.drop_table("wallets")
     op.drop_index(op.f("ix_user_email"), table_name="user")
     op.drop_table("user")
     op.drop_table("transactions_section")

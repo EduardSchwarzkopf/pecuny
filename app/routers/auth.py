@@ -101,7 +101,7 @@ async def login(
         return render_form_template(TEMPLATE_LOGIN, request, schemas.LoginForm(request))
 
     if not user.is_active:
-        set_feedback(request, FeedbackType.ERROR, "This account is not active")
+        set_feedback(request, FeedbackType.ERROR, "This wallet is not active")
         return render_form_template(TEMPLATE_LOGIN, request, schemas.LoginForm(request))
 
     result = await auth_backend.login(strategy, user)
@@ -202,7 +202,7 @@ async def verify_email(
     user_service: UserService = Depends(UserService.get_instance),
 ):
     """
-    Verifies the email address associated with a user account.
+    Verifies the email address associated with a user wallet.
 
     Args:
         request: The request object.

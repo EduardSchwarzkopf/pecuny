@@ -6,18 +6,18 @@
 >
   <div class="grow w-full md:w-auto">
     <div class="flex flex-row space-x-4 items-center">
-      <p class="text-xl text-gray-700 font-medium">{{account.label}}</p>
-      {{ btn.edit(url_for('page_update_account_form', account_id=account.id)) }}
+      <p class="text-xl text-gray-700 font-medium">{{wallet.label}}</p>
+      {{ btn.edit(url_for('page_update_wallet_form', wallet_id=wallet.id)) }}
     </div>
   </div>
   <div class="flex justify-end space-x-2 ">
-    {{ btn.link("Create Transaction", url_for('page_create_transaction_form', account_id=account.id)) }}
+    {{ btn.link("Create Transaction", url_for('page_create_transaction_form', wallet_id=wallet.id)) }}
     <div class="relative">
         {{btn.button(id="menu-button", classname="text-lg", text='<i class="fa-solid fa-ellipsis py-1"></i>', variant='secondary' )}}
       <div class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" id="dropdown-menu">
         <div class="py-1" role="none">
-          <a href="{{ url_for('page_list_scheduled_transactions', account_id=account.id) }}" class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-0">Scheduled Transactions</a>
-          <a href="{{ url_for('page_import_transactions_get', account_id=account.id) }}" class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-0">Import</a>
+          <a href="{{ url_for('page_list_scheduled_transactions', wallet_id=wallet.id) }}" class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-0">Scheduled Transactions</a>
+          <a href="{{ url_for('page_import_transactions_get', wallet_id=wallet.id) }}" class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-0">Import</a>
         </div>
       </div>
     </div>
@@ -49,7 +49,7 @@
 <div class="flex flex-col items-center bg-white shadow py-6 rounded-lg">
   <div class="uppercase tracking-wide text-center mb-6 md:mb-8">
     <span class="text-gray text-xs font-bold mb-2">Balance</span>
-    <p class="text-primary text-4xl">{{ '%0.2f' % account.balance }}</p>
+    <p class="text-primary text-4xl">{{ '%0.2f' % wallet.balance }}</p>
   </div>
 
   <div class="uppercase tracking-wide text-center text-gray">
@@ -86,9 +86,9 @@
     <div class="grid gap-3 bg-white transition rounded-lg">
       {% for transaction in group.transactions %}
       <a
-        href="{{ url_for('page_update_transaction_get', account_id=account.id, transaction_id=transaction.id)}}"
+        href="{{ url_for('page_update_transaction_get', wallet_id=wallet.id, transaction_id=transaction.id)}}"
       >
-        {% include 'fragments/accounts/transaction.html' %} 
+        {% include 'fragments/wallets/transaction.html' %} 
       </a>
       {% endfor %}
     </div>
