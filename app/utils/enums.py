@@ -44,7 +44,6 @@ class DatabaseFilterOperator(ExtendedEnum):
 
 
 class Frequency(ExtendedEnum):
-    ONCE = 1
     DAILY = 2
     WEEKLY = 3
     MONTHLY = 4
