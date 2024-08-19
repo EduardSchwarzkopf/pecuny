@@ -186,7 +186,7 @@ class Repository:
 
         def get_period_start_date(frequency_id: int) -> datetime:
             match frequency_id:
-                case Frequency.DAILY.value | Frequency.ONCE.value:
+                case Frequency.DAILY.value:
                     return today
                 case Frequency.WEEKLY.value:
                     return today - timedelta(days=7)

@@ -25,7 +25,7 @@ ENDPOINT = "/api/scheduled-transactions/"
 @pytest.mark.parametrize(
     "amount, reference, category_id, frequency_id",
     [
-        (10, "Added 10", 1, 1),
+        (10, "Added 10", 1, 2),
         (20.5, "Added 20.5", 3, 2),
         (-30.5, "Substract 30.5", 6, 3),
         (-40.5, "Subsctract 40.5", 6, 4),
