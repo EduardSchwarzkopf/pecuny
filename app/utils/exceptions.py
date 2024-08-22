@@ -11,16 +11,13 @@ class BaseException(ABC, Exception):
     def details(self, message):
         return f"{type(self).__name__} at line {self.__traceback__.tb_lineno} of {__file__}: {self}"
 
+
+class UserAlreadyExistsException(BaseException):
     def __init__(self):
         super().__init__("User with given email already exists.")
 
 
-class PasswordsDontMatchException(Exception):
-    def __init__(self):
-        super().__init__("Provided passwords do not match.")
-
-
-class UserNotFoundException(Exception):
+class UserNotFoundException(BaseException):
     pass
 
 
