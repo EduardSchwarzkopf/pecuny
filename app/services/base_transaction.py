@@ -61,10 +61,12 @@ class BaseTransactionService(BaseService):
 
         Returns:
             The transaction if found, None otherwise.
+
+        Raises:
+            TransactionNotFoundException: If the transaction does not exist.
+            WalletNotFoundException: If the wallet does not exist.
+            AccessDeniedException: If the user does not have access to the wallet.
         """
-        logger.info(
-            "Retrieving transaction with ID %s for user %s", transaction_id, user.id
-        )
         transaction = await self._get_transaction_by_id(transaction_id)
 
         if transaction is None:
