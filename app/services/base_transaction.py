@@ -176,19 +176,6 @@ class BaseTransactionService(BaseService):
                 user, transaction_data
             )
 
-            if offset_transaction is None:
-                logger.warning(
-                    "User[id: %s] not allowed to access offset_wallet[id: %s]",
-                    user.id,
-                    transaction_data.offset_wallet_id,
-                )
-                raise AccessDeniedError(
-                    (
-                        f"User[id: {user.id}] not allowed to access "
-                        f"offset_wallet[id: {transaction_data.offset_wallet_id}]"
-                    )
-                )
-
             transaction.offset_transaction = offset_transaction
             offset_transaction.offset_transaction = transaction
             await self.repository.save(offset_transaction)
