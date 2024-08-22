@@ -122,7 +122,6 @@ class BaseTransactionService(BaseService):
         amount = transaction.information.amount
 
         if transaction.offset_transaction:
-            logger.info("Handling offset transaction for delete.")
             offset_transaction = transaction.offset_transaction
             offset_wallet = await self.repository.get(
                 models.Wallet, offset_transaction.wallet_id
@@ -178,7 +177,6 @@ class BaseTransactionService(BaseService):
         )
 
         if transaction_data.offset_wallet_id:
-            logger.info("Handling offset wallet for transaction.")
             offset_transaction = await self._handle_offset_transaction(
                 user, transaction_data
             )
@@ -226,7 +224,6 @@ class BaseTransactionService(BaseService):
             WalletNotFoundException: If the wallet does not exist.
             AccessDeniedException: If the user does not have access to the wallet.
         """
-        logger.info("Handling offset transaction for user %s", user.id)
         offset_wallet_id = transaction_data.offset_wallet_id
 
         if offset_wallet_id is None:
