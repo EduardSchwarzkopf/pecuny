@@ -260,7 +260,7 @@ class BaseTransactionService(BaseService):
 
     async def update_transaction(
         self,
-        current_user: models.User,
+        user: models.User,
         transaction_id: int,
         transaction_information: schemas.TransactionInformtionUpdate,
     ) -> Optional[models.Transaction]:
