@@ -80,12 +80,7 @@ class BaseTransactionService(BaseService):
         if WalletService.has_user_access_to_wallet(user, wallet):
             raise AccessDeniedException(user.id, wallet.id)
 
-        if wallet.user_id == user.id:
-            logger.info("User ID verified. Returning transaction.")
-            return transaction
-
-        logger.warning(WALLET_USER_ID_MISMATCH)
-        return None
+        return transaction
 
     async def delete_transaction(
         self, current_user: models.User, transaction_id: int
