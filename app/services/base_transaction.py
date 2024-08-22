@@ -6,8 +6,11 @@ from app.repository import Repository
 from app.services.base import BaseService
 from app.services.wallets import WalletService
 from app.utils.classes import RoundedDecimal
-from app.utils.exceptions import AccessDeniedError
-from app.utils.log_messages import WALLET_USER_ID_MISMATCH
+from app.utils.exceptions import (
+    AccessDeniedException,
+    TransactionNotFoundException,
+    WalletNotFoundException,
+)
 
 logger = get_logger(__name__)
 
