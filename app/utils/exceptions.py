@@ -46,4 +46,11 @@ class TransactionNotFoundException(BaseException):
         self.transaction_id = transaction_id
         super().__init__(f"Transaction {transaction_id} not found")
 
+
+class WalletNotFoundException(BaseException):
+    def __init__(self, wallet_id):
+        self.wallet_id = wallet_id
+        super().__init__(f"Wallet {wallet_id} not found")
+
+
     """Raised when a user tries to access a resource they don't have permission to."""
