@@ -51,7 +51,7 @@ class BaseTransactionService(BaseService):
 
     async def get_transaction(
         self, user: models.User, transaction_id: int
-    ) -> Optional[models.Transaction]:
+    ) -> models.Transaction:
         """
         Retrieves a transaction for a specific user by ID.
 
@@ -84,7 +84,7 @@ class BaseTransactionService(BaseService):
 
     async def delete_transaction(
         self, current_user: models.User, transaction_id: int
-    ) -> Optional[bool]:
+    ) -> True:
         """
         Deletes a transaction for the current user by ID.
 
@@ -137,7 +137,7 @@ class BaseTransactionService(BaseService):
         self,
         user: models.User,
         transaction_data: schemas.TransactionData,
-    ) -> Optional[models.Transaction]:
+    ) -> models.Transaction:
         """
         Creates a new transaction for a user based on the provided transaction data.
 
@@ -190,7 +190,7 @@ class BaseTransactionService(BaseService):
         self,
         user: models.User,
         transaction_data: schemas.TransactionData,
-    ) -> Optional[models.Transaction]:
+    ) -> models.Transaction:
         """
         Handles the creation of an offset transaction for a user based on the provided data.
 
@@ -242,7 +242,7 @@ class BaseTransactionService(BaseService):
         user: models.User,
         transaction_id: int,
         transaction_information: schemas.TransactionInformtionUpdate,
-    ) -> Optional[models.Transaction]:
+    ) -> models.Transaction:
         """
         Updates a transaction for the current user by ID with the provided information.
 
