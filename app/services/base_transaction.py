@@ -296,7 +296,6 @@ class BaseTransactionService(BaseService):
         )
 
         if transaction.offset_transactions_id:
-            logger.info("Handling offset transaction for update.")
             offset_transaction = await self.repository.get(
                 self.service_model,
                 transaction.offset_transactions_id,
