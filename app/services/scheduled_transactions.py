@@ -16,7 +16,11 @@ from app.schemas import (
 )
 from app.services.base_transaction import BaseTransactionService
 from app.services.wallets import WalletService
-from app.utils.exceptions import AccessDeniedError
+from app.utils.exceptions import (
+    AccessDeniedException,
+    TransactionNotFoundException,
+    WalletNotFoundException,
+)
 
 logger = get_logger(__name__)
 
