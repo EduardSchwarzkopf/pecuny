@@ -53,4 +53,10 @@ class WalletNotFoundException(BaseException):
         super().__init__(f"Wallet {wallet_id} not found")
 
 
+class AccessDeniedException(BaseException):
     """Raised when a user tries to access a resource they don't have permission to."""
+
+    def __init__(self, user_id, wallet_id):
+        self.user_id = user_id
+        self.wallet_id = wallet_id
+        super().__init__(f"User {user_id} does not have access to wallet {wallet_id}")
