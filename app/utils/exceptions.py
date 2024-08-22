@@ -1,7 +1,16 @@
+from abc import ABC
+
 from fastapi import HTTPException, status
 
 
-class UserAlreadyExistsException(Exception):
+class BaseException(ABC, Exception):
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)
+
+    def details(self, message):
+        return f"{type(self).__name__} at line {self.__traceback__.tb_lineno} of {__file__}: {self}"
+
     def __init__(self):
         super().__init__("User with given email already exists.")
 
