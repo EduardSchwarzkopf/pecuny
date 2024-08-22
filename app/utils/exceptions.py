@@ -41,5 +41,9 @@ class NotFoundException(HTTPException):
         super().__init__(status.HTTP_404_NOT_FOUND, "Not Found")
 
 
-class AccessDeniedError(Exception):
+class TransactionNotFoundException(BaseException):
+    def __init__(self, transaction_id):
+        self.transaction_id = transaction_id
+        super().__init__(f"Transaction {transaction_id} not found")
+
     """Raised when a user tries to access a resource they don't have permission to."""
