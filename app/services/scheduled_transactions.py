@@ -45,19 +45,26 @@ class ScheduledTransactionService(BaseTransactionService):
 
         Returns:
             A list of transactions that match the criteria.
+
+        Raises:
+            WalletNotFoundException: If the wallet does not exist.
+            AccessDeniedException: If the user does not have access to the wallet.
         """
         logger.info(
-            "Starting transaction list retrieval for user %s and wallet %s",
-            user.id,
-            wallet_id,
+            f"Starting transaction list retrieval for user {user.id} and wallet {wallet_id}",
         )
+
         wallet = await self.repository.get(Wallet, wallet_id)
 
         if wallet is None:
-            return []
+            err = WalletNotFoundException(wallet_id)
+            logger.info(err.message)
+            raise err
 
-        if wallet is None or not WalletService.has_user_access_to_wallet(user, wallet):
-            return []
+        if not WalletService.has_user_access_to_wallet(user, wallet):
+            err = AccessDeniedException(user.id, wallet.id)
+            logger.info(err.message)
+            raise err
 
         return await self.repository.filter_by(
             self.service_model,
@@ -69,7 +76,7 @@ class ScheduledTransactionService(BaseTransactionService):
         self,
         user: User,
         transaction_information: ScheduledTransactionInformationCreate,
-    ) -> Optional[ServiceModel]:
+    ) -> ServiceModel:
         """
         Creates a new scheduled transaction for a user based on the provided information.
 
@@ -79,41 +86,51 @@ class ScheduledTransactionService(BaseTransactionService):
 
         Returns:
             The created scheduled transaction if successful, None otherwise.
+
+        Raises:
+            WalletNotFoundException: If the wallet does not exist.
+            AccessDeniedException: If the user does not have access to the wallet.
         """
-        logger.info("Creating new scheduled transaction for user %s", user.id)
+        wallet_id = transaction_information.wallet_id
         wallet = await self.repository.get(Wallet, transaction_information.wallet_id)
 
-        if wallet is None or not WalletService.has_user_access_to_wallet(user, wallet):
-            return None
+        if wallet is None:
+            err = WalletNotFoundException(wallet_id)
+            logger.info(err.message)
+            raise err
+
+        if not WalletService.has_user_access_to_wallet(user, wallet):
+            err = AccessDeniedException(user.id, wallet.id)
+            logger.info(err.message)
+            raise err
 
         db_transaction_information = TransactionInformation()
         db_transaction_information.add_attributes_from_dict(
             transaction_information.model_dump()
         )
 
+        offset_wallet_id = transaction_information.offset_wallet_id
         transaction = self.service_model(
             frequency_id=transaction_information.frequency_id,
             date_start=transaction_information.date_start,
             date_end=transaction_information.date_end,
             information=db_transaction_information,
             wallet_id=wallet.id,
-            offset_wallet_id=transaction_information.offset_wallet_id,
+            offset_wallet_id=offset_wallet_id,
         )
 
         if transaction_information.offset_wallet_id:
-            offset_wallet = await self.repository.get(
-                Wallet, transaction_information.offset_wallet_id
-            )
+            offset_wallet = await self.repository.get(Wallet, offset_wallet_id)
 
-            if offset_wallet is None or not WalletService.has_user_access_to_wallet(
-                user, offset_wallet
-            ):
-                raise AccessDeniedError(
-                    (
-                        f"User[id: {user.id}] not allowed to access "
-                        f"offset_wallet[id: {transaction_information.offset_wallet_id}]"
-                    )
-                )
+            if offset_wallet is None:
+                err = WalletNotFoundException(offset_wallet_id)
+                logger.info(err.message)
+                raise err
+
+            if not WalletService.has_user_access_to_wallet(user, offset_wallet):
+                err = AccessDeniedException(user.id, offset_wallet.id)
+                logger.info(err.message)
+                raise err
 
         await self.repository.save([transaction, db_transaction_information])
 
@@ -124,7 +141,7 @@ class ScheduledTransactionService(BaseTransactionService):
         user: User,
         transaction_id: int,
         transaction_information: ScheduledTransactionInformtionUpdate,
-    ) -> Optional[ServiceModel]:
+    ) -> ServiceModel:
         """
         Updates a scheduled transaction for a user with the provided information.
 
@@ -135,31 +152,43 @@ class ScheduledTransactionService(BaseTransactionService):
 
         Returns:
             The updated scheduled transaction if successful, None otherwise.
+
+        Raises:
+            WalletNotFoundException: If the wallet does not exist.
+            TransactionNotFoundException: If the transaction does not exist.
+            AccessDeniedException: If the user does not have access to the wallet.
         """
 
         transaction = await self._get_transaction_by_id(transaction_id)
 
         if transaction is None:
-            return None
+            raise TransactionNotFoundException(transaction_id)
 
         wallet = await self.repository.get(Wallet, transaction_information.wallet_id)
-        if wallet is None or not WalletService.has_user_access_to_wallet(user, wallet):
-            return None
+
+        if wallet is None:
+            err = WalletNotFoundException(wallet_id)
+            logger.info(err.message)
+            raise err
+
+        if not WalletService.has_user_access_to_wallet(user, wallet):
+            err = AccessDeniedException(user.id, wallet.id)
+            logger.info(err.message)
+            raise err
 
         if transaction.offset_wallet_id and transaction_information.offset_wallet_id:
-            offset_wallet = await self.repository.get(
-                Wallet, transaction_information.offset_wallet_id
-            )
+            offset_wallet_id = transaction_information.offset_wallet_id
+            offset_wallet = await self.repository.get(Wallet, offset_wallet_id)
 
-            if offset_wallet is None or not WalletService.has_user_access_to_wallet(
-                user, offset_wallet
-            ):
-                raise AccessDeniedError(
-                    (
-                        f"User[id: {user.id}] not allowed to access "
-                        f"offset_wallet[id: {transaction_information.offset_wallet_id}]"
-                    )
-                )
+            if offset_wallet is None:
+                err = WalletNotFoundException(offset_wallet_id)
+                logger.info(err.message)
+                raise err
+
+            if not WalletService.has_user_access_to_wallet(user, offset_wallet):
+                err = AccessDeniedException(user.id, offset_wallet.id)
+                logger.info(err.message)
+                raise err
 
         transaction_values = {
             "amount": transaction_information.amount,
@@ -180,7 +209,7 @@ class ScheduledTransactionService(BaseTransactionService):
 
     async def delete_scheduled_transaction(
         self, current_user: User, transaction_id: int
-    ) -> Optional[bool]:
+    ) -> bool:
         """
         Deletes a scheduled transaction.
 
@@ -190,25 +219,29 @@ class ScheduledTransactionService(BaseTransactionService):
 
         Returns:
             bool: True if the scheduled transaction is successfully deleted, False otherwise.
-        """
 
-        logger.info(
-            "Deleting scheduled_transaction with ID %s for user %s",
-            transaction_id,
-            current_user.id,
-        )
+        Raises:
+            WalletNotFoundException: If the wallet does not exist.
+            TransactionNotFoundException: If the transaction does not exist.
+            AccessDeniedException: If the user does not have access to the wallet.
+        """
 
         transaction = await self._get_transaction_by_id(transaction_id)
 
         if transaction is None:
-            logger.warning(
-                "Scheduled Transaction with ID %s not found.", transaction_id
-            )
-            return None
+            raise TransactionNotFoundException(transaction_id)
 
         wallet = await self.repository.get(Wallet, transaction.wallet_id)
-        if wallet is None or current_user.id != wallet.user_id:
-            return None
+
+        if wallet is None:
+            err = WalletNotFoundException(wallet_id)
+            logger.info(err.message)
+            raise err
+
+        if not WalletService.has_user_access_to_wallet(user, wallet):
+            err = AccessDeniedException(user.id, wallet.id)
+            logger.info(err.message)
+            raise err
 
         created_transaction_list = await self.repository.filter_by(
             Transaction,
