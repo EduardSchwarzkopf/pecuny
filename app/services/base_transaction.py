@@ -149,8 +149,11 @@ class BaseTransactionService(BaseService):
 
         Returns:
             The created transaction if successful, None otherwise.
+
+        Raises:
+            WalletNotFoundException: If the wallet does not exist.
+            AccessDeniedException: If the user does not have access to the wallet.
         """
-        logger.info("Creating new transaction for user %s", user.id)
         wallet = await self.repository.get(models.Wallet, transaction_data.wallet_id)
 
         if wallet is None or not WalletService.has_user_access_to_wallet(user, wallet):
@@ -210,6 +213,11 @@ class BaseTransactionService(BaseService):
 
         Returns:
             The created offset transaction if successful, None otherwise.
+
+        Raises:
+            ValueError: If offset_wallet_id in transaction_information does not exist.
+            WalletNotFoundException: If the wallet does not exist.
+            AccessDeniedException: If the user does not have access to the wallet.
         """
         logger.info("Handling offset transaction for user %s", user.id)
         offset_wallet_id = transaction_data.offset_wallet_id
@@ -256,6 +264,11 @@ class BaseTransactionService(BaseService):
 
         Returns:
             The updated transaction if successful, None otherwise.
+
+        Raises:
+            TransactionNotFoundException: If the transaction does not exist.
+            WalletNotFoundException: If the wallet does not exist.
+            AccessDeniedException: If the user does not have access to the wallet.
         """
 
         transaction = await self._get_transaction_by_id(transaction_id)
