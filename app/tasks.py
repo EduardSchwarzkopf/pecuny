@@ -152,7 +152,7 @@ async def import_transactions_from_csv(
 
     reader = csv.DictReader(csv_file, delimiter=";")
 
-    async with await db.get_session() as session:
+    async with db.get_session() as session:
         repo = Repository(session)
 
         user = await repo.get(models.User, user_id)
@@ -222,7 +222,7 @@ async def process_scheduled_transactions():
     creating corresponding transactions.
     """
 
-    async with await db.get_session() as session:
+    async with db.get_session() as session:
         repo = Repository(session)
         service = TransactionService(repo)
         today = get_today()
