@@ -19,9 +19,9 @@ ModelT = TypeVar("ModelT", bound=BaseModel)
 
 class Repository:
 
-    def __init__(self, session: Optional[AsyncSession] = None):
+    def __init__(self):
 
-        self.session = session if session is not None else db.session
+        self.session = db.session
 
     def _load_relationships(
         self, query: Select, relationships: InstrumentedAttribute = None
@@ -264,25 +264,12 @@ class Repository:
         Raises:
             None
         """
+
         if isinstance(obj, list):
             self.session.add_all(obj)
             return
 
         self.session.add(obj)
-
-    async def commit(self) -> None:
-        """Commit the changes made in the session to the database.
-
-        Args:
-            session: The database session.
-
-        Returns:
-            None
-
-        Raises:
-            None
-        """
-        await self.session.commit()
 
     async def update(self, cls: Type[ModelT], instance_id: int, **kwargs) -> None:
         """Update an instance of the specified model with the given ID.
