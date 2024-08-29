@@ -95,7 +95,7 @@ async def get_user_offset_wallet(
 
     Args:
         wallet (models.Wallet): The wallet for which to find the offset wallet.
-        wallet_list (list[models.Wallet]): The list of wallets to search within.
+        repository (Repository): The repository to query for wallet information.
 
     Returns:
         models.Wallet or None: The offset wallet if found, otherwise None.
