@@ -155,7 +155,7 @@ class BaseTransactionService(BaseService):
         wallet = await self.repository.get(models.Wallet, transaction_data.wallet_id)
 
         if wallet is None:
-            raise WalletNotFoundException(wallet_id)
+            raise WalletNotFoundException(transaction_data.wallet_id)
 
         if not WalletService.has_user_access_to_wallet(user, wallet):
             raise AccessDeniedException(user.id, wallet.id)
@@ -216,7 +216,7 @@ class BaseTransactionService(BaseService):
         if offset_wallet is None:
             raise WalletNotFoundException(offset_wallet_id)
 
-        if not WalletService.has_user_access_to_wallet(user, offset_wallet.id):
+        if not WalletService.has_user_access_to_wallet(user, offset_wallet):
             raise AccessDeniedException(user.id, offset_wallet.id)
 
         transaction_data.amount = RoundedDecimal(transaction_data.amount * -1)
