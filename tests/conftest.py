@@ -59,38 +59,6 @@ async def fixture_init_db():
     await db.engine.dispose()
 
 
-async def cleanup_tests(session: AsyncSession):
-    """
-    Performs cleanup tasks for tests.
-
-    Returns:
-        None
-    """
-
-    repo = Repository(session)
-    user_list = await repo.get_all(models.User)
-
-    delete_task = [repo.delete(user) for user in user_list]
-    await asyncio.gather(*delete_task)
-
-
-@pytest.fixture(name="session", autouse=True, scope="session")
-async def fixture_session() -> AsyncSession:  # type: ignore
-    """
-    Fixture that provides an async session.
-
-    Args:
-        None
-
-    Returns:
-        AsyncSession: An async session.
-    """
-    session = db.session
-    await cleanup_tests(session)
-
-    yield session
-
-
 @pytest.fixture(scope="session", autouse=True)
 def anyio_backend():
     """
