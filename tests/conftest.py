@@ -32,12 +32,12 @@ async def populate_db(session: AsyncSession):
         models.Frequency(**frequency) for frequency in frequency_list
     ]
 
-    session.add_all(
-        transaction_category_list
-        + transaction_section_list
-        + transaction_frequency_list
-    )
-    await session.commit()
+    async with db.get_session() as session:
+        session.add_all(
+            transaction_category_list
+            + transaction_section_list
+            + transaction_frequency_list
+        )
 
 
 @pytest.fixture(scope="session", autouse=True)
