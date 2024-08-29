@@ -7,7 +7,7 @@ from app.models import Base
 from app.repository import Repository
 
 
-async def populate_db(session: AsyncSession):
+async def populate_db():
     """
     Populates the database with transaction sections and categories.
 
@@ -54,7 +54,7 @@ async def fixture_init_db():
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
-    await populate_db(db.session)
+    await populate_db()
 
     await db.engine.dispose()
 
@@ -107,18 +107,15 @@ def anyio_backend():
 
 
 @pytest.fixture(name="repository")
-def get_repository(session):
+def get_repository():
     """
     Fixture to provide a repository instance for testing.
-
-    Args:
-        session: The SQLAlchemy session object.
 
     Returns:
         Repository: An instance of the Repository class.
     """
 
-    yield Repository(session)
+    yield Repository()
 
 
 from .fixtures import *  # pylint: disable=wildcard-import,unused-wildcard-import,wrong-import-position
