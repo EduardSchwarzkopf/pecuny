@@ -5,7 +5,6 @@ from typing import List
 
 import pytest
 from sqlalchemy import and_, exists, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas
 from app.date_manager import get_day_delta, get_today, get_tomorrow, get_yesterday
