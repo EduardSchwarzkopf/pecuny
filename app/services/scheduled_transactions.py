@@ -3,7 +3,9 @@ from typing import Optional
 
 from app.logger import get_logger
 from app.models import (
+    Frequency,
     Transaction,
+    TransactionCategory,
     TransactionInformation,
     TransactionScheduled,
     User,
@@ -18,6 +20,8 @@ from app.services.base_transaction import BaseTransactionService
 from app.services.wallets import WalletService
 from app.utils.exceptions import (
     AccessDeniedException,
+    CategoryNotFoundException,
+    FrequencyNotFoundException,
     TransactionNotFoundException,
     WalletNotFoundException,
 )
@@ -91,14 +95,31 @@ class ScheduledTransactionService(BaseTransactionService):
         if not WalletService.has_user_access_to_wallet(user, wallet):
             raise AccessDeniedException(user.id, wallet.id)
 
-        db_transaction_information = TransactionInformation()
-        db_transaction_information.add_attributes_from_dict(
-            transaction_information.model_dump()
+        category = await self.repository.get(
+            TransactionCategory, transaction_information.category_id
+        )
+
+        if category is None:
+            raise CategoryNotFoundException(transaction_information.category_id)
+
+        frequency = await self.repository.get(
+            Frequency, transaction_information.frequency_id
+        )
+
+        if frequency is None:
+            raise FrequencyNotFoundException(transaction_information.frequency_id)
+
+        db_transaction_information = TransactionInformation(
+            amount=transaction_information.amount,
+            reference=transaction_information.reference,
+            category=category,
+            category_id=category.id,
         )
 
         offset_wallet_id = transaction_information.offset_wallet_id
         transaction = self.service_model(
             frequency_id=transaction_information.frequency_id,
+            frequency=frequency,
             date_start=transaction_information.date_start,
             date_end=transaction_information.date_end,
             information=db_transaction_information,
