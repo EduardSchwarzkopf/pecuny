@@ -8,6 +8,7 @@ from app.services.wallets import WalletService
 from app.utils.classes import RoundedDecimal
 from app.utils.exceptions import (
     AccessDeniedException,
+    CategoryNotFoundException,
     TransactionNotFoundException,
     WalletNotFoundException,
 )
@@ -82,14 +83,12 @@ class BaseTransactionService(BaseService):
 
         return transaction
 
-    async def delete_transaction(
-        self, current_user: models.User, transaction_id: int
-    ) -> True:
+    async def delete_transaction(self, user: models.User, transaction_id: int) -> True:
         """
         Deletes a transaction for the current user by ID.
 
         Args:
-            current_user: The current user performing the deletion.
+            user: The current user performing the deletion.
             transaction_id: The ID of the transaction to delete.
 
         Returns:
@@ -160,9 +159,19 @@ class BaseTransactionService(BaseService):
         if not WalletService.has_user_access_to_wallet(user, wallet):
             raise AccessDeniedException(user.id, wallet.id)
 
-        db_transaction_information = models.TransactionInformation()
-        db_transaction_information.add_attributes_from_dict(
-            transaction_data.model_dump()
+        category = await self.repository.get(
+            models.TransactionCategory, transaction_data.category_id
+        )
+
+        if category is None:
+            raise CategoryNotFoundException(transaction_data.category_id)
+
+        db_transaction_information = models.TransactionInformation(
+            amount=transaction_data.amount,
+            reference=transaction_data.reference,
+            date=transaction_data.date,
+            category=category,
+            category_id=category.id,
         )
 
         transaction = self.service_model(
