@@ -33,13 +33,7 @@ async def test_create_wallet(test_user: models.User, repository: Repository):
 
     Args:
         test_user (fixture): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
+        repository (fixture): The repository for database operations.
     """
 
     res = await make_http_request(
@@ -76,13 +70,6 @@ async def test_invalid_title_create_wallet(test_user: models.User, label: Any):
     Args:
         test_user (fixture): The test user.
         label (Any): The label of the wallet.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
     """
 
     res = await make_http_request(
@@ -100,13 +87,7 @@ async def test_delete_wallet(test_wallet: models.Wallet, repository: Repository)
 
     Args:
         test_wallet (fixture): The test wallet.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
+        repository (fixture): The repository for database operations.
     """
 
     res = await make_http_request(
@@ -131,13 +112,7 @@ async def test_invalid_delete_wallet(
     Args:
         test_user (fixture): The test user.
         test_wallets (fixture): The list of test wallets.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
+        repository (fixture): The repository for database operations.
     """
 
     other_wallet = await get_other_user_wallet(test_user, repository)
@@ -193,13 +168,7 @@ async def test_update_wallet(
         test_wallet (fixture): The test wallet.
         test_user (fixture): The test user.
         values (dict): The updated values for the wallet.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
+        repository (fixture): The repository for database operations.
     """
     response = await make_http_request(
         f"{ENDPOINT}{test_wallet.id}", json=values, as_user=test_user
@@ -228,13 +197,7 @@ async def test_get_wallet_response(test_wallet):
     Tests if the transaction amount in the JSON response is a float.
 
     Args:
-        test_wallet_transaction_list (fixture): The list of wallet transactions.
-        test_user (fixture): The test user.
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
+        test_wallet (fixture): A wallet from the test_user.
     """
 
     res = await make_http_request(
@@ -261,12 +224,10 @@ async def test_import_transaction(
     Test case for importing transactions into an wallet.
 
     Args:
-        test_wallet: The wallet to import transactions into.
-        test_user: The user performing the import.
+        test_wallet (fixture): The wallet to import transactions into.
+        test_user (fixture): The user performing the import.
         tmp_path: Path to a temporary directory for file operations.
-
-    Returns:
-        None
+        repository (fixture): The repository for database operations.
     """
 
     wallet_id = test_wallet.id
@@ -337,12 +298,9 @@ async def test_import_transaction_fail(
     Test case for importing transactions into an wallet.
 
     Args:
-        test_wallet: The wallet to import transactions into.
-        test_user: The user performing the import.
+        test_wallet (fixture): The wallet to import transactions into.
+        test_user (fixture): The user performing the import.
         tmp_path: Path to a temporary directory for file operations.
-
-    Returns:
-        None
     """
 
     category_label = category_id
@@ -397,8 +355,8 @@ async def test_invalid_import_transaction_file(
     Test case for importing transactions into an wallet.
 
     Args:
-        test_wallet: The wallet to import transactions into.
-        test_user: The user performing the import.
+        test_wallet (fixture): The wallet to import transactions into.
+        test_user (fixture): The user performing the import.
         tmp_path: Path to a temporary directory for file operations.
 
     Returns:
@@ -448,8 +406,8 @@ async def test_example_import_file(
     Test case for importing transactions into an wallet.
 
     Args:
-        test_wallet: The wallet to import transactions into.
-        test_user: The user performing the import.
+        test_wallet (fixture): The wallet to import transactions into.
+        test_user (fixture): The user performing the import.
         tmp_path: Path to a temporary directory for file operations.
 
     Returns:
