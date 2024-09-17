@@ -183,13 +183,13 @@ class ScheduledTransactionService(BaseTransactionService):
         return transaction
 
     async def delete_scheduled_transaction(
-        self, current_user: User, transaction_id: int
+        self, user: User, transaction_id: int
     ) -> bool:
         """
         Deletes a scheduled transaction.
 
         Args:
-            current_user: The current active user.
+            user: The current active user.
             transaction_id: The ID of the scheduled transaction to delete.
 
         Returns:
