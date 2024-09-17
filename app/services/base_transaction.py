@@ -77,7 +77,7 @@ class BaseTransactionService(BaseService):
         if wallet is None:
             raise WalletNotFoundException(transaction.wallet_id)
 
-        if WalletService.has_user_access_to_wallet(user, wallet):
+        if not WalletService.has_user_access_to_wallet(user, wallet):
             raise AccessDeniedException(user.id, wallet.id)
 
         return transaction
@@ -111,7 +111,7 @@ class BaseTransactionService(BaseService):
         if wallet is None:
             raise WalletNotFoundException(transaction.wallet_id)
 
-        if WalletService.has_user_access_to_wallet(user, wallet):
+        if not WalletService.has_user_access_to_wallet(user, wallet):
             raise AccessDeniedException(user.id, wallet.id)
 
         amount = transaction.information.amount
@@ -267,7 +267,7 @@ class BaseTransactionService(BaseService):
 
         wallet: models.Wallet = transaction.wallet
 
-        if not WalletService.has_user_access_to_wallet(user, wallet.id):
+        if not WalletService.has_user_access_to_wallet(user, wallet):
             raise AccessDeniedException(user.id, wallet.id)
 
         amount_updated = (
@@ -286,7 +286,7 @@ class BaseTransactionService(BaseService):
 
             offset_wallet: models.Wallet = offset_transaction.wallet
 
-            if not WalletService.has_user_access_to_wallet(user, offset_wallet.id):
+            if not WalletService.has_user_access_to_wallet(user, offset_wallet):
                 raise AccessDeniedException(user.id, offset_wallet.id)
 
             offset_wallet.balance -= amount_updated
