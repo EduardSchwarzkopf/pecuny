@@ -102,11 +102,9 @@ async def test_create_transactions_from_schedule(
 
     wallet = await repository.get(models.Wallet, wallet_id)
 
-    assert isinstance(wallet, models.Wallet)
+    assert wallet is not None
 
-    new_balance = wallet.balance
-
-    assert new_balance == expected_wallet_balance
+    assert wallet.balance == expected_wallet_balance
 
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
