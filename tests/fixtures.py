@@ -1,12 +1,11 @@
 import asyncio
 import datetime
 import itertools
-from typing import List
 
 import pytest
 from sqlalchemy import and_, exists, func, select
 
-from app import models, schemas
+from app import models, schemas, session_transaction_manager
 from app.date_manager import get_day_delta, get_today, get_tomorrow, get_yesterday
 from app.repository import Repository
 from app.services.scheduled_transactions import ScheduledTransactionService
@@ -242,7 +241,8 @@ async def fixture_create_test_wallets(create_test_users: list[models.User]):
         )
         create_task_list.append(task)
 
-    wallet_list = await asyncio.gather(*create_task_list)
+    async with session_transaction_manager.transaction():
+        wallet_list = await asyncio.gather(*create_task_list)
 
     yield wallet_list
 
@@ -380,7 +380,8 @@ async def fixture_create_transactions(
             ]
         )
 
-    transaction_list = await asyncio.gather(*create_task)
+    async with session_transaction_manager.transaction():
+        transaction_list = await asyncio.gather(*create_task)
 
     yield transaction_list
 
@@ -512,7 +513,6 @@ async def fixture_create_scheduled_transactions(
     create_task = []
 
     for wallet in test_wallets:
-
         create_task.extend(
             [
                 service.create_scheduled_transaction(
@@ -531,14 +531,14 @@ async def fixture_create_scheduled_transactions(
             ]
         )
 
-    scheduled_transaction_list: List[models.TransactionScheduled | None] = (
-        await asyncio.gather(*create_task)
-    )
+    async with session_transaction_manager.transaction():
+        scheduled_transaction_list = await asyncio.gather(*create_task)
 
     yield scheduled_transaction_list
 
     delete_task = []
-    for scheduled_transaction in scheduled_transaction_list:
+
+    for scheduled_transaction in await repository.get_all(models.TransactionScheduled):
 
         if scheduled_transaction is None:
             continue
