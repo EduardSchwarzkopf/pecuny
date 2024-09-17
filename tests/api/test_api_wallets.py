@@ -2,7 +2,7 @@ import csv
 import io
 import time
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 import pytest
 from starlette.status import (
@@ -11,7 +11,7 @@ from starlette.status import (
     HTTP_202_ACCEPTED,
     HTTP_204_NO_CONTENT,
     HTTP_400_BAD_REQUEST,
-    HTTP_404_NOT_FOUND,
+    HTTP_403_FORBIDDEN,
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
@@ -22,12 +22,12 @@ from app.repository import Repository
 from app.utils.classes import RoundedDecimal, TransactionCSV
 from app.utils.dataclasses_utils import ImportedTransaction
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
-from tests.utils import make_http_request
+from tests.utils import get_other_user_wallet, make_http_request
 
 ENDPOINT = "/api/wallets/"
 
 
-async def test_create_wallet(test_user: models.User):
+async def test_create_wallet(test_user: models.User, repository: Repository):
     """
     Test case for creating an wallet.
 
@@ -123,7 +123,7 @@ async def test_delete_wallet(test_wallet: models.Wallet, repository: Repository)
 
 
 async def test_invalid_delete_wallet(
-    test_user: models.User, test_wallets: List[models.Wallet], repository: Repository
+    test_user: models.User, test_wallet: models.Wallet, repository: Repository
 ):
     """
     Test case for deleting an wallet.
@@ -140,20 +140,19 @@ async def test_invalid_delete_wallet(
 
     """
 
-    for wallet in test_wallets:
+    other_wallet = await get_other_user_wallet(test_user, repository)
+    wallet_id = other_wallet.id
 
-        if wallet.user_id == test_user.id:
-            continue
+    res = await make_http_request(
+        f"{ENDPOINT}{wallet_id}", as_user=test_user, method=RequestMethod.DELETE
+    )
 
-        res = await make_http_request(
-            f"{ENDPOINT}{wallet.id}", as_user=test_user, method=RequestMethod.DELETE
-        )
+    assert res.status_code == HTTP_403_FORBIDDEN
 
-        assert res.status_code == HTTP_404_NOT_FOUND
+    wallet_refresh = await repository.get(models.Wallet, wallet_id)
 
-        wallet_refresh = await repository.get(models.Wallet, wallet.id)
-
-        assert wallet_refresh == wallet
+    assert isinstance(wallet_refresh, models.Wallet)
+    assert wallet_refresh.id == wallet_id
 
 
 @pytest.mark.parametrize(
