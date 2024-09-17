@@ -2,11 +2,12 @@ from fastapi import Depends, File, Response, UploadFile, status
 from fastapi.exceptions import HTTPException
 
 from app import schemas
-from app import transaction_manager as tm
+from app import session_transaction_manager as tm
 from app.models import User
 from app.routers.api.users import current_active_verified_user
 from app.services.wallets import WalletService
 from app.utils import APIRouterExtended
+from app.utils.exceptions import AccessDeniedException, WalletNotFoundException
 from app.utils.file_utils import process_csv_file
 
 router = APIRouterExtended(prefix="/wallets", tags=["Wallets"])
@@ -76,8 +77,8 @@ async def api_create_wallet(
         ResponseModel: The created wallet information.
     """
 
-    wallet = await tm.transaction(service.create_wallet, current_user, wallet)
-    return wallet
+    async with tm.transaction():
+        return await service.create_wallet(current_user, wallet)
 
 
 @router.post("/{wallet_id}", response_model=ResponseModel)
@@ -99,9 +100,13 @@ async def api_update_wallet(
         ResponseModel: The updated wallet information.
     """
 
-    return await tm.transaction(
-        service.update_wallet, current_user, wallet_id, wallet_data
-    )
+    async with tm.transaction():
+        try:
+            return await service.update_wallet(current_user, wallet_id, wallet_data)
+        except WalletNotFoundException as e:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
+        except AccessDeniedException as e:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
 
 
 @router.delete("/{wallet_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -124,14 +129,13 @@ async def api_delete_wallet(
         HTTPException: If the wallet is not found.
     """
 
-    result = await tm.transaction(service.delete_wallet, current_user, wallet_id)
-    if result:
-        return None
-
-    if result is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Wallet not found"
-        )
+    async with tm.transaction():
+        try:
+            return await service.delete_wallet(current_user, wallet_id)
+        except WalletNotFoundException as e:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
+        except AccessDeniedException as e:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
 
 
 @router.post("/{wallet_id}/import")
