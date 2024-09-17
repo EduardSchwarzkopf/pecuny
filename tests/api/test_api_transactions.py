@@ -46,13 +46,6 @@ async def test_create_transaction(
         category_id (int): The category ID of the transaction.
         test_wallet (models.Wallet): The test wallet.
         test_user (models.User): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
     """
     wallet_balance = test_wallet.balance
 
@@ -109,12 +102,6 @@ async def test_updated_transaction(
         amount (int | float): The amount of the transaction.
         test_wallet (models.Wallet): The test wallet.
         test_user (models.User): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
     """
 
     reference = f"Updated Val {amount}"
@@ -173,12 +160,6 @@ async def test_delete_transactions(
         test_wallet (fixture): The test wallet.
         test_wallet_transaction_list (fixture): The list of test wallet transactions.
         test_user (fixture): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
     """
 
     for transaction in test_wallet_transaction_list:
@@ -217,12 +198,6 @@ async def test_delete_transactions_fail(test_user: models.User, repository: Repo
     Args:
         test_wallet (models.Wallet): The test wallet.
         test_user (models.User): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
     """
 
     wallet = await get_other_user_wallet(test_user, repository)
@@ -282,13 +257,6 @@ async def test_create_offset_transaction(
         amount (int | float): The amount of the transaction.
         expected_offset_amount (int | float): The expected amount of the offset transaction.
         category_id (int): The category ID of the transaction.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
     """
 
     wallet_id = test_wallet.id
@@ -346,14 +314,6 @@ async def test_create_offset_transaction_other_wallet_fail(
         test_wallet (models.Wallet): The test wallet.
         test_wallets (list[models.Wallet]): The list of test wallets.
         test_user (models.User): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-        ValueError: If no offset wallet is found.
-
     """
 
     offset_wallet_list = await repository.filter_by(
@@ -424,13 +384,6 @@ async def test_updated_offset_transaction(
         test_wallet (models.Wallet): The test wallet.
         category_id (int): The category ID of the transaction.
         amount (int | float): The amount of the transaction.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
     """
 
     offset_wallet = await get_user_offset_wallet(test_wallet, repository)
@@ -518,12 +471,6 @@ async def test_delete_offset_transaction(
         test_user (models.User): The test user.
         category_id (int): The category ID of the transaction.
         amount (int | float): The amount of the transaction.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
     """
 
     offset_wallet = await get_user_offset_wallet(test_wallet, repository)
@@ -579,11 +526,6 @@ async def test_transaction_amount_is_number(
     Args:
         test_wallet_transaction_list (fixture): The list of wallet transactions.
         test_user (fixture): The test user.
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
     """
 
     transaction = test_wallet_transaction_list[0]
