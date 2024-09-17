@@ -1,12 +1,17 @@
-from fastapi import Depends, Response, status
+from fastapi import Depends, status
 from fastapi.exceptions import HTTPException
 
 from app import schemas
-from app import transaction_manager as tm
+from app import session_transaction_manager as tm
 from app.models import User
 from app.routers.api.users import current_active_verified_user
 from app.services.scheduled_transactions import ScheduledTransactionService
 from app.utils import APIRouterExtended
+from app.utils.exceptions import (
+    AccessDeniedException,
+    TransactionNotFoundException,
+    WalletNotFoundException,
+)
 
 router = APIRouterExtended(
     prefix="/scheduled-transactions", tags=["Scheduled Transactions"]
@@ -40,7 +45,16 @@ async def api_get_scheduled_transactions(
         HTTPException: If the wallet is not found.
     """
 
-    return await service.get_transaction_list(current_user, wallet_id)
+    try:
+        return await service.get_transaction_list(current_user, wallet_id)
+    except WalletNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
+        ) from e
+    except AccessDeniedException as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
+        ) from e
 
 
 @router.get("/{transaction_id}", response_model=ResponseModel)
@@ -65,14 +79,20 @@ async def api_get_scheduled_transaction(
         HTTPException: If the scheduled transaction is not found.
     """
 
-    transaction = await service.get_transaction(current_user, transaction_id)
-
-    if transaction:
-        return transaction
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled transaction not found"
-    )
+    try:
+        return await service.get_transaction(current_user, transaction_id)
+    except TransactionNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
+        ) from e
+    except WalletNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
+        ) from e
+    except AccessDeniedException as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
+        ) from e
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ResponseModel)
@@ -97,17 +117,19 @@ async def api_create_scheduled_transaction(
         HTTPException: If the scheduled transaction is not created.
     """
 
-    transaction = await tm.transaction(
-        service.create_scheduled_transaction, current_user, transaction_information
-    )
-
-    if transaction:
-        return transaction
-
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Scheduled transaction not created",
-    )
+    async with tm.transaction():
+        try:
+            return await service.create_scheduled_transaction(
+                current_user, transaction_information
+            )
+        except WalletNotFoundException as e:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=e.message
+            ) from e
+        except AccessDeniedException as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
+            ) from e
 
 
 @router.post("/{transaction_id}", response_model=ResponseModel)
@@ -135,19 +157,24 @@ async def api_update_scheduled_transaction(
         HTTPException: If the scheduled transaction update fails.
     """
 
-    transaction = await tm.transaction(
-        service.update_scheduled_transaction,
-        current_user,
-        transaction_id,
-        transaction_information,
-    )
-
-    if transaction:
-        return transaction
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled transaction not found"
-    )
+    try:
+        return await service.update_scheduled_transaction(
+            current_user,
+            transaction_id,
+            transaction_information,
+        )
+    except TransactionNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
+        ) from e
+    except WalletNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
+        ) from e
+    except AccessDeniedException as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
+        ) from e
 
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -172,15 +199,17 @@ async def api_delete_scheduled_transaction(
         HTTPException: If the transaction is not found.
     """
 
-    result = await tm.transaction(
-        service.delete_scheduled_transaction, current_user, transaction_id
-    )
-    if result:
-        return Response(
-            status_code=status.HTTP_204_NO_CONTENT,
-            content="Schheduled Transaction deleted successfully",
-        )
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled Transaction not found"
-    )
+    try:
+        return await service.delete_scheduled_transaction(current_user, transaction_id)
+    except TransactionNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
+        ) from e
+    except WalletNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
+        ) from e
+    except AccessDeniedException as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
+        ) from e
