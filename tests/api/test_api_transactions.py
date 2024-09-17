@@ -346,7 +346,7 @@ async def test_create_offset_transaction_other_wallet_fail(
         as_user=test_user,
     )
 
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTP_403_FORBIDDEN
 
     wallet_refreshed = await repository.get(models.Wallet, wallet_id)
     offset_wallet_refreshed = await repository.get(models.Wallet, offset_wallet_id)
