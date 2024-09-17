@@ -1,7 +1,6 @@
 from fastapi import Depends, HTTPException, Response, status
 
 from app import schemas
-from app import transaction_manager as tm
 from app.auth_manager import current_active_verified_user
 from app.models import User
 from app.services.users import UserService
@@ -29,9 +28,7 @@ async def api_delete_me(
         HTTPException: If the transaction is not found.
     """
 
-    result = await tm.transaction(service.delete_self, current_user)
-
-    if result:
+    if await service.delete_self(current_user):
         return Response(
             status_code=status.HTTP_204_NO_CONTENT,
             content="User deleted successfully",
