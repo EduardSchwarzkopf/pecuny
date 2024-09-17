@@ -12,10 +12,7 @@ async def test_flow_logout(test_user: models.User):
     Test function to verify the logout process for a test user.
 
     Args:
-        test_user: The test user object for logout testing.
-
-    Returns:
-        None
+        test_user (fixture): The test user object for logout testing.
     """
 
     res = await make_http_request(
