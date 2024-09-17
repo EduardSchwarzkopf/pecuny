@@ -209,7 +209,7 @@ class ScheduledTransactionService(BaseTransactionService):
         wallet = await self.repository.get(Wallet, transaction.wallet_id)
 
         if wallet is None:
-            raise WalletNotFoundException(wallet_id)
+            raise WalletNotFoundException(transaction.wallet_id)
 
         if not WalletService.has_user_access_to_wallet(user, wallet):
             raise AccessDeniedException(user.id, wallet.id)
