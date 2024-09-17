@@ -24,18 +24,16 @@ from app.utils.exceptions import (
 
 logger = get_logger(__name__)
 
-ServiceModel = TransactionScheduled
-
 
 class ScheduledTransactionService(BaseTransactionService):
     def __init__(self, repository: Optional[Repository] = None):
-        super().__init__(ServiceModel, repository)
+        super().__init__(TransactionScheduled, repository)
 
     async def get_transaction_list(
         self,
         user: User,
         wallet_id: int,
-    ) -> list[ServiceModel]:
+    ) -> list[TransactionScheduled]:
         """
         Retrieves a list of transactions for a specific user and wallet.
 
@@ -69,7 +67,7 @@ class ScheduledTransactionService(BaseTransactionService):
         self,
         user: User,
         transaction_information: ScheduledTransactionInformationCreate,
-    ) -> ServiceModel:
+    ) -> TransactionScheduled:
         """
         Creates a new scheduled transaction for a user based on the provided information.
 
@@ -126,7 +124,7 @@ class ScheduledTransactionService(BaseTransactionService):
         user: User,
         transaction_id: int,
         transaction_information: ScheduledTransactionInformtionUpdate,
-    ) -> ServiceModel:
+    ) -> TransactionScheduled:
         """
         Updates a scheduled transaction for a user with the provided information.
 
