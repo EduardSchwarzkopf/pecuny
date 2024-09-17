@@ -39,13 +39,6 @@ async def test_create_user(
         username (str): The username of the user.
         displayname (str): The display name of the user.
         password (str): The password of the user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
     """
 
     res = await make_http_request(
@@ -85,13 +78,6 @@ async def test_invalid_create_user(test_user: models.User):
 
     Args:
         test_user (fixture): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
     """
 
     email = test_user.email
@@ -107,16 +93,11 @@ async def test_login_active_user(
     active_user: models.User, common_user_data: schemas.UserCreate
 ):
     """
-    Test case for login.
+    Test case for logging in with an active user.
 
     Args:
-        None
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
+        active_user: The active user attempting to log in.
+        common_user_data: Common user data for the login attempt.
 
     """
 
@@ -160,16 +141,11 @@ async def test_login_active_verified_user(
     active_verified_user: models.User, common_user_data: schemas.UserCreate
 ):
     """
-    Test case for login.
+    Test case for logging in with an active and verified user.
 
     Args:
-        None
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
+        active_verified_user: The active and verified user attempting to log in.
+        common_user_data: Common user data for the login attempt.
 
     """
 
@@ -216,11 +192,8 @@ async def test_login_inactive_user(
     Test case for logging in with an inactive user.
 
     Args:
-        test_inactive_user: The inactive user attempting to log in.
+        inactive_user: The inactive user attempting to log in.
         common_user_data: Common user data for the login attempt.
-
-    Returns:
-        None
     """
 
     res = await make_http_request(
@@ -257,12 +230,6 @@ async def test_invalid_login_inactive_user(
         username (str): The username for the login.
         password (str): The password for the login.
         status_code (int): The expected status code of the response.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
     """
 
     res = await make_http_request(
@@ -279,14 +246,10 @@ async def test_logout(test_user: models.User):
 
     Args:
         test_user: The test user object for simulating the logout.
-
-    Returns:
-        None
     """
 
     res = await make_http_request(url="/api/auth/logout", as_user=test_user)
 
-    # TODO: check for other states as well
     assert res.status_code == HTTP_204_NO_CONTENT
 
 
@@ -296,9 +259,6 @@ async def test_refresh_token_handling(test_user: models.User):
 
     Args:
         test_user: The test user object for token refresh testing.
-
-    Returns:
-        None
     """
 
     strategy = get_strategy()
