@@ -5,13 +5,17 @@ from starlette import status
 from starlette_wtf import csrf_protect
 
 from app import models, schemas
-from app import transaction_manager as tm
 from app.auth_manager import current_active_verified_user
 from app.date_manager import now
 from app.routers.wallets import handle_wallet_route
 from app.routers.wallets import router as wallet_router
 from app.services.scheduled_transactions import ScheduledTransactionService
 from app.utils import PageRouter
+from app.utils.exceptions import (
+    AccessDeniedException,
+    TransactionNotFoundException,
+    WalletNotFoundException,
+)
 from app.utils.template_utils import (
     add_breadcrumb,
     calculate_financial_summary,
@@ -142,12 +146,12 @@ async def page_create_scheduled_transaction(
         wallet_id=wallet_id, **form.data
     )
 
-    response = await tm.transaction(
-        transaction_service.create_scheduled_transaction, user, transaction
-    )
-
-    if not response:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
+    try:
+        await transaction_service.create_scheduled_transaction(user, transaction)
+    except WalletNotFoundException as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
+    except AccessDeniedException as e:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
 
     return RedirectResponse(
         request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),
@@ -268,12 +272,16 @@ async def page_update_scheduled_transaction_post(
         wallet_id=wallet_id, **form.data
     )
 
-    await tm.transaction(
-        transaction_service.update_scheduled_transaction,
-        user,
-        transaction_id,
-        transaction_information,
-    )
+    try:
+        await transaction_service.update_scheduled_transaction(
+            user,
+            transaction_id,
+            transaction_information,
+        )
+    except WalletNotFoundException as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
+    except AccessDeniedException as e:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
 
     return RedirectResponse(
         request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),
@@ -304,14 +312,12 @@ async def page_delete_scheduled_transaction(
         RedirectResponse: A redirect response to the wallet page.
     """
 
-    transaction = await transaction_service.get_transaction(user, transaction_id)
-
-    if transaction is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
-
-    await tm.transaction(
-        transaction_service.delete_scheduled_transaction, user, transaction_id
-    )
+    try:
+        await transaction_service.delete_scheduled_transaction, user, transaction_id
+    except (WalletNotFoundException, TransactionNotFoundException) as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
+    except AccessDeniedException as e:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
 
     return RedirectResponse(
         request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),
