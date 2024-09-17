@@ -1,5 +1,4 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.data import categories, frequencies
 from app.database import db
@@ -32,7 +31,7 @@ async def populate_db():
         models.Frequency(**frequency) for frequency in frequency_list
     ]
 
-    async with db.get_session() as session:
+    async with db.get_session() as session, session.begin():
         session.add_all(
             transaction_category_list
             + transaction_section_list
