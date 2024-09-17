@@ -6,6 +6,7 @@ from starlette.status import (
     HTTP_201_CREATED,
     HTTP_204_NO_CONTENT,
     HTTP_401_UNAUTHORIZED,
+    HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
 )
 
@@ -14,7 +15,7 @@ from app.date_manager import get_iso_timestring
 from app.repository import Repository
 from app.utils.classes import RoundedDecimal
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
-from tests.utils import get_user_offset_wallet, make_http_request
+from tests.utils import get_other_user_wallet, get_user_offset_wallet, make_http_request
 
 ENDPOINT = "/api/transactions/"
 
