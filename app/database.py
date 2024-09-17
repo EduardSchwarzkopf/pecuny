@@ -31,9 +31,6 @@ class Database:
             None
         """
 
-        if self._session is not None:
-            await self._session.close()
-
         self._session = self.get_session()
 
     def get_session(self) -> AsyncSession:
