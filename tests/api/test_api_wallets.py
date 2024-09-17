@@ -50,11 +50,15 @@ async def test_create_wallet(test_user: models.User):
 
     assert res.status_code == HTTP_201_CREATED
 
-    new_wallet = schemas.Wallet(**res.json())
+    new_wallet = schemas.WalletData(**res.json())
 
-    assert new_wallet.label == "test_wallet"
-    assert new_wallet.balance == 500
-    assert new_wallet.description == "test"
+    wallet = await repository.get(models.Wallet, new_wallet.id)
+
+    assert wallet is not None
+
+    assert wallet.label == "test_wallet"
+    assert wallet.balance == 500
+    assert wallet.description == "test"
 
 
 @pytest.mark.parametrize(
