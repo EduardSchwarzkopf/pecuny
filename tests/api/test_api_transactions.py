@@ -210,9 +210,7 @@ async def test_delete_transactions(
 
 
 @pytest.mark.usefixtures("create_transactions")
-async def test_delete_transactions_fail(
-    test_wallet: models.Wallet, test_user: models.User, repository: Repository
-):
+async def test_delete_transactions_fail(test_user: models.User, repository: Repository):
     """
     Test case for failing to delete transactions.
 
@@ -227,34 +225,33 @@ async def test_delete_transactions_fail(
         AssertionError: If the test fails.
     """
 
-    result = await repository.filter_by(
-        models.Wallet,
-        models.Wallet.user_id,
-        test_wallet.user_id,
-        DatabaseFilterOperator.NOT_EQUAL,
-        load_relationships_list=[models.Wallet.transactions],
+    wallet = await get_other_user_wallet(test_user, repository)
+    transaction = await repository.filter_by(
+        models.Transaction,
+        models.Transaction.wallet_id,
+        wallet.id,
     )
-    wallet = result[0]
 
+    transaction = transaction[0]
+
+    wallet_id = wallet.id
     wallet_balance = wallet.balance
 
-    for transaction in wallet.transactions:
+    res = await make_http_request(
+        f"{ENDPOINT}{transaction.id}",
+        method=RequestMethod.DELETE,
+        as_user=test_user,
+    )
 
-        res = await make_http_request(
-            f"{ENDPOINT}{transaction.id}",
-            method=RequestMethod.DELETE,
-            as_user=test_user,
-        )
+    assert res.status_code == HTTP_401_UNAUTHORIZED
 
-        assert res.status_code == HTTP_404_NOT_FOUND
+    wallet_refresh = await repository.get(models.Wallet, wallet_id)
 
-        wallet_refresh = await repository.get(models.Wallet, wallet.id)
+    assert wallet_refresh is not None
 
-        assert wallet_refresh is not None
+    wallet_balance_after = wallet_refresh.balance
 
-        wallet_balance_after = wallet_refresh.balance
-
-        assert wallet_balance_after == wallet_balance
+    assert wallet_balance_after == wallet_balance
 
 
 @pytest.mark.parametrize(
