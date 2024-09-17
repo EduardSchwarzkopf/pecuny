@@ -257,7 +257,7 @@ async def test_read_scheduled_transaction_unauthorized(
         ENDPOINT + str(transaction.id), as_user=test_user, method=RequestMethod.GET
     )
 
-    assert res.status_code == HTTP_404_NOT_FOUND
+    assert res.status_code == HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.usefixtures("test_wallet_scheduled_transaction_list")
@@ -298,7 +298,7 @@ async def test_update_scheduled_transaction_unauthorized(
         as_user=test_user,
     )
 
-    assert res.status_code == HTTP_404_NOT_FOUND
+    assert res.status_code == HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.usefixtures("test_wallet_scheduled_transaction_list")
@@ -330,7 +330,7 @@ async def test_delete_scheduled_transaction_unauthorized(
         ENDPOINT + str(transaction_id), as_user=test_user, method=RequestMethod.DELETE
     )
 
-    assert res.status_code == HTTP_404_NOT_FOUND
+    assert res.status_code == HTTP_401_UNAUTHORIZED
 
     transaction_db = await repository.get(models.TransactionScheduled, transaction_id)
 
