@@ -155,6 +155,10 @@ class Transaction(TransactionBase):
     offset_transactions_id: Optional[IdField] = None
 
 
+class TransactionResponse(Transaction):
+    pass
+
+
 class ScheduledTransaction(TransactionBase):
     date_start: DateField
     frequency: FrequencyData
