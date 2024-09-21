@@ -1,4 +1,5 @@
 import contextlib
+from typing import Optional
 
 from fastapi import Depends, Request
 from fastapi.responses import RedirectResponse
@@ -21,7 +22,6 @@ from app.services.users import UserService
 from app.utils import PageRouter
 from app.utils.dataclasses_utils import CreateUserData
 from app.utils.enums import FeedbackType
-from app.utils.exceptions import UserAlreadyExistsException, UserNotFoundException
 from app.utils.template_utils import render_form_template, set_feedback
 
 router = PageRouter()
@@ -42,7 +42,7 @@ TEMPLATE_LOGIN = f"{TEMPLATE_PREFIX}/page_login.html"
 @router.get(path=LOGIN, tags=["Pages", "Authentication"])
 async def get_login(
     request: Request,
-    user: User = Depends(optional_current_active_verified_user),
+    user: Optional[User] = Depends(optional_current_active_verified_user),
     msg: str = "",
 ):
     """
