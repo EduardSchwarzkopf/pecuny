@@ -13,8 +13,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from jwt import ExpiredSignatureError, InvalidSignatureError, InvalidTokenError
-from starlette.exceptions import HTTPException
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 from starlette_wtf import CSRFProtectMiddleware
 
 from app import models, schemas, templates
@@ -22,13 +22,17 @@ from app.authentication.dependencies import get_strategy
 from app.authentication.strategies import JWTAccessRefreshStrategy
 from app.config import settings
 from app.database import db
+from app.exceptions.http_exceptions import (
+    HTTPForbiddenException,
+    HTTPNotFoundException,
+    HTTPUnauthorizedException,
+)
 from app.logger import get_logger
 from app.middleware import HeaderLinkMiddleware
 from app.repository import Repository
 from app.routes import router_list
 from app.scheduled_tasks import add_jobs_to_scheduler
 from app.utils import BreadcrumbBuilder
-from app.utils.exceptions import UnauthorizedPageException
 
 logger = get_logger(__name__)
 scheduler = AsyncIOScheduler()
@@ -201,13 +205,13 @@ if _debug := os.getenv("DEBUG"):
 
 @app.exception_handler(status.HTTP_401_UNAUTHORIZED)
 async def unauthorized_exception_handler(
-    request: Request, exc: UnauthorizedPageException
+    request: Request, exc: HTTPUnauthorizedException
 ):
     """Exception handler for 401 Unauthorized errors.
 
     Args:
         request: The request object.
-        exc: The UnauthorizedPageException object.
+        exc: The HTTPUnauthorizedPageException object.
 
     Returns:
         Response: The response to return.
@@ -231,7 +235,7 @@ async def unauthorized_exception_handler(
 
 
 @app.exception_handler(status.HTTP_403_FORBIDDEN)
-async def forbidden_exception_handler(request: Request, exc: UnauthorizedPageException):
+async def forbidden_exception_handler(request: Request, exc: HTTPForbiddenException):
     """
     Handles exceptions with status code 403 (Forbidden).
 
@@ -285,7 +289,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 @app.exception_handler(status.HTTP_404_NOT_FOUND)
-async def page_not_found_exception_handler(request: Request, exc: HTTPException):
+async def page_not_found_exception_handler(
+    request: Request, exc: HTTPNotFoundException
+):
     """Exception handler for 404 Page Not Found errors.
 
     Args:
@@ -310,7 +316,9 @@ async def page_not_found_exception_handler(request: Request, exc: HTTPException)
 
 
 @app.exception_handler(status.HTTP_500_INTERNAL_SERVER_ERROR)
-async def internal_server_error_handler(request: Request, exc: HTTPException):
+async def internal_server_error_handler(
+    request: Request, exc: HTTP_500_INTERNAL_SERVER_ERROR
+):
     """
     Handles internal server errors by logging the error details and
     returning an appropriate response.
