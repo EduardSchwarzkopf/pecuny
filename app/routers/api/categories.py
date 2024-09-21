@@ -4,7 +4,7 @@ from fastapi.exceptions import HTTPException
 from app import schemas
 from app.models import User
 from app.routers.api.users import current_active_verified_user
-from app.services.categories import CategoryService
+from app.services.category import CategoryService
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(prefix="/categories", tags=["Categories"])
