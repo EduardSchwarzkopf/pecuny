@@ -6,15 +6,15 @@ from starlette_wtf import csrf_protect
 
 from app import models, schemas
 from app.auth_manager import current_active_verified_user
+from app.exceptions.transaction_service_exceptions import TransactionNotFoundException
+from app.exceptions.wallet_service_exceptions import (
+    WalletAccessDeniedException,
+    WalletNotFoundException,
+)
 from app.routers.wallets import handle_wallet_route
 from app.routers.wallets import router as wallet_router
 from app.services.transactions import TransactionService
 from app.utils import PageRouter
-from app.utils.exceptions import (
-    AccessDeniedException,
-    TransactionNotFoundException,
-    WalletNotFoundException,
-)
 from app.utils.template_utils import (
     populate_transaction_form_choices,
     render_transaction_form_template,
@@ -115,7 +115,7 @@ async def page_create_transaction(
         await transaction_service.create_transaction(user, transaction)
     except WalletNotFoundException as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
-    except AccessDeniedException as e:
+    except WalletAccessDeniedException as e:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
 
     return RedirectResponse(
@@ -239,7 +239,7 @@ async def page_update_transaction_post(
         )
     except (WalletNotFoundException, TransactionNotFoundException) as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
-    except AccessDeniedException as e:
+    except WalletAccessDeniedException as e:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
 
     return RedirectResponse(
@@ -277,7 +277,7 @@ async def page_delete_transaction(
         await transaction_service.delete_transaction(user, transaction_id)
     except (WalletNotFoundException, TransactionNotFoundException) as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
-    except AccessDeniedException as e:
+    except WalletAccessDeniedException as e:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
 
     return RedirectResponse(

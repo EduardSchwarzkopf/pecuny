@@ -10,12 +10,15 @@ from starlette_wtf import csrf_protect
 
 from app import models, schemas
 from app.auth_manager import current_active_verified_user
+from app.exceptions.wallet_service_exceptions import (
+    WalletAccessDeniedException,
+    WalletNotFoundException,
+)
 from app.routers.dashboard import router as dashboard_router
 from app.services.transactions import TransactionService
 from app.services.wallets import WalletService
 from app.utils import PageRouter
 from app.utils.enums import FeedbackType
-from app.utils.exceptions import AccessDeniedException, WalletNotFoundException
 from app.utils.file_utils import process_csv_file
 from app.utils.template_utils import (
     add_breadcrumb,
@@ -304,7 +307,7 @@ async def page_delete_wallet(
         await service.delete_wallet(user, wallet_id)
     except WalletNotFoundException as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
-    except AccessDeniedException as e:
+    except WalletAccessDeniedException as e:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
 
     return RedirectResponse(router.url_path_for("page_list_wallets"), status_code=302)
@@ -353,7 +356,7 @@ async def page_update_wallet(
         await service.update_wallet(user, wallet_id, wallet)
     except WalletNotFoundException as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
-    except AccessDeniedException as e:
+    except WalletAccessDeniedException as e:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
 
     return RedirectResponse(

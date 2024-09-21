@@ -3,11 +3,14 @@ from fastapi.exceptions import HTTPException
 
 from app import schemas
 from app import session_transaction_manager as tm
+from app.exceptions.wallet_service_exceptions import (
+    WalletAccessDeniedException,
+    WalletNotFoundException,
+)
 from app.models import User
 from app.routers.api.users import current_active_verified_user
 from app.services.wallets import WalletService
 from app.utils import APIRouterExtended
-from app.utils.exceptions import AccessDeniedException, WalletNotFoundException
 from app.utils.file_utils import process_csv_file
 
 router = APIRouterExtended(prefix="/wallets", tags=["Wallets"])
@@ -105,7 +108,7 @@ async def api_update_wallet(
             return await service.update_wallet(current_user, wallet_id, wallet_data)
         except WalletNotFoundException as e:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
-        except AccessDeniedException as e:
+        except WalletAccessDeniedException as e:
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
 
 
@@ -134,7 +137,7 @@ async def api_delete_wallet(
             return await service.delete_wallet(current_user, wallet_id)
         except WalletNotFoundException as e:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
-        except AccessDeniedException as e:
+        except WalletAccessDeniedException as e:
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
 
 

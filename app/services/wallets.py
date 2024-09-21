@@ -2,9 +2,12 @@ from typing import Optional
 
 from app import models, schemas
 from app.config import settings
+from app.exceptions.wallet_service_exceptions import (
+    WalletAccessDeniedException,
+    WalletNotFoundException,
+)
 from app.logger import get_logger
 from app.services.base import BaseService
-from app.utils.exceptions import AccessDeniedException, WalletNotFoundException
 
 logger = get_logger(__name__)
 
@@ -42,7 +45,7 @@ class WalletService(BaseService):
             logger.info("Found wallet %s for user: %s", wallet_id, current_user.id)
             return wallet
 
-        raise AccessDeniedException(current_user.id, wallet_id)
+        raise WalletAccessDeniedException(current_user, wallet)
 
     async def create_wallet(
         self, user: models.User, wallet: schemas.Wallet
@@ -67,7 +70,7 @@ class WalletService(BaseService):
             )
             return db_wallet
 
-        raise AccessDeniedException(current_user.id, wallet_id)
+        raise WalletAccessDeniedException(current_user, wallet)
 
     async def delete_wallet(self, current_user: models.User, wallet_id: int) -> True:
 
@@ -80,7 +83,7 @@ class WalletService(BaseService):
             await self.repository.delete(wallet)
             return True
 
-        raise AccessDeniedException(current_user.id, wallet_id)
+        raise WalletAccessDeniedException(current_user, wallet)
 
     async def check_max_wallets(self, user: models.User) -> bool:
         """

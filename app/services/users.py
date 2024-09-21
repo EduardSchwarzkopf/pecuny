@@ -6,6 +6,10 @@ from fastapi_users import exceptions
 from app import database, models, schemas
 from app.authentication.management import UserManager
 from app.database import db
+from app.exceptions.user_service_exceptions import (
+    UserAlreadyExistsException,
+    UserNotFoundException,
+)
 from app.logger import get_logger
 from app.repository import Repository
 from app.schemas import EmailStr, UserCreate
@@ -13,7 +17,6 @@ from app.services.base import BaseService
 from app.utils.dataclasses_utils import CreateUserData
 from app.utils.displayname_generator import generate_displayname
 from app.utils.enums import EmailVerificationStatus
-from app.utils.exceptions import UserAlreadyExistsException, UserNotFoundException
 
 logger = get_logger(__name__)
 

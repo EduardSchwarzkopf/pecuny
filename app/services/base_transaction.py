@@ -1,17 +1,17 @@
 from typing import Optional, Type, Union
 
 from app import models, schemas
+from app.exceptions.category_service_exceptions import CategoryNotFoundException
+from app.exceptions.transaction_service_exceptions import TransactionNotFoundException
+from app.exceptions.wallet_service_exceptions import (
+    WalletAccessDeniedException,
+    WalletNotFoundException,
+)
 from app.logger import get_logger
 from app.repository import Repository
 from app.services.base import BaseService
 from app.services.wallets import WalletService
 from app.utils.classes import RoundedDecimal
-from app.utils.exceptions import (
-    AccessDeniedException,
-    CategoryNotFoundException,
-    TransactionNotFoundException,
-    WalletNotFoundException,
-)
 
 logger = get_logger(__name__)
 
@@ -79,7 +79,7 @@ class BaseTransactionService(BaseService):
             raise WalletNotFoundException(transaction.wallet_id)
 
         if not WalletService.has_user_access_to_wallet(user, wallet):
-            raise AccessDeniedException(user.id, wallet.id)
+            raise WalletAccessDeniedException(user, wallet)
 
         return transaction
 
@@ -111,7 +111,7 @@ class BaseTransactionService(BaseService):
             raise WalletNotFoundException(transaction.wallet_id)
 
         if not WalletService.has_user_access_to_wallet(user, wallet):
-            raise AccessDeniedException(user.id, wallet.id)
+            raise WalletAccessDeniedException(user, wallet)
 
         amount = transaction.information.amount
 
@@ -157,7 +157,7 @@ class BaseTransactionService(BaseService):
             raise WalletNotFoundException(transaction_data.wallet_id)
 
         if not WalletService.has_user_access_to_wallet(user, wallet):
-            raise AccessDeniedException(user.id, wallet.id)
+            raise WalletAccessDeniedException(user, wallet)
 
         category = await self.repository.get(
             models.TransactionCategory, transaction_data.category_id
@@ -226,7 +226,7 @@ class BaseTransactionService(BaseService):
             raise WalletNotFoundException(offset_wallet_id)
 
         if not WalletService.has_user_access_to_wallet(user, offset_wallet):
-            raise AccessDeniedException(user.id, offset_wallet.id)
+            raise WalletAccessDeniedException(user, offset_wallet)
 
         transaction_data.amount = RoundedDecimal(transaction_data.amount * -1)
         offset_wallet.balance += transaction_data.amount
@@ -277,7 +277,7 @@ class BaseTransactionService(BaseService):
         wallet: models.Wallet = transaction.wallet
 
         if not WalletService.has_user_access_to_wallet(user, wallet):
-            raise AccessDeniedException(user.id, wallet.id)
+            raise WalletAccessDeniedException(user, wallet)
 
         amount_updated = (
             round(transaction_information.amount, 2) - transaction.information.amount
@@ -296,7 +296,7 @@ class BaseTransactionService(BaseService):
             offset_wallet: models.Wallet = offset_transaction.wallet
 
             if not WalletService.has_user_access_to_wallet(user, offset_wallet):
-                raise AccessDeniedException(user.id, offset_wallet.id)
+                raise WalletAccessDeniedException(user, offset_wallet)
 
             offset_wallet.balance -= amount_updated
             offset_transaction.information.amount = transaction_information.amount * -1
