@@ -1,7 +1,5 @@
 from abc import ABC
 
-from kombu import entity
-
 from app import models
 from app.utils.fields import IdField
 
@@ -11,23 +9,27 @@ class BaseServiceException(ABC, Exception):
         self.message = message
         super().__init__(message)
 
-    def details(self):
-        return f"{type(self).__name__} at line {self.__traceback__.tb_lineno} of {__file__}: {self}"
-
 
 class EntityNotFoundException(BaseServiceException):
-    def __init__(self, model: models.Base, entity_id: IdField):
-        self.model_entity_name = model.__name__
+    def __init__(self, user: models.User, model: models.Base, entity_id: IdField):
+        self.entity_model_class_name = model.__name__
         self.entity_id = entity_id
-        super().__init__(f"{self.model_entity_name} with ID {self.entity_id} not found")
+        self.user = user
+
+        super().__init__(
+            f"[UserID: {self.user.id}] - "
+            f"Could not find {self.entity_model_class_name} with ID {self.entity_id}."
+        )
 
 
 class EntityAccessDeniedException(BaseServiceException):
     def __init__(self, user: models.User, entity: models.BaseModel):
         self.entity = entity
         self.entity_id = entity.id
-        self.entity_name = entity.__class__.__name__
+        self.entity_class_name = entity.__class__.__name__
         self.user = user
+
         super().__init__(
-            f"User with ID {user.id} is not allowed to access {self.entity_name} with ID {self.entity_id}"
+            f"[UserID: {self.user.id}] - "
+            f"Access to {self.entity_class_name} with ID {self.entity_id} is denied."
         )
