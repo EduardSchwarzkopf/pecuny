@@ -2,6 +2,11 @@ from datetime import datetime
 from typing import List, Optional
 
 from app import models, schemas
+from app.exceptions.transaction_service_exceptions import TransactionNotFoundException
+from app.exceptions.wallet_service_exceptions import (
+    WalletAccessDeniedException,
+    WalletNotFoundException,
+)
 from app.logger import get_logger
 from app.repository import Repository
 from app.services.base_transaction import BaseTransactionService
@@ -14,6 +19,7 @@ class TransactionService(
     BaseTransactionService,
 ):
     def __init__(self, repository: Optional[Repository] = None):
+        self.logger = logger
         super().__init__(models.Transaction, repository)
 
     async def get_transaction_list(
@@ -66,7 +72,28 @@ class TransactionService(
             None
         """
 
-        return await super().get_transaction(user, transaction_id)
+        transaction = await self.repository.get(
+            models.Transaction,
+            transaction_id,
+            load_relationships_list=[models.Transaction.offset_transaction],
+        )
+
+        if transaction is None:
+            self.log_and_raise_exception(
+                TransactionNotFoundException(user, transaction_id)
+            )
+
+        wallet = await self.repository.get(models.Wallet, transaction.wallet_id)
+
+        if wallet is None:
+            self.log_and_raise_exception(
+                WalletNotFoundException(user, transaction.wallet_id)
+            )
+
+        if not WalletService.has_user_access_to_wallet(user, wallet):
+            self.log_and_raise_exception(WalletAccessDeniedException(user, wallet))
+
+        return transaction
 
     async def create_transaction(
         self,
