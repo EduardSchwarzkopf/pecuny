@@ -219,7 +219,6 @@ async def unauthorized_exception_handler(
     Raises:
         None
     """
-    logger.info("[UnauthorizedAccess] on path: %s", request.url.path)
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
@@ -250,7 +249,6 @@ async def forbidden_exception_handler(request: Request, exc: HTTPForbiddenExcept
         None
     """
 
-    logger.info("[Forbidden] on path: %s", request.url.path)
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
@@ -274,7 +272,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         None
     """
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-    logger.exception("UNPROCESSABLE_ENTITY - %s", request.__dict__)
     if request.url.path.startswith("/api/"):
         return JSONResponse(
             status_code=status_code,
@@ -304,7 +301,6 @@ async def page_not_found_exception_handler(
     Raises:
         None
     """
-    logger.warning("[PageNotFound] on path: %s", request.url.path)
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
