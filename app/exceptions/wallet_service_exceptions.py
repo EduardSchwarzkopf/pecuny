@@ -7,9 +7,9 @@ from app.utils.fields import IdField
 
 
 class WalletNotFoundException(EntityNotFoundException):
-    def __init__(self, wallet_id: IdField):
+    def __init__(self, user: models.User, wallet_id: IdField):
         self.wallet_id = wallet_id
-        super().__init__(models.Wallet, wallet_id)
+        super().__init__(user, models.Wallet, wallet_id)
 
 
 class WalletAccessDeniedException(EntityAccessDeniedException):
