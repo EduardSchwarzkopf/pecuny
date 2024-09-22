@@ -194,10 +194,10 @@ class UserService(BaseService):
         try:
             existing_user = await self.user_manager.get_by_email(email)
             if existing_user is None:
-                raise UserNotFoundException(email)
+                raise UserNotFoundException()
             await self.user_manager.forgot_password(existing_user)
         except exceptions.UserNotExists as e:
-            raise UserNotFoundException(email) from e
+            raise UserNotFoundException() from e
 
     async def reset_password(self, password: str, token: str) -> bool:
         """
