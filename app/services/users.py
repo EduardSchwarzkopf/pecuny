@@ -1,4 +1,3 @@
-from logging import Logger
 from typing import Optional
 
 from fastapi import Request
