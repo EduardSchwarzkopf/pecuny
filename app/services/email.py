@@ -8,7 +8,7 @@ from app.logger import get_logger
 from app.models import User
 from app.schemas import EmailSchema
 
-log = get_logger(__name__)
+logger = get_logger(__name__)
 
 conf = ConnectionConfig(
     MAIL_USERNAME=settings.mail_username,
@@ -60,12 +60,10 @@ async def _send(email: EmailSchema, subject: str, template_name: str) -> JSONRes
     fm = FastMail(conf)
     try:
         await fm.send_message(message, template_name=template_name)
-        log.info("Email has been sent to %s", recipients)
         return JSONResponse(status_code=200, content={"message": "email has been sent"})
     except Exception as e:
-        log.error(
-            "Email could not be sent to %s due to %s",
-            recipients,
+        logger.error(
+            "Email could not be sent due to %s",
             e,
         )
         raise
@@ -90,7 +88,6 @@ async def send_welcome(user: User, token: str) -> JSONResponse:
         email=[user.email],
         body={"user": user, "url": settings.domain, "token": token},
     )
-    log.info("Sending welcome email to %s", user.email)
     return await _send(email, "Welcome! 🎉", template_name="emails/welcome.html")
 
 
@@ -114,7 +111,6 @@ async def send_forgot_password(user: User, token: str) -> JSONResponse:
         body={"user": user, "url": settings.domain, "token": token},
     )
 
-    log.info("Sending forgot password email to %s", user.email)
     return await _send(
         email, "Reset Password Request", template_name="emails/forgot-password.html"
     )
@@ -146,7 +142,6 @@ async def send_email_verification(
             "token": token,
         },
     )
-    log.info("Sending new token email to %s", user.email)
     return await _send(
         email, "Your verification Token!", template_name="emails/new-token.html"
     )
@@ -182,7 +177,6 @@ async def send_transaction_import_report(
             "failed_imports": failed_transactions_count,
         },
     )
-    log.info("Sending transaction import report email to %s", user.email)
     return await _send(
         email,
         "Your transaction import report!",
