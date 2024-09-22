@@ -1,3 +1,4 @@
+from logging import Logger
 from typing import Optional
 
 from fastapi import Request
@@ -46,7 +47,7 @@ class UserService(BaseService):
             None
         """
 
-        super().__init__(repository)
+        super().__init__(logger, repository)
         self.user_manager = self._get_user_manager()
 
     def _get_user_manager(self):
@@ -162,8 +163,7 @@ class UserService(BaseService):
             existing_user = None
 
         if existing_user is not None:
-            logger.warning("User with email %s already exists", email)
-            raise UserAlreadyExistsException()
+            self.log_and_raise_exception(UserAlreadyExistsException(email))
 
     async def verify_email(self, token: str) -> EmailVerificationStatus:
         """
@@ -208,12 +208,10 @@ class UserService(BaseService):
         try:
             existing_user = await self.user_manager.get_by_email(email)
             if existing_user is None:
-                logger.warning("No user found with email %s", email)
-                raise UserNotFoundException()
+                self.log_and_raise_exception(UserNotFoundException(email))
             await self.user_manager.forgot_password(existing_user)
         except exceptions.UserNotExists as e:
-            logger.warning("No user found with email %s", email)
-            raise UserNotFoundException from e
+            self.log_and_raise_exception(UserNotFoundException(email))
 
     async def reset_password(self, password: str, token: str) -> bool:
         """
