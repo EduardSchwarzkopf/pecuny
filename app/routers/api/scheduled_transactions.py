@@ -48,7 +48,7 @@ async def api_get_scheduled_transactions(
     """
 
     try:
-        return await service.get_transaction_list(current_user, wallet_id)
+        return await service.get_scheduled_transaction_list(current_user, wallet_id)
     except WalletNotFoundException as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=e.message
@@ -82,7 +82,7 @@ async def api_get_scheduled_transaction(
     """
 
     try:
-        return await service.get_transaction(current_user, transaction_id)
+        return await service.get_scheduled_transaction(current_user, transaction_id)
     except ScheduledTransactionNotFoundException as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=e.message
