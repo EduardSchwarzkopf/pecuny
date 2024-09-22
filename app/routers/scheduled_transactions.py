@@ -51,7 +51,7 @@ async def page_list_scheduled_transactions(
         TemplateResponse: The rendered list wallets page.
     """
 
-    transaction_list = await service.get_transaction_list(user, wallet_id)
+    transaction_list = await service.get_scheduled_transaction_list(user, wallet_id)
     wallet = await handle_wallet_route(request, user, wallet_id)
 
     add_breadcrumb(request, "Scheduled Transactions", "")
@@ -184,7 +184,9 @@ async def page_update_scheduled_transaction_get(
 
     await handle_wallet_route(request, user, wallet_id)
 
-    transaction = await transaction_service.get_transaction(user, transaction_id)
+    transaction = await transaction_service.get_scheduled_transaction(
+        user, transaction_id
+    )
 
     if transaction is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
@@ -247,7 +249,9 @@ async def page_update_scheduled_transaction_post(
 
     await handle_wallet_route(request, user, wallet_id)
 
-    transaction = await transaction_service.get_transaction(user, transaction_id)
+    transaction = await transaction_service.get_scheduled_transaction(
+        user, transaction_id
+    )
 
     if transaction is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
