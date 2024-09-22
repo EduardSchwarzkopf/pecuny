@@ -7,19 +7,15 @@ from app.exceptions.wallet_service_exceptions import (
     WalletAccessDeniedException,
     WalletNotFoundException,
 )
-from app.logger import get_logger
 from app.repository import Repository
 from app.services.base_transaction import BaseTransactionService
 from app.services.wallets import WalletService
-
-logger = get_logger(__name__)
 
 
 class TransactionService(
     BaseTransactionService,
 ):
     def __init__(self, repository: Optional[Repository] = None):
-        self.logger = logger
         super().__init__(models.Transaction, repository)
 
     async def get_transaction_list(
@@ -41,11 +37,6 @@ class TransactionService(
         Returns:
             A list of transactions that match the criteria.
         """
-        logger.info(
-            "Starting transaction list retrieval for user %s and wallet %s",
-            user.id,
-            wallet_id,
-        )
         wallet = await self.repository.get(models.Wallet, wallet_id)
 
         if wallet is None or not WalletService.has_user_access_to_wallet(user, wallet):
@@ -79,19 +70,15 @@ class TransactionService(
         )
 
         if transaction is None:
-            self.log_and_raise_exception(
-                TransactionNotFoundException(user, transaction_id)
-            )
+            raise TransactionNotFoundException(user, transaction_id)
 
         wallet = await self.repository.get(models.Wallet, transaction.wallet_id)
 
         if wallet is None:
-            self.log_and_raise_exception(
-                WalletNotFoundException(user, transaction.wallet_id)
-            )
+            raise WalletNotFoundException(user, transaction.wallet_id)
 
         if not WalletService.has_user_access_to_wallet(user, wallet):
-            self.log_and_raise_exception(WalletAccessDeniedException(user, wallet))
+            raise WalletAccessDeniedException(user, wallet)
 
         return transaction
 
