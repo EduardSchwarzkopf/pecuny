@@ -1,8 +1,8 @@
 from fastapi import Depends, File, Response, UploadFile, status
-from fastapi.exceptions import HTTPException
 
 from app import schemas
 from app import session_transaction_manager as tm
+from app.exceptions.http_exceptions import HTTPForbiddenException, HTTPNotFoundException
 from app.exceptions.wallet_service_exceptions import (
     WalletAccessDeniedException,
     WalletNotFoundException,
@@ -58,9 +58,9 @@ async def api_get_wallet(
     try:
         return await service.get_wallet(current_user, wallet_id)
     except WalletNotFoundException as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
+        raise HTTPNotFoundException() from e
     except WalletAccessDeniedException as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
+        raise HTTPForbiddenException() from e
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ResponseModel)
@@ -107,9 +107,9 @@ async def api_update_wallet(
         try:
             return await service.update_wallet(current_user, wallet_id, wallet_data)
         except WalletNotFoundException as e:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
+            raise HTTPNotFoundException() from e
         except WalletAccessDeniedException as e:
-            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
+            raise HTTPForbiddenException() from e
 
 
 @router.delete("/{wallet_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -136,9 +136,9 @@ async def api_delete_wallet(
         try:
             return await service.delete_wallet(current_user, wallet_id)
         except WalletNotFoundException as e:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
+            raise HTTPNotFoundException() from e
         except WalletAccessDeniedException as e:
-            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
+            raise HTTPForbiddenException() from e
 
 
 @router.post("/{wallet_id}/import")

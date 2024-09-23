@@ -3,13 +3,13 @@ from datetime import datetime
 from itertools import groupby
 
 from fastapi import Cookie, Depends, File, Request, UploadFile
-from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette import status
 from starlette_wtf import csrf_protect
 
 from app import models, schemas
 from app.auth_manager import current_active_verified_user
+from app.exceptions.http_exceptions import HTTPForbiddenException, HTTPNotFoundException
 from app.exceptions.wallet_service_exceptions import (
     WalletAccessDeniedException,
     WalletNotFoundException,
@@ -55,7 +55,7 @@ async def handle_wallet_route(
     wallet = await service.get_wallet(user, wallet_id)
 
     if wallet is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Wallet not found")
+        raise HTTPNotFoundException()
 
     add_breadcrumb(request, "Wallets", PREFIX)
     wallet_url = f"{PREFIX}/{wallet_id}" if create_link else ""
@@ -306,9 +306,9 @@ async def page_delete_wallet(
     try:
         await service.delete_wallet(user, wallet_id)
     except WalletNotFoundException as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
+        raise HTTPNotFoundException() from e
     except WalletAccessDeniedException as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
+        raise HTTPForbiddenException() from e
 
     return RedirectResponse(router.url_path_for("page_list_wallets"), status_code=302)
 
@@ -355,9 +355,9 @@ async def page_update_wallet(
     try:
         await service.update_wallet(user, wallet_id, wallet)
     except WalletNotFoundException as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
+        raise HTTPNotFoundException() from e
     except WalletAccessDeniedException as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
+        raise HTTPForbiddenException() from e
 
     return RedirectResponse(
         router.url_path_for("page_get_wallet", wallet_id=wallet_id), status_code=302
