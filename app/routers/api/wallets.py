@@ -59,6 +59,8 @@ async def api_get_wallet(
         return await service.get_wallet(current_user, wallet_id)
     except WalletNotFoundException as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
+    except WalletAccessDeniedException as e:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ResponseModel)
