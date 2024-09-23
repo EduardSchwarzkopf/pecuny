@@ -18,7 +18,7 @@ class HTTPForbiddenException(HTTPException):
 
 
 class HTTPNotFoundException(HTTPException):
-    def __init__(self, entity_name: str, entity_id: int):
+    def __init__(self):
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="This is not the resource you are looking for.",
