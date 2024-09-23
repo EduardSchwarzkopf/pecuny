@@ -1,19 +1,16 @@
 from typing import Optional, Type, Union
 
 from app import models, schemas
-from app.logger import get_logger
+from app.exceptions.category_service_exceptions import CategoryNotFoundException
+from app.exceptions.transaction_service_exceptions import TransactionNotFoundException
+from app.exceptions.wallet_service_exceptions import (
+    WalletAccessDeniedException,
+    WalletNotFoundException,
+)
 from app.repository import Repository
 from app.services.base import BaseService
 from app.services.wallets import WalletService
 from app.utils.classes import RoundedDecimal
-from app.utils.exceptions import (
-    AccessDeniedException,
-    CategoryNotFoundException,
-    TransactionNotFoundException,
-    WalletNotFoundException,
-)
-
-logger = get_logger(__name__)
 
 
 class BaseTransactionService(BaseService):
@@ -23,12 +20,11 @@ class BaseTransactionService(BaseService):
         repository: Optional[Repository] = None,
     ):
         self.service_model = service_model
-
         super().__init__(repository)
 
     async def _get_transaction_by_id(
         self, transaction_id: int
-    ) -> Optional[Union[models.Transaction, models.TransactionScheduled]]:
+    ) -> Optional[models.Transaction]:
         """
         Retrieves a transaction by ID.
 
@@ -38,50 +34,12 @@ class BaseTransactionService(BaseService):
         Returns:
             The transaction if found, None otherwise.
         """
-        if self.service_model is models.Transaction:
-            return await self.repository.get(
-                self.service_model,
-                transaction_id,
-                load_relationships_list=[self.service_model.offset_transaction],
-            )
 
         return await self.repository.get(
             self.service_model,
             transaction_id,
+            load_relationships_list=[self.service_model.offset_transaction],
         )
-
-    async def get_transaction(
-        self, user: models.User, transaction_id: int
-    ) -> models.Transaction:
-        """
-        Retrieves a transaction for a specific user by ID.
-
-        Args:
-            user: The user for whom the transaction is being retrieved.
-            transaction_id: The ID of the transaction to retrieve.
-
-        Returns:
-            The transaction if found, None otherwise.
-
-        Raises:
-            TransactionNotFoundException: If the transaction does not exist.
-            WalletNotFoundException: If the wallet does not exist.
-            AccessDeniedException: If the user does not have access to the wallet.
-        """
-        transaction = await self._get_transaction_by_id(transaction_id)
-
-        if transaction is None:
-            raise TransactionNotFoundException(transaction_id)
-
-        wallet = await self.repository.get(models.Wallet, transaction.wallet_id)
-
-        if wallet is None:
-            raise WalletNotFoundException(transaction.wallet_id)
-
-        if not WalletService.has_user_access_to_wallet(user, wallet):
-            raise AccessDeniedException(user.id, wallet.id)
-
-        return transaction
 
     async def delete_transaction(self, user: models.User, transaction_id: int) -> True:
         """
@@ -103,15 +61,15 @@ class BaseTransactionService(BaseService):
         transaction = await self._get_transaction_by_id(transaction_id)
 
         if transaction is None:
-            raise TransactionNotFoundException(transaction_id)
+            raise TransactionNotFoundException(user, transaction_id)
 
         wallet = await self.repository.get(models.Wallet, transaction.wallet_id)
 
         if wallet is None:
-            raise WalletNotFoundException(transaction.wallet_id)
+            raise WalletNotFoundException(user, transaction.wallet_id)
 
         if not WalletService.has_user_access_to_wallet(user, wallet):
-            raise AccessDeniedException(user.id, wallet.id)
+            raise WalletAccessDeniedException(user, wallet)
 
         amount = transaction.information.amount
 
@@ -122,7 +80,7 @@ class BaseTransactionService(BaseService):
             )
 
             if offset_wallet is None:
-                raise WalletNotFoundException(offset_transaction.wallet_id)
+                raise WalletNotFoundException(user, offset_transaction.wallet_id)
 
             offset_wallet.balance += amount
             await self.repository.delete(transaction.offset_transaction)
@@ -149,22 +107,22 @@ class BaseTransactionService(BaseService):
 
         Raises:
             WalletNotFoundException: If the wallet does not exist.
-            AccessDeniedException: If the user does not have access to the wallet.
+            WalletAccessDeniedException: If the user does not have access to the wallet.
         """
         wallet = await self.repository.get(models.Wallet, transaction_data.wallet_id)
 
         if wallet is None:
-            raise WalletNotFoundException(transaction_data.wallet_id)
+            raise WalletNotFoundException(user, transaction_data.wallet_id)
 
         if not WalletService.has_user_access_to_wallet(user, wallet):
-            raise AccessDeniedException(user.id, wallet.id)
+            raise WalletAccessDeniedException(user, wallet)
 
         category = await self.repository.get(
             models.TransactionCategory, transaction_data.category_id
         )
 
         if category is None:
-            raise CategoryNotFoundException(transaction_data.category_id)
+            raise CategoryNotFoundException(user, transaction_data.category_id)
 
         db_transaction_information = models.TransactionInformation(
             amount=transaction_data.amount,
@@ -223,10 +181,10 @@ class BaseTransactionService(BaseService):
         offset_wallet = await self.repository.get(models.Wallet, offset_wallet_id)
 
         if offset_wallet is None:
-            raise WalletNotFoundException(offset_wallet_id)
+            raise WalletNotFoundException(user, offset_wallet_id)
 
         if not WalletService.has_user_access_to_wallet(user, offset_wallet):
-            raise AccessDeniedException(user.id, offset_wallet.id)
+            raise WalletAccessDeniedException(user, offset_wallet)
 
         transaction_data.amount = RoundedDecimal(transaction_data.amount * -1)
         offset_wallet.balance += transaction_data.amount
@@ -272,12 +230,12 @@ class BaseTransactionService(BaseService):
         transaction = await self._get_transaction_by_id(transaction_id)
 
         if transaction is None:
-            raise TransactionNotFoundException(transaction_id)
+            raise TransactionNotFoundException(user, transaction_id)
 
         wallet: models.Wallet = transaction.wallet
 
         if not WalletService.has_user_access_to_wallet(user, wallet):
-            raise AccessDeniedException(user.id, wallet.id)
+            raise WalletAccessDeniedException(user, wallet)
 
         amount_updated = (
             round(transaction_information.amount, 2) - transaction.information.amount
@@ -291,12 +249,16 @@ class BaseTransactionService(BaseService):
             )
 
             if offset_transaction is None:
-                raise TransactionNotFoundException(transaction.offset_transactions_id)
+                self.log_and_raise_exception(
+                    TransactionNotFoundException(
+                        user, transaction.offset_transactions_id
+                    )
+                )
 
             offset_wallet: models.Wallet = offset_transaction.wallet
 
             if not WalletService.has_user_access_to_wallet(user, offset_wallet):
-                raise AccessDeniedException(user.id, offset_wallet.id)
+                raise WalletAccessDeniedException(user, offset_wallet)
 
             offset_wallet.balance -= amount_updated
             offset_transaction.information.amount = transaction_information.amount * -1

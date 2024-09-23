@@ -2,14 +2,18 @@ from typing import Optional
 
 from app import models, schemas
 from app.config import settings
-from app.logger import get_logger
+from app.exceptions.wallet_service_exceptions import (
+    WalletAccessDeniedException,
+    WalletNotFoundException,
+)
+from app.repository import Repository
 from app.services.base import BaseService
-from app.utils.exceptions import AccessDeniedException, WalletNotFoundException
-
-logger = get_logger(__name__)
 
 
 class WalletService(BaseService):
+
+    def __init__(self, repository: Optional[Repository] = None):
+        super().__init__(repository)
 
     async def get_wallets(self, current_user: models.User) -> list[models.Wallet]:
         """
@@ -29,20 +33,17 @@ class WalletService(BaseService):
             or []
         )
 
-    async def get_wallet(
-        self, current_user: models.User, wallet_id: int
-    ) -> Optional[models.Wallet]:
+    async def get_wallet(self, user: models.User, wallet_id: int) -> models.Wallet:
 
         wallet = await self.repository.get(models.Wallet, wallet_id)
 
         if wallet is None:
-            raise WalletNotFoundException(wallet_id)
+            raise WalletNotFoundException(user, wallet_id)
 
-        if self.has_user_access_to_wallet(current_user, wallet):
-            logger.info("Found wallet %s for user: %s", wallet_id, current_user.id)
+        if self.has_user_access_to_wallet(user, wallet):
             return wallet
 
-        raise AccessDeniedException(current_user.id, wallet_id)
+        raise WalletAccessDeniedException(user, wallet)
 
     async def create_wallet(
         self, user: models.User, wallet: schemas.Wallet
@@ -53,34 +54,34 @@ class WalletService(BaseService):
         return db_wallet
 
     async def update_wallet(
-        self, current_user: models.User, wallet_id, wallet: schemas.WalletData
+        self, user: models.User, wallet_id, wallet: schemas.WalletData
     ) -> models.Wallet:
 
         db_wallet = await self.repository.get(models.Wallet, wallet_id)
 
         if db_wallet is None:
-            raise WalletNotFoundException(wallet_id)
+            raise WalletNotFoundException(user, wallet_id)
 
-        if self.has_user_access_to_wallet(current_user, db_wallet):
+        if self.has_user_access_to_wallet(user, db_wallet):
             await self.repository.update(
                 models.Wallet, db_wallet.id, **wallet.model_dump()
             )
             return db_wallet
 
-        raise AccessDeniedException(current_user.id, wallet_id)
+        raise WalletAccessDeniedException(user, wallet)
 
-    async def delete_wallet(self, current_user: models.User, wallet_id: int) -> True:
+    async def delete_wallet(self, user: models.User, wallet_id: int) -> True:
 
         wallet = await self.repository.get(models.Wallet, wallet_id)
 
         if wallet is None:
-            raise WalletNotFoundException(wallet_id)
+            raise WalletNotFoundException(user, wallet_id)
 
-        if self.has_user_access_to_wallet(current_user, wallet):
+        if self.has_user_access_to_wallet(user, wallet):
             await self.repository.delete(wallet)
             return True
 
-        raise AccessDeniedException(current_user.id, wallet_id)
+        raise WalletAccessDeniedException(user, wallet)
 
     async def check_max_wallets(self, user: models.User) -> bool:
         """
@@ -98,12 +99,7 @@ class WalletService(BaseService):
         if wallet_list is None:
             return True
 
-        result = len(wallet_list) >= settings.max_allowed_wallets
-        if result:
-            logger.warning(
-                "User %s has reached the maximum allowed wallets limit.", user.id
-            )
-        return result
+        return len(wallet_list) >= settings.max_allowed_wallets
 
     @staticmethod
     def calculate_total_balance(wallet_list: list[models.Wallet]) -> float:

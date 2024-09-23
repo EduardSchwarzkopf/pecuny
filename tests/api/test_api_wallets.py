@@ -12,6 +12,7 @@ from starlette.status import (
     HTTP_204_NO_CONTENT,
     HTTP_400_BAD_REQUEST,
     HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
@@ -53,6 +54,21 @@ async def test_create_wallet(test_user: models.User, repository: Repository):
     assert wallet.label == "test_wallet"
     assert wallet.balance == 500
     assert wallet.description == "test"
+
+
+async def test_wallet_not_found(test_user: models.User):
+    """
+    Test case for getting an wallet that does not exist.
+
+    Args:
+        test_user (fixture): The test user.
+    """
+
+    res = await make_http_request(
+        f"{ENDPOINT}123456789", as_user=test_user, method=RequestMethod.GET
+    )
+
+    assert res.status_code == HTTP_404_NOT_FOUND
 
 
 @pytest.mark.parametrize(

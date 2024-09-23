@@ -12,16 +12,16 @@ from app.celery import celery
 from app.config import settings
 from app.database import db
 from app.date_manager import get_today
-from app.logger import get_logger
+from app.exceptions.wallet_service_exceptions import (
+    WalletAccessDeniedException,
+    WalletNotFoundException,
+)
 from app.repository import Repository
 from app.services.email import send_transaction_import_report
 from app.services.transactions import TransactionService
 from app.session_transaction_manager import transaction
 from app.utils.dataclasses_utils import FailedImportedTransaction
 from app.utils.enums import DatabaseFilterOperator, Frequency
-from app.utils.exceptions import AccessDeniedException, WalletNotFoundException
-
-logger = get_logger(__name__)
 
 
 async def _process_transaction_row(
@@ -122,8 +122,7 @@ async def _process_transaction_row(
                 user,
                 transaction_data,
             )
-        except (WalletNotFoundException, AccessDeniedException) as e:
-            logger.error(e.message)
+        except (WalletNotFoundException, WalletAccessDeniedException) as e:
             failed_transaction.reason = e.message
             return failed_transaction
 
@@ -170,7 +169,6 @@ async def import_transactions_from_csv(
         )
         if failed_transaction:
             failed_transaction_list.append(failed_transaction)
-            logger.error(failed_transaction.reason)
 
     if settings.environment != "test":
         await send_transaction_import_report(

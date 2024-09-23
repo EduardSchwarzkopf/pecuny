@@ -1,13 +1,14 @@
 from typing import Optional
 
 from app import models
-from app.logger import get_logger
+from app.repository import Repository
 from app.services.base import BaseService
-
-logger = get_logger(__name__)
 
 
 class CategoryService(BaseService):
+
+    def __init__(self, repository: Optional[Repository] = None):
+        super().__init__(repository)
 
     async def get_categories(
         self,
@@ -23,7 +24,6 @@ class CategoryService(BaseService):
             list[TransactionCategory]: A list of transaction category objects.
         """
 
-        logger.info("Getting categories for user %s", current_user.id)
         return await self.repository.get_all(models.TransactionCategory)
 
     async def get_category(
@@ -43,9 +43,6 @@ class CategoryService(BaseService):
             None
         """
 
-        logger.info(
-            "Getting category with id %s for user %s", category_id, current_user.id
-        )
         category = await self.repository.get(models.TransactionCategory, category_id)
 
         if category and (
@@ -53,11 +50,6 @@ class CategoryService(BaseService):
         ):
             return category
 
-        logger.info(
-            "Category with id %s does not belong to user %s or does not exist",
-            category_id,
-            current_user.id,
-        )
         return None
 
     # async def create_category(

@@ -5,15 +5,15 @@ from fastapi.exceptions import HTTPException
 
 from app import schemas
 from app import session_transaction_manager as tm
+from app.exceptions.transaction_service_exceptions import TransactionNotFoundException
+from app.exceptions.wallet_service_exceptions import (
+    WalletAccessDeniedException,
+    WalletNotFoundException,
+)
 from app.models import User
 from app.routers.api.users import current_active_verified_user
 from app.services.transactions import TransactionService
 from app.utils import APIRouterExtended
-from app.utils.exceptions import (
-    AccessDeniedException,
-    TransactionNotFoundException,
-    WalletNotFoundException,
-)
 
 router = APIRouterExtended(prefix="/transactions", tags=["Transactions"])
 
@@ -79,7 +79,7 @@ async def api_get_transaction(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=e.message
         ) from e
-    except AccessDeniedException as e:
+    except WalletAccessDeniedException as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
         ) from e
@@ -116,7 +116,7 @@ async def api_create_transaction(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=e.message
             ) from e
-        except AccessDeniedException as e:
+        except WalletAccessDeniedException as e:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
             ) from e
@@ -159,7 +159,7 @@ async def api_update_transaction(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=e.message
             ) from e
-        except AccessDeniedException as e:
+        except WalletAccessDeniedException as e:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
             ) from e
@@ -196,7 +196,7 @@ async def api_delete_transaction(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=e.message
             ) from e
-        except AccessDeniedException as e:
+        except WalletAccessDeniedException as e:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
             ) from e

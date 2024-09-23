@@ -6,16 +6,16 @@ from fastapi_users import exceptions
 from app import database, models, schemas
 from app.authentication.management import UserManager
 from app.database import db
-from app.logger import get_logger
+from app.exceptions.user_service_exceptions import (
+    UserAlreadyExistsException,
+    UserNotFoundException,
+)
 from app.repository import Repository
 from app.schemas import EmailStr, UserCreate
 from app.services.base import BaseService
 from app.utils.dataclasses_utils import CreateUserData
 from app.utils.displayname_generator import generate_displayname
 from app.utils.enums import EmailVerificationStatus
-from app.utils.exceptions import UserAlreadyExistsException, UserNotFoundException
-
-logger = get_logger(__name__)
 
 
 class UserService(BaseService):
@@ -74,7 +74,6 @@ class UserService(BaseService):
             bool: True if the user is successfully deleted, False otherwise.
         """
 
-        logger.info("Deleting user %s", current_user.id)
         await self.repository.delete(current_user)
 
         return True
@@ -95,7 +94,6 @@ class UserService(BaseService):
             bool: User object.
         """
 
-        logger.info("Updating user %s", user.id)
         return await self.user_manager.update(user_data, user, request=request)
 
     async def create_user(
@@ -117,8 +115,6 @@ class UserService(BaseService):
             None
         """
 
-        logger.info("Creating new user with email %s", user_data.email)
-
         if not user_data.displayname:
             user_data.displayname = generate_displayname()
 
@@ -135,7 +131,6 @@ class UserService(BaseService):
                 request=request,
             )
         except exceptions.UserAlreadyExists:
-            logger.warning("User with email %s already exists", user_data.email)
             return None
 
     async def validate_new_user(self, email) -> None:
@@ -152,15 +147,13 @@ class UserService(BaseService):
             UserAlreadyExistsException: If a user with the given email already exists.
         """
 
-        logger.info("Validating new user with email %s", email)
         try:
             existing_user = await self.user_manager.get_by_email(email)
         except exceptions.UserNotExists:
             existing_user = None
 
         if existing_user is not None:
-            logger.warning("User with email %s already exists", email)
-            raise UserAlreadyExistsException()
+            raise UserAlreadyExistsException(email)
 
     async def verify_email(self, token: str) -> EmailVerificationStatus:
         """
@@ -176,15 +169,12 @@ class UserService(BaseService):
             None
         """
 
-        logger.info("Verifying email with token %s", token)
         try:
             await self.user_manager.verify(token)
             return EmailVerificationStatus.VERIFIED
         except exceptions.InvalidVerifyToken:
-            logger.warning("Invalid token for email verification: %s", token)
             return EmailVerificationStatus.INVALID_TOKEN
         except exceptions.UserAlreadyVerified:
-            logger.warning("User already verified for token: %s", token)
             return EmailVerificationStatus.ALREADY_VERIFIED
 
     async def forgot_password(self, email: EmailStr) -> None:
@@ -201,16 +191,13 @@ class UserService(BaseService):
             UserNotFoundException: If no user is found with the given email.
         """
 
-        logger.info("Processing forgot password for email %s", email)
         try:
             existing_user = await self.user_manager.get_by_email(email)
             if existing_user is None:
-                logger.warning("No user found with email %s", email)
                 raise UserNotFoundException()
             await self.user_manager.forgot_password(existing_user)
         except exceptions.UserNotExists as e:
-            logger.warning("No user found with email %s", email)
-            raise UserNotFoundException from e
+            raise UserNotFoundException() from e
 
     async def reset_password(self, password: str, token: str) -> bool:
         """
@@ -229,16 +216,12 @@ class UserService(BaseService):
             InvalidPasswordException: If the password is invalid.
         """
 
-        logger.info("Resetting password with token %s", token)
         try:
             await self.user_manager.reset_password(token, password)
             return True
         except exceptions.InvalidResetPasswordToken as e:
-            logger.warning("Invalid reset password token: %s", token)
             raise exceptions.InvalidResetPasswordToken from e
         except exceptions.UserInactive as e:
-            logger.warning("User is inactive for token: %s", token)
             raise exceptions.UserInactive from e
         except exceptions.InvalidPasswordException as e:
-            logger.warning("Invalid password for token: %s", token)
             raise exceptions.InvalidPasswordException from e

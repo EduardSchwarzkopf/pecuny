@@ -1,21 +1,20 @@
 from fastapi import Depends, Request
-from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from starlette import status
 from starlette_wtf import csrf_protect
 
 from app import models, schemas
 from app.auth_manager import current_active_verified_user
 from app.date_manager import now
+from app.exceptions.http_exceptions import HTTPForbiddenException, HTTPNotFoundException
+from app.exceptions.transaction_service_exceptions import TransactionNotFoundException
+from app.exceptions.wallet_service_exceptions import (
+    WalletAccessDeniedException,
+    WalletNotFoundException,
+)
 from app.routers.wallets import handle_wallet_route
 from app.routers.wallets import router as wallet_router
 from app.services.scheduled_transactions import ScheduledTransactionService
 from app.utils import PageRouter
-from app.utils.exceptions import (
-    AccessDeniedException,
-    TransactionNotFoundException,
-    WalletNotFoundException,
-)
 from app.utils.template_utils import (
     add_breadcrumb,
     calculate_financial_summary,
@@ -51,7 +50,7 @@ async def page_list_scheduled_transactions(
         TemplateResponse: The rendered list wallets page.
     """
 
-    transaction_list = await service.get_transaction_list(user, wallet_id)
+    transaction_list = await service.get_scheduled_transaction_list(user, wallet_id)
     wallet = await handle_wallet_route(request, user, wallet_id)
 
     add_breadcrumb(request, "Scheduled Transactions", "")
@@ -149,9 +148,9 @@ async def page_create_scheduled_transaction(
     try:
         await transaction_service.create_scheduled_transaction(user, transaction)
     except WalletNotFoundException as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
-    except AccessDeniedException as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
+        raise HTTPNotFoundException() from e
+    except WalletAccessDeniedException as e:
+        raise HTTPForbiddenException() from e
 
     return RedirectResponse(
         request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),
@@ -184,10 +183,12 @@ async def page_update_scheduled_transaction_get(
 
     await handle_wallet_route(request, user, wallet_id)
 
-    transaction = await transaction_service.get_transaction(user, transaction_id)
+    transaction = await transaction_service.get_scheduled_transaction(
+        user, transaction_id
+    )
 
     if transaction is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
+        raise HTTPNotFoundException()
 
     form: schemas.UpdateScheduledTransactionForm = (
         schemas.UpdateScheduledTransactionForm(
@@ -247,10 +248,12 @@ async def page_update_scheduled_transaction_post(
 
     await handle_wallet_route(request, user, wallet_id)
 
-    transaction = await transaction_service.get_transaction(user, transaction_id)
+    transaction = await transaction_service.get_scheduled_transaction(
+        user, transaction_id
+    )
 
     if transaction is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
+        raise HTTPNotFoundException()
 
     form = await schemas.UpdateScheduledTransactionForm.from_formdata(request)
     await populate_transaction_form_choices(wallet_id, user, form)
@@ -279,9 +282,9 @@ async def page_update_scheduled_transaction_post(
             transaction_information,
         )
     except WalletNotFoundException as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
-    except AccessDeniedException as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
+        raise HTTPNotFoundException() from e
+    except WalletAccessDeniedException as e:
+        raise HTTPForbiddenException() from e
 
     return RedirectResponse(
         request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),
@@ -315,9 +318,9 @@ async def page_delete_scheduled_transaction(
     try:
         await transaction_service.delete_scheduled_transaction, user, transaction_id
     except (WalletNotFoundException, TransactionNotFoundException) as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=e.message) from e
-    except AccessDeniedException as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=e.message) from e
+        raise HTTPNotFoundException() from e
+    except WalletAccessDeniedException as e:
+        raise HTTPForbiddenException() from e
 
     return RedirectResponse(
         request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),

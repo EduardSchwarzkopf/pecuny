@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse
 from starlette_wtf import StarletteForm
 
 from app import models, schemas, templates
-from app.services.categories import CategoryService
+from app.services.category import CategoryService
 from app.services.frequency import FrequencyService
 from app.services.wallets import WalletService
 from app.utils.dataclasses_utils import FinancialSummary
