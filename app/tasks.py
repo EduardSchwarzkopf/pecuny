@@ -12,10 +12,8 @@ from app.celery import celery
 from app.config import settings
 from app.database import db
 from app.date_manager import get_today
-from app.exceptions.wallet_service_exceptions import (
-    WalletAccessDeniedException,
-    WalletNotFoundException,
-)
+from app.exceptions.base_service_exception import EntityNotFoundException
+from app.exceptions.wallet_service_exceptions import WalletAccessDeniedException
 from app.repository import Repository
 from app.services.email import send_transaction_import_report
 from app.services.transactions import TransactionService
@@ -122,7 +120,7 @@ async def _process_transaction_row(
                 user,
                 transaction_data,
             )
-        except (WalletNotFoundException, WalletAccessDeniedException) as e:
+        except (EntityNotFoundException, WalletAccessDeniedException) as e:
             failed_transaction.reason = e.message
             return failed_transaction
 
