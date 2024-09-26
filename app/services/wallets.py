@@ -49,6 +49,9 @@ class WalletService(BaseService):
         self, user: models.User, wallet: schemas.Wallet
     ) -> models.Wallet:
 
+        if await self.has_reached_wallet_limit(user):
+            raise WalletLimitReachedException(user)
+
         db_wallet = models.Wallet(user=user, **wallet.model_dump())
         await self.repository.save(db_wallet)
         return db_wallet
