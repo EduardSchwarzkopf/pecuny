@@ -185,24 +185,7 @@ class BaseTransactionService(BaseService):
             round(transaction_information.amount, 2) - transaction.information.amount
         )
 
-        if transaction.offset_transactions_id:
-            offset_transaction = await self.repository.get(
-                self.service_model,
-                transaction.offset_transactions_id,
-                load_relationships_list=[self.service_model.wallet],
             )
-
-            if offset_transaction is None:
-                self.log_and_raise_exception(
-                    TransactionNotFoundException(
-                        user, transaction.offset_transactions_id
-                    )
-                )
-
-            offset_wallet: models.Wallet = offset_transaction.wallet
-
-            if not WalletService.has_user_access_to_wallet(user, offset_wallet):
-                raise WalletAccessDeniedException(user, offset_wallet)
 
             offset_wallet.balance -= amount_updated
             offset_transaction.information.amount = transaction_information.amount * -1
