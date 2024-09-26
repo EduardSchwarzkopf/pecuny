@@ -18,6 +18,7 @@ from starlette.status import (
 from app import models, schemas
 from app.data.categories import get_section_list
 from app.date_manager import string_to_datetime
+from app.exceptions.base_service_exception import EntityNotFoundException
 from app.repository import Repository
 from app.utils.classes import RoundedDecimal, TransactionCSV
 from app.utils.dataclasses_utils import ImportedTransaction
@@ -113,9 +114,8 @@ async def test_delete_wallet(test_wallet: models.Wallet, repository: Repository)
 
     assert res.status_code == HTTP_204_NO_CONTENT
 
-    wallet = await repository.get(models.Wallet, test_wallet.id)
-
-    assert wallet is None
+    with pytest.raises(EntityNotFoundException):
+        await repository.get(models.Wallet, test_wallet.id)
 
 
 async def test_invalid_delete_wallet(
