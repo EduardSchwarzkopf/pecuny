@@ -110,9 +110,6 @@ class UserService(BaseService):
 
         Returns:
             bool: True if the user is successfully created, False otherwise.
-
-        Raises:
-            None
         """
 
         if not user_data.displayname:
