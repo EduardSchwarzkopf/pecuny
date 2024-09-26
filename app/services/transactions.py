@@ -57,22 +57,9 @@ class TransactionService(
             None
         """
 
-        transaction = await self.repository.get(
-            models.Transaction,
-            transaction_id,
-            load_relationships_list=[models.Transaction.offset_transaction],
-        )
+        transaction = await self.__get_transaction_by_id(transaction_id)
 
-        if transaction is None:
-            raise TransactionNotFoundException(user, transaction_id)
-
-        wallet = await self.repository.get(models.Wallet, transaction.wallet_id)
-
-        if wallet is None:
-            raise WalletNotFoundException(user, transaction.wallet_id)
-
-        if not WalletService.has_user_access_to_wallet(user, wallet):
-            raise WalletAccessDeniedException(user, wallet)
+        await self.wallet_service.validate_access_to_wallet(user, transaction.wallet_id)
 
         return transaction
 
