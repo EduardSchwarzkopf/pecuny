@@ -33,17 +33,17 @@ class WalletService(BaseService):
             or []
         )
 
+    async def __get_wallet_by_id(self, wallet_id: int):
+        return await self.repository.get(models.Wallet, wallet_id)
+
     async def get_wallet(self, user: models.User, wallet_id: int) -> models.Wallet:
 
-        wallet = await self.repository.get(models.Wallet, wallet_id)
+        wallet = await self.__get_wallet_by_id(wallet_id)
 
-        if wallet is None:
-            raise WalletNotFoundException(user, wallet_id)
+        if not self.has_user_access_to_wallet(user, wallet):
+            raise WalletAccessDeniedException(user, wallet)
 
-        if self.has_user_access_to_wallet(user, wallet):
-            return wallet
-
-        raise WalletAccessDeniedException(user, wallet)
+        return wallet
 
     async def create_wallet(
         self, user: models.User, wallet: schemas.Wallet
