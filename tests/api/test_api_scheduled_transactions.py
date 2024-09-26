@@ -13,6 +13,7 @@ from starlette.status import (
 
 from app import models, schemas
 from app.date_manager import get_day_delta, get_tomorrow, get_yesterday, now
+from app.exceptions.base_service_exception import EntityNotFoundException
 from app.repository import Repository
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
 from tests.utils import get_other_user_wallet, make_http_request
@@ -193,9 +194,8 @@ async def test_delete_scheduled_transaction(
 
     assert res.status_code == HTTP_204_NO_CONTENT
 
-    db_transaction = await repository.get(models.TransactionScheduled, transaction_id)
-
-    assert db_transaction is None
+    with pytest.raises(EntityNotFoundException):
+        await repository.get(models.TransactionScheduled, transaction_id)
 
 
 # Tests for unauthorized access
