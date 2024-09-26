@@ -211,12 +211,5 @@ class UserService(BaseService):
             InvalidPasswordException: If the password is invalid.
         """
 
-        try:
-            await self.user_manager.reset_password(token, password)
-            return True
-        except exceptions.InvalidResetPasswordToken as e:
-            raise exceptions.InvalidResetPasswordToken from e
-        except exceptions.UserInactive as e:
-            raise exceptions.UserInactive from e
-        except exceptions.InvalidPasswordException as e:
-            raise exceptions.InvalidPasswordException from e
+        await self.user_manager.reset_password(token, password)
+        return True
