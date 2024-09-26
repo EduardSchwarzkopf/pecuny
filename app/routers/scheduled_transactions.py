@@ -5,12 +5,6 @@ from starlette_wtf import csrf_protect
 from app import models, schemas
 from app.auth_manager import current_active_verified_user
 from app.date_manager import now
-from app.exceptions.http_exceptions import HTTPForbiddenException, HTTPNotFoundException
-from app.exceptions.transaction_service_exceptions import TransactionNotFoundException
-from app.exceptions.wallet_service_exceptions import (
-    WalletAccessDeniedException,
-    WalletNotFoundException,
-)
 from app.routers.wallets import handle_wallet_route
 from app.routers.wallets import router as wallet_router
 from app.services.scheduled_transactions import ScheduledTransactionService
