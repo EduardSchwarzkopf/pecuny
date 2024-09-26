@@ -6,6 +6,7 @@ from starlette.status import (
     HTTP_201_CREATED,
     HTTP_204_NO_CONTENT,
     HTTP_400_BAD_REQUEST,
+    HTTP_409_CONFLICT,
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
@@ -72,7 +73,7 @@ async def test_create_user(
     assert new_user.is_verified is db_user.is_verified
 
 
-async def test_invalid_create_user(test_user: models.User):
+async def test_user_already_exists(test_user: models.User):
     """
     Test case for creating an invalid user.
 
@@ -86,7 +87,7 @@ async def test_invalid_create_user(test_user: models.User):
         json={"email": email, "password": "testpassword", "displayname": "John"},
     )
 
-    assert res.status_code == HTTP_400_BAD_REQUEST
+    assert res.status_code == HTTP_409_CONFLICT
 
 
 async def test_login_active_user(
