@@ -137,7 +137,7 @@ async def test_invalid_delete_wallet(
         f"{ENDPOINT}{wallet_id}", as_user=test_user, method=RequestMethod.DELETE
     )
 
-    assert res.status_code == HTTP_403_FORBIDDEN
+    assert res.status_code == HTTP_404_NOT_FOUND
 
     wallet_refresh = await repository.get(models.Wallet, wallet_id)
 
