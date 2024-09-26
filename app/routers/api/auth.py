@@ -1,4 +1,5 @@
 from fastapi import Depends, HTTPException, Request, status
+from fastapi_users.exceptions import UserAlreadyExists
 
 from app import schemas
 from app.services.users import UserService
@@ -28,15 +29,14 @@ async def api_create_user(
         UserRead: The created user information.
     """
 
-    user = await service.create_user(
-        CreateUserData(user_data.email, user_data.password, user_data.displayname),
-        request=request,
-    )
+    try:
 
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="An error occurred while processing your request",
+        return await service.create_user(
+            CreateUserData(user_data.email, user_data.password, user_data.displayname),
+            request=request,
         )
-
-    return user
+    except UserAlreadyExists as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User already Exists",
+        ) from e
