@@ -11,13 +11,11 @@ class BaseServiceException(ABC, Exception):
 
 
 class EntityNotFoundException(BaseServiceException):
-    def __init__(self, user: models.User, model: models.Base, entity_id: IdField):
+    def __init__(self, model: models.Base, entity_id: IdField):
         self.entity_model_class_name = model.__name__
         self.entity_id = entity_id
-        self.user = user
 
         super().__init__(
-            f"[UserID: {self.user.id}] - "
             f"Could not find {self.entity_model_class_name} with ID {self.entity_id}."
         )
 
@@ -25,11 +23,10 @@ class EntityNotFoundException(BaseServiceException):
 class EntityAccessDeniedException(BaseServiceException):
     def __init__(self, user: models.User, entity: models.BaseModel):
         self.entity = entity
-        self.entity_id = entity.id
         self.entity_class_name = entity.__class__.__name__
         self.user = user
 
         super().__init__(
-            f"[UserID: {self.user.id}] - "
-            f"Access to {self.entity_class_name} with ID {self.entity_id} is denied."
+            f"Access to {self.entity_class_name} with ID {self.entity.id} is denied "
+            f"to user with ID {self.user.id}."
         )
