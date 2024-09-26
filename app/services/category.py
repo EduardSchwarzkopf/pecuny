@@ -45,10 +45,10 @@ class CategoryService(BaseService):
 
         category = await self.repository.get(models.TransactionCategory, category_id)
 
-        if category and (
-            category.user_id is None or category.user_id == current_user.id
-        ):
-            return category
+        if category.user_id == user.id:
+            raise EntityAccessDeniedException(user, category)
+
+        return category
 
         return None
 
