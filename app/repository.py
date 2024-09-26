@@ -10,6 +10,7 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 from app import models
 from app.database import db
+from app.exceptions.base_service_exception import EntityNotFoundException
 from app.models import BaseModel
 from app.utils.enums import DatabaseFilterOperator, Frequency
 from app.utils.fields import IdField
@@ -63,7 +64,7 @@ class Repository:
         cls: Type[ModelT],
         instance_id: Union[int, IdField],
         load_relationships_list: Optional[list[InstrumentedAttribute]] = None,
-    ) -> Optional[ModelT]:
+    ) -> ModelT:
         """Retrieve an instance of the specified model by its ID.
 
         Args:
@@ -79,7 +80,12 @@ class Repository:
         q = select(cls).where(cls.id == instance_id)
         q = self._load_relationships(q, load_relationships_list)
         result = await self.session.execute(q)
-        return result.scalars().first()
+        model = result.scalars().first()
+
+        if model is None:
+            raise EntityNotFoundException(cls, instance_id)
+
+        return model
 
     async def filter_by(
         self,
