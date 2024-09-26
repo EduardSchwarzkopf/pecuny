@@ -1,15 +1,9 @@
 from datetime import datetime
 from typing import List, Optional
 
-from app import models, schemas
-from app.exceptions.transaction_service_exceptions import TransactionNotFoundException
-from app.exceptions.wallet_service_exceptions import (
-    WalletAccessDeniedException,
-    WalletNotFoundException,
-)
+from app import models
 from app.repository import Repository
 from app.services.base_transaction import BaseTransactionService
-from app.services.wallets import WalletService
 
 
 class TransactionService(
