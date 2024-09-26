@@ -135,6 +135,10 @@ class WalletService(BaseService):
             raise WalletAccessDeniedException(user, wallet)
 
         return
+
+    def has_user_access_to_wallet(
+        self, user: models.User, wallet: models.Wallet
+    ) -> bool:
         """
         Check if the user has access to the wallet.
 
@@ -145,4 +149,5 @@ class WalletService(BaseService):
         Returns:
             bool: True if the user has access to the wallet, False otherwise.
         """
+
         return user.id == wallet.user_id
