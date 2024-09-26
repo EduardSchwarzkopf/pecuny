@@ -68,12 +68,9 @@ class BaseTransactionService(BaseService):
 
         if transaction.offset_transaction:
             offset_transaction = transaction.offset_transaction
-            offset_wallet = await self.repository.get(
-                models.Wallet, offset_transaction.wallet_id
+            offset_wallet = await self.wallet_service.get_wallet(
+                user, offset_transaction.wallet_id
             )
-
-            if offset_wallet is None:
-                raise WalletNotFoundException(user, offset_transaction.wallet_id)
 
             offset_wallet.balance += amount
             await self.repository.delete(transaction.offset_transaction)
