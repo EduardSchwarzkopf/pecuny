@@ -12,7 +12,7 @@ class FrequencyService(BaseService):
 
     async def get_frequency_list(
         self,
-    ) -> Optional[list[models.TransactionCategory]]:
+    ) -> list[models.TransactionCategory]:
         """
         Get a list of transaction categories based on frequency.
 
