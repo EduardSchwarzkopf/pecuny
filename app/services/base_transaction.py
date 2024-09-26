@@ -1,12 +1,6 @@
 from typing import Optional, Type, Union
 
 from app import models, schemas
-from app.exceptions.category_service_exceptions import CategoryNotFoundException
-from app.exceptions.transaction_service_exceptions import TransactionNotFoundException
-from app.exceptions.wallet_service_exceptions import (
-    WalletAccessDeniedException,
-    WalletNotFoundException,
-)
 from app.repository import Repository
 from app.services.base import BaseService
 from app.services.wallets import WalletService
