@@ -57,19 +57,16 @@ class WalletService(BaseService):
         return db_wallet
 
     async def update_wallet(
-        self, user: models.User, wallet_id, wallet: schemas.WalletData
+        self, user: models.User, wallet_id, wallet_data: schemas.WalletData
     ) -> models.Wallet:
 
-        db_wallet = await self.repository.get(models.Wallet, wallet_id)
+        db_wallet = await self.get_wallet(user, wallet_id)
 
-        if db_wallet is None:
-            raise WalletNotFoundException(user, wallet_id)
+        await self.repository.update(
+            models.Wallet, db_wallet.id, **wallet_data.model_dump()
+        )
 
-        if self.has_user_access_to_wallet(user, db_wallet):
-            await self.repository.update(
-                models.Wallet, db_wallet.id, **wallet.model_dump()
-            )
-            return db_wallet
+        return db_wallet
 
         raise WalletAccessDeniedException(user, wallet)
 
