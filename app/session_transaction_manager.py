@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import Any, Optional
+from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.base import object_mapper
@@ -22,6 +22,7 @@ class SessionTransactionManager:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if exc_type:
             await self.session.rollback()
+            # TODO: Add condition to log only unhandled erros?
             logger.warning(f"Transaction rolled back due to: {exc_val}")
         else:
             await self.session.commit()
