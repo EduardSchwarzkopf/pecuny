@@ -25,9 +25,6 @@ async def api_get_categories(
 
     Returns:
         ResponseModel: The retrieved category information.
-
-    Raises:
-        HTTPException: If the category is not found.
     """
 
     return await service.get_categories(current_user)
@@ -48,17 +45,9 @@ async def api_get_category(
 
     Returns:
         ResponseModel: The retrieved category information.
-
-    Raises:
-        HTTPException: If the category is not found.
     """
 
-    category = await service.get_category(current_user, category_id)
-
-    if category is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Category not found")
-
-    return category
+    return await service.get_category(current_user, category_id)
 
 
 # @router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)

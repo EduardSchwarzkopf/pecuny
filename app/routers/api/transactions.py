@@ -1,15 +1,9 @@
 from datetime import datetime
 
 from fastapi import Depends, status
-from fastapi.exceptions import HTTPException
 
 from app import schemas
 from app import session_transaction_manager as tm
-from app.exceptions.transaction_service_exceptions import TransactionNotFoundException
-from app.exceptions.wallet_service_exceptions import (
-    WalletAccessDeniedException,
-    WalletNotFoundException,
-)
 from app.models import User
 from app.routers.api.users import current_active_verified_user
 from app.services.transactions import TransactionService
@@ -69,20 +63,7 @@ async def api_get_transaction(
         HTTPException: If the transaction is not found.
     """
 
-    try:
-        return await service.get_transaction(current_user, transaction_id)
-    except TransactionNotFoundException as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-        ) from e
-    except WalletNotFoundException as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-        ) from e
-    except WalletAccessDeniedException as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
-        ) from e
+    return await service.get_transaction(current_user, transaction_id)
 
 
 @router.post(
@@ -110,16 +91,7 @@ async def api_create_transaction(
     transaction_data = schemas.TransactionData(**transaction_information.model_dump())
 
     async with tm.transaction():
-        try:
-            return await service.create_transaction(current_user, transaction_data)
-        except WalletNotFoundException as e:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-            ) from e
-        except WalletAccessDeniedException as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
-            ) from e
+        return await service.create_transaction(current_user, transaction_data)
 
 
 @router.post("/{transaction_id}", response_model=schemas.TransactionResponse)
@@ -145,24 +117,13 @@ async def api_update_transaction(
     """
 
     async with tm.transaction():
-        try:
-            return await service.update_transaction(
-                current_user,
-                transaction_id,
-                transaction_information,
-            )
-        except TransactionNotFoundException as e:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-            ) from e
-        except WalletNotFoundException as e:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-            ) from e
-        except WalletAccessDeniedException as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
-            ) from e
+        transaction = await service.update_transaction(
+            current_user,
+            transaction_id,
+            transaction_information,
+        )
+
+    return transaction
 
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -186,17 +147,4 @@ async def api_delete_transaction(
     """
 
     async with tm.transaction():
-        try:
-            return await service.delete_transaction(current_user, transaction_id)
-        except TransactionNotFoundException as e:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-            ) from e
-        except WalletNotFoundException as e:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-            ) from e
-        except WalletAccessDeniedException as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
-            ) from e
+        return await service.delete_transaction(current_user, transaction_id)

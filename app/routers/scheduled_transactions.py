@@ -139,12 +139,7 @@ async def page_create_scheduled_transaction(
         wallet_id=wallet_id, **form.data
     )
 
-    try:
-        await transaction_service.create_scheduled_transaction(user, transaction)
-    except WalletNotFoundException as e:
-        raise HTTPNotFoundException() from e
-    except WalletAccessDeniedException as e:
-        raise HTTPForbiddenException() from e
+    await transaction_service.create_scheduled_transaction(user, transaction)
 
     return RedirectResponse(
         request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),
@@ -180,9 +175,6 @@ async def page_update_scheduled_transaction_get(
     transaction = await transaction_service.get_scheduled_transaction(
         user, transaction_id
     )
-
-    if transaction is None:
-        raise HTTPNotFoundException()
 
     form: schemas.UpdateScheduledTransactionForm = (
         schemas.UpdateScheduledTransactionForm(
@@ -246,9 +238,6 @@ async def page_update_scheduled_transaction_post(
         user, transaction_id
     )
 
-    if transaction is None:
-        raise HTTPNotFoundException()
-
     form = await schemas.UpdateScheduledTransactionForm.from_formdata(request)
     await populate_transaction_form_choices(wallet_id, user, form)
 
@@ -269,16 +258,11 @@ async def page_update_scheduled_transaction_post(
         wallet_id=wallet_id, **form.data
     )
 
-    try:
-        await transaction_service.update_scheduled_transaction(
-            user,
-            transaction_id,
-            transaction_information,
-        )
-    except WalletNotFoundException as e:
-        raise HTTPNotFoundException() from e
-    except WalletAccessDeniedException as e:
-        raise HTTPForbiddenException() from e
+    await transaction_service.update_scheduled_transaction(
+        user,
+        transaction_id,
+        transaction_information,
+    )
 
     return RedirectResponse(
         request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),
@@ -309,12 +293,7 @@ async def page_delete_scheduled_transaction(
         RedirectResponse: A redirect response to the wallet page.
     """
 
-    try:
-        await transaction_service.delete_scheduled_transaction, user, transaction_id
-    except (WalletNotFoundException, TransactionNotFoundException) as e:
-        raise HTTPNotFoundException() from e
-    except WalletAccessDeniedException as e:
-        raise HTTPForbiddenException() from e
+    await transaction_service.delete_scheduled_transaction, user, transaction_id
 
     return RedirectResponse(
         request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),

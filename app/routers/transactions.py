@@ -4,12 +4,6 @@ from starlette_wtf import csrf_protect
 
 from app import models, schemas
 from app.auth_manager import current_active_verified_user
-from app.exceptions.http_exceptions import HTTPForbiddenException, HTTPNotFoundException
-from app.exceptions.transaction_service_exceptions import TransactionNotFoundException
-from app.exceptions.wallet_service_exceptions import (
-    WalletAccessDeniedException,
-    WalletNotFoundException,
-)
 from app.routers.wallets import handle_wallet_route
 from app.routers.wallets import router as wallet_router
 from app.services.transactions import TransactionService
@@ -110,12 +104,7 @@ async def page_create_transaction(
 
     transaction = schemas.TransactionData(wallet_id=wallet_id, **form.data)
 
-    try:
-        await transaction_service.create_transaction(user, transaction)
-    except WalletNotFoundException as e:
-        raise HTTPNotFoundException() from e
-    except WalletAccessDeniedException as e:
-        raise HTTPForbiddenException() from e
+    await transaction_service.create_transaction(user, transaction)
 
     return RedirectResponse(
         wallet_router.url_path_for("page_get_wallet", wallet_id=wallet_id),
@@ -147,9 +136,6 @@ async def page_update_transaction_get(
     await handle_wallet_route(request, user, wallet_id)
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
-
-    if transaction is None:
-        raise HTTPNotFoundException()
 
     form: schemas.UpdateTransactionForm = schemas.UpdateTransactionForm(
         request, data=transaction.information.__dict__
@@ -207,9 +193,6 @@ async def page_update_transaction_post(
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
 
-    if transaction is None:
-        raise HTTPNotFoundException()
-
     form = await schemas.UpdateTransactionForm.from_formdata(request)
     await populate_transaction_form_choices(
         wallet_id, user, form, "Linked wallet (not editable)"
@@ -232,14 +215,9 @@ async def page_update_transaction_post(
         wallet_id=wallet_id, **form.data
     )
 
-    try:
-        await transaction_service.update_transaction(
-            user, transaction_id, transaction_information
-        )
-    except (WalletNotFoundException, TransactionNotFoundException) as e:
-        raise HTTPNotFoundException() from e
-    except WalletAccessDeniedException as e:
-        raise HTTPForbiddenException() from e
+    await transaction_service.update_transaction(
+        user, transaction_id, transaction_information
+    )
 
     return RedirectResponse(
         wallet_router.url_path_for("page_get_wallet", wallet_id=wallet_id),
@@ -269,15 +247,7 @@ async def page_delete_transaction(
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
 
-    if transaction is None:
-        raise HTTPNotFoundException()
-
-    try:
-        await transaction_service.delete_transaction(user, transaction_id)
-    except (WalletNotFoundException, TransactionNotFoundException) as e:
-        raise HTTPNotFoundException() from e
-    except WalletAccessDeniedException as e:
-        raise HTTPForbiddenException() from e
+    await transaction_service.delete_transaction(user, transaction_id)
 
     return RedirectResponse(
         wallet_router.url_path_for("page_get_wallet", wallet_id=wallet_id),
