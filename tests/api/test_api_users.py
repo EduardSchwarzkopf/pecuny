@@ -9,6 +9,7 @@ from starlette.status import (
 )
 
 from app import models, schemas
+from app.exceptions.base_service_exception import EntityNotFoundException
 from app.repository import Repository
 from app.services.users import UserService
 from app.utils.enums import RequestMethod
@@ -166,8 +167,8 @@ async def test_delete_self(active_verified_user: models.User, repository: Reposi
 
     assert res.status_code == HTTP_204_NO_CONTENT
 
-    user = await repository.get(models.User, active_verified_user.id)
-    assert user is None
+    with pytest.raises(EntityNotFoundException):
+        await repository.get(models.User, active_verified_user.id)
 
 
 async def test_invalid_delete_other_user(
