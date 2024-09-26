@@ -87,9 +87,6 @@ class WalletService(BaseService):
 
         wallet_list = await self.get_wallets(user)
 
-        if wallet_list is None:
-            return True
-
         return len(wallet_list) >= settings.max_allowed_wallets
 
     @staticmethod
