@@ -8,6 +8,8 @@ from app.schemas import (
     ScheduledTransactionInformtionUpdate,
 )
 from app.services.base_transaction import BaseTransactionService
+from app.services.category import CategoryService
+from app.services.frequency import FrequencyService
 from app.services.wallets import WalletService
 
 
