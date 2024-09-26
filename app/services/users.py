@@ -115,20 +115,17 @@ class UserService(BaseService):
         if not user_data.displayname:
             user_data.displayname = generate_displayname()
 
-        try:
-            return await self.user_manager.create(
-                UserCreate(
-                    email=user_data.email,
-                    displayname=user_data.displayname,
-                    password=user_data.password,
-                    is_superuser=user_data.is_superuser,
-                    is_verified=user_data.is_verified,
-                    is_active=user_data.is_active,
-                ),
-                request=request,
-            )
-        except exceptions.UserAlreadyExists:
-            return None
+        return await self.user_manager.create(
+            UserCreate(
+                email=user_data.email,
+                displayname=user_data.displayname,
+                password=user_data.password,
+                is_superuser=user_data.is_superuser,
+                is_verified=user_data.is_verified,
+                is_active=user_data.is_active,
+            ),
+            request=request,
+        )
 
     async def validate_new_user(self, email) -> None:
         """
