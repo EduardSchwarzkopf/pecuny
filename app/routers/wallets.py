@@ -89,7 +89,7 @@ async def max_wallets_reached(
             if the maximum number of wallets has been reached.
     """
 
-    if await service.check_max_wallets(user):
+    if await service.has_reached_wallet_limit(user):
         set_feedback(request, FeedbackType.ERROR, "Maximum number of wallets reached")
         return RedirectResponse(
             router.url_path_for("page_list_wallets"),
