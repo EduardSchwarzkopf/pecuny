@@ -210,7 +210,7 @@ async def test_delete_transactions_fail(test_user: models.User, repository: Repo
         as_user=test_user,
     )
 
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTP_404_NOT_FOUND
 
     wallet_refresh = await repository.get(models.Wallet, wallet_id)
 
@@ -334,7 +334,7 @@ async def test_create_offset_transaction_other_wallet_fail(
         as_user=test_user,
     )
 
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTP_404_NOT_FOUND
 
     wallet_refreshed = await repository.get(models.Wallet, wallet_id)
     offset_wallet_refreshed = await repository.get(models.Wallet, offset_wallet_id)
