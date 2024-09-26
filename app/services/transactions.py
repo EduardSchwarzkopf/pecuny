@@ -36,10 +36,7 @@ class TransactionService(BaseTransactionService):
         Returns:
             A list of transactions that match the criteria.
         """
-        wallet = await self.repository.get(models.Wallet, wallet_id)
-
-        if wallet is None or not WalletService.has_user_access_to_wallet(user, wallet):
-            return []
+        await self.wallet_service.validate_access_to_wallet(user, wallet_id)
 
         return await self.repository.get_transactions_from_period(
             wallet_id, date_start, date_end
