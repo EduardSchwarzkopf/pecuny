@@ -207,8 +207,8 @@ class BaseTransactionService(BaseService):
             offset_wallet.balance -= amount_updated
             offset_transaction.information.amount = transaction_information.amount * -1
 
-        wallet_values = {"balance": wallet.balance + amount_updated}
-        await self.repository.update(models.Wallet, wallet.id, **wallet_values)
+        wallet_data = schemas.WalletData(**wallet.__dict__)
+        wallet_data.balance = wallet.balance + amount_updated
 
         transaction_values = {
             "amount": transaction_information.amount,
