@@ -22,7 +22,7 @@ class SessionTransactionManager:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if exc_type:
             await self.session.rollback()
-            logger.error(f"Transaction rolled back due to: {exc_val}")
+            logger.warning(f"Transaction rolled back due to: {exc_val}")
         else:
             await self.session.commit()
             for entity in self.entities_to_refresh:
