@@ -100,7 +100,7 @@ class UserService(BaseService):
         self,
         user_data: CreateUserData,
         request: Optional[Request] = None,
-    ) -> Optional[models.User]:
+    ) -> models.User:
         """
         Creates a new user.
 
