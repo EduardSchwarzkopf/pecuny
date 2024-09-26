@@ -16,9 +16,7 @@ class BaseTransactionService(BaseService):
         self.service_model = service_model
         super().__init__(repository)
 
-    async def _get_transaction_by_id(
-        self, transaction_id: int
-    ) -> Optional[models.Transaction]:
+    async def __get_transaction_by_id(self, transaction_id: int):
         """
         Retrieves a transaction by ID.
 
