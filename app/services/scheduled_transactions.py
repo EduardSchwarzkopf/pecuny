@@ -101,27 +101,15 @@ class ScheduledTransactionService(BaseTransactionService):
             The created scheduled transaction if successful, None otherwise.
         """
         wallet_id = transaction_information.wallet_id
-        wallet = await self.repository.get(Wallet, transaction_information.wallet_id)
+        wallet = await self.wallet_service.get_wallet(user, wallet_id)
 
-        if wallet is None:
-            raise WalletNotFoundException(user, wallet_id)
-
-        if not WalletService.has_user_access_to_wallet(user, wallet):
-            raise WalletAccessDeniedException(user, wallet)
-
-        category = await self.repository.get(
-            TransactionCategory, transaction_information.category_id
+        category = await CategoryService().get_category(
+            user, transaction_information.category_id
         )
 
-        if category is None:
-            raise CategoryNotFoundException(user, transaction_information.category_id)
-
-        frequency = await self.repository.get(
-            Frequency, transaction_information.frequency_id
+        frequency = await FrequencyService().get_frequency(
+            transaction_information.frequency_id
         )
-
-        if frequency is None:
-            raise FrequencyNotFoundException(user, transaction_information.frequency_id)
 
         db_transaction_information = TransactionInformation(
             amount=transaction_information.amount,
