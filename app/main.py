@@ -6,22 +6,35 @@ from urllib.parse import parse_qs
 import arel
 import jwt
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fastapi import FastAPI, Request, Response, status
-from fastapi.encoders import jsonable_encoder
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from jwt import ExpiredSignatureError, InvalidSignatureError, InvalidTokenError
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 from starlette_wtf import CSRFProtectMiddleware
 
-from app import models, schemas, templates
+from app import models, templates
 from app.authentication.dependencies import get_strategy
 from app.authentication.strategies import JWTAccessRefreshStrategy
 from app.config import settings
 from app.database import db
+from app.exception_handler import (
+    access_denied_exception_handler,
+    forbidden_exception_handler,
+    http_exception_handler,
+    http_not_found_exception_handler,
+    internal_server_error_handler,
+    not_found_exception_handler,
+    unauthorized_exception_handler,
+    unhandled_exception_handler,
+    validation_exception_handler,
+)
+from app.exceptions.base_service_exception import (
+    EntityAccessDeniedException,
+    EntityNotFoundException,
+)
 from app.exceptions.http_exceptions import (
     HTTPForbiddenException,
     HTTPNotFoundException,
@@ -203,140 +216,14 @@ if _debug := os.getenv("DEBUG"):
     templates.env.globals["hot_reload"] = hot_reload
 
 
-@app.exception_handler(status.HTTP_401_UNAUTHORIZED)
-async def unauthorized_exception_handler(
-    request: Request, exc: HTTPUnauthorizedException
-):
-    """Exception handler for 401 Unauthorized errors.
+app.add_exception_handler(EntityAccessDeniedException, access_denied_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(EntityNotFoundException, not_found_exception_handler)
+app.add_exception_handler(HTTPNotFoundException, http_not_found_exception_handler)
+app.add_exception_handler(HTTPForbiddenException, forbidden_exception_handler)
+app.add_exception_handler(HTTPUnauthorizedException, unauthorized_exception_handler)
+app.add_exception_handler(HTTP_500_INTERNAL_SERVER_ERROR, internal_server_error_handler)
 
-    Args:
-        request: The request object.
-        exc: The HTTPUnauthorizedPageException object.
-
-    Returns:
-        Response: The response to return.
-
-    Raises:
-        None
-    """
-    if request.url.path.startswith("/api/"):
-        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
-
-    return templates.TemplateResponse(
-        "pages/auth/page_login.html",
-        {
-            "request": request,
-            "redirect": request.url.path,
-            "form": schemas.LoginForm(request),
-        },
-        status_code=exc.status_code,
-    )
-
-
-@app.exception_handler(status.HTTP_403_FORBIDDEN)
-async def forbidden_exception_handler(request: Request, exc: HTTPForbiddenException):
-    """
-    Handles exceptions with status code 403 (Forbidden).
-
-    Args:
-        request: The request object associated with the exception.
-        exc: The UnauthorizedPageException instance raised.
-
-    Returns:
-        JSONResponse or RedirectResponse based on the request path.
-
-    Raises:
-        None
-    """
-
-    if request.url.path.startswith("/api/"):
-        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
-
-    url = app.router.url_path_for("page_user_settings")
-
-    return RedirectResponse(url)
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """Exception handler for RequestValidationError.
-
-    Args:
-        request: The request object.
-        exc: The RequestValidationError object.
-
-    Returns:
-        Response: The response to return.
-
-    Raises:
-        None
-    """
-    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-    if request.url.path.startswith("/api/"):
-        return JSONResponse(
-            status_code=status_code,
-            content=jsonable_encoder({"detail": exc.errors(), "body": exc.body}),
-        )
-
-    return templates.TemplateResponse(
-        "exceptions/422.html",
-        {"request": request},
-        status_code=status_code,
-    )
-
-
-@app.exception_handler(status.HTTP_404_NOT_FOUND)
-async def page_not_found_exception_handler(
-    request: Request, exc: HTTPNotFoundException
-):
-    """Exception handler for 404 Page Not Found errors.
-
-    Args:
-        request: The request object.
-        exc: The HTTPException object.
-
-    Returns:
-        Response: The response to return.
-
-    Raises:
-        None
-    """
-    if request.url.path.startswith("/api/"):
-        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
-
-    return templates.TemplateResponse(
-        "exceptions/404.html",
-        {"request": request},
-        status_code=exc.status_code,
-    )
-
-
-@app.exception_handler(status.HTTP_500_INTERNAL_SERVER_ERROR)
-async def internal_server_error_handler(
-    request: Request, exc: HTTP_500_INTERNAL_SERVER_ERROR
-):
-    """
-    Handles internal server errors by logging the error details and
-    returning an appropriate response.
-
-    Args:
-        request: The incoming request object.
-        exc: The raised HTTPException.
-
-    Returns:
-        JSONResponse or TemplateResponse: Response based on the request path.
-    """
-
-    error_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-
-    logger.error(
-        "[INTERNAL SERVER ERROR] on path: %s | detail: %s", request.url.path, str(exc)
-    )
-    if request.url.path.startswith("/api/"):
-        return JSONResponse({"detail": "Internal server error"}, status_code=error_code)
-
-    return templates.TemplateResponse(
-        "exceptions/500.html",
-        {"request": request},
-        status_code=error_code,
-    )
+## Catch all
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(Exception, unhandled_exception_handler)
