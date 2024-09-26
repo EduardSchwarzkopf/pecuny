@@ -6,9 +6,7 @@ from app.repository import Repository
 from app.services.base_transaction import BaseTransactionService
 
 
-class TransactionService(
-    BaseTransactionService,
-):
+class TransactionService(BaseTransactionService):
     def __init__(self, repository: Optional[Repository] = None):
         super().__init__(models.Transaction, repository)
 
