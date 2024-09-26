@@ -68,22 +68,13 @@ class WalletService(BaseService):
 
         return db_wallet
 
-        raise WalletAccessDeniedException(user, wallet)
-
     async def delete_wallet(self, user: models.User, wallet_id: int) -> True:
 
-        wallet = await self.repository.get(models.Wallet, wallet_id)
+        wallet = await self.get_wallet(user, wallet_id)
+        await self.repository.delete(wallet)
+        return True
 
-        if wallet is None:
-            raise WalletNotFoundException(user, wallet_id)
-
-        if self.has_user_access_to_wallet(user, wallet):
-            await self.repository.delete(wallet)
-            return True
-
-        raise WalletAccessDeniedException(user, wallet)
-
-    async def check_max_wallets(self, user: models.User) -> bool:
+    async def has_reached_wallet_limit(self, user: models.User) -> bool:
         """
         Checks if the maximum number of wallets has been reached for a user.
 
