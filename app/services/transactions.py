@@ -10,6 +10,13 @@ class TransactionService(BaseTransactionService):
     def __init__(self, repository: Optional[Repository] = None):
         super().__init__(models.Transaction, repository)
 
+    async def __get_transaction_by_id(self, transaction_id: int):
+        return await self.repository.get(
+            self.service_model,
+            transaction_id,
+            load_relationships_list=[self.service_model.offset_transaction],
+        )
+
     async def get_transaction_list(
         self,
         user: models.User,
