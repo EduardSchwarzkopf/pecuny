@@ -209,6 +209,7 @@ class BaseTransactionService(BaseService):
 
         wallet_data = schemas.WalletData(**wallet.__dict__)
         wallet_data.balance = wallet.balance + amount_updated
+        await self.wallet_service.update_wallet(user, wallet.id, wallet_data)
 
         transaction_values = {
             "amount": transaction_information.amount,
