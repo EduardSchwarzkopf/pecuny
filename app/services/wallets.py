@@ -4,7 +4,7 @@ from app import models, schemas
 from app.config import settings
 from app.exceptions.wallet_service_exceptions import (
     WalletAccessDeniedException,
-    WalletNotFoundException,
+    WalletLimitReachedException,
 )
 from app.repository import Repository
 from app.services.base import BaseService
