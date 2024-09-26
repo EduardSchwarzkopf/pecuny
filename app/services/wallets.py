@@ -115,8 +115,26 @@ class WalletService(BaseService):
 
         return sum(wallet.balance for wallet in wallet_list)
 
-    @staticmethod
-    def has_user_access_to_wallet(user: models.User, wallet: models.Wallet) -> bool:
+    async def validate_access_to_wallet(
+        self, user: models.User, wallet_id: int
+    ) -> None:
+        """
+        Validates if the user has access to the wallet.
+
+        Args:
+            user: The user object.
+            wallet_id: The wallet ID.
+
+        Raises:
+            WalletAccessDeniedException: If the user does not have access to the wallet.
+        """
+
+        wallet = await self.__get_wallet_by_id(wallet_id)
+
+        if not self.has_user_access_to_wallet(user, wallet):
+            raise WalletAccessDeniedException(user, wallet)
+
+        return
         """
         Check if the user has access to the wallet.
 
