@@ -51,8 +51,6 @@ class CategoryService(BaseService):
 
         return category
 
-        return None
-
     # async def create_category(
     #     user: models.User, category: schemas.TransactionCategory
     # ) -> models.TransactionCategory:
