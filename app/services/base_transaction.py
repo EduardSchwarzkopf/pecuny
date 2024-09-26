@@ -185,6 +185,8 @@ class BaseTransactionService(BaseService):
             round(transaction_information.amount, 2) - transaction.information.amount
         )
 
+            offset_wallet = await self.wallet_service.get_wallet(
+                user, offset_transaction.wallet_id
             )
 
             offset_wallet.balance -= amount_updated
