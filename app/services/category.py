@@ -27,8 +27,8 @@ class CategoryService(BaseService):
         return await self.repository.get_all(models.TransactionCategory)
 
     async def get_category(
-        self, current_user: models.User, category_id: int
-    ) -> Optional[models.TransactionCategory]:
+        self, user: models.User, category_id: int
+    ) -> models.TransactionCategory:
         """
         Retrieves a transaction category by ID.
 
