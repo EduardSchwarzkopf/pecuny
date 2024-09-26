@@ -58,16 +58,9 @@ class ScheduledTransactionService(BaseTransactionService):
             transaction_id
         )
 
-        if scheduled_transaction is None:
-            raise ScheduledTransactionNotFoundException(user, transaction_id)
-
-        wallet = await self.repository.get(Wallet, scheduled_transaction.wallet_id)
-
-        if wallet is None:
-            raise WalletNotFoundException(user, scheduled_transaction.wallet_id)
-
-        if not WalletService.has_user_access_to_wallet(user, wallet):
-            raise WalletAccessDeniedException(user, wallet)
+        await self.wallet_service.validate_access_to_wallet(
+            user, scheduled_transaction.wallet_id
+        )
 
         return scheduled_transaction
 
@@ -91,13 +84,7 @@ class ScheduledTransactionService(BaseTransactionService):
             AccessDeniedException: If the user does not have access to the wallet.
         """
 
-        wallet = await self.repository.get(Wallet, wallet_id)
-
-        if wallet is None:
-            raise WalletNotFoundException(user, wallet_id)
-
-        if not WalletService.has_user_access_to_wallet(user, wallet):
-            raise WalletAccessDeniedException(user, wallet)
+        wallet = await WalletService().get_wallet(user, wallet_id)
 
         return await self.repository.filter_by(
             self.service_model,
@@ -166,13 +153,7 @@ class ScheduledTransactionService(BaseTransactionService):
         )
 
         if transaction_information.offset_wallet_id:
-            offset_wallet = await self.repository.get(Wallet, offset_wallet_id)
-
-            if offset_wallet is None:
-                raise WalletNotFoundException(user, offset_wallet_id)
-
-            if not WalletService.has_user_access_to_wallet(user, offset_wallet):
-                raise WalletAccessDeniedException(user, offset_wallet)
+            await self.wallet_service.validate_access_to_wallet(user, offset_wallet_id)
 
         await self.repository.save([transaction, db_transaction_information])
 
@@ -203,26 +184,11 @@ class ScheduledTransactionService(BaseTransactionService):
 
         transaction = await self._get_scheduled_transaction_by_id(transaction_id)
 
-        if transaction is None:
-            raise ScheduledTransactionNotFoundException(user, transaction_id)
-
-        wallet = await self.repository.get(Wallet, transaction_information.wallet_id)
-
-        if wallet is None:
-            raise WalletNotFoundException(user, transaction_information.wallet_id)
-
-        if not WalletService.has_user_access_to_wallet(user, wallet):
-            raise WalletAccessDeniedException(user, wallet)
+        await self.wallet_service.validate_access_to_wallet(user, transaction.wallet_id)
 
         if transaction.offset_wallet_id and transaction_information.offset_wallet_id:
             offset_wallet_id = transaction_information.offset_wallet_id
-            offset_wallet = await self.repository.get(Wallet, offset_wallet_id)
-
-            if offset_wallet is None:
-                raise WalletNotFoundException(user, offset_wallet_id)
-
-            if not WalletService.has_user_access_to_wallet(user, offset_wallet):
-                raise WalletAccessDeniedException(user, offset_wallet)
+            await self.wallet_service.validate_access_to_wallet(user, offset_wallet_id)
 
         transaction_values = {
             "amount": transaction_information.amount,
@@ -262,16 +228,7 @@ class ScheduledTransactionService(BaseTransactionService):
 
         transaction = await self._get_scheduled_transaction_by_id(transaction_id)
 
-        if transaction is None:
-            raise ScheduledTransactionNotFoundException(user, transaction_id)
-
-        wallet = await self.repository.get(Wallet, transaction.wallet_id)
-
-        if wallet is None:
-            raise WalletNotFoundException(user, transaction.wallet_id)
-
-        if not WalletService.has_user_access_to_wallet(user, wallet):
-            raise WalletAccessDeniedException(user, wallet)
+        await self.wallet_service.validate_access_to_wallet(user, transaction.wallet_id)
 
         created_transaction_list = await self.repository.filter_by(
             Transaction,
