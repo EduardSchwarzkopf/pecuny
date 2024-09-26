@@ -3,6 +3,7 @@ from typing import Optional, Type, Union
 from app import models, schemas
 from app.repository import Repository
 from app.services.base import BaseService
+from app.services.category import CategoryService
 from app.services.wallets import WalletService
 from app.utils.classes import RoundedDecimal
 
@@ -185,6 +186,8 @@ class BaseTransactionService(BaseService):
             round(transaction_information.amount, 2) - transaction.information.amount
         )
 
+        if transaction.offset_transaction:
+            offset_transaction: models.Transaction = transaction.offset_transaction
             offset_wallet = await self.wallet_service.get_wallet(
                 user, offset_transaction.wallet_id
             )
