@@ -19,7 +19,7 @@ class ScheduledTransactionService(BaseTransactionService):
 
     async def _get_scheduled_transaction_by_id(
         self, scheduled_transaction_id: int
-    ) -> Optional[TransactionScheduled]:
+    ) -> TransactionScheduled:
         """
         Retrieves a scheduled transaction by ID.
 
