@@ -1,24 +1,7 @@
 import asyncio
 from typing import Optional
 
-from app.exceptions.category_service_exceptions import CategoryNotFoundException
-from app.exceptions.frequency_service_exceptions import FrequencyNotFoundException
-from app.exceptions.scheduled_transaction_service_exceptions import (
-    ScheduledTransactionNotFoundException,
-)
-from app.exceptions.wallet_service_exceptions import (
-    WalletAccessDeniedException,
-    WalletNotFoundException,
-)
-from app.models import (
-    Frequency,
-    Transaction,
-    TransactionCategory,
-    TransactionInformation,
-    TransactionScheduled,
-    User,
-    Wallet,
-)
+from app.models import Transaction, TransactionInformation, TransactionScheduled, User
 from app.repository import Repository
 from app.schemas import (
     ScheduledTransactionInformationCreate,
