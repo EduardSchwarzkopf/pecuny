@@ -14,6 +14,7 @@ class BaseTransactionService(BaseService):
         repository: Optional[Repository] = None,
     ):
         self.service_model = service_model
+        self.wallet_service = WalletService(repository)
         super().__init__(repository)
 
     async def __get_transaction_by_id(self, transaction_id: int):
