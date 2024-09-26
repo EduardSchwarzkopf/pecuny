@@ -141,6 +141,7 @@ class UserService(BaseService):
             UserAlreadyExistsException: If a user with the given email already exists.
         """
 
+        # TODO: This needs to be refactored
         try:
             existing_user = await self.user_manager.get_by_email(email)
         except exceptions.UserNotExists:
