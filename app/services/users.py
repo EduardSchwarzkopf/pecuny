@@ -147,7 +147,7 @@ class UserService(BaseService):
             existing_user = None
 
         if existing_user is not None:
-            raise UserAlreadyExistsException(email)
+            raise UserAlreadyExistsException()
 
     async def verify_email(self, token: str) -> EmailVerificationStatus:
         """
