@@ -10,6 +10,7 @@ from starlette.status import (
 
 from app import models, schemas
 from app.date_manager import get_iso_timestring
+from app.exceptions.base_service_exception import EntityNotFoundException
 from app.repository import Repository
 from app.utils.classes import RoundedDecimal
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
