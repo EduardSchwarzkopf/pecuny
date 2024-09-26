@@ -40,7 +40,7 @@ class CategoryService(BaseService):
             TransactionCategory: The retrieved transaction category.
 
         Raises:
-            None
+            EntityAccessDeniedException: If the user does not have access to the category.
         """
 
         category = await self.repository.get(models.TransactionCategory, category_id)
