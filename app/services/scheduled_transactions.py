@@ -49,9 +49,6 @@ class ScheduledTransactionService(BaseTransactionService):
 
         Returns:
             The transaction with the specified ID.
-
-        Raises:
-            ScheduledTransactionNotFoundException: If the transaction does not exist.
         """
 
         scheduled_transaction = await self._get_scheduled_transaction_by_id(
@@ -78,10 +75,6 @@ class ScheduledTransactionService(BaseTransactionService):
 
         Returns:
             A list of transactions that match the criteria.
-
-        Raises:
-            WalletNotFoundException: If the wallet does not exist.
-            AccessDeniedException: If the user does not have access to the wallet.
         """
 
         wallet = await WalletService().get_wallet(user, wallet_id)
@@ -106,10 +99,6 @@ class ScheduledTransactionService(BaseTransactionService):
 
         Returns:
             The created scheduled transaction if successful, None otherwise.
-
-        Raises:
-            WalletNotFoundException: If the wallet does not exist.
-            AccessDeniedException: If the user does not have access to the wallet.
         """
         wallet_id = transaction_information.wallet_id
         wallet = await self.repository.get(Wallet, transaction_information.wallet_id)
@@ -175,11 +164,6 @@ class ScheduledTransactionService(BaseTransactionService):
 
         Returns:
             The updated scheduled transaction if successful, None otherwise.
-
-        Raises:
-            WalletNotFoundException: If the wallet does not exist.
-            ScheduledTransactionNotFoundException: If the transaction does not exist.
-            AccessDeniedException: If the user does not have access to the wallet.
         """
 
         transaction = await self._get_scheduled_transaction_by_id(transaction_id)
@@ -219,11 +203,6 @@ class ScheduledTransactionService(BaseTransactionService):
 
         Returns:
             bool: True if the scheduled transaction is successfully deleted, False otherwise.
-
-        Raises:
-            WalletNotFoundException: If the wallet does not exist.
-            ScheduledTransactionNotFoundException: If the transaction does not exist.
-            AccessDeniedException: If the user does not have access to the wallet.
         """
 
         transaction = await self._get_scheduled_transaction_by_id(transaction_id)
