@@ -24,7 +24,7 @@ class FrequencyService(BaseService):
 
         return await self.repository.get_all(models.Frequency)
 
-    async def get_frequency(self, frequency_id: int) -> Optional[models.Frequency]:
+    async def get_frequency(self, frequency_id: int) -> models.Frequency:
         """
         Get a specific transaction category by frequency ID.
 
