@@ -7,6 +7,8 @@ from app.exceptions.base_service_exception import (
 
 class WalletAccessDeniedException(EntityAccessDeniedException):
     def __init__(self, user: models.User, wallet: models.Wallet):
+        super().__init__(user, wallet)
+
 
 class WalletLimitReachedException(BaseServiceException):
     def __init__(self, user: models.User):
