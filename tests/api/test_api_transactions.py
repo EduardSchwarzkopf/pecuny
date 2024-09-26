@@ -214,8 +214,6 @@ async def test_delete_transactions_fail(test_user: models.User, repository: Repo
 
     wallet_refresh = await repository.get(models.Wallet, wallet_id)
 
-    assert wallet_refresh is not None
-
     wallet_balance_after = wallet_refresh.balance
 
     assert wallet_balance_after == wallet_balance
