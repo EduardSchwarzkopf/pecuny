@@ -43,6 +43,7 @@ async def make_http_request(  # pylint: disable=too-many-arguments
     method: RequestMethod = RequestMethod.POST,
     cookies: Optional[Cookies] = None,
     params: Optional[QueryParams] = None,
+    follow_redirects: Optional[bool] = False,
     files: Optional[dict[str, tuple[str, BufferedReader, str]]] = None,
 ) -> Response:
     """
@@ -73,13 +74,25 @@ async def make_http_request(  # pylint: disable=too-many-arguments
             client = await authorized_httpx_client(client, as_user)
 
         if method == RequestMethod.POST:
-            response = client.post(url, json=json, data=data, files=files)
+            response = client.post(
+                url,
+                json=json,
+                data=data,
+                files=files,
+                follow_redirects=follow_redirects,
+            )
         elif method == RequestMethod.PATCH:
-            response = client.patch(url, json=json, data=data, files=files)
+            response = client.patch(
+                url,
+                json=json,
+                data=data,
+                files=files,
+                follow_redirects=follow_redirects,
+            )
         elif method == RequestMethod.GET:
-            response = client.get(url, params=params)
+            response = client.get(url, params=params, follow_redirects=follow_redirects)
         elif method == RequestMethod.DELETE:
-            response = client.delete(url)
+            response = client.delete(url, follow_redirects=follow_redirects)
         else:
             raise ValueError(
                 f"Invalid method: {method}. Expected one of: get, post, patch, delete."
