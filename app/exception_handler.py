@@ -8,12 +8,7 @@ from fastapi.exception_handlers import (
     request_validation_exception_handler as _request_validation_exception_handler,
 )
 from fastapi.exceptions import HTTPException, RequestValidationError
-from fastapi.responses import (
-    JSONResponse,
-    PlainTextResponse,
-    RedirectResponse,
-    Response,
-)
+from fastapi.responses import JSONResponse, RedirectResponse, Response
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from app import templates
