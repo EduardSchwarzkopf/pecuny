@@ -37,9 +37,6 @@ async def unauthorized_exception_handler(
 
     Returns:
         Response: The response to return.
-
-    Raises:
-        None
     """
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
@@ -58,9 +55,6 @@ async def access_denied_exception_handler(
 
     Returns:
         Response: The response to return.
-
-    Raises:
-        None
     """
 
     err = HTTPNotFoundException()
