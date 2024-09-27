@@ -49,15 +49,7 @@ async def unauthorized_exception_handler(
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
-    return templates.TemplateResponse(
-        "pages/auth/page_login.html",
-        {
-            "request": request,
-            "redirect": request.url.path,
-            "form": schemas.LoginForm(request),
-        },
-        status_code=exc.status_code,
-    )
+    return RedirectResponse(request.url_for("login"))
 
 
 async def access_denied_exception_handler(
