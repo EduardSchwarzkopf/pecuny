@@ -89,15 +89,12 @@ async def forbidden_exception_handler(request: Request, exc: HTTPForbiddenExcept
 
     Returns:
         JSONResponse or RedirectResponse based on the request path.
-
-    Raises:
-        None
     """
 
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
-    url = request.url_for("page_user_settings")
+    url = request.url_for("dashboard")
 
     return RedirectResponse(url)
 
