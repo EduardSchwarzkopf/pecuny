@@ -57,15 +57,7 @@ async def access_denied_exception_handler(
         Response: The response to return.
     """
 
-    err = HTTPNotFoundException()
-    if request.url.path.startswith("/api/"):
-        return JSONResponse({"detail": err.detail}, status_code=err.status_code)
-
-    return templates.TemplateResponse(
-        "exceptions/404.html",
-        {"request": request},
-        status_code=err.status_code,
-    )
+    return await http_not_found_exception_handler(request, HTTPNotFoundException())
 
 
 async def forbidden_exception_handler(request: Request, exc: HTTPForbiddenException):
@@ -122,9 +114,7 @@ async def not_found_exception_handler(request: Request, exc: EntityNotFoundExcep
     Returns:
         Response: The response to return.
     """
-    return await http_not_found_exception_handler(
-        request, HTTPException(HTTP_404_NOT_FOUND, exc.message)
-    )
+    return await http_not_found_exception_handler(request, HTTPNotFoundException())
 
 
 async def http_not_found_exception_handler(
