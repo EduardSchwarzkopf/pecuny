@@ -16,7 +16,7 @@ from fastapi.responses import (
 )
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
-from app import schemas, templates
+from app import templates
 from app.exceptions.base_service_exception import (
     EntityAccessDeniedException,
     EntityNotFoundException,
