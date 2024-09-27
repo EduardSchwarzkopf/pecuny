@@ -108,9 +108,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
     Returns:
         Response: The response to return.
-
-    Raises:
-        None
     """
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
     if request.url.path.startswith("/api/"):
@@ -135,9 +132,6 @@ async def not_found_exception_handler(request: Request, exc: EntityNotFoundExcep
 
     Returns:
         Response: The response to return.
-
-    Raises:
-        None
     """
     status_code = status.HTTP_404_NOT_FOUND
     if request.url.path.startswith("/api/"):
@@ -161,9 +155,6 @@ async def http_not_found_exception_handler(
 
     Returns:
         Response: The response to return.
-
-    Raises:
-        None
     """
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
