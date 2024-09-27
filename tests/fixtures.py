@@ -19,8 +19,17 @@ from app.utils.enums import DatabaseFilterOperator, Frequency
 # pylint: disable=unused-argument
 
 
+@pytest.fixture(name="test_user_data", scope="session")
+async def test_user_data():
+    return schemas.UserCreate(
+        email="test_user@example.com",
+        password="password123",
+        displayname="test_user",
+    )
+
+
 @pytest.fixture(name="common_user_data", scope="session")
-def fixture_common_user_data():
+def fixture_common_user_data(test_user_data: schemas.UserCreate):
     """
     Fixture for common user data used in tests.
 
@@ -30,7 +39,7 @@ def fixture_common_user_data():
 
     return schemas.UserCreate(
         email="user123@example.com",
-        password="mypassword",
+        password=test_user_data.password,
         displayname="user",
     )
 
@@ -48,7 +57,9 @@ async def fixture_user_service():
 
 
 @pytest.fixture(name="create_test_users", scope="session")
-async def fixture_create_test_users(user_service: UserService):
+async def fixture_create_test_users(
+    user_service: UserService, test_user_data: schemas.UserCreate
+):
     """
     Fixture that creates test users.
 
@@ -59,7 +70,7 @@ async def fixture_create_test_users(user_service: UserService):
         None
     """
 
-    password = "password123"
+    password = test_user_data.password
     create_user_list = [
         ["user00@pytest.de", password, "User00"],
         ["user01@pytest.de", password, "User01"],
