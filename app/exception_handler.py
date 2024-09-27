@@ -166,36 +166,6 @@ async def http_not_found_exception_handler(
     )
 
 
-async def internal_server_error_handler(
-    request: Request, exc: HTTP_500_INTERNAL_SERVER_ERROR
-):
-    """
-    Handles internal server errors by logging the error details and
-    returning an appropriate response.
-
-    Args:
-        request: The incoming request object.
-        exc: The raised HTTPException.
-
-    Returns:
-        JSONResponse or TemplateResponse: Response based on the request path.
-    """
-
-    error_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-
-    logger.error(
-        "[INTERNAL SERVER ERROR] on path: %s | detail: %s", request.url.path, str(exc)
-    )
-    if request.url.path.startswith("/api/"):
-        return JSONResponse({"detail": "Internal server error"}, status_code=error_code)
-
-    return templates.TemplateResponse(
-        "exceptions/500.html",
-        {"request": request},
-        status_code=error_code,
-    )
-
-
 async def request_validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
@@ -222,20 +192,14 @@ async def http_exception_handler(
     This is a wrapper to the default HTTPException handler of FastAPI.
     This function will be called when a HTTPException is explicitly raised.
     """
-    logger.debug("Our custom http_exception_handler was called")
     return await _http_exception_handler(request, exc)
 
 
-async def unhandled_exception_handler(
-    request: Request, exc: Exception
-) -> PlainTextResponse:
+async def unhandled_exception_handler(request: Request, exc: Exception):
     """
     This middleware will log all unhandled exceptions.
     Unhandled exceptions are all exceptions that are not HTTPExceptions or RequestValidationErrors.
     """
-    logger.debug("Our custom unhandled_exception_handler was called")
-    host = getattr(getattr(request, "client", None), "host", None)
-    port = getattr(getattr(request, "client", None), "port", None)
     url = (
         f"{request.url.path}?{request.query_params}"
         if request.query_params
@@ -244,6 +208,17 @@ async def unhandled_exception_handler(
     exception_type, exception_value, exception_traceback = sys.exc_info()
     exception_name = getattr(exception_type, "__name__", None)
     logger.error(
-        f'{host}:{port} - "{request.method} {url}" 500 Internal Server Error <{exception_name}: {exception_value}>'
+        f"{request.method} {url} - 500 Internal Server Error <{exception_name}: {exception_value}> >> traceback:\n{exception_traceback}"
     )
-    return PlainTextResponse(str(exc), status_code=500)
+
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            {"detail": "Internal server error"},
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    return templates.TemplateResponse(
+        "exceptions/500.html",
+        {"request": request},
+        status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+    )
