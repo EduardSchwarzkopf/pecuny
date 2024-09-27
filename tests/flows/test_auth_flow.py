@@ -33,3 +33,32 @@ async def test_flow_logout(test_user: models.User):
     assert res.status_code == HTTP_401_UNAUTHORIZED
 
 
+async def test_flow_login(test_user: models.User, test_user_data: schemas.UserCreate):
+    """
+    Test function to verify the login process for a test user.
+
+    Args:
+        test_user (fixture): The test user object for login testing.
+    """
+
+    res = await make_http_request(
+        url="/login",
+        method=RequestMethod.POST,
+        data={"username": test_user.email, "password": test_user_data.password},
+    )
+
+    cookies: Cookies = res.cookies
+    access_token = cookies.get(settings.access_token_name)
+    refresh_token = cookies.get(settings.refresh_token_name)
+
+    assert access_token is not None
+    assert refresh_token is not None
+
+    res = await make_http_request(
+        url="/dashboard/",
+        method=RequestMethod.GET,
+        cookies=cookies,
+        follow_redirects=True,
+    )
+
+    assert res.status_code == 200
