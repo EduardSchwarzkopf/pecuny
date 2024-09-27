@@ -9,7 +9,7 @@ from fastapi.exception_handlers import (
 )
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse, Response
-from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 
 from app import templates
 from app.exceptions.base_service_exception import (
@@ -122,14 +122,8 @@ async def not_found_exception_handler(request: Request, exc: EntityNotFoundExcep
     Returns:
         Response: The response to return.
     """
-    status_code = status.HTTP_404_NOT_FOUND
-    if request.url.path.startswith("/api/"):
-        return JSONResponse({"detail": exc.message}, status_code)
-
-    return templates.TemplateResponse(
-        "exceptions/404.html",
-        {"request": request},
-        status_code,
+    return await http_not_found_exception_handler(
+        request, HTTPException(HTTP_404_NOT_FOUND, exc.message)
     )
 
 
