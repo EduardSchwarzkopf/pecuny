@@ -5,6 +5,8 @@ from app.database import db
 from app.models import Base
 from app.repository import Repository
 
+BASE_URL = "http://test"
+
 
 async def populate_db():
     """

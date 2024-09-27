@@ -10,6 +10,7 @@ from app.config import settings
 from app.main import app
 from app.repository import Repository
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
+from tests.conftest import BASE_URL
 
 
 async def authorized_httpx_client(client: AsyncClient, user: models.User):
@@ -63,7 +64,7 @@ async def make_http_request(  # pylint: disable=too-many-arguments
         ValueError: If an invalid method is provided.
     """
 
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    async with AsyncClient(app=app, base_url=BASE_URL) as client:
 
         if cookies:
             client.cookies = {**client.cookies, **cookies}
