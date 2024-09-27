@@ -1,7 +1,7 @@
 from httpx import Cookies
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from app import models
+from app import models, schemas
 from app.config import settings
 from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
@@ -31,3 +31,5 @@ async def test_flow_logout(test_user: models.User):
     )
 
     assert res.status_code == HTTP_401_UNAUTHORIZED
+
+
