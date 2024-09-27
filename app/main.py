@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from jwt import ExpiredSignatureError, InvalidSignatureError, InvalidTokenError
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_500_INTERNAL_SERVER_ERROR
 from starlette_wtf import CSRFProtectMiddleware
 
 from app import models, templates
@@ -222,6 +222,7 @@ app.add_exception_handler(EntityNotFoundException, not_found_exception_handler)
 app.add_exception_handler(HTTPNotFoundException, http_not_found_exception_handler)
 app.add_exception_handler(HTTPForbiddenException, forbidden_exception_handler)
 app.add_exception_handler(HTTPUnauthorizedException, unauthorized_exception_handler)
+app.add_exception_handler(HTTP_401_UNAUTHORIZED, unauthorized_exception_handler)
 app.add_exception_handler(HTTP_500_INTERNAL_SERVER_ERROR, internal_server_error_handler)
 
 ## Catch all
