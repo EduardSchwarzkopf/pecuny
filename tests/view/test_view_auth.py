@@ -1,10 +1,12 @@
 from typing import Optional
 
+import pytest
 from bs4 import BeautifulSoup, Tag
 from httpx import QueryParams
-from starlette.status import HTTP_200_OK
+from starlette.status import HTTP_200_OK, HTTP_307_TEMPORARY_REDIRECT
 
 from app.utils.enums import RequestMethod
+from tests.conftest import BASE_URL
 from tests.form_utils import base_form_test
 from tests.utils import make_http_request
 
@@ -128,3 +130,32 @@ async def test_view_reset_password():
 
     assert token_field["value"] == token_value
     assert token_field["type"] == "hidden"
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        ("/dashboard"),
+        ("/dashboard/wallets/1"),
+        ("/dashboard/wallets"),
+        ("/dashboard/wallets/1/import"),
+        ("/dashboard/wallets/9999999"),
+    ],
+)
+async def test_view_redirect_to_login_unauthenticated(url: str):
+    """
+    Test case for the view to redirect to the login page.
+
+    Returns:
+        None
+    """
+
+    res = await make_http_request(url, method=RequestMethod.GET, follow_redirects=True)
+
+    assert res.history[0].status_code == HTTP_307_TEMPORARY_REDIRECT
+
+    res.status_code == HTTP_200_OK
+
+    soup = BeautifulSoup(res.text)
+    form = soup.find("form")
+    assert form["action"] == f"{BASE_URL}/login"
