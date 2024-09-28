@@ -8,7 +8,11 @@ from fastapi.exception_handlers import (
 )
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse, Response
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import (
+    HTTP_404_NOT_FOUND,
+    HTTP_405_METHOD_NOT_ALLOWED,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+)
 
 from app import templates
 from app.exceptions.base_service_exception import (
@@ -18,6 +22,7 @@ from app.exceptions.base_service_exception import (
 from app.exceptions.http_exceptions import (
     HTTPForbiddenException,
     HTTPInternalServerException,
+    HTTPMethodNotAllowedException,
     HTTPNotFoundException,
     HTTPUnauthorizedException,
 )
@@ -72,12 +77,7 @@ async def forbidden_exception_handler(request: Request, exc: HTTPForbiddenExcept
         JSONResponse or RedirectResponse based on the request path.
     """
 
-    if request.url.path.startswith("/api/"):
-        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
-
-    url = request.url_for("dashboard")
-
-    return RedirectResponse(url)
+    return await http_not_found_exception_handler(request, HTTPNotFoundException())
 
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -131,6 +131,27 @@ async def http_not_found_exception_handler(
     return templates.TemplateResponse(
         request,
         "exceptions/404.html",
+        status_code=exc.status_code,
+    )
+
+
+async def http_405_exception_handler(
+    request: Request, exc: HTTP_405_METHOD_NOT_ALLOWED
+) -> JSONResponse:
+    return await http_method_not_allowed_exception_handler(
+        request, HTTPMethodNotAllowedException()
+    )
+
+
+async def http_method_not_allowed_exception_handler(
+    request: Request, exc: HTTPMethodNotAllowedException
+) -> JSONResponse:
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+
+    return templates.TemplateResponse(
+        request,
+        "exceptions/405.html",
         status_code=exc.status_code,
     )
 
