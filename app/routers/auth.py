@@ -219,8 +219,9 @@ async def verify_email(
 
     status = await user_service.verify_email(token)
     return templates.TemplateResponse(
+        request,
         f"{TEMPLATE_PREFIX}/page_email_verify.html",
-        {"request": request, "verification_status": status.value},
+        {"verification_status": status.value},
     )
 
 
