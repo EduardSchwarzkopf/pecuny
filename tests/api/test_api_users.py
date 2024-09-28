@@ -5,7 +5,7 @@ from starlette.status import (
     HTTP_200_OK,
     HTTP_204_NO_CONTENT,
     HTTP_401_UNAUTHORIZED,
-    HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
 )
 
 from app import models, schemas
@@ -151,7 +151,7 @@ async def test_invalid_updated_user(
         as_user=active_verified_user,
     )
 
-    assert res.status_code == HTTP_403_FORBIDDEN
+    assert res.status_code == HTTP_404_NOT_FOUND
 
 
 async def test_delete_self(active_verified_user: models.User, repository: Repository):
@@ -189,7 +189,7 @@ async def test_invalid_delete_other_user(
         as_user=active_verified_user,
     )
 
-    assert res.status_code == HTTP_403_FORBIDDEN
+    assert res.status_code == HTTP_404_NOT_FOUND
 
     refresh_user: Optional[models.User] = await repository.get(
         models.User, test_user.id
