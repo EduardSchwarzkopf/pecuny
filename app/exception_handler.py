@@ -98,8 +98,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         )
 
     return templates.TemplateResponse(
+        request,
         "exceptions/422.html",
-        {"request": request},
         status_code=status_code,
     )
 
