@@ -19,9 +19,7 @@ async def test_view_not_found_error():
 
 
 async def test_view_internal_server_error():
-    res = await make_http_request(
-        "/error/raise-test-error/500", method=RequestMethod.GET
-    )
+    res = await make_http_request("/error/raise/500", method=RequestMethod.GET)
 
     assert res.status_code == HTTP_500_INTERNAL_SERVER_ERROR
 
