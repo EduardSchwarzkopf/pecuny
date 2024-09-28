@@ -105,15 +105,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 async def not_found_exception_handler(request: Request, exc: EntityNotFoundException):
-    """Exception handler for EntityNotFound errors.
+    return await http_not_found_exception_handler(request, HTTPNotFoundException())
 
-    Args:
-        request: The request object.
-        exc: The EntityNotFoundException object.
 
-    Returns:
-        Response: The response to return.
-    """
+# status code 404 handler
+async def http_404_exception_handler(request: Request, exc: HTTP_404_NOT_FOUND):
     return await http_not_found_exception_handler(request, HTTPNotFoundException())
 
 
