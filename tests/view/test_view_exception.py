@@ -1,5 +1,11 @@
 from bs4 import BeautifulSoup
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import (
+    HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
+    HTTP_405_METHOD_NOT_ALLOWED,
+    HTTP_422_UNPROCESSABLE_ENTITY,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+)
 
 from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
@@ -14,14 +20,16 @@ async def test_view_not_found_error():
 
     soup = BeautifulSoup(res.text, features="html.parser")
 
-    home_link = soup.find("a", {"href": "/"})
-    assert home_link is not None
+    assert soup.find("a", {"href": "/"}) is not None
 
 
 async def test_view_internal_server_error():
-    res = await make_http_request("/error/raise/500", method=RequestMethod.GET)
+    status_code = HTTP_500_INTERNAL_SERVER_ERROR
+    res = await make_http_request(
+        f"/errors/raise/{status_code}", method=RequestMethod.GET
+    )
 
-    assert res.status_code == HTTP_500_INTERNAL_SERVER_ERROR
+    assert res.status_code == status_code
 
     soup = BeautifulSoup(res.text, features="html.parser")
 
