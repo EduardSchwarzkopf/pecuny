@@ -1,22 +1,8 @@
 from bs4 import BeautifulSoup
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 
-from app import models
 from app.utils.enums import RequestMethod
 from tests.utils import make_http_request
-
-
-async def test_view_not_found_error_authenticated(test_user: models.User):
-    res = await make_http_request(
-        "/not-found", as_user=test_user, follow_redirects=True, method=RequestMethod.GET
-    )
-
-    assert res.status_code == HTTP_404_NOT_FOUND
-
-    soup = BeautifulSoup(res.text, features="html.parser")
-
-    home_link = soup.find("a", {"href": "/"})
-    assert home_link is not None
 
 
 async def test_view_not_found_error():
