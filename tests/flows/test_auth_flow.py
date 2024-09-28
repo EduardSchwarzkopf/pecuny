@@ -65,4 +65,4 @@ async def test_flow_login(test_user: models.User, test_user_data: schemas.UserCr
         follow_redirects=True,
     )
 
-    assert res.status_code == 200
+    assert res.status_code == HTTP_200_OK
