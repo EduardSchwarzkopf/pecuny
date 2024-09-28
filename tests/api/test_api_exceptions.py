@@ -14,14 +14,14 @@ from tests.utils import make_http_request
 
 
 async def assert_error_response(
-    status_code: int, excpected_status_code: Optional[int] = None
+    status_code: int, expected_status_code: Optional[int] = None
 ):
     res = await make_http_request(
         f"/api/errors/raise/{status_code}", method=RequestMethod.GET
     )
 
-    if excpected_status_code:
-        assert res.status_code == excpected_status_code
+    if expected_status_code:
+        assert res.status_code == expected_status_code
     else:
         assert res.status_code == status_code
 
