@@ -12,7 +12,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from jwt import ExpiredSignatureError, InvalidSignatureError, InvalidTokenError
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.status import HTTP_401_UNAUTHORIZED
+from starlette.status import (
+    HTTP_401_UNAUTHORIZED,
+    HTTP_404_NOT_FOUND,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+)
 from starlette_wtf import CSRFProtectMiddleware
 
 from app import models, templates
@@ -23,8 +27,11 @@ from app.database import db
 from app.exception_handler import (
     access_denied_exception_handler,
     forbidden_exception_handler,
+    http_404_exception_handler,
+    http_500_exception_handler,
     http_exception_handler,
     http_not_found_exception_handler,
+    internal_server_exception_handler,
     not_found_exception_handler,
     unauthorized_exception_handler,
     unhandled_exception_handler,
@@ -36,6 +43,7 @@ from app.exceptions.base_service_exception import (
 )
 from app.exceptions.http_exceptions import (
     HTTPForbiddenException,
+    HTTPInternalServerException,
     HTTPNotFoundException,
     HTTPUnauthorizedException,
 )
@@ -215,13 +223,20 @@ if _debug := os.getenv("DEBUG"):
     templates.env.globals["hot_reload"] = hot_reload
 
 
-app.add_exception_handler(EntityAccessDeniedException, access_denied_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
+
 app.add_exception_handler(EntityNotFoundException, not_found_exception_handler)
 app.add_exception_handler(HTTPNotFoundException, http_not_found_exception_handler)
+app.add_exception_handler(HTTP_404_NOT_FOUND, http_404_exception_handler)
+
+app.add_exception_handler(EntityAccessDeniedException, access_denied_exception_handler)
 app.add_exception_handler(HTTPForbiddenException, forbidden_exception_handler)
 app.add_exception_handler(HTTPUnauthorizedException, unauthorized_exception_handler)
 app.add_exception_handler(HTTP_401_UNAUTHORIZED, unauthorized_exception_handler)
+app.add_exception_handler(
+    HTTPInternalServerException, internal_server_exception_handler
+)
+app.add_exception_handler(HTTP_500_INTERNAL_SERVER_ERROR, http_500_exception_handler)
 
 ## Catch all
 app.add_exception_handler(HTTPException, http_exception_handler)
