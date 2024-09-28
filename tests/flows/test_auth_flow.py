@@ -1,5 +1,5 @@
 from httpx import Cookies
-from starlette.status import HTTP_401_UNAUTHORIZED
+from starlette.status import HTTP_200_OK
 
 from app import models, schemas
 from app.config import settings
@@ -27,10 +27,14 @@ async def test_flow_logout(test_user: models.User):
     assert refresh_token == '""'
 
     res = await make_http_request(
-        url="/dashboard/", method=RequestMethod.GET, cookies=cookies
+        url="/dashboard/",
+        method=RequestMethod.GET,
+        cookies=cookies,
+        follow_redirects=True,
     )
 
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTP_200_OK
+    assert res.url.path == "/login"
 
 
 async def test_flow_login(test_user: models.User, test_user_data: schemas.UserCreate):
