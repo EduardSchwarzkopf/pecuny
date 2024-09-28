@@ -1,18 +1,10 @@
-from typing import Union
+from typing import Type, TypeVar, Union
 
 from fastapi import Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exception_handlers import http_exception_handler as _http_exception_handler
-from fastapi.exception_handlers import (
-    request_validation_exception_handler as _request_validation_exception_handler,
-)
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse, Response
-from starlette.status import (
-    HTTP_404_NOT_FOUND,
-    HTTP_405_METHOD_NOT_ALLOWED,
-    HTTP_500_INTERNAL_SERVER_ERROR,
-)
 
 from app import templates
 from app.exceptions.base_service_exception import (
@@ -30,43 +22,50 @@ from app.exceptions.http_exceptions import (
 from app.logger import get_logger
 
 logger = get_logger(__name__)
+HTTPExceptionT = TypeVar("HTTPExceptionT", bound=HTTPException)
+
+
+async def __get_http_exception(
+    exc_class_or_status_code: int | HTTPExceptionT, exception: Type[HTTPExceptionT]
+) -> HTTPExceptionT:
+
+    if isinstance(exc_class_or_status_code, int):
+        return exception()
+
+    return exc_class_or_status_code
 
 
 async def unauthorized_exception_handler(
-    request: Request, exc: HTTPUnauthorizedException
+    request: Request, exc_class_or_status_code: int | HTTPUnauthorizedException
 ):
-    """Exception handler for 401 Unauthorized errors.
 
-    Args:
-        request: The request object.
-        exc: The HTTPUnauthorizedPageException object.
+    exc = await __get_http_exception(
+        exc_class_or_status_code, HTTPUnauthorizedException
+    )
 
-    Returns:
-        Response: The response to return.
-    """
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
     return RedirectResponse(request.url_for("login"))
 
 
-async def access_denied_exception_handler(
+async def entity_not_found_exception_handler(
+    request: Request, exc: EntityNotFoundException
+):
+
+    return await not_found_exception_handler(request, HTTPNotFoundException())
+
+
+async def entity_access_denied_exception_handler(
     request: Request, exc: EntityAccessDeniedException
 ):
-    """Exception handler for EntityAccessDeniedException.
 
-    Args:
-        request: The request object.
-        exc: The EntityAccessDeniedException object.
-
-    Returns:
-        Response: The response to return.
-    """
-
-    return await http_not_found_exception_handler(request, HTTPNotFoundException())
+    return await not_found_exception_handler(request, HTTPNotFoundException())
 
 
-async def forbidden_exception_handler(request: Request, exc: HTTPForbiddenException):
+async def forbidden_exception_handler(
+    request: Request, exc_class_or_status_code: int | HTTPForbiddenException
+):
     """
     Handles exceptions with status code 403 (Forbidden).
 
@@ -78,10 +77,12 @@ async def forbidden_exception_handler(request: Request, exc: HTTPForbiddenExcept
         JSONResponse or RedirectResponse based on the request path.
     """
 
-    return await http_not_found_exception_handler(request, HTTPNotFoundException())
+    return await not_found_exception_handler(request, HTTPNotFoundException())
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(
+    request: Request, exc_class_or_status_code: int | RequestValidationError
+):
     """Exception handler for RequestValidationError.
 
     Args:
@@ -91,6 +92,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     Returns:
         Response: The response to return.
     """
+    exc = exc_class_or_status_code
+
+    if isinstance(exc_class_or_status_code, int):
+        exc = RequestValidationError([])
+
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
     if request.url.path.startswith("/api/"):
         return JSONResponse(
@@ -105,16 +111,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-async def not_found_exception_handler(request: Request, exc: EntityNotFoundException):
-    return await http_not_found_exception_handler(request, HTTPNotFoundException())
-
-
-async def http_404_exception_handler(request: Request, exc: HTTP_404_NOT_FOUND):
-    return await http_not_found_exception_handler(request, HTTPNotFoundException())
-
-
-async def http_not_found_exception_handler(
-    request: Request, exc: HTTPNotFoundException
+async def not_found_exception_handler(
+    request: Request, exc_class_or_status_code: int | HTTPNotFoundException
 ):
     """Exception handler for 404 Page Not Found errors.
 
@@ -125,6 +123,8 @@ async def http_not_found_exception_handler(
     Returns:
         Response: The response to return.
     """
+
+    exc = await __get_http_exception(exc_class_or_status_code, HTTPNotFoundException)
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
@@ -135,8 +135,8 @@ async def http_not_found_exception_handler(
     )
 
 
-async def http_bad_request_exception_handler(
-    request: Request, exc: HTTPBadRequestException
+async def bad_request_exception_handler(
+    request: Request, exc_class_or_status_code: int | HTTPBadRequestException
 ):
     """Exception handler for 400 Bad Request errors.
 
@@ -147,6 +147,8 @@ async def http_bad_request_exception_handler(
     Returns:
         Response: The response to return.
     """
+    exc = await __get_http_exception(exc_class_or_status_code, HTTPBadRequestException)
+
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
@@ -157,21 +159,14 @@ async def http_bad_request_exception_handler(
     )
 
 
-async def http_400_exception_handler(request: Request, exc: HTTPBadRequestException):
-    return await http_bad_request_exception_handler(request, HTTPBadRequestException())
-
-
-async def http_405_exception_handler(
-    request: Request, exc: HTTP_405_METHOD_NOT_ALLOWED
+async def method_not_allowed_exception_handler(
+    request: Request, exc_class_or_status_code: int | HTTPMethodNotAllowedException
 ) -> JSONResponse:
-    return await http_method_not_allowed_exception_handler(
-        request, HTTPMethodNotAllowedException()
+
+    exc = await __get_http_exception(
+        exc_class_or_status_code, HTTPMethodNotAllowedException
     )
 
-
-async def http_method_not_allowed_exception_handler(
-    request: Request, exc: HTTPMethodNotAllowedException
-) -> JSONResponse:
     if request.url.path.startswith("/api/"):
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
@@ -182,51 +177,18 @@ async def http_method_not_allowed_exception_handler(
     )
 
 
-async def request_validation_exception_handler(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
-    """
-    This is a wrapper to the default RequestValidationException handler of FastAPI.
-    This function will be called when client input is not valid.
-    """
-    logger.debug("Our custom request_validation_exception_handler was called")
-    body = await request.body()
-    query_params = request.query_params._dict  # pylint: disable=protected-access
-    detail = {
-        "errors": exc.errors(),
-        "body": body.decode(),
-        "query_params": query_params,
-    }
-    logger.info(detail)
-    return await _request_validation_exception_handler(request, exc)
-
-
-async def http_exception_handler(
-    request: Request, exc: HTTPException
+async def unhandeled_http_exception_handler(
+    request: Request, exc_class_or_status_code: int | HTTPException
 ) -> Union[JSONResponse, Response]:
-    """
-    This is a wrapper to the default HTTPException handler of FastAPI.
-    This function will be called when a HTTPException is explicitly raised.
-    """
-    return await _http_exception_handler(request, exc)
+    exc = await __get_http_exception(exc_class_or_status_code, HTTPException)
+    return await internal_server_exception_handler(request, exc)
 
 
-async def unhandled_exception_handler(request: Request, exc: Exception):
-    """
-    This middleware will log all unhandled exceptions.
-    Unhandled exceptions are all exceptions that are not HTTPExceptions or RequestValidationErrors.
-    """
+async def unhandled_exception_handler(request: Request, exc: Exception | int):
+
     return await internal_server_exception_handler(
         request,
         HTTPInternalServerException(),
-    )
-
-
-async def http_500_exception_handler(
-    request: Request, exc: HTTP_500_INTERNAL_SERVER_ERROR
-):
-    return await internal_server_exception_handler(
-        request, HTTPInternalServerException()
     )
 
 

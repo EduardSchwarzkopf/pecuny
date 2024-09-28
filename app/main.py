@@ -15,6 +15,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
+    HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     HTTP_405_METHOD_NOT_ALLOWED,
     HTTP_500_INTERNAL_SERVER_ERROR,
@@ -27,19 +28,15 @@ from app.authentication.strategies import JWTAccessRefreshStrategy
 from app.config import settings
 from app.database import db
 from app.exception_handler import (
-    access_denied_exception_handler,
+    bad_request_exception_handler,
+    entity_access_denied_exception_handler,
+    entity_not_found_exception_handler,
     forbidden_exception_handler,
-    http_400_exception_handler,
-    http_404_exception_handler,
-    http_405_exception_handler,
-    http_500_exception_handler,
-    http_bad_request_exception_handler,
-    http_exception_handler,
-    http_method_not_allowed_exception_handler,
-    http_not_found_exception_handler,
     internal_server_exception_handler,
+    method_not_allowed_exception_handler,
     not_found_exception_handler,
     unauthorized_exception_handler,
+    unhandeled_http_exception_handler,
     unhandled_exception_handler,
     validation_exception_handler,
 )
@@ -47,14 +44,7 @@ from app.exceptions.base_service_exception import (
     EntityAccessDeniedException,
     EntityNotFoundException,
 )
-from app.exceptions.http_exceptions import (
-    HTTPBadRequestException,
-    HTTPForbiddenException,
-    HTTPInternalServerException,
-    HTTPMethodNotAllowedException,
-    HTTPNotFoundException,
-    HTTPUnauthorizedException,
-)
+from app.exceptions.http_exceptions import HTTPInternalServerException
 from app.logger import get_logger
 from app.middleware import HeaderLinkMiddleware
 from app.repository import Repository
@@ -231,29 +221,24 @@ if _debug := os.getenv("DEBUG"):
     templates.env.globals["hot_reload"] = hot_reload
 
 
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-
-app.add_exception_handler(EntityNotFoundException, not_found_exception_handler)
-app.add_exception_handler(HTTPNotFoundException, http_not_found_exception_handler)
-app.add_exception_handler(HTTP_404_NOT_FOUND, http_404_exception_handler)
-
-app.add_exception_handler(HTTP_405_METHOD_NOT_ALLOWED, http_405_exception_handler)
 app.add_exception_handler(
-    HTTPMethodNotAllowedException, http_method_not_allowed_exception_handler
+    EntityAccessDeniedException, entity_access_denied_exception_handler
 )
+app.add_exception_handler(EntityNotFoundException, entity_not_found_exception_handler)
 
-app.add_exception_handler(HTTPBadRequestException, http_bad_request_exception_handler)
-app.add_exception_handler(HTTP_400_BAD_REQUEST, http_400_exception_handler)
-
-app.add_exception_handler(EntityAccessDeniedException, access_denied_exception_handler)
-app.add_exception_handler(HTTPForbiddenException, forbidden_exception_handler)
-app.add_exception_handler(HTTPUnauthorizedException, unauthorized_exception_handler)
+app.add_exception_handler(HTTP_400_BAD_REQUEST, bad_request_exception_handler)
 app.add_exception_handler(HTTP_401_UNAUTHORIZED, unauthorized_exception_handler)
+app.add_exception_handler(HTTP_403_FORBIDDEN, forbidden_exception_handler)
+app.add_exception_handler(HTTP_404_NOT_FOUND, not_found_exception_handler)
 app.add_exception_handler(
-    HTTPInternalServerException, internal_server_exception_handler
+    HTTP_405_METHOD_NOT_ALLOWED, method_not_allowed_exception_handler
 )
-app.add_exception_handler(HTTP_500_INTERNAL_SERVER_ERROR, http_500_exception_handler)
+app.add_exception_handler(
+    HTTP_500_INTERNAL_SERVER_ERROR, internal_server_exception_handler
+)
 
-## Catch all
-app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)  # 422
+
+## Catch the unhandeled
+app.add_exception_handler(HTTPException, unhandeled_http_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
