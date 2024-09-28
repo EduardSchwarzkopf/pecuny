@@ -6,6 +6,7 @@ from app.exceptions.http_exceptions import (
     HTTPBadRequestException,
     HTTPForbiddenException,
     HTTPInternalServerException,
+    HTTPMethodNotAllowedException,
     HTTPNotFoundException,
     HTTPUnauthorizedException,
 )
@@ -36,5 +37,8 @@ async def raise_error(status_code: int):
 
     if status_code == 401:
         raise HTTPUnauthorizedException()
+
+    if status_code == 405:
+        raise HTTPMethodNotAllowedException()
 
     raise HTTPException(status_code=status_code, detail="Custom error")
