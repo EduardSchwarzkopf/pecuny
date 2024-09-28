@@ -28,16 +28,29 @@ async def test_view_internal_server_error():
     assert soup.find("h1").text == "✖⸑✖"
 
 
-def test_view_unauthorized_error():
-    raise NotImplementedError()
+async def test_view_request_validation_error():
+    status_code = HTTP_422_UNPROCESSABLE_ENTITY
+    res = await make_http_request(
+        f"/errors/raise/{status_code}", method=RequestMethod.GET
+    )
+
+    assert res.status_code == status_code
+
+    soup = BeautifulSoup(res.text, features="html.parser")
+
+    assert soup.find("p") is not None
+    assert soup.find("a", {"href": "/"}) is not None
 
 
-def test_view_request_validation_error():
-    raise NotImplementedError()
+async def test_view_forbidden_error():
+    res = await make_http_request(
+        f"/errors/raise/{HTTP_403_FORBIDDEN}", method=RequestMethod.GET
+    )
 
+    assert res.status_code == HTTP_404_NOT_FOUND
+    soup = BeautifulSoup(res.text, features="html.parser")
 
-def test_view_forbidden_error():
-    raise NotImplementedError()
+    assert soup.find("a", {"href": "/"}) is not None
 
 
 def test_view_timeout_error():
