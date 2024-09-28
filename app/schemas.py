@@ -36,6 +36,10 @@ StringContr = Annotated[
 ]
 
 
+def serialize_rounded_decimal(value: Decimal) -> float:
+    return float(value)
+
+
 class EmailSchema(BaseModel):
     email: list[EmailStr]
     body: dict[str, Any]
@@ -77,6 +81,11 @@ class WalletUpdate(Base):
         description="The wallet balance rounded to two decimal places.",
     )
     model_config = ConfigDict(json_encoders={Decimal: float})
+
+    # TODO: Use field_serializer for response schemase
+    # @field_serializer("balance")
+    # def serialize_balance(self, balance: Decimal, _info):
+    #     return serialize_rounded_decimal(balance)
 
 
 class TransactionInformationBase(BaseModel):
