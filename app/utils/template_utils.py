@@ -77,7 +77,7 @@ def render_template(
     if context_extra is None:
         context_extra = {}
 
-    return templates.TemplateResponse(template, {**context, **context_extra})
+    return templates.TemplateResponse(request, template, {**context, **context_extra})
 
 
 def render_form_template(template: str, request: Request, form: StarletteForm):
