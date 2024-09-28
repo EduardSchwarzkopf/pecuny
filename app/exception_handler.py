@@ -1,4 +1,3 @@
-import sys
 from typing import Union
 
 from fastapi import Request, status
@@ -18,12 +17,13 @@ from app.exceptions.base_service_exception import (
 )
 from app.exceptions.http_exceptions import (
     HTTPForbiddenException,
+    HTTPInternalServerException,
     HTTPNotFoundException,
     HTTPUnauthorizedException,
 )
 from app.logger import get_logger
 
-logger = get_logger("")
+logger = get_logger(__name__)
 
 
 async def unauthorized_exception_handler(
@@ -169,25 +169,43 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     This middleware will log all unhandled exceptions.
     Unhandled exceptions are all exceptions that are not HTTPExceptions or RequestValidationErrors.
     """
+    return await internal_server_exception_handler(
+        request,
+        HTTPInternalServerException(),
+    )
+
+
+async def http_500_exception_handler(
+    request: Request, exc: HTTP_500_INTERNAL_SERVER_ERROR
+):
+    return await internal_server_exception_handler(
+        request, HTTPInternalServerException()
+    )
+
+
+async def internal_server_exception_handler(
+    request: Request, exc: HTTPInternalServerException
+):
     url = (
         f"{request.url.path}?{request.query_params}"
         if request.query_params
         else request.url.path
     )
-    exception_type, exception_value, exception_traceback = sys.exc_info()
-    exception_name = getattr(exception_type, "__name__", None)
-    logger.error(
-        f"{request.method} {url} - 500 Internal Server Error <{exception_name}: {exception_value}> >> traceback:\n{exception_traceback}"
+
+    exception_name = exc.__class__.__name__
+
+    logger.exception(
+        f"{request.method} {url} - [500 INTERNAL SERVER ERROR] {exception_name}"
     )
 
     if request.url.path.startswith("/api/"):
         return JSONResponse(
             {"detail": "Internal server error"},
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=exc.status_code,
         )
 
     return templates.TemplateResponse(
+        request,
         "exceptions/500.html",
-        {"request": request},
-        status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+        status_code=exc.status_code,
     )
