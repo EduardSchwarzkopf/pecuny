@@ -1,13 +1,14 @@
+{% import 'macros/buttons.html' as btn %}
 {% extends "layouts/base.html" %}
 
 {% block content %}
 <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-    <h1 class="text-4xl font-bold mb-4 text-red-600">422 Unprocessable Entity</h1>
+    <h1 class="text-4xl font-bold mb-4 text-red-600">We encountered a tiny hiccup with your input.</h1>
     <p class="text-xl mb-4">
-        Oops, we could not process the request due to semantic errors.
+        Please review your input and try again.
     </p>
-    <a href="/" class="text-blue-500 hover:underline">
-        Go back to the homepage
+    <a href="/">
+        {{ btn.button('Back home') }}
     </a>
 </div>
 {% endblock %}
