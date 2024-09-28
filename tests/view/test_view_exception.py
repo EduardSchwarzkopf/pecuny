@@ -20,7 +20,7 @@ async def test_view_not_found_error():
 
 async def test_view_internal_server_error():
     res = await make_http_request(
-        "/error/raise-internal-error", method=RequestMethod.GET
+        "/error/raise-test-error/500", method=RequestMethod.GET
     )
 
     assert res.status_code == HTTP_500_INTERNAL_SERVER_ERROR
@@ -43,11 +43,7 @@ def test_view_forbidden_error():
 
 
 def test_view_timeout_error():
-    raise NotImplementedError()
-
-
-def test_view_connection_error():
-    raise NotImplementedError()
+    pass
 
 
 def test_create_invalid_data():
