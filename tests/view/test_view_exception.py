@@ -53,13 +53,18 @@ async def test_view_forbidden_error():
     assert soup.find("a", {"href": "/"}) is not None
 
 
-def test_view_timeout_error():
-    pass
+async def test_view_method_not_allowed():
+    status_code = HTTP_405_METHOD_NOT_ALLOWED
+    res = await make_http_request(
+        f"/errors/raise/{status_code}", method=RequestMethod.GET
+    )
 
+    assert res.status_code == status_code
 
-def test_create_invalid_data():
-    raise NotImplementedError()
+    res_redirect = await make_http_request(
+        f"/errors/raise/{status_code}", method=RequestMethod.GET, follow_redirects=True
+    )
 
+    soup = BeautifulSoup(res_redirect.text, features="html.parser")
 
-def test_view_method_not_allowed():
-    raise NotImplementedError()
+    assert soup.find("a", {"href": "/"}) is not None
