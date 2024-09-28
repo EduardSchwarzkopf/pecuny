@@ -3,6 +3,7 @@ from fastapi.exceptions import RequestValidationError
 
 
 def raise_http_error(status_code: int):
+
     if status_code == 400:
         raise HTTPBadRequestException()
 
@@ -23,6 +24,9 @@ def raise_http_error(status_code: int):
 
     if status_code == 500:
         raise HTTPInternalServerException()
+
+    if status_code == 666:
+        raise Exception("This is a custom exception.")
 
     raise HTTPException(status_code=status_code, detail="Custom error")
 
@@ -52,8 +56,8 @@ class HTTPNotFoundException(HTTPException):
 
 
 class HTTPBadRequestException(HTTPException):
-    def __init__(self):
-        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request.")
+    def __init__(self, detail: str = "Bad Request."):
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
 
 class HTTPInternalServerException(HTTPException):
