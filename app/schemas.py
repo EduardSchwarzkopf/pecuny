@@ -50,8 +50,7 @@ class UserCreate(schemas.BaseUserCreate):
 
 
 class Base(BaseModel):
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(form_attributes=True)
 
 
 class UserUpdate(schemas.BaseUserUpdate):
