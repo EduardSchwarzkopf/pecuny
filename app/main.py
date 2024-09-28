@@ -15,6 +15,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.status import (
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
+    HTTP_405_METHOD_NOT_ALLOWED,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 from starlette_wtf import CSRFProtectMiddleware
@@ -28,8 +29,10 @@ from app.exception_handler import (
     access_denied_exception_handler,
     forbidden_exception_handler,
     http_404_exception_handler,
+    http_405_exception_handler,
     http_500_exception_handler,
     http_exception_handler,
+    http_method_not_allowed_exception_handler,
     http_not_found_exception_handler,
     internal_server_exception_handler,
     not_found_exception_handler,
@@ -44,6 +47,7 @@ from app.exceptions.base_service_exception import (
 from app.exceptions.http_exceptions import (
     HTTPForbiddenException,
     HTTPInternalServerException,
+    HTTPMethodNotAllowedException,
     HTTPNotFoundException,
     HTTPUnauthorizedException,
 )
@@ -228,6 +232,11 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(EntityNotFoundException, not_found_exception_handler)
 app.add_exception_handler(HTTPNotFoundException, http_not_found_exception_handler)
 app.add_exception_handler(HTTP_404_NOT_FOUND, http_404_exception_handler)
+
+app.add_exception_handler(HTTP_405_METHOD_NOT_ALLOWED, http_405_exception_handler)
+app.add_exception_handler(
+    HTTPMethodNotAllowedException, http_method_not_allowed_exception_handler
+)
 
 app.add_exception_handler(EntityAccessDeniedException, access_denied_exception_handler)
 app.add_exception_handler(HTTPForbiddenException, forbidden_exception_handler)
