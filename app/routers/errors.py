@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import RedirectResponse
 
