@@ -94,7 +94,7 @@ async def validation_exception_handler(
     """
     exc = exc_class_or_status_code
 
-    if isinstance(exc_class_or_status_code, int):
+    if isinstance(exc, int):
         exc = RequestValidationError([])
 
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
