@@ -20,6 +20,7 @@ from app.exceptions.base_service_exception import (
     EntityNotFoundException,
 )
 from app.exceptions.http_exceptions import (
+    HTTPBadRequestException,
     HTTPForbiddenException,
     HTTPInternalServerException,
     HTTPMethodNotAllowedException,
@@ -108,7 +109,6 @@ async def not_found_exception_handler(request: Request, exc: EntityNotFoundExcep
     return await http_not_found_exception_handler(request, HTTPNotFoundException())
 
 
-# status code 404 handler
 async def http_404_exception_handler(request: Request, exc: HTTP_404_NOT_FOUND):
     return await http_not_found_exception_handler(request, HTTPNotFoundException())
 
@@ -133,6 +133,32 @@ async def http_not_found_exception_handler(
         "exceptions/404.html",
         status_code=exc.status_code,
     )
+
+
+async def http_bad_request_exception_handler(
+    request: Request, exc: HTTPBadRequestException
+):
+    """Exception handler for 400 Bad Request errors.
+
+    Args:
+        request: The request object.
+        exc: HTTPBadRequestException object.
+
+    Returns:
+        Response: The response to return.
+    """
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+
+    return templates.TemplateResponse(
+        request,
+        "exceptions/400.html",
+        status_code=exc.status_code,
+    )
+
+
+async def http_400_exception_handler(request: Request, exc: HTTPBadRequestException):
+    return await http_bad_request_exception_handler(request, HTTPBadRequestException())
 
 
 async def http_405_exception_handler(

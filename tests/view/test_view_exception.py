@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from starlette.status import (
+    HTTP_400_BAD_REQUEST,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     HTTP_405_METHOD_NOT_ALLOWED,
@@ -72,6 +73,19 @@ async def test_view_method_not_allowed():
     res_redirect = await make_http_request(
         f"/errors/raise/{status_code}", method=RequestMethod.GET, follow_redirects=True
     )
+
+    soup = BeautifulSoup(res_redirect.text, features="html.parser")
+
+    assert soup.find("a", {"href": "/"}) is not None
+
+
+async def test_view_bad_request():
+    status_code = HTTP_400_BAD_REQUEST
+    res = await make_http_request(
+        f"/errors/raise/{status_code}", method=RequestMethod.GET
+    )
+
+    assert res.status_code == status_code
 
     soup = BeautifulSoup(res_redirect.text, features="html.parser")
 

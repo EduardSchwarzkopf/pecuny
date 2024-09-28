@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from jwt import ExpiredSignatureError, InvalidSignatureError, InvalidTokenError
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.status import (
+    HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
     HTTP_405_METHOD_NOT_ALLOWED,
@@ -28,9 +29,11 @@ from app.database import db
 from app.exception_handler import (
     access_denied_exception_handler,
     forbidden_exception_handler,
+    http_400_exception_handler,
     http_404_exception_handler,
     http_405_exception_handler,
     http_500_exception_handler,
+    http_bad_request_exception_handler,
     http_exception_handler,
     http_method_not_allowed_exception_handler,
     http_not_found_exception_handler,
@@ -45,6 +48,7 @@ from app.exceptions.base_service_exception import (
     EntityNotFoundException,
 )
 from app.exceptions.http_exceptions import (
+    HTTPBadRequestException,
     HTTPForbiddenException,
     HTTPInternalServerException,
     HTTPMethodNotAllowedException,
@@ -237,6 +241,9 @@ app.add_exception_handler(HTTP_405_METHOD_NOT_ALLOWED, http_405_exception_handle
 app.add_exception_handler(
     HTTPMethodNotAllowedException, http_method_not_allowed_exception_handler
 )
+
+app.add_exception_handler(HTTPBadRequestException, http_bad_request_exception_handler)
+app.add_exception_handler(HTTP_400_BAD_REQUEST, http_400_exception_handler)
 
 app.add_exception_handler(EntityAccessDeniedException, access_denied_exception_handler)
 app.add_exception_handler(HTTPForbiddenException, forbidden_exception_handler)
