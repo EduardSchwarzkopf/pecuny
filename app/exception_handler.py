@@ -133,8 +133,8 @@ async def http_not_found_exception_handler(
         return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
     return templates.TemplateResponse(
+        request,
         "exceptions/404.html",
-        {"request": request},
         status_code=exc.status_code,
     )
 
