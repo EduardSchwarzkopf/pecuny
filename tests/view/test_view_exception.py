@@ -87,6 +87,6 @@ async def test_view_bad_request():
 
     assert res.status_code == status_code
 
-    soup = BeautifulSoup(res_redirect.text, features="html.parser")
+    soup = BeautifulSoup(res.text, features="html.parser")
 
     assert soup.find("a", {"href": "/"}) is not None
