@@ -10,6 +10,6 @@ router = PageRouter(tags=["Error"], prefix="/errors")
 @router.get("/raise/{status_code}")
 async def raise_error(status_code: int):
     if settings.environment != "test":
-        return RedirectResponse(f"/", status_code=302)
+        return RedirectResponse("/", status_code=302)
 
     raise_http_error(status_code)
