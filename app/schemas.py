@@ -73,7 +73,7 @@ class WalletUpdate(Base):
     description: Optional[str]
     balance: Optional[RoundedDecimal] = Field(
         default=None,
-        example=0.00,
+        examples=[0.00],
         description="The wallet balance rounded to two decimal places.",
     )
     model_config = ConfigDict(json_encoders={Decimal: float})
@@ -83,7 +83,7 @@ class TransactionInformationBase(BaseModel):
     amount: RoundedDecimal = Field(
         ...,
         description="The transaction amount, rounded to two decimal places.",
-        example=100.00,
+        examples=[100.00],
     )
     reference: str
     category_id: IdField
