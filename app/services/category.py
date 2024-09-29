@@ -2,7 +2,6 @@ from typing import Optional
 
 from app import models
 from app.exceptions.base_service_exception import EntityAccessDeniedException
-from app.repository import Repository
 from app.services.base import BaseService
 
 
