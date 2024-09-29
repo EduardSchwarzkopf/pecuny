@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, List, Optional, Tuple, Type, Union
 
 from sqlalchemy import Select, exists, func, text
 from sqlalchemy import update as sql_update
@@ -11,11 +11,9 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from app import models
 from app.database import db
 from app.exceptions.base_service_exception import EntityNotFoundException
-from app.models import BaseModel
 from app.utils.enums import DatabaseFilterOperator, Frequency
 from app.utils.fields import IdField
-
-ModelT = TypeVar("ModelT", bound=BaseModel)
+from app.utils.types import ModelT
 
 
 class Repository:

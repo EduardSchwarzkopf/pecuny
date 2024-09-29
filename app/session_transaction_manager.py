@@ -1,10 +1,11 @@
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.base import object_mapper
 from sqlalchemy.orm.exc import UnmappedInstanceError
 
+from app import models
 from app.database import db
 from app.logger import get_logger
 
@@ -14,7 +15,7 @@ logger = get_logger(__name__)
 class SessionTransactionManager:
     def __init__(self, session: Optional[AsyncSession] = None):
         self.session = session or db.session
-        self.entities_to_refresh = []
+        self.entities_to_refresh: List[models.Base] = []
 
     async def __aenter__(self):
         return self

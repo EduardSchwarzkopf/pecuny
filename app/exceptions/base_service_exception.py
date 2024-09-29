@@ -1,7 +1,9 @@
 from abc import ABC
+from typing import Type
 
 from app import models
 from app.utils.fields import IdField
+from app.utils.types import ModelT
 
 
 class BaseServiceException(ABC, Exception):
@@ -11,7 +13,7 @@ class BaseServiceException(ABC, Exception):
 
 
 class EntityNotFoundException(BaseServiceException):
-    def __init__(self, model: models.Base, entity_id: IdField):
+    def __init__(self, model: Type[ModelT], entity_id: IdField | int):
         self.entity_model_class_name = model.__name__
         self.entity_id = entity_id
 
@@ -21,7 +23,7 @@ class EntityNotFoundException(BaseServiceException):
 
 
 class EntityAccessDeniedException(BaseServiceException):
-    def __init__(self, user: models.User, entity: models.BaseModel):
+    def __init__(self, user: models.User, entity: Type[ModelT]):
         self.entity = entity
         self.entity_class_name = entity.__class__.__name__
         self.user = user
