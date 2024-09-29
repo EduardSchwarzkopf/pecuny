@@ -103,7 +103,7 @@ async def make_http_request(  # pylint: disable=too-many-arguments
 
 async def get_user_offset_wallet(
     wallet: models.Wallet, repository: Repository
-) -> Optional[models.Wallet]:
+) -> models.Wallet:
     """
     Returns the offset wallet for a given wallet within a list of wallets.
 
