@@ -12,9 +12,6 @@ from app.services.base import BaseService
 
 class WalletService(BaseService):
 
-    def __init__(self, repository: Optional[Repository] = None):
-        super().__init__(repository)
-
     async def get_wallets(self, current_user: models.User) -> list[models.Wallet]:
         """
         Retrieves a list of wallets.
