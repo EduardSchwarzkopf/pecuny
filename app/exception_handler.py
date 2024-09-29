@@ -69,7 +69,7 @@ async def unauthorized_exception_handler(
 
 
 async def entity_not_found_exception_handler(
-    request: Request, exc_: EntityNotFoundException
+    request: Request, _exc: EntityNotFoundException
 ):
     """
     Handles repository entity not found exceptions.
@@ -86,7 +86,7 @@ async def entity_not_found_exception_handler(
 
 
 async def entity_access_denied_exception_handler(
-    request: Request, exc: EntityAccessDeniedException
+    request: Request, _exc: EntityAccessDeniedException
 ):
     """
     Handles access denied exceptions for both API and non-API requests.
@@ -103,7 +103,7 @@ async def entity_access_denied_exception_handler(
 
 
 async def forbidden_exception_handler(
-    request: Request, exc_class_or_status_code: int | HTTPForbiddenException
+    request: Request, _exc_class_or_status_code: int | HTTPForbiddenException
 ):
     """
     Handles access forbidden exception for both API and non-API requests.
@@ -248,7 +248,7 @@ async def unhandeled_http_exception_handler(
     return await internal_server_exception_handler(request, exc)
 
 
-async def unhandled_exception_handler(request: Request, exc: Exception | int):
+async def unhandled_exception_handler(request: Request, _exc: Exception | int):
     """
     Handles general unhandled exceptions.
 
