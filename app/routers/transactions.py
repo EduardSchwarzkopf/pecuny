@@ -245,8 +245,6 @@ async def page_delete_transaction(
         RedirectResponse: A redirect response to the wallet page.
     """
 
-    transaction = await transaction_service.get_transaction(user, transaction_id)
-
     await transaction_service.delete_transaction(user, transaction_id)
 
     return RedirectResponse(
