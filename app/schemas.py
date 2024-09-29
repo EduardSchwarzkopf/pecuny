@@ -37,6 +37,16 @@ StringContr = Annotated[
 
 
 def serialize_rounded_decimal(value: Decimal) -> float:
+    """
+    Converts a Decimal value to a float by serializing it.
+
+    Args:
+        value: The Decimal value to be converted to a float.
+
+    Returns:
+        float: The serialized float value.
+    """
+
     return float(value)
 
 
