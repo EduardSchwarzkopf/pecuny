@@ -7,9 +7,6 @@ from app.services.base import BaseService
 
 class FrequencyService(BaseService):
 
-    def __init__(self, repository: Optional[Repository] = None):
-        super().__init__(repository)
-
     async def get_frequency_list(
         self,
     ) -> list[models.TransactionCategory]:
