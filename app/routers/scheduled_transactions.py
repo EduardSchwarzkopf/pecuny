@@ -293,7 +293,7 @@ async def page_delete_scheduled_transaction(
         RedirectResponse: A redirect response to the wallet page.
     """
 
-    await transaction_service.delete_scheduled_transaction, user, transaction_id
+    await transaction_service.delete_scheduled_transaction, user, transaction_id  # pylint: disable=pointless-statement
 
     return RedirectResponse(
         request.url_for("page_list_scheduled_transactions", wallet_id=wallet_id),
