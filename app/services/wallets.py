@@ -1,3 +1,5 @@
+from typing import Literal
+
 from app import models, schemas
 from app.config import settings
 from app.exceptions.wallet_service_exceptions import (
@@ -109,7 +111,7 @@ class WalletService(BaseService):
 
         return db_wallet
 
-    async def delete_wallet(self, user: models.User, wallet_id: int) -> True:
+    async def delete_wallet(self, user: models.User, wallet_id: int) -> Literal[True]:
         """
         Deletes a wallet for a specific user based on the wallet ID.
 
