@@ -1,4 +1,5 @@
 import contextlib
+from typing import Optional
 
 from fastapi import Depends, Request
 from fastapi.responses import RedirectResponse
@@ -11,13 +12,16 @@ from app.auth_manager import auth_backend, optional_current_active_verified_user
 from app.authentication.dependencies import get_user_manager
 from app.authentication.management import UserManager
 from app.authentication.strategies import JWTStrategy
+from app.exceptions.user_service_exceptions import (
+    UserAlreadyExistsException,
+    UserNotFoundException,
+)
 from app.models import User
 from app.routers.dashboard import router as dashboard_router
 from app.services.users import UserService
 from app.utils import PageRouter
 from app.utils.dataclasses_utils import CreateUserData
 from app.utils.enums import FeedbackType
-from app.utils.exceptions import UserAlreadyExistsException, UserNotFoundException
 from app.utils.template_utils import render_form_template, set_feedback
 
 router = PageRouter()
@@ -38,7 +42,7 @@ TEMPLATE_LOGIN = f"{TEMPLATE_PREFIX}/page_login.html"
 @router.get(path=LOGIN, tags=["Pages", "Authentication"])
 async def get_login(
     request: Request,
-    user: User = Depends(optional_current_active_verified_user),
+    user: Optional[User] = Depends(optional_current_active_verified_user),
     msg: str = "",
 ):
     """
@@ -215,8 +219,9 @@ async def verify_email(
 
     status = await user_service.verify_email(token)
     return templates.TemplateResponse(
+        request,
         f"{TEMPLATE_PREFIX}/page_email_verify.html",
-        {"request": request, "verification_status": status.value},
+        {"verification_status": status.value},
     )
 
 

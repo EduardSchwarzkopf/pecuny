@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, List, Optional, Tuple, Type, Union
 
 from sqlalchemy import Select, exists, func, text
 from sqlalchemy import update as sql_update
@@ -10,18 +10,16 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 from app import models
 from app.database import db
-from app.models import BaseModel
+from app.exceptions.base_service_exception import EntityNotFoundException
 from app.utils.enums import DatabaseFilterOperator, Frequency
 from app.utils.fields import IdField
-
-ModelT = TypeVar("ModelT", bound=BaseModel)
+from app.utils.types import ModelT
 
 
 class Repository:
 
     def __init__(self, session: Optional[AsyncSession] = None):
-
-        self.session = session if session is not None else db.session
+        self.session = session or db.session
 
     def _load_relationships(
         self, query: Select, relationships: InstrumentedAttribute = None
@@ -64,7 +62,7 @@ class Repository:
         cls: Type[ModelT],
         instance_id: Union[int, IdField],
         load_relationships_list: Optional[list[InstrumentedAttribute]] = None,
-    ) -> Optional[ModelT]:
+    ) -> ModelT:
         """Retrieve an instance of the specified model by its ID.
 
         Args:
@@ -80,7 +78,12 @@ class Repository:
         q = select(cls).where(cls.id == instance_id)
         q = self._load_relationships(q, load_relationships_list)
         result = await self.session.execute(q)
-        return result.scalars().first()
+        model = result.scalars().first()
+
+        if model is None:
+            raise EntityNotFoundException(cls, instance_id)
+
+        return model
 
     async def filter_by(
         self,
@@ -264,25 +267,12 @@ class Repository:
         Raises:
             None
         """
+
         if isinstance(obj, list):
             self.session.add_all(obj)
             return
 
         self.session.add(obj)
-
-    async def commit(self) -> None:
-        """Commit the changes made in the session to the database.
-
-        Args:
-            session: The database session.
-
-        Returns:
-            None
-
-        Raises:
-            None
-        """
-        await self.session.commit()
 
     async def update(self, cls: Type[ModelT], instance_id: int, **kwargs) -> None:
         """Update an instance of the specified model with the given ID.
@@ -342,7 +332,7 @@ class Repository:
         """
         return await self.session.refresh(obj)
 
-    async def refresh_all(self, object_list: list[Type[ModelT]]) -> None:
+    async def refresh_all(self, object_list: List[ModelT]) -> None:
         """Refresh the state of multiple objects from the database.
 
         Args:

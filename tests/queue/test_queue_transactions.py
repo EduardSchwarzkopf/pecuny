@@ -32,9 +32,9 @@ async def _assert_transaction_creation(
     Asserts the creation of transactions based on the specified frequency for a test wallet.
 
     Args:
-        frequency: The frequency of the transactions to be created.
-        test_wallet: The test wallet for the transactions.
-        repository: The repository for database operations.
+        frequency (fixture): The frequency of the transactions to be created.
+        test_wallet (fixture): The test wallet for the transactions.
+        repository (fixture): The repository for database operations.
     """
 
     model = models.TransactionScheduled
@@ -81,10 +81,10 @@ async def test_create_transactions_from_schedule(
     Test the creation of transactions from a list of scheduled transactions for a test wallet.
 
     Args:
-        test_wallet: The test wallet for the transactions.
-        test_wallet_scheduled_transaction_list:
+        test_wallet (fixture): The test wallet for the transactions.
+        test_wallet_scheduled_transaction_list (fixture):
             List of scheduled transactions for the test wallet.
-        repository: The repository for database operations.
+        repository (fixture): The repository for database operations.
     """
 
     balance = test_wallet.balance
@@ -102,11 +102,9 @@ async def test_create_transactions_from_schedule(
 
     wallet = await repository.get(models.Wallet, wallet_id)
 
-    assert isinstance(wallet, models.Wallet)
+    assert wallet is not None
 
-    new_balance = wallet.balance
-
-    assert new_balance == expected_wallet_balance
+    assert wallet.balance == expected_wallet_balance
 
 
 @pytest.mark.usefixtures("create_scheduled_transactions")
@@ -117,8 +115,8 @@ async def test_create_daily_transaction(
     Test the creation of daily transactions for a test wallet.
 
     Args:
-        test_wallet: The test wallet for the transaction.
-        repository: The repository for database operations.
+        test_wallet (fixture): The test wallet for the transaction.
+        repository (fixture): The repository for database operations.
     """
 
     _process_scheduled_transactions()
@@ -133,8 +131,8 @@ async def test_create_weekly_transaction(
     Test the creation of weekly transactions for a test wallet.
 
     Args:
-        test_wallet: The test wallet for the transaction.
-        repository: The repository for database operations.
+        test_wallet (fixture): The test wallet for the transaction.
+        repository (fixture): The repository for database operations.
     """
 
     _process_scheduled_transactions()
@@ -149,8 +147,8 @@ async def test_create_yearly_transaction(
     Test the creation of yearly transactions for a test wallet.
 
     Args:
-        test_wallet: The test wallet for the transaction.
-        repository: The repository for database operations.
+        test_wallet (fixture): The test wallet for the transaction.
+        repository (fixture): The repository for database operations.
     """
 
     _process_scheduled_transactions()
@@ -165,8 +163,8 @@ async def test_scheduled_transaction_ended(
     Test that scheduled transactions that have ended do not have corresponding created transactions.
 
     Args:
-        test_wallet: The test wallet for the transaction.
-        repository: The repository for database operations.
+        test_wallet (fixture): The test wallet for the transaction.
+        repository (fixture): The repository for database operations.
     """
 
     _process_scheduled_transactions()
@@ -200,8 +198,8 @@ async def test_scheduled_transaction_not_started(
     Test that scheduled transactions not yet started do not have corresponding created transactions.
 
     Args:
-        test_wallet: The test wallet for the transaction.
-        repository: The repository for database operations.
+        test_wallet (fixture): The test wallet for the transaction.
+        repository (fixture): The repository for database operations.
     """
 
     _process_scheduled_transactions()
@@ -239,9 +237,9 @@ async def _assert_scheduled_transaction_already_exist(
     the specified frequency and test wallet.
 
     Args:
-        frequency: The frequency of the scheduled transaction.
-        test_wallet: The test wallet for the scheduled transaction.
-        repository: The repository for database operations.
+        frequency (fixture): The frequency of the scheduled transaction.
+        test_wallet (fixture): The test wallet for the scheduled transaction.
+        repository (fixture): The repository for database operations.
     """
 
     scheduled_transaction_list = await repository.filter_by_multiple(
@@ -331,9 +329,9 @@ async def test_scheduled_transaction_daily_already_exist(
     Test if a daily scheduled transaction already exists.
 
     Args:
-        test_wallet: The test wallet for the transaction.
-        test_user: The test user for the transaction.
-        repository: The repository for database operations.
+        test_wallet (fixture): The test wallet for the transaction.
+        test_user (fixture): The test user for the transaction.
+        repository (fixture): The repository for database operations.
     """
 
     await _assert_scheduled_transaction_already_exist(
@@ -351,9 +349,9 @@ async def test_scheduled_transaction_weekly_already_exist(
     Test if a weekly scheduled transaction already exists.
 
     Args:
-        test_wallet: The test wallet for the transaction.
-        test_user: The test user for the transaction.
-        repository: The repository for database operations.
+        test_wallet (fixture): The test wallet for the transaction.
+        test_user (fixture): The test user for the transaction.
+        repository (fixture): The repository for database operations.
     """
 
     await _assert_scheduled_transaction_already_exist(
@@ -371,9 +369,9 @@ async def test_scheduled_transaction_monthly_already_exist(
     Test if a monthly scheduled transaction already exists.
 
     Args:
-        test_wallet: The test wallet for the transaction.
-        test_user: The test user for the transaction.
-        repository: The repository for database operations.
+        test_wallet (fixture): The test wallet for the transaction.
+        test_user (fixture): The test user for the transaction.
+        repository (fixture): The repository for database operations.
     """
 
     await _assert_scheduled_transaction_already_exist(
@@ -391,9 +389,9 @@ async def test_scheduled_transaction_yearly_already_exist(
     Test if a yearly scheduled transaction already exists.
 
     Args:
-        test_wallet: The test wallet for the transaction.
-        test_user: The test user for the transaction.
-        repository: The repository for database operations.
+        test_wallet (fixture): The test wallet for the transaction.
+        test_user (fixture): The test user for the transaction.
+        repository (fixture): The repository for database operations.
     """
 
     date = get_today() - datetime.timedelta(days=180)

@@ -1,17 +1,15 @@
 from typing import Optional
 
 from app import models
-from app.logger import get_logger
+from app.exceptions.base_service_exception import EntityAccessDeniedException
 from app.services.base import BaseService
-
-logger = get_logger(__name__)
 
 
 class CategoryService(BaseService):
 
     async def get_categories(
         self,
-        current_user: models.User,
+        _current_user: models.User,
     ) -> Optional[list[models.TransactionCategory]]:
         """
         Retrieves a list of transaction categories.
@@ -23,12 +21,11 @@ class CategoryService(BaseService):
             list[TransactionCategory]: A list of transaction category objects.
         """
 
-        logger.info("Getting categories for user %s", current_user.id)
         return await self.repository.get_all(models.TransactionCategory)
 
     async def get_category(
-        self, current_user: models.User, category_id: int
-    ) -> Optional[models.TransactionCategory]:
+        self, user: models.User, category_id: int
+    ) -> models.TransactionCategory:
         """
         Retrieves a transaction category by ID.
 
@@ -40,25 +37,15 @@ class CategoryService(BaseService):
             TransactionCategory: The retrieved transaction category.
 
         Raises:
-            None
+            EntityAccessDeniedException: If the user does not have access to the category.
         """
 
-        logger.info(
-            "Getting category with id %s for user %s", category_id, current_user.id
-        )
         category = await self.repository.get(models.TransactionCategory, category_id)
 
-        if category and (
-            category.user_id is None or category.user_id == current_user.id
-        ):
-            return category
+        if category.user_id == user.id:
+            raise EntityAccessDeniedException(user, category)
 
-        logger.info(
-            "Category with id %s does not belong to user %s or does not exist",
-            category_id,
-            current_user.id,
-        )
-        return None
+        return category
 
     # async def create_category(
     #     user: models.User, category: schemas.TransactionCategory

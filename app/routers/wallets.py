@@ -3,13 +3,11 @@ from datetime import datetime
 from itertools import groupby
 
 from fastapi import Cookie, Depends, File, Request, UploadFile
-from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette import status
 from starlette_wtf import csrf_protect
 
 from app import models, schemas
-from app import transaction_manager as tm
 from app.auth_manager import current_active_verified_user
 from app.routers.dashboard import router as dashboard_router
 from app.services.transactions import TransactionService
@@ -43,16 +41,10 @@ async def handle_wallet_route(
 
     Returns:
         Wallet: The wallet object.
-
-    Raises:
-        HTTPException: If the wallet is not found.
     """
 
     service = WalletService()
     wallet = await service.get_wallet(user, wallet_id)
-
-    if wallet is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Wallet not found")
 
     add_breadcrumb(request, "Wallets", PREFIX)
     wallet_url = f"{PREFIX}/{wallet_id}" if create_link else ""
@@ -97,7 +89,7 @@ async def max_wallets_reached(
             if the maximum number of wallets has been reached.
     """
 
-    if await service.check_max_wallets(user):
+    if await service.has_reached_wallet_limit(user):
         set_feedback(request, FeedbackType.ERROR, "Maximum number of wallets reached")
         return RedirectResponse(
             router.url_path_for("page_list_wallets"),
@@ -167,10 +159,7 @@ async def page_create_wallet(
 
     wallet = schemas.Wallet(**form.data)
 
-    response = await tm.transaction(service.create_wallet, user, wallet)
-
-    if not response:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
+    await service.create_wallet(user, wallet)
 
     return RedirectResponse(router.url_path_for("page_list_wallets"), status_code=302)
 
@@ -303,10 +292,7 @@ async def page_delete_wallet(
 
     await handle_wallet_route(request, user, wallet_id)
 
-    response = await tm.transaction(service.delete_wallet, user, wallet_id)
-
-    if not response:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
+    await service.delete_wallet(user, wallet_id)
 
     return RedirectResponse(router.url_path_for("page_list_wallets"), status_code=302)
 
@@ -350,10 +336,7 @@ async def page_update_wallet(
 
     wallet = schemas.Wallet(**form.data, balance=wallet.balance)
 
-    response = await tm.transaction(service.update_wallet, user, wallet_id, wallet)
-
-    if not response:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
+    await service.update_wallet(user, wallet_id, wallet)
 
     return RedirectResponse(
         router.url_path_for("page_get_wallet", wallet_id=wallet_id), status_code=302
@@ -410,9 +393,6 @@ async def page_import_transactions_post(
 
     Returns:
         Response: HTTP response indicating the success of the import operation.
-    Raises:
-        HTTPException: If the file type is invalid, file is empty,
-        decoding error occurs, validation fails, or import fails.
     """
 
     form = await schemas.ImportTransactionsForm.from_formdata(request)

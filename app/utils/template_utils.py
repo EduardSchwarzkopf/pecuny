@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse
 from starlette_wtf import StarletteForm
 
 from app import models, schemas, templates
-from app.services.categories import CategoryService
+from app.services.category import CategoryService
 from app.services.frequency import FrequencyService
 from app.services.wallets import WalletService
 from app.utils.dataclasses_utils import FinancialSummary
@@ -77,7 +77,7 @@ def render_template(
     if context_extra is None:
         context_extra = {}
 
-    return templates.TemplateResponse(template, {**context, **context_extra})
+    return templates.TemplateResponse(request, template, {**context, **context_extra})
 
 
 def render_form_template(template: str, request: Request, form: StarletteForm):
@@ -265,7 +265,14 @@ async def populate_transaction_form_category_choices(
     category_service = CategoryService()
     category_list = await category_service.get_categories(user) or []
     category_data_list = [
-        schemas.CategoryData(**category.__dict__) for category in category_list
+        schemas.CategoryData(
+            id=category.id,
+            label=category.label,
+            section=schemas.SectionData(
+                id=category.section_id, label=category.section.label
+            ),
+        )
+        for category in category_list
     ]
     form.category_id.choices = group_categories_by_section(category_data_list)
 

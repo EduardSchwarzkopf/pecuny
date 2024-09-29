@@ -5,16 +5,16 @@ from starlette.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_204_NO_CONTENT,
-    HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
 )
 
 from app import models, schemas
 from app.date_manager import get_iso_timestring
+from app.exceptions.base_service_exception import EntityNotFoundException
 from app.repository import Repository
 from app.utils.classes import RoundedDecimal
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
-from tests.utils import get_user_offset_wallet, make_http_request
+from tests.utils import get_other_user_wallet, get_user_offset_wallet, make_http_request
 
 ENDPOINT = "/api/transactions/"
 
@@ -46,13 +46,6 @@ async def test_create_transaction(
         category_id (int): The category ID of the transaction.
         test_wallet (models.Wallet): The test wallet.
         test_user (models.User): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
     """
     wallet_balance = test_wallet.balance
 
@@ -109,12 +102,6 @@ async def test_updated_transaction(
         amount (int | float): The amount of the transaction.
         test_wallet (models.Wallet): The test wallet.
         test_user (models.User): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
     """
 
     reference = f"Updated Val {amount}"
@@ -145,16 +132,12 @@ async def test_updated_transaction(
 
     transaction = schemas.Transaction(**res.json())
 
-    assert transaction is not None
-
-    updated_test_wallet = await repository.get(models.Wallet, test_wallet.id)
-
-    assert updated_test_wallet is not None
+    await repository.refresh(test_wallet)
 
     amount = RoundedDecimal(amount)
     difference = RoundedDecimal(transaction_amount_before - amount)
 
-    assert updated_test_wallet.balance == wallet_balance - difference
+    assert test_wallet.balance == wallet_balance - difference
     assert transaction.information.amount == amount
     assert transaction.information.reference == reference
     assert transaction.information.category_id == category_id
@@ -173,12 +156,6 @@ async def test_delete_transactions(
         test_wallet (fixture): The test wallet.
         test_wallet_transaction_list (fixture): The list of test wallet transactions.
         test_user (fixture): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
     """
 
     for transaction in test_wallet_transaction_list:
@@ -193,68 +170,53 @@ async def test_delete_transactions(
             as_user=test_user,
         )
         assert res.status_code == HTTP_204_NO_CONTENT
-        result = await repository.get(models.Transaction, transaction_id)
-
-        assert result is None
 
         wallet = await repository.get(models.Wallet, test_wallet.id)
-
-        assert wallet is not None
 
         wallet_balance_after = wallet.balance
 
         expected_balance = wallet_balance - amount
         assert wallet_balance_after == expected_balance
 
-        assert await repository.get(models.Transaction, transaction_id) is None
+        with pytest.raises(EntityNotFoundException):
+            await repository.get(models.Transaction, transaction_id)
 
 
 @pytest.mark.usefixtures("create_transactions")
-async def test_delete_transactions_fail(
-    test_wallet: models.Wallet, test_user: models.User, repository: Repository
-):
+async def test_delete_transactions_fail(test_user: models.User, repository: Repository):
     """
     Test case for failing to delete transactions.
 
     Args:
         test_wallet (models.Wallet): The test wallet.
         test_user (models.User): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
     """
 
-    result = await repository.filter_by(
-        models.Wallet,
-        models.Wallet.user_id,
-        test_wallet.user_id,
-        DatabaseFilterOperator.NOT_EQUAL,
-        load_relationships_list=[models.Wallet.transactions],
+    wallet = await get_other_user_wallet(test_user, repository)
+    transaction = await repository.filter_by(
+        models.Transaction,
+        models.Transaction.wallet_id,
+        wallet.id,
     )
-    wallet = result[0]
 
+    transaction = transaction[0]
+
+    wallet_id = wallet.id
     wallet_balance = wallet.balance
 
-    for transaction in wallet.transactions:
+    res = await make_http_request(
+        f"{ENDPOINT}{transaction.id}",
+        method=RequestMethod.DELETE,
+        as_user=test_user,
+    )
 
-        res = await make_http_request(
-            f"{ENDPOINT}{transaction.id}",
-            method=RequestMethod.DELETE,
-            as_user=test_user,
-        )
+    assert res.status_code == HTTP_404_NOT_FOUND
 
-        assert res.status_code == HTTP_404_NOT_FOUND
+    wallet_refresh = await repository.get(models.Wallet, wallet_id)
 
-        wallet_refresh = await repository.get(models.Wallet, wallet.id)
+    wallet_balance_after = wallet_refresh.balance
 
-        assert wallet_refresh is not None
-
-        wallet_balance_after = wallet_refresh.balance
-
-        assert wallet_balance_after == wallet_balance
+    assert wallet_balance_after == wallet_balance
 
 
 @pytest.mark.parametrize(
@@ -285,19 +247,10 @@ async def test_create_offset_transaction(
         amount (int | float): The amount of the transaction.
         expected_offset_amount (int | float): The expected amount of the offset transaction.
         category_id (int): The category ID of the transaction.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
     """
 
     wallet_id = test_wallet.id
     offset_wallet = await get_user_offset_wallet(test_wallet, repository)
-
-    assert offset_wallet is not None
 
     reference = f"test_create_offset_transaction - {amount}"
     res = await make_http_request(
@@ -324,8 +277,6 @@ async def test_create_offset_transaction(
         models.Transaction, offset_transactions_id
     )
 
-    assert new_offset_transaction is not None
-
     assert new_transaction.wallet_id == wallet_id
     assert new_offset_transaction.wallet_id == offset_wallet.id
 
@@ -349,14 +300,6 @@ async def test_create_offset_transaction_other_wallet_fail(
         test_wallet (models.Wallet): The test wallet.
         test_wallets (list[models.Wallet]): The list of test wallets.
         test_user (models.User): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-        ValueError: If no offset wallet is found.
-
     """
 
     offset_wallet_list = await repository.filter_by(
@@ -389,13 +332,10 @@ async def test_create_offset_transaction_other_wallet_fail(
         as_user=test_user,
     )
 
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTP_404_NOT_FOUND
 
     wallet_refreshed = await repository.get(models.Wallet, wallet_id)
     offset_wallet_refreshed = await repository.get(models.Wallet, offset_wallet_id)
-
-    assert wallet_refreshed is not None
-    assert offset_wallet_refreshed is not None
 
     assert wallet_balance == wallet_refreshed.balance
     assert offset_wallet_balance == offset_wallet_refreshed.balance
@@ -427,18 +367,9 @@ async def test_updated_offset_transaction(
         test_wallet (models.Wallet): The test wallet.
         category_id (int): The category ID of the transaction.
         amount (int | float): The amount of the transaction.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
     """
 
     offset_wallet = await get_user_offset_wallet(test_wallet, repository)
-
-    assert offset_wallet is not None
 
     wallet_balance = test_wallet.balance
     offset_wallet_balance = offset_wallet.balance
@@ -483,14 +414,10 @@ async def test_updated_offset_transaction(
     assert transaction.information.reference == reference
     assert transaction.information.category_id == category_id
 
-    wallet_refreshed = await repository.get(models.Wallet, wallet_id)
-    offset_wallet_refreshed = await repository.get(models.Wallet, offset_wallet_id)
+    await repository.refresh_all([test_wallet, offset_wallet])
 
-    assert wallet_refreshed is not None
-    assert offset_wallet_refreshed is not None
-
-    assert wallet_refreshed.balance == wallet_balance + amount
-    assert offset_wallet_refreshed.balance == offset_wallet_balance - amount
+    assert test_wallet.balance == wallet_balance + amount
+    assert offset_wallet.balance == offset_wallet_balance - amount
 
 
 @pytest.mark.parametrize(
@@ -521,17 +448,9 @@ async def test_delete_offset_transaction(
         test_user (models.User): The test user.
         category_id (int): The category ID of the transaction.
         amount (int | float): The amount of the transaction.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
     """
 
     offset_wallet = await get_user_offset_wallet(test_wallet, repository)
-
-    assert offset_wallet is not None
 
     wallet_balance = test_wallet.balance
     offset_wallet_balance = offset_wallet.balance
@@ -566,9 +485,6 @@ async def test_delete_offset_transaction(
     wallet_refresh = await repository.get(models.Wallet, test_wallet.id)
     offset_wallet_refresh = await repository.get(models.Wallet, offset_wallet.id)
 
-    assert wallet_refresh is not None
-    assert offset_wallet_refresh is not None
-
     assert offset_wallet_balance == offset_wallet_refresh.balance
     assert wallet_balance == wallet_refresh.balance
 
@@ -582,19 +498,12 @@ async def test_transaction_amount_is_number(
     Args:
         test_wallet_transaction_list (fixture): The list of wallet transactions.
         test_user (fixture): The test user.
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
     """
 
     transaction = test_wallet_transaction_list[0]
     wallet = await repository.get(
         models.Wallet, transaction.wallet_id, [models.Wallet.user]
     )
-
-    assert wallet is not None
 
     res = await make_http_request(
         f"{ENDPOINT}{transaction.id}",

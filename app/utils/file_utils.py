@@ -1,5 +1,6 @@
 from fastapi import HTTPException, UploadFile
 
+from app.exceptions.http_exceptions import HTTPBadRequestException
 from app.models import User
 from app.tasks import import_transactions_from_csv
 
@@ -27,6 +28,6 @@ async def process_csv_file(
     contents = await file.read()
 
     if not contents:
-        raise HTTPException(status_code=400, detail="File is empty")
+        raise HTTPBadRequestException("File is empty")
 
     import_transactions_from_csv.delay(current_user.id, wallet_id, contents)

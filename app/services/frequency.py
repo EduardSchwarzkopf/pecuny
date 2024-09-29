@@ -1,17 +1,12 @@
-from typing import Optional
-
 from app import models
-from app.logger import get_logger
 from app.services.base import BaseService
-
-logger = get_logger(__name__)
 
 
 class FrequencyService(BaseService):
 
     async def get_frequency_list(
         self,
-    ) -> Optional[list[models.TransactionCategory]]:
+    ) -> list[models.TransactionCategory]:
         """
         Get a list of transaction categories based on frequency.
 
@@ -23,7 +18,7 @@ class FrequencyService(BaseService):
 
         return await self.repository.get_all(models.Frequency)
 
-    async def get_frequency(self, frequency_id: int) -> Optional[models.Frequency]:
+    async def get_frequency(self, frequency_id: int) -> models.Frequency:
         """
         Get a specific transaction category by frequency ID.
 

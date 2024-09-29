@@ -1,15 +1,11 @@
-from typing import Optional, Type, Union
+from typing import Literal, Optional, Type, Union
 
 from app import models, schemas
-from app.logger import get_logger
 from app.repository import Repository
 from app.services.base import BaseService
+from app.services.category import CategoryService
 from app.services.wallets import WalletService
 from app.utils.classes import RoundedDecimal
-from app.utils.exceptions import AccessDeniedError
-from app.utils.log_messages import WALLET_USER_ID_MISMATCH
-
-logger = get_logger(__name__)
 
 
 class BaseTransactionService(BaseService):
@@ -19,12 +15,10 @@ class BaseTransactionService(BaseService):
         repository: Optional[Repository] = None,
     ):
         self.service_model = service_model
-
+        self.wallet_service = WalletService(repository)
         super().__init__(repository)
 
-    async def _get_transaction_by_id(
-        self, transaction_id: int
-    ) -> Optional[Union[models.Transaction, models.TransactionScheduled]]:
+    async def __get_transaction_by_id(self, transaction_id: int):
         """
         Retrieves a transaction by ID.
 
@@ -34,93 +28,39 @@ class BaseTransactionService(BaseService):
         Returns:
             The transaction if found, None otherwise.
         """
-        if self.service_model is models.Transaction:
-            return await self.repository.get(
-                self.service_model,
-                transaction_id,
-                load_relationships_list=[self.service_model.offset_transaction],
-            )
 
         return await self.repository.get(
             self.service_model,
             transaction_id,
+            load_relationships_list=[self.service_model.offset_transaction],
         )
-
-    async def get_transaction(
-        self, user: models.User, transaction_id: int
-    ) -> Optional[models.Transaction]:
-        """
-        Retrieves a transaction for a specific user by ID.
-
-        Args:
-            user: The user for whom the transaction is being retrieved.
-            transaction_id: The ID of the transaction to retrieve.
-
-        Returns:
-            The transaction if found, None otherwise.
-        """
-        logger.info(
-            "Retrieving transaction with ID %s for user %s", transaction_id, user.id
-        )
-        transaction = await self._get_transaction_by_id(transaction_id)
-
-        if transaction is None:
-            logger.warning("Transaction with ID %s not found.", transaction_id)
-            return None
-
-        wallet = await self.repository.get(models.Wallet, transaction.wallet_id)
-
-        if wallet is None:
-            return None
-
-        if wallet.user_id == user.id:
-            logger.info("User ID verified. Returning transaction.")
-            return transaction
-
-        logger.warning(WALLET_USER_ID_MISMATCH)
-        return None
 
     async def delete_transaction(
-        self, current_user: models.User, transaction_id: int
-    ) -> Optional[bool]:
+        self, user: models.User, transaction_id: int
+    ) -> Literal[True]:
         """
         Deletes a transaction for the current user by ID.
 
         Args:
-            current_user: The current user performing the deletion.
+            user: The current user performing the deletion.
             transaction_id: The ID of the transaction to delete.
 
         Returns:
             True if the transaction is successfully deleted, None otherwise.
+
         """
-        logger.info(
-            "Deleting transaction with ID %s for user %s",
-            transaction_id,
-            current_user.id,
-        )
 
-        transaction = await self._get_transaction_by_id(transaction_id)
+        transaction = await self.__get_transaction_by_id(transaction_id)
 
-        if transaction is None:
-            logger.warning("Transaction with ID %s not found.", transaction_id)
-            return None
-
-        wallet = await self.repository.get(models.Wallet, transaction.wallet_id)
-
-        if wallet is None or current_user.id != wallet.user_id:
-            return None
+        wallet = await self.wallet_service.get_wallet(user, transaction.wallet_id)
 
         amount = transaction.information.amount
 
         if transaction.offset_transaction:
-            logger.info("Handling offset transaction for delete.")
             offset_transaction = transaction.offset_transaction
-            offset_wallet = await self.repository.get(
-                models.Wallet, offset_transaction.wallet_id
+            offset_wallet = await self.wallet_service.get_wallet(
+                user, offset_transaction.wallet_id
             )
-
-            if offset_wallet is None:
-                return None
 
             offset_wallet.balance += amount
             await self.repository.delete(transaction.offset_transaction)
@@ -134,7 +74,7 @@ class BaseTransactionService(BaseService):
         self,
         user: models.User,
         transaction_data: schemas.TransactionData,
-    ) -> Optional[models.Transaction]:
+    ) -> models.Transaction:
         """
         Creates a new transaction for a user based on the provided transaction data.
 
@@ -144,16 +84,20 @@ class BaseTransactionService(BaseService):
 
         Returns:
             The created transaction if successful, None otherwise.
+
         """
-        logger.info("Creating new transaction for user %s", user.id)
-        wallet = await self.repository.get(models.Wallet, transaction_data.wallet_id)
+        wallet = await self.wallet_service.get_wallet(user, transaction_data.wallet_id)
 
-        if wallet is None or not WalletService.has_user_access_to_wallet(user, wallet):
-            return None
+        category = await CategoryService().get_category(
+            user, transaction_data.category_id
+        )
 
-        db_transaction_information = models.TransactionInformation()
-        db_transaction_information.add_attributes_from_dict(
-            transaction_data.model_dump()
+        db_transaction_information = models.TransactionInformation(
+            amount=transaction_data.amount,
+            reference=transaction_data.reference,
+            date=transaction_data.date,
+            category=category,
+            category_id=category.id,
         )
 
         transaction = self.service_model(
@@ -163,23 +107,9 @@ class BaseTransactionService(BaseService):
         )
 
         if transaction_data.offset_wallet_id:
-            logger.info("Handling offset wallet for transaction.")
             offset_transaction = await self._handle_offset_transaction(
                 user, transaction_data
             )
-
-            if offset_transaction is None:
-                logger.warning(
-                    "User[id: %s] not allowed to access offset_wallet[id: %s]",
-                    user.id,
-                    transaction_data.offset_wallet_id,
-                )
-                raise AccessDeniedError(
-                    (
-                        f"User[id: {user.id}] not allowed to access "
-                        f"offset_wallet[id: {transaction_data.offset_wallet_id}]"
-                    )
-                )
 
             transaction.offset_transaction = offset_transaction
             offset_transaction.offset_transaction = transaction
@@ -195,7 +125,7 @@ class BaseTransactionService(BaseService):
         self,
         user: models.User,
         transaction_data: schemas.TransactionData,
-    ) -> Optional[models.Transaction]:
+    ) -> models.Transaction:
         """
         Handles the creation of an offset transaction for a user based on the provided data.
 
@@ -205,17 +135,14 @@ class BaseTransactionService(BaseService):
 
         Returns:
             The created offset transaction if successful, None otherwise.
+
         """
-        logger.info("Handling offset transaction for user %s", user.id)
         offset_wallet_id = transaction_data.offset_wallet_id
+
         if offset_wallet_id is None:
-            return None
+            raise ValueError("No offset_wallet_id provided")
 
-        offset_wallet = await self.repository.get(models.Wallet, offset_wallet_id)
-
-        if offset_wallet is None or user.id != offset_wallet.user_id:
-            logger.warning("User ID does not match the offset wallet's User ID.")
-            return None
+        offset_wallet = await self.wallet_service.get_wallet(user, offset_wallet_id)
 
         transaction_data.amount = RoundedDecimal(transaction_data.amount * -1)
         offset_wallet.balance += transaction_data.amount
@@ -237,10 +164,10 @@ class BaseTransactionService(BaseService):
 
     async def update_transaction(
         self,
-        current_user: models.User,
+        user: models.User,
         transaction_id: int,
         transaction_information: schemas.TransactionInformtionUpdate,
-    ) -> Optional[models.Transaction]:
+    ) -> models.Transaction:
         """
         Updates a transaction for the current user by ID with the provided information.
 
@@ -253,40 +180,26 @@ class BaseTransactionService(BaseService):
             The updated transaction if successful, None otherwise.
         """
 
-        transaction = await self._get_transaction_by_id(transaction_id)
+        transaction = await self.__get_transaction_by_id(transaction_id)
 
-        if transaction is None:
-            return None
-
-        wallet = transaction.wallet
-        if current_user.id != wallet.user_id:
-            logger.warning(WALLET_USER_ID_MISMATCH)
-            return None
+        wallet = await self.wallet_service.get_wallet(user, transaction.wallet_id)
 
         amount_updated = (
             round(transaction_information.amount, 2) - transaction.information.amount
         )
 
-        if transaction.offset_transactions_id:
-            logger.info("Handling offset transaction for update.")
-            offset_transaction = await self.repository.get(
-                self.service_model,
-                transaction.offset_transactions_id,
-                load_relationships_list=[self.service_model.wallet],
+        if transaction.offset_transaction:
+            offset_transaction: models.Transaction = transaction.offset_transaction
+            offset_wallet = await self.wallet_service.get_wallet(
+                user, offset_transaction.wallet_id
             )
-
-            if offset_transaction is None:
-                return None
-
-            offset_wallet = offset_transaction.wallet
-            if offset_wallet is None or offset_wallet.user_id != current_user.id:
-                return None
 
             offset_wallet.balance -= amount_updated
             offset_transaction.information.amount = transaction_information.amount * -1
 
-        wallet_values = {"balance": wallet.balance + amount_updated}
-        await self.repository.update(models.Wallet, wallet.id, **wallet_values)
+        wallet_data = schemas.WalletData(**wallet.__dict__)
+        wallet_data.balance = wallet.balance + amount_updated
+        await self.wallet_service.update_wallet(user, wallet.id, wallet_data)
 
         transaction_values = {
             "amount": transaction_information.amount,

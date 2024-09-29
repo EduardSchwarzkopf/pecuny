@@ -1,13 +1,11 @@
 import asyncio
 import datetime
 import itertools
-from typing import List
 
 import pytest
 from sqlalchemy import and_, exists, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app import models, schemas
+from app import models, schemas, session_transaction_manager
 from app.date_manager import get_day_delta, get_today, get_tomorrow, get_yesterday
 from app.repository import Repository
 from app.services.scheduled_transactions import ScheduledTransactionService
@@ -21,8 +19,24 @@ from app.utils.enums import DatabaseFilterOperator, Frequency
 # pylint: disable=unused-argument
 
 
+@pytest.fixture(name="test_user_data", scope="session")
+async def fixture_test_user_data():
+    """
+    Fixture that provides test data for a user in the form of a UserCreate schema.
+
+    Returns:
+        schemas.UserCreate: Test data for creating a user.
+    """
+
+    return schemas.UserCreate(
+        email="test_user@example.com",
+        password="password123",
+        displayname="test_user",
+    )
+
+
 @pytest.fixture(name="common_user_data", scope="session")
-def fixture_common_user_data():
+def fixture_common_user_data(test_user_data: schemas.UserCreate):
     """
     Fixture for common user data used in tests.
 
@@ -32,18 +46,15 @@ def fixture_common_user_data():
 
     return schemas.UserCreate(
         email="user123@example.com",
-        password="mypassword",
+        password=test_user_data.password,
         displayname="user",
     )
 
 
 @pytest.fixture(name="user_service", scope="session")
-async def fixture_user_service(session):
+async def fixture_user_service():
     """
     Create a session-scoped user service fixture.
-
-    Args:
-        session: The session object.
 
     Returns:
         UserService: The user service fixture.
@@ -53,7 +64,9 @@ async def fixture_user_service(session):
 
 
 @pytest.fixture(name="create_test_users", scope="session")
-async def fixture_create_test_users(user_service: UserService):
+async def fixture_create_test_users(
+    user_service: UserService, test_user_data: schemas.UserCreate
+):
     """
     Fixture that creates test users.
 
@@ -64,7 +77,7 @@ async def fixture_create_test_users(user_service: UserService):
         None
     """
 
-    password = "password123"
+    password = test_user_data.password
     create_user_list = [
         ["user00@pytest.de", password, "User00"],
         ["user01@pytest.de", password, "User01"],
@@ -206,14 +219,11 @@ async def fixture_inactive_user(
 
 
 @pytest.fixture(name="create_test_wallets", scope="session")
-async def fixture_create_test_wallets(
-    session: AsyncSession, create_test_users: list[models.User]
-):
+async def fixture_create_test_wallets(create_test_users: list[models.User]):
     """
     Fixture that creates test wallets.
 
     Args:
-        session (fixture): The session fixture.
         test_users (fixture): Fixture to get a test user.
         test_users (fixuter): Fixture to get a list of test users.
 
@@ -249,8 +259,8 @@ async def fixture_create_test_wallets(
         )
         create_task_list.append(task)
 
-    wallet_list = await asyncio.gather(*create_task_list)
-    await session.commit()
+    async with session_transaction_manager.transaction():
+        wallet_list = await asyncio.gather(*create_task_list)
 
     yield wallet_list
 
@@ -316,14 +326,12 @@ def get_date_range(date_start, days=5):
 @pytest.fixture(name="create_transactions")
 async def fixture_create_transactions(
     test_wallets: list[models.Wallet],
-    session: AsyncSession,
 ):
     """
     Fixture that creates test transactions.
 
     Args:
         test_wallets (fixture): The test wallets fixture.
-        session (fixture): The session fixture.
 
     Returns:
         list[Transaction]: A list of test transactions.
@@ -390,8 +398,8 @@ async def fixture_create_transactions(
             ]
         )
 
-    transaction_list = await asyncio.gather(*create_task)
-    await session.commit()
+    async with session_transaction_manager.transaction():
+        transaction_list = await asyncio.gather(*create_task)
 
     yield transaction_list
 
@@ -523,7 +531,6 @@ async def fixture_create_scheduled_transactions(
     create_task = []
 
     for wallet in test_wallets:
-
         create_task.extend(
             [
                 service.create_scheduled_transaction(
@@ -542,15 +549,14 @@ async def fixture_create_scheduled_transactions(
             ]
         )
 
-    scheduled_transaction_list: List[models.TransactionScheduled | None] = (
-        await asyncio.gather(*create_task)
-    )
-    await repository.session.commit()
+    async with session_transaction_manager.transaction():
+        scheduled_transaction_list = await asyncio.gather(*create_task)
 
     yield scheduled_transaction_list
 
     delete_task = []
-    for scheduled_transaction in scheduled_transaction_list:
+
+    for scheduled_transaction in await repository.get_all(models.TransactionScheduled):
 
         if scheduled_transaction is None:
             continue
@@ -565,7 +571,6 @@ async def fixture_create_scheduled_transactions(
         )
 
     await asyncio.gather(*delete_task)
-    await repository.session.commit()
 
 
 @pytest.fixture(name="test_wallet_scheduled_transaction_list")

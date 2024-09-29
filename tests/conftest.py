@@ -1,13 +1,14 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.data import categories, frequencies
 from app.database import db
 from app.models import Base
 from app.repository import Repository
 
+BASE_URL = "http://test"
 
-async def populate_db(session: AsyncSession):
+
+async def populate_db():
     """
     Populates the database with transaction sections and categories.
 
@@ -32,12 +33,12 @@ async def populate_db(session: AsyncSession):
         models.Frequency(**frequency) for frequency in frequency_list
     ]
 
-    session.add_all(
-        transaction_category_list
-        + transaction_section_list
-        + transaction_frequency_list
-    )
-    await session.commit()
+    async with db.get_session() as session, session.begin():
+        session.add_all(
+            transaction_category_list
+            + transaction_section_list
+            + transaction_frequency_list
+        )
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -54,41 +55,9 @@ async def fixture_init_db():
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
-    await populate_db(db.session)
+    await populate_db()
 
     await db.engine.dispose()
-
-
-async def cleanup_tests(session: AsyncSession):
-    """
-    Performs cleanup tasks for tests.
-
-    Returns:
-        None
-    """
-
-    repo = Repository(session)
-    user_list = await repo.get_all(models.User)
-
-    delete_task = [repo.delete(user) for user in user_list]
-    await asyncio.gather(*delete_task)
-
-
-@pytest.fixture(name="session", autouse=True, scope="session")
-async def fixture_session() -> AsyncSession:  # type: ignore
-    """
-    Fixture that provides an async session.
-
-    Args:
-        None
-
-    Returns:
-        AsyncSession: An async session.
-    """
-    session = db.session
-    await cleanup_tests(session)
-
-    yield session
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -107,18 +76,15 @@ def anyio_backend():
 
 
 @pytest.fixture(name="repository")
-def get_repository(session):
+def get_repository():
     """
     Fixture to provide a repository instance for testing.
-
-    Args:
-        session: The SQLAlchemy session object.
 
     Returns:
         Repository: An instance of the Repository class.
     """
 
-    yield Repository(session)
+    yield Repository()
 
 
 from .fixtures import *  # pylint: disable=wildcard-import,unused-wildcard-import,wrong-import-position

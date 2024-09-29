@@ -8,6 +8,7 @@ class BaseService(ABC):
     def __init__(self, repository: Optional[Repository] = None):
         if repository is None:
             repository = Repository()
+
         self.repository = repository
 
     @classmethod

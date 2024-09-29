@@ -2,7 +2,7 @@ import csv
 import io
 import time
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 import pytest
 from starlette.status import (
@@ -18,28 +18,23 @@ from starlette.status import (
 from app import models, schemas
 from app.data.categories import get_section_list
 from app.date_manager import string_to_datetime
+from app.exceptions.base_service_exception import EntityNotFoundException
 from app.repository import Repository
 from app.utils.classes import RoundedDecimal, TransactionCSV
 from app.utils.dataclasses_utils import ImportedTransaction
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
-from tests.utils import make_http_request
+from tests.utils import get_other_user_wallet, make_http_request
 
 ENDPOINT = "/api/wallets/"
 
 
-async def test_create_wallet(test_user: models.User):
+async def test_create_wallet(test_user: models.User, repository: Repository):
     """
     Test case for creating an wallet.
 
     Args:
         test_user (fixture): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
+        repository (fixture): The repository for database operations.
     """
 
     res = await make_http_request(
@@ -50,11 +45,30 @@ async def test_create_wallet(test_user: models.User):
 
     assert res.status_code == HTTP_201_CREATED
 
-    new_wallet = schemas.Wallet(**res.json())
+    new_wallet = schemas.WalletData(**res.json())
 
-    assert new_wallet.label == "test_wallet"
-    assert new_wallet.balance == 500
-    assert new_wallet.description == "test"
+    wallet = await repository.get(models.Wallet, new_wallet.id)
+
+    assert wallet is not None
+
+    assert wallet.label == "test_wallet"
+    assert wallet.balance == 500
+    assert wallet.description == "test"
+
+
+async def test_wallet_not_found(test_user: models.User):
+    """
+    Test case for getting an wallet that does not exist.
+
+    Args:
+        test_user (fixture): The test user.
+    """
+
+    res = await make_http_request(
+        f"{ENDPOINT}123456789", as_user=test_user, method=RequestMethod.GET
+    )
+
+    assert res.status_code == HTTP_404_NOT_FOUND
 
 
 @pytest.mark.parametrize(
@@ -72,13 +86,6 @@ async def test_invalid_title_create_wallet(test_user: models.User, label: Any):
     Args:
         test_user (fixture): The test user.
         label (Any): The label of the wallet.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
     """
 
     res = await make_http_request(
@@ -96,13 +103,7 @@ async def test_delete_wallet(test_wallet: models.Wallet, repository: Repository)
 
     Args:
         test_wallet (fixture): The test wallet.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
+        repository (fixture): The repository for database operations.
     """
 
     res = await make_http_request(
@@ -113,43 +114,34 @@ async def test_delete_wallet(test_wallet: models.Wallet, repository: Repository)
 
     assert res.status_code == HTTP_204_NO_CONTENT
 
-    wallet = await repository.get(models.Wallet, test_wallet.id)
+    with pytest.raises(EntityNotFoundException):
+        await repository.get(models.Wallet, test_wallet.id)
 
-    assert wallet is None
 
-
-async def test_invalid_delete_wallet(
-    test_user: models.User, test_wallets: List[models.Wallet], repository: Repository
-):
+@pytest.mark.usefixtures("test_wallet")
+async def test_invalid_delete_wallet(test_user: models.User, repository: Repository):
     """
     Test case for deleting an wallet.
 
     Args:
         test_user (fixture): The test user.
         test_wallets (fixture): The list of test wallets.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
+        repository (fixture): The repository for database operations.
     """
 
-    for wallet in test_wallets:
+    other_wallet = await get_other_user_wallet(test_user, repository)
+    wallet_id = other_wallet.id
 
-        if wallet.user_id == test_user.id:
-            continue
+    res = await make_http_request(
+        f"{ENDPOINT}{wallet_id}", as_user=test_user, method=RequestMethod.DELETE
+    )
 
-        res = await make_http_request(
-            f"{ENDPOINT}{wallet.id}", as_user=test_user, method=RequestMethod.DELETE
-        )
+    assert res.status_code == HTTP_404_NOT_FOUND
 
-        assert res.status_code == HTTP_404_NOT_FOUND
+    wallet_refresh = await repository.get(models.Wallet, wallet_id)
 
-        wallet_refresh = await repository.get(models.Wallet, wallet.id)
-
-        assert wallet_refresh == wallet
+    assert isinstance(wallet_refresh, models.Wallet)
+    assert wallet_refresh.id == wallet_id
 
 
 @pytest.mark.parametrize(
@@ -190,13 +182,7 @@ async def test_update_wallet(
         test_wallet (fixture): The test wallet.
         test_user (fixture): The test user.
         values (dict): The updated values for the wallet.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
-
+        repository (fixture): The repository for database operations.
     """
     response = await make_http_request(
         f"{ENDPOINT}{test_wallet.id}", json=values, as_user=test_user
@@ -225,13 +211,7 @@ async def test_get_wallet_response(test_wallet):
     Tests if the transaction amount in the JSON response is a float.
 
     Args:
-        test_wallet_transaction_list (fixture): The list of wallet transactions.
-        test_user (fixture): The test user.
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
+        test_wallet (fixture): A wallet from the test_user.
     """
 
     res = await make_http_request(
@@ -258,12 +238,10 @@ async def test_import_transaction(
     Test case for importing transactions into an wallet.
 
     Args:
-        test_wallet: The wallet to import transactions into.
-        test_user: The user performing the import.
+        test_wallet (fixture): The wallet to import transactions into.
+        test_user (fixture): The user performing the import.
         tmp_path: Path to a temporary directory for file operations.
-
-    Returns:
-        None
+        repository (fixture): The repository for database operations.
     """
 
     wallet_id = test_wallet.id
@@ -334,12 +312,9 @@ async def test_import_transaction_fail(
     Test case for importing transactions into an wallet.
 
     Args:
-        test_wallet: The wallet to import transactions into.
-        test_user: The user performing the import.
+        test_wallet (fixture): The wallet to import transactions into.
+        test_user (fixture): The user performing the import.
         tmp_path: Path to a temporary directory for file operations.
-
-    Returns:
-        None
     """
 
     category_label = category_id
@@ -394,8 +369,8 @@ async def test_invalid_import_transaction_file(
     Test case for importing transactions into an wallet.
 
     Args:
-        test_wallet: The wallet to import transactions into.
-        test_user: The user performing the import.
+        test_wallet (fixture): The wallet to import transactions into.
+        test_user (fixture): The user performing the import.
         tmp_path: Path to a temporary directory for file operations.
 
     Returns:
@@ -445,8 +420,8 @@ async def test_example_import_file(
     Test case for importing transactions into an wallet.
 
     Args:
-        test_wallet: The wallet to import transactions into.
-        test_user: The user performing the import.
+        test_wallet (fixture): The wallet to import transactions into.
+        test_user (fixture): The user performing the import.
         tmp_path: Path to a temporary directory for file operations.
 
     Returns:

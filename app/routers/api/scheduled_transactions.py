@@ -1,8 +1,7 @@
-from fastapi import Depends, Response, status
-from fastapi.exceptions import HTTPException
+from fastapi import Depends, status
 
 from app import schemas
-from app import transaction_manager as tm
+from app import session_transaction_manager as tm
 from app.models import User
 from app.routers.api.users import current_active_verified_user
 from app.services.scheduled_transactions import ScheduledTransactionService
@@ -40,7 +39,7 @@ async def api_get_scheduled_transactions(
         HTTPException: If the wallet is not found.
     """
 
-    return await service.get_transaction_list(current_user, wallet_id)
+    return await service.get_scheduled_transaction_list(current_user, wallet_id)
 
 
 @router.get("/{transaction_id}", response_model=ResponseModel)
@@ -65,14 +64,7 @@ async def api_get_scheduled_transaction(
         HTTPException: If the scheduled transaction is not found.
     """
 
-    transaction = await service.get_transaction(current_user, transaction_id)
-
-    if transaction:
-        return transaction
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled transaction not found"
-    )
+    return await service.get_scheduled_transaction(current_user, transaction_id)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ResponseModel)
@@ -97,17 +89,10 @@ async def api_create_scheduled_transaction(
         HTTPException: If the scheduled transaction is not created.
     """
 
-    transaction = await tm.transaction(
-        service.create_scheduled_transaction, current_user, transaction_information
-    )
-
-    if transaction:
-        return transaction
-
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Scheduled transaction not created",
-    )
+    async with tm.transaction():
+        return await service.create_scheduled_transaction(
+            current_user, transaction_information
+        )
 
 
 @router.post("/{transaction_id}", response_model=ResponseModel)
@@ -135,18 +120,10 @@ async def api_update_scheduled_transaction(
         HTTPException: If the scheduled transaction update fails.
     """
 
-    transaction = await tm.transaction(
-        service.update_scheduled_transaction,
+    return await service.update_scheduled_transaction(
         current_user,
         transaction_id,
         transaction_information,
-    )
-
-    if transaction:
-        return transaction
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled transaction not found"
     )
 
 
@@ -172,15 +149,4 @@ async def api_delete_scheduled_transaction(
         HTTPException: If the transaction is not found.
     """
 
-    result = await tm.transaction(
-        service.delete_scheduled_transaction, current_user, transaction_id
-    )
-    if result:
-        return Response(
-            status_code=status.HTTP_204_NO_CONTENT,
-            content="Schheduled Transaction deleted successfully",
-        )
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled Transaction not found"
-    )
+    return await service.delete_scheduled_transaction(current_user, transaction_id)

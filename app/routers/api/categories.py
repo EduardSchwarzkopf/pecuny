@@ -1,10 +1,9 @@
-from fastapi import Depends, status
-from fastapi.exceptions import HTTPException
+from fastapi import Depends
 
 from app import schemas
 from app.models import User
 from app.routers.api.users import current_active_verified_user
-from app.services.categories import CategoryService
+from app.services.category import CategoryService
 from app.utils import APIRouterExtended
 
 router = APIRouterExtended(prefix="/categories", tags=["Categories"])
@@ -25,9 +24,6 @@ async def api_get_categories(
 
     Returns:
         ResponseModel: The retrieved category information.
-
-    Raises:
-        HTTPException: If the category is not found.
     """
 
     return await service.get_categories(current_user)
@@ -48,17 +44,9 @@ async def api_get_category(
 
     Returns:
         ResponseModel: The retrieved category information.
-
-    Raises:
-        HTTPException: If the category is not found.
     """
 
-    category = await service.get_category(current_user, category_id)
-
-    if category is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Category not found")
-
-    return category
+    return await service.get_category(current_user, category_id)
 
 
 # @router.post("/", status_code=status.HTTP_201_CREATED, response_model=response_model)

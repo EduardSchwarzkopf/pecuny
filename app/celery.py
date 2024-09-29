@@ -4,7 +4,6 @@ from inspect import isawaitable
 from celery import Celery
 
 from app.config import settings
-from app.database import db
 
 
 class AsyncCelery(Celery):
@@ -14,13 +13,6 @@ class AsyncCelery(Celery):
 
         if "app" in kwargs:
             self.init_app(kwargs["app"])
-
-    def get_db(self):
-        """
-        Returns the database connection.
-        """
-
-        return db
 
     def patch_task(self):
         """

@@ -2,10 +2,8 @@ from typing import Any, List, Tuple
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from app.logger import get_logger
 from app.tasks import process_scheduled_transactions
 
-logger = get_logger(__name__)
 job_registry: List[Tuple[Any, Any, dict]] = []
 
 

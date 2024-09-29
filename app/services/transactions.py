@@ -1,20 +1,21 @@
 from datetime import datetime
 from typing import List, Optional
 
-from app import models, schemas
-from app.logger import get_logger
+from app import models
 from app.repository import Repository
 from app.services.base_transaction import BaseTransactionService
-from app.services.wallets import WalletService
-
-logger = get_logger(__name__)
 
 
-class TransactionService(
-    BaseTransactionService,
-):
+class TransactionService(BaseTransactionService):
     def __init__(self, repository: Optional[Repository] = None):
         super().__init__(models.Transaction, repository)
+
+    async def __get_transaction_by_id(self, transaction_id: int):
+        return await self.repository.get(
+            self.service_model,
+            transaction_id,
+            load_relationships_list=[self.service_model.offset_transaction],
+        )
 
     async def get_transaction_list(
         self,
@@ -35,15 +36,7 @@ class TransactionService(
         Returns:
             A list of transactions that match the criteria.
         """
-        logger.info(
-            "Starting transaction list retrieval for user %s and wallet %s",
-            user.id,
-            wallet_id,
-        )
-        wallet = await self.repository.get(models.Wallet, wallet_id)
-
-        if wallet is None or not WalletService.has_user_access_to_wallet(user, wallet):
-            return []
+        await self.wallet_service.validate_access_to_wallet(user, wallet_id)
 
         return await self.repository.get_transactions_from_period(
             wallet_id, date_start, date_end
@@ -51,7 +44,7 @@ class TransactionService(
 
     async def get_transaction(
         self, user: models.User, transaction_id: int
-    ) -> Optional[models.Transaction]:
+    ) -> models.Transaction:
         """
         Retrieves a transaction by ID.
 
@@ -66,83 +59,8 @@ class TransactionService(
             None
         """
 
-        return await super().get_transaction(user, transaction_id)
+        transaction = await self.__get_transaction_by_id(transaction_id)
 
-    async def create_transaction(
-        self,
-        user: models.User,
-        transaction_data: schemas.TransactionData,
-    ) -> Optional[models.Transaction]:
-        """
-        Creates a new transaction.
+        await self.wallet_service.validate_access_to_wallet(user, transaction.wallet_id)
 
-        Args:
-            user: The user object.
-            transaction_information: The information for the transaction.
-
-        Returns:
-            Transaction: The created transaction.
-
-        Raises:
-            None
-        """
-        return await super().create_transaction(user, transaction_data)
-
-    async def _handle_offset_transaction(
-        self,
-        user: models.User,
-        transaction_data: schemas.TransactionData,
-    ) -> Optional[models.Transaction]:
-        """
-        Handles an offset transaction for a user.
-
-        Args:
-            user: The user object.
-            transaction_information: The information for the offset transaction.
-
-        Returns:
-            Transaction: The created offset transaction.
-
-        Raises:
-            None
-        """
-        return await super()._handle_offset_transaction(user, transaction_data)
-
-    async def update_transaction(
-        self,
-        current_user: models.User,
-        transaction_id: int,
-        transaction_information: schemas.TransactionInformtionUpdate,
-    ) -> Optional[models.Transaction]:
-        """
-        Updates a transaction.
-
-        Args:
-            current_user: The current active user.
-            transaction_id: The ID of the transaction to update.
-            transaction_information: The updated transaction information.
-
-        Returns:
-            Transaction: The updated transaction.
-
-        Raises:
-            None
-        """
-        return await super().update_transaction(
-            current_user, transaction_id, transaction_information
-        )
-
-    async def delete_transaction(
-        self, current_user: models.User, transaction_id: int
-    ) -> Optional[bool]:
-        """
-        Deletes a transaction.
-
-        Args:
-            current_user: The current active user.
-            transaction_id: The ID of the transaction to delete.
-
-        Returns:
-            bool: True if the transaction is successfully deleted, False otherwise.
-        """
-        return await super().delete_transaction(current_user, transaction_id)
+        return transaction

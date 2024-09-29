@@ -1,11 +1,8 @@
 from fastapi import Depends, Request
-from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from starlette import status
 from starlette_wtf import csrf_protect
 
 from app import models, schemas
-from app import transaction_manager as tm
 from app.auth_manager import current_active_verified_user
 from app.routers.wallets import handle_wallet_route
 from app.routers.wallets import router as wallet_router
@@ -107,12 +104,7 @@ async def page_create_transaction(
 
     transaction = schemas.TransactionData(wallet_id=wallet_id, **form.data)
 
-    response = await tm.transaction(
-        transaction_service.create_transaction, user, transaction
-    )
-
-    if not response:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
+    await transaction_service.create_transaction(user, transaction)
 
     return RedirectResponse(
         wallet_router.url_path_for("page_get_wallet", wallet_id=wallet_id),
@@ -144,9 +136,6 @@ async def page_update_transaction_get(
     await handle_wallet_route(request, user, wallet_id)
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
-
-    if transaction is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
     form: schemas.UpdateTransactionForm = schemas.UpdateTransactionForm(
         request, data=transaction.information.__dict__
@@ -204,9 +193,6 @@ async def page_update_transaction_post(
 
     transaction = await transaction_service.get_transaction(user, transaction_id)
 
-    if transaction is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
-
     form = await schemas.UpdateTransactionForm.from_formdata(request)
     await populate_transaction_form_choices(
         wallet_id, user, form, "Linked wallet (not editable)"
@@ -229,15 +215,9 @@ async def page_update_transaction_post(
         wallet_id=wallet_id, **form.data
     )
 
-    response = await tm.transaction(
-        transaction_service.update_transaction,
-        user,
-        transaction_id,
-        transaction_information,
+    await transaction_service.update_transaction(
+        user, transaction_id, transaction_information
     )
-
-    if not response:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
 
     return RedirectResponse(
         wallet_router.url_path_for("page_get_wallet", wallet_id=wallet_id),
@@ -265,17 +245,7 @@ async def page_delete_transaction(
         RedirectResponse: A redirect response to the wallet page.
     """
 
-    transaction = await transaction_service.get_transaction(user, transaction_id)
-
-    if transaction is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Transaction not found")
-
-    response = await tm.transaction(
-        transaction_service.delete_transaction, user, transaction_id
-    )
-
-    if not response:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Kaputt")
+    await transaction_service.delete_transaction(user, transaction_id)
 
     return RedirectResponse(
         wallet_router.url_path_for("page_get_wallet", wallet_id=wallet_id),

@@ -1,8 +1,7 @@
 from fastapi import Depends, File, Response, UploadFile, status
-from fastapi.exceptions import HTTPException
 
 from app import schemas
-from app import transaction_manager as tm
+from app import session_transaction_manager as tm
 from app.models import User
 from app.routers.api.users import current_active_verified_user
 from app.services.wallets import WalletService
@@ -34,7 +33,7 @@ async def api_get_wallets(
 @router.get("/{wallet_id}", response_model=ResponseModel)
 async def api_get_wallet(
     wallet_id: int,
-    current_user: User = Depends(current_active_verified_user),
+    user: User = Depends(current_active_verified_user),
     service: WalletService = Depends(WalletService.get_instance),
 ):
     """
@@ -51,12 +50,7 @@ async def api_get_wallet(
         HTTPException: If the wallet is not found.
     """
 
-    wallet = await service.get_wallet(current_user, wallet_id)
-
-    if wallet is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Wallet not found")
-
-    return wallet
+    return await service.get_wallet(user, wallet_id)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ResponseModel)
@@ -76,8 +70,8 @@ async def api_create_wallet(
         ResponseModel: The created wallet information.
     """
 
-    wallet = await tm.transaction(service.create_wallet, current_user, wallet)
-    return wallet
+    async with tm.transaction():
+        return await service.create_wallet(current_user, wallet)
 
 
 @router.post("/{wallet_id}", response_model=ResponseModel)
@@ -99,9 +93,8 @@ async def api_update_wallet(
         ResponseModel: The updated wallet information.
     """
 
-    return await tm.transaction(
-        service.update_wallet, current_user, wallet_id, wallet_data
-    )
+    async with tm.transaction():
+        return await service.update_wallet(current_user, wallet_id, wallet_data)
 
 
 @router.delete("/{wallet_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -124,14 +117,8 @@ async def api_delete_wallet(
         HTTPException: If the wallet is not found.
     """
 
-    result = await tm.transaction(service.delete_wallet, current_user, wallet_id)
-    if result:
-        return None
-
-    if result is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Wallet not found"
-        )
+    async with tm.transaction():
+        return await service.delete_wallet(current_user, wallet_id)
 
 
 @router.post("/{wallet_id}/import")

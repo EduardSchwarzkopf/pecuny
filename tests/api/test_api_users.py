@@ -5,10 +5,11 @@ from starlette.status import (
     HTTP_200_OK,
     HTTP_204_NO_CONTENT,
     HTTP_401_UNAUTHORIZED,
-    HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
 )
 
 from app import models, schemas
+from app.exceptions.base_service_exception import EntityNotFoundException
 from app.repository import Repository
 from app.services.users import UserService
 from app.utils.enums import RequestMethod
@@ -38,11 +39,7 @@ async def update_user_test(
         test_user: The user whose information is being updated.
         values: Dictionary of values to update the user with.
         user_service: The UserService instance for managing users.
-
-    Returns:
-        None
     """
-
     res = await make_http_request(
         "/api/users/me",
         json=values,
@@ -79,12 +76,6 @@ async def test_update_active_verified_user_self(
     Args:
         active_verified_user (fixture): The test user.
         values (dict): The updated values for the user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
     """
 
     await update_user_test(active_verified_user, values, user_service)
@@ -100,12 +91,6 @@ async def test_update_active_user_self(
     Args:
         active_verified_user (fixture): The test user.
         values (dict): The updated values for the user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
     """
 
     await update_user_test(active_user, values, user_service)
@@ -156,9 +141,6 @@ async def test_invalid_updated_user(
             The active and verified user performing the update operation.
         test_user: The user to be updated.
         values: Dictionary of invalid values to update the user with.
-
-    Returns:
-        None
     """
 
     user_id = str(test_user.id)
@@ -169,7 +151,7 @@ async def test_invalid_updated_user(
         as_user=active_verified_user,
     )
 
-    assert res.status_code == HTTP_403_FORBIDDEN
+    assert res.status_code == HTTP_404_NOT_FOUND
 
 
 async def test_delete_self(active_verified_user: models.User, repository: Repository):
@@ -178,12 +160,6 @@ async def test_delete_self(active_verified_user: models.User, repository: Reposi
 
     Args:
         active_verified_user (fixture): The test user.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If the test fails.
     """
     res = await make_http_request(
         "/api/users/me", method=RequestMethod.DELETE, as_user=active_verified_user
@@ -191,8 +167,8 @@ async def test_delete_self(active_verified_user: models.User, repository: Reposi
 
     assert res.status_code == HTTP_204_NO_CONTENT
 
-    user = await repository.get(models.User, active_verified_user.id)
-    assert user is None
+    with pytest.raises(EntityNotFoundException):
+        await repository.get(models.User, active_verified_user.id)
 
 
 async def test_invalid_delete_other_user(
@@ -205,9 +181,6 @@ async def test_invalid_delete_other_user(
         active_verified_user (fixture):
             The active and verified user performing the delete operation.
         test_user (fixture): The user to be deleted.
-
-    Returns:
-        None
     """
 
     res = await make_http_request(
@@ -216,7 +189,7 @@ async def test_invalid_delete_other_user(
         as_user=active_verified_user,
     )
 
-    assert res.status_code == HTTP_403_FORBIDDEN
+    assert res.status_code == HTTP_404_NOT_FOUND
 
     refresh_user: Optional[models.User] = await repository.get(
         models.User, test_user.id
@@ -240,9 +213,6 @@ async def test_update_email(
     Args:
         active_verified_user: The active and verified user whose email is being updated.
         user_service: The UserService instance for managing users.
-
-    Returns:
-        None
     """
 
     res = await make_http_request(

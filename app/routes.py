@@ -7,6 +7,7 @@ from app.auth_manager import auth_backend, fastapi_users
 from app.routers import (
     auth,
     dashboard,
+    errors,
     index,
     scheduled_transactions,
     transactions,
@@ -15,6 +16,7 @@ from app.routers import (
 )
 from app.routers.api import auth as api_auth
 from app.routers.api import categories as api_categories
+from app.routers.api import errors as api_errors
 from app.routers.api import scheduled_transactions as api_scheduled_transactions
 from app.routers.api import transactions as api_transactions
 from app.routers.api import users as api_users
@@ -48,6 +50,7 @@ user_tag_list = ["Api", "Users"]
 router_list: RouterList = [
     ## Pages
     {"router": index.router},
+    {"router": errors.router},
     {"router": dashboard.router},
     {"router": wallets.router},
     {"router": auth.router},
@@ -58,6 +61,7 @@ router_list: RouterList = [
     {
         "router": api_users.router,
     },
+    {"router": api_errors.router},
     {"router": api_categories.router},
     {"router": api_auth.router},
     {

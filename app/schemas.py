@@ -36,6 +36,20 @@ StringContr = Annotated[
 ]
 
 
+def serialize_rounded_decimal(value: Decimal) -> float:
+    """
+    Converts a Decimal value to a float by serializing it.
+
+    Args:
+        value: The Decimal value to be converted to a float.
+
+    Returns:
+        float: The serialized float value.
+    """
+
+    return float(value)
+
+
 class EmailSchema(BaseModel):
     email: list[EmailStr]
     body: dict[str, Any]
@@ -50,8 +64,7 @@ class UserCreate(schemas.BaseUserCreate):
 
 
 class Base(BaseModel):
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(form_attributes=True)
 
 
 class UserUpdate(schemas.BaseUserUpdate):
@@ -74,17 +87,22 @@ class WalletUpdate(Base):
     description: Optional[str]
     balance: Optional[RoundedDecimal] = Field(
         default=None,
-        example=0.00,
+        examples=[0.00],
         description="The wallet balance rounded to two decimal places.",
     )
     model_config = ConfigDict(json_encoders={Decimal: float})
+
+    # TODO: Use field_serializer for response schemase
+    # @field_serializer("balance")
+    # def serialize_balance(self, balance: Decimal, _info):
+    #     return serialize_rounded_decimal(balance)
 
 
 class TransactionInformationBase(BaseModel):
     amount: RoundedDecimal = Field(
         ...,
         description="The transaction amount, rounded to two decimal places.",
-        example=100.00,
+        examples=[100.00],
     )
     reference: str
     category_id: IdField
@@ -153,6 +171,10 @@ class TransactionBase(Base):
 
 class Transaction(TransactionBase):
     offset_transactions_id: Optional[IdField] = None
+
+
+class TransactionResponse(Transaction):
+    pass
 
 
 class ScheduledTransaction(TransactionBase):

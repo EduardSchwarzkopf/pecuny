@@ -13,6 +13,7 @@ from starlette.status import (
 
 from app import models, schemas
 from app.date_manager import get_day_delta, get_tomorrow, get_yesterday, now
+from app.exceptions.base_service_exception import EntityNotFoundException
 from app.repository import Repository
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
 from tests.utils import get_other_user_wallet, make_http_request
@@ -49,8 +50,8 @@ async def test_create_scheduled_transaction(
         reference: The reference for the transaction.
         category_id: The category ID of the transaction.
         frequency_id: The frequency ID of the transaction.
-        test_wallet: The wallet for which the transaction is created.
-        test_user: The user creating the transaction.
+        test_wallet (fixture): The wallet for which the transaction is created.
+        test_user (fixture): The user creating the transaction.
     """
 
     yesterday = get_yesterday()
@@ -92,9 +93,10 @@ async def test_read_scheduled_transaction(
     Test reading a scheduled transaction.
 
     Args:
-        test_wallet: The wallet associated with the transaction.
-        test_user: The user performing the read operation.
-        test_wallet_scheduled_transaction_list: List of scheduled transactions for testing.
+        test_wallet (fixture): The wallet associated with the transaction.
+        test_user (fixture): The user performing the read operation.
+        test_wallet_scheduled_transaction_list (fixture):
+            List of scheduled transactions for testing.
     """
 
     transaction = test_wallet_scheduled_transaction_list[0]
@@ -126,8 +128,9 @@ async def test_update_scheduled_transaction(
     Test updating a scheduled transaction with new information.
 
     Args:
-        test_user: The user performing the update.
-        test_wallet_scheduled_transaction_list: List of scheduled transactions for testing.
+        test_user (fixture): The user performing the update.
+        test_wallet_scheduled_transaction_list (fixture):
+            List of scheduled transactions for testing.
     """
 
     transaction = test_wallet_scheduled_transaction_list[0]
@@ -176,9 +179,10 @@ async def test_delete_scheduled_transaction(
     Test deleting a scheduled transaction.
 
     Args:
-        test_user: The user performing the deletion.
-        test_wallet_scheduled_transaction_list: List of scheduled transactions for testing.
-        repository: The repository for database operations.
+        test_user (fixture): The user performing the deletion.
+        test_wallet_scheduled_transaction_list (fixture):
+            List of scheduled transactions for testing.
+        repository (fixture): The repository for database operations.
     """
 
     transaction = test_wallet_scheduled_transaction_list[0]
@@ -190,9 +194,8 @@ async def test_delete_scheduled_transaction(
 
     assert res.status_code == HTTP_204_NO_CONTENT
 
-    db_transaction = await repository.get(models.TransactionScheduled, transaction_id)
-
-    assert db_transaction is None
+    with pytest.raises(EntityNotFoundException):
+        await repository.get(models.TransactionScheduled, transaction_id)
 
 
 # Tests for unauthorized access
@@ -205,8 +208,8 @@ async def test_create_scheduled_transaction_unauthorized(
     Tests unauthorized creation of a scheduled transaction.
 
     Args:
-        test_user: The unauthorized user attempting the creation.
-        repository: The repository for database operations.
+        test_user (fixture): The unauthorized user attempting the creation.
+        repository (fixture): The repository for database operations.
 
     """
 
@@ -226,7 +229,7 @@ async def test_create_scheduled_transaction_unauthorized(
         as_user=test_user,
     )
 
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTP_404_NOT_FOUND
 
 
 @pytest.mark.usefixtures("test_wallet_scheduled_transaction_list")
@@ -238,8 +241,8 @@ async def test_read_scheduled_transaction_unauthorized(
     Test reading a scheduled transaction by an unauthorized user.
 
     Args:
-        test_user: The unauthorized user attempting the read operation.
-        repository: The repository for database operations.
+        test_user (fixture): The unauthorized user attempting the read operation.
+        repository (fixture): The repository for database operations.
 
     """
 
@@ -269,8 +272,8 @@ async def test_update_scheduled_transaction_unauthorized(
     Test updating a scheduled transaction by an unauthorized user.
 
     Args:
-        test_user: The unauthorized user attempting the update.
-        repository: The repository for database operations.
+        test_user (fixture): The unauthorized user attempting the update.
+        repository (fixture): The repository for database operations.
 
     """
 
@@ -310,8 +313,8 @@ async def test_delete_scheduled_transaction_unauthorized(
     Test deleting a scheduled transaction by an unauthorized user.
 
     Args:
-        test_user: The unauthorized user attempting the deletion.
-        repository: The repository for database operations.
+        test_user (fixture): The unauthorized user attempting the deletion.
+        repository (fixture): The repository for database operations.
     """
 
     other_wallet = await get_other_user_wallet(test_user, repository)
@@ -345,7 +348,8 @@ async def test_create_scheduled_transaction_unauthenticated(
     Test creating a scheduled transaction without authentication.
 
     Args:
-        test_wallet_scheduled_transaction_list: List of scheduled transactions for testing.
+        test_wallet_scheduled_transaction_list (fixture):
+            ist of scheduled transactions for testing.
     """
 
     transaction = test_wallet_scheduled_transaction_list[0]
@@ -373,7 +377,8 @@ async def test_read_scheduled_transaction_unauthenticated(
     Test reading a scheduled transaction without authentication.
 
     Args:
-        test_wallet_scheduled_transaction_list: List of scheduled transactions for testing.
+        test_wallet_scheduled_transaction_list (fixture):
+            List of scheduled transactions for testing.
     """
 
     transaction = test_wallet_scheduled_transaction_list[0]
@@ -392,7 +397,8 @@ async def test_update_scheduled_transaction_unauthenticated(
     Test updating a scheduled transaction without authentication.
 
     Args:
-        test_wallet_scheduled_transaction_list: List of scheduled transactions for testing.
+        test_wallet_scheduled_transaction_list (fixture):
+            List of scheduled transactions for testing.
     """
 
     transaction = test_wallet_scheduled_transaction_list[0]
@@ -442,7 +448,7 @@ async def test_read_scheduled_transaction_not_found(
     Test reading a scheduled transaction that is not found.
 
     Args:
-        test_user: The user it should be tested with.
+        test_user (fixture): The user it should be tested with.
     """
 
     res = await make_http_request(
@@ -476,7 +482,7 @@ async def test_create_scheduled_transaction_with_missing_fields(
     Args:
         test_wallet_scheduled_transaction_list(fixture):
             Fixture to get a list of scheduled transactions
-        test_user: The user it should be tested with.
+        test_user (fixture): The user it should be tested with.
         key: The key that should be removed from the payload.
     """
 
@@ -548,8 +554,8 @@ async def test_create_scheduled_transaction_with_invalid_data(
     Test creation of scheduled transactions with invalid data.
 
     Args:
-        test_user: The user it should be tested with.
-        test_wallet: The test wallet for the transactions.
+        test_user (fixture): The user it should be tested with.
+        test_wallet (fixture): The test wallet for the transactions.
         key: The key that should be updated in the payload.
         value: The value that should be placed on the key.
     """
@@ -620,8 +626,8 @@ async def test_update_scheduled_transaction_with_invalid_data(
     Test updating of scheduled transactions with invalid data.
 
     Args:
-        test_user: The user it should be tested with.
-        test_wallet: The test wallet for the transactions.
+        test_user (fixture): The user it should be tested with.
+        test_wallet (fixture): The test wallet for the transactions.
         key: The key that should be updated in the payload.
         value: The value that should be placed on the key.
     """
@@ -656,8 +662,8 @@ async def test_update_scheduled_transaction_non_existent(
     Test updating of scheduled transactions that does not exist.
 
     Args:
-        test_user: The user it should be tested with.
-        test_wallet: The test wallet for the transactions.
+        test_user (fixture): The user it should be tested with.
+        test_wallet (fixture): The test wallet for the transactions.
     """
 
     payload = {

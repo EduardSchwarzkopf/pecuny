@@ -6,21 +6,20 @@ from typing import List, Optional
 
 from fastapi import HTTPException
 from pydantic import ValidationError
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app import models, schemas, transaction_manager
+from app import models, schemas
 from app.celery import celery
 from app.config import settings
 from app.database import db
 from app.date_manager import get_today
-from app.logger import get_logger
+from app.exceptions.base_service_exception import EntityNotFoundException
+from app.exceptions.wallet_service_exceptions import WalletAccessDeniedException
 from app.repository import Repository
 from app.services.email import send_transaction_import_report
 from app.services.transactions import TransactionService
+from app.session_transaction_manager import transaction
 from app.utils.dataclasses_utils import FailedImportedTransaction
 from app.utils.enums import DatabaseFilterOperator, Frequency
-
-logger = get_logger(__name__)
 
 
 async def _process_transaction_row(
@@ -115,16 +114,15 @@ async def _process_transaction_row(
         failed_transaction.reason = error_message
         return failed_transaction
 
-    transaction = await transaction_manager.transaction(
-        service.create_transaction,
-        user,
-        transaction_data,
-        session=repo.session,
-    )
-
-    if transaction is None:
-        failed_transaction.reason = "Failed to create transaction"
-        return failed_transaction
+    async with transaction():
+        try:
+            await service.create_transaction(
+                user,
+                transaction_data,
+            )
+        except (EntityNotFoundException, WalletAccessDeniedException) as e:
+            failed_transaction.reason = e.message
+            return failed_transaction
 
     return None
 
@@ -152,24 +150,23 @@ async def import_transactions_from_csv(
 
     reader = csv.DictReader(csv_file, delimiter=";")
 
-    async with await db.get_session() as session:
-        repo = Repository(session)
+    await db.init()
+    repo = Repository()
 
-        user = await repo.get(models.User, user_id)
+    user = await repo.get(models.User, user_id)
 
-        if user is None:
-            raise ValueError("User not found")
+    if user is None:
+        raise ValueError("User not found")
 
-        service = TransactionService(repo)
-        failed_transaction_list: List[FailedImportedTransaction] = []
+    service = TransactionService(repo)
+    failed_transaction_list: List[FailedImportedTransaction] = []
 
-        for row in reader:
-            failed_transaction = await _process_transaction_row(
-                row, reader.line_num, wallet_id, user, repo, service
-            )
-            if failed_transaction:
-                failed_transaction_list.append(failed_transaction)
-                logger.error(failed_transaction.reason)
+    for row in reader:
+        failed_transaction = await _process_transaction_row(
+            row, reader.line_num, wallet_id, user, repo, service
+        )
+        if failed_transaction:
+            failed_transaction_list.append(failed_transaction)
 
     if settings.environment != "test":
         await send_transaction_import_report(
@@ -180,7 +177,6 @@ async def import_transactions_from_csv(
 
 
 async def _create_transaction(
-    session: AsyncSession,
     today: datetime,
     service: TransactionService,
     repo: Repository,
@@ -210,9 +206,8 @@ async def _create_transaction(
         scheduled_transaction_id=scheduled_transaction.id,
     )
 
-    await transaction_manager.transaction(
-        service.create_transaction, user, new_transaction, session=session
-    )
+    async with transaction():
+        await service.create_transaction(user, new_transaction)
 
 
 @celery.task
@@ -222,27 +217,26 @@ async def process_scheduled_transactions():
     creating corresponding transactions.
     """
 
-    async with await db.get_session() as session:
-        repo = Repository(session)
-        service = TransactionService(repo)
-        today = get_today()
+    await db.init()
+    repo = Repository()
+    service = TransactionService(repo)
+    today = get_today()
 
-        scheduled_transaction_list = []
+    scheduled_transaction_list = []
 
-        for frequency in Frequency.get_list():
-            transactions = await repo.get_scheduled_transactions_by_frequency(
-                frequency.value, today
-            )
-            scheduled_transaction_list += transactions
+    for frequency in Frequency.get_list():
+        transactions = await repo.get_scheduled_transactions_by_frequency(
+            frequency.value, today
+        )
+        scheduled_transaction_list += transactions
 
-        if not scheduled_transaction_list:
-            return
+    if not scheduled_transaction_list:
+        return
 
-        for scheduled in scheduled_transaction_list:
-            await _create_transaction(
-                session=session,
-                repo=repo,
-                today=today,
-                service=service,
-                scheduled_transaction=scheduled,
-            )
+    for scheduled in scheduled_transaction_list:
+        await _create_transaction(
+            repo=repo,
+            today=today,
+            service=service,
+            scheduled_transaction=scheduled,
+        )

@@ -10,6 +10,7 @@ from app.config import settings
 from app.main import app
 from app.repository import Repository
 from app.utils.enums import DatabaseFilterOperator, RequestMethod
+from tests.conftest import BASE_URL
 
 
 async def authorized_httpx_client(client: AsyncClient, user: models.User):
@@ -42,6 +43,7 @@ async def make_http_request(  # pylint: disable=too-many-arguments
     method: RequestMethod = RequestMethod.POST,
     cookies: Optional[Cookies] = None,
     params: Optional[QueryParams] = None,
+    follow_redirects: Optional[bool] = False,
     files: Optional[dict[str, tuple[str, BufferedReader, str]]] = None,
 ) -> Response:
     """
@@ -63,7 +65,7 @@ async def make_http_request(  # pylint: disable=too-many-arguments
         ValueError: If an invalid method is provided.
     """
 
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    async with AsyncClient(app=app, base_url=BASE_URL) as client:
 
         if cookies:
             client.cookies = {**client.cookies, **cookies}
@@ -72,13 +74,25 @@ async def make_http_request(  # pylint: disable=too-many-arguments
             client = await authorized_httpx_client(client, as_user)
 
         if method == RequestMethod.POST:
-            response = client.post(url, json=json, data=data, files=files)
+            response = client.post(
+                url,
+                json=json,
+                data=data,
+                files=files,
+                follow_redirects=follow_redirects,
+            )
         elif method == RequestMethod.PATCH:
-            response = client.patch(url, json=json, data=data, files=files)
+            response = client.patch(
+                url,
+                json=json,
+                data=data,
+                files=files,
+                follow_redirects=follow_redirects,
+            )
         elif method == RequestMethod.GET:
-            response = client.get(url, params=params)
+            response = client.get(url, params=params, follow_redirects=follow_redirects)
         elif method == RequestMethod.DELETE:
-            response = client.delete(url)
+            response = client.delete(url, follow_redirects=follow_redirects)
         else:
             raise ValueError(
                 f"Invalid method: {method}. Expected one of: get, post, patch, delete."
@@ -89,13 +103,13 @@ async def make_http_request(  # pylint: disable=too-many-arguments
 
 async def get_user_offset_wallet(
     wallet: models.Wallet, repository: Repository
-) -> Optional[models.Wallet]:
+) -> models.Wallet:
     """
     Returns the offset wallet for a given wallet within a list of wallets.
 
     Args:
         wallet (models.Wallet): The wallet for which to find the offset wallet.
-        wallet_list (list[models.Wallet]): The list of wallets to search within.
+        repository (Repository): The repository to query for wallet information.
 
     Returns:
         models.Wallet or None: The offset wallet if found, otherwise None.

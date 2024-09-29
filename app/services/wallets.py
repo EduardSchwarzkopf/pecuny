@@ -1,11 +1,12 @@
-from typing import Optional
+from typing import Literal
 
 from app import models, schemas
 from app.config import settings
-from app.logger import get_logger
+from app.exceptions.wallet_service_exceptions import (
+    WalletAccessDeniedException,
+    WalletLimitReachedException,
+)
 from app.services.base import BaseService
-
-logger = get_logger(__name__)
 
 
 class WalletService(BaseService):
@@ -28,114 +29,105 @@ class WalletService(BaseService):
             or []
         )
 
-    async def get_wallet(
-        self, current_user: models.User, wallet_id: int
-    ) -> Optional[models.Wallet]:
+    async def __get_wallet_by_id(self, wallet_id: int):
         """
-        Retrieves an wallet by ID.
+        Retrieves a wallet by its ID using the repository.
 
         Args:
-            current_user: The current active user.
             wallet_id: The ID of the wallet to retrieve.
 
         Returns:
-            Wallet: The retrieved wallet object.
+            models.Wallet: The wallet object associated with the provided ID.
         """
 
-        logger.info("Getting wallet %s for user: %s", wallet_id, current_user.id)
-        wallet = await self.repository.get(models.Wallet, wallet_id)
+        return await self.repository.get(models.Wallet, wallet_id)
 
-        if wallet is None:
-            return None
+    async def get_wallet(self, user: models.User, wallet_id: int) -> models.Wallet:
+        """
+        Retrieves a wallet for a specific user based on the wallet ID.
 
-        if self.has_user_access_to_wallet(current_user, wallet):
-            logger.info("Found wallet %s for user: %s", wallet_id, current_user.id)
-            return wallet
+        Args:
+            user: The user for whom the wallet is being retrieved.
+            wallet_id: The ID of the wallet to retrieve.
 
-        return None
+        Returns:
+            models.Wallet: The wallet associated with the provided ID.
+
+        Raises:
+            WalletAccessDeniedException: If the user does not have access to the wallet.
+        """
+
+        wallet = await self.__get_wallet_by_id(wallet_id)
+
+        if not self.has_user_access_to_wallet(user, wallet):
+            raise WalletAccessDeniedException(user, wallet)
+
+        return wallet
 
     async def create_wallet(
         self, user: models.User, wallet: schemas.Wallet
     ) -> models.Wallet:
         """
-        Creates a new wallet.
+        Creates a new wallet for a user based on the provided wallet data.
 
         Args:
-            user: The user object.
-            wallet: The wallet data.
+            user: The user for whom the wallet is being created.
+            wallet: The wallet data to create the new wallet.
 
         Returns:
-            Wallet: The created wallet object.
+            models.Wallet: The newly created wallet object.
+
+        Raises:
+            WalletLimitReachedException: If the user has reached the wallet limit.
         """
 
-        logger.info("Creating new wallet for user: %s", user.id)
+        if await self.has_reached_wallet_limit(user):
+            raise WalletLimitReachedException(user)
+
         db_wallet = models.Wallet(user=user, **wallet.model_dump())
         await self.repository.save(db_wallet)
-        logger.info("Wallet created for user: %s", user.id)
         return db_wallet
 
     async def update_wallet(
-        self, current_user: models.User, wallet_id, wallet: schemas.WalletData
-    ) -> Optional[models.Wallet]:
+        self, user: models.User, wallet_id, wallet_data: schemas.WalletData
+    ) -> models.Wallet:
         """
-        Updates an wallet.
+        Updates an existing wallet for a user with the provided wallet data.
 
         Args:
-            current_user: The current active user.
+            user: The user for whom the wallet is being updated.
             wallet_id: The ID of the wallet to update.
-            wallet: The updated wallet data.
+            wallet_data: The updated wallet data.
 
         Returns:
-            Wallet: The updated wallet information.
+            models.Wallet: The updated wallet object.
         """
 
-        logger.info("Updating wallet %s for user: %s", wallet_id, current_user.id)
-        db_wallet = await self.repository.get(models.Wallet, wallet_id)
+        db_wallet = await self.get_wallet(user, wallet_id)
 
-        if db_wallet is None:
-            return None
-
-        if db_wallet.user_id == current_user.id:
-            await self.repository.update(
-                models.Wallet, db_wallet.id, **wallet.model_dump()
-            )
-            logger.info("Wallet %s updated for user:  %s", wallet, current_user.id)
-            return db_wallet
-        logger.warning(
-            "Wallet %s not found or does not belong to user: %s",
-            wallet,
-            current_user.id,
+        await self.repository.update(
+            models.Wallet, db_wallet.id, **wallet_data.model_dump()
         )
-        return None
 
-    async def delete_wallet(
-        self, current_user: models.User, wallet_id: int
-    ) -> Optional[bool]:
+        return db_wallet
+
+    async def delete_wallet(self, user: models.User, wallet_id: int) -> Literal[True]:
         """
-        Deletes an wallet.
+        Deletes a wallet for a specific user based on the wallet ID.
 
         Args:
-            current_user: The current active user.
+            user: The user for whom the wallet is being deleted.
             wallet_id: The ID of the wallet to delete.
 
         Returns:
-            bool: True if the wallet is successfully deleted, False otherwise.
+            True: If the wallet is successfully deleted.
         """
 
-        logger.info("Deleting wallet %s for user: %s", wallet_id, current_user.id)
-        wallet = await self.repository.get(models.Wallet, wallet_id)
-        if wallet and wallet.user_id == current_user.id:
-            await self.repository.delete(wallet)
-            logger.info("Wallet %s deleted for user: %s", wallet_id, current_user.id)
-            return True
-        logger.warning(
-            "Wallet %s not found or does not belong to user: %s",
-            wallet_id,
-            current_user.id,
-        )
-        return None
+        wallet = await self.get_wallet(user, wallet_id)
+        await self.repository.delete(wallet)
+        return True
 
-    async def check_max_wallets(self, user: models.User) -> bool:
+    async def has_reached_wallet_limit(self, user: models.User) -> bool:
         """
         Checks if the maximum number of wallets has been reached for a user.
 
@@ -146,18 +138,9 @@ class WalletService(BaseService):
             bool: True if the maximum number of wallets has been reached, False otherwise.
         """
 
-        logger.info("Checking if maximum wallets reached for user: %s", user.id)
         wallet_list = await self.get_wallets(user)
 
-        if wallet_list is None:
-            return True
-
-        result = len(wallet_list) >= settings.max_allowed_wallets
-        if result:
-            logger.warning(
-                "User %s has reached the maximum allowed wallets limit.", user.id
-            )
-        return result
+        return len(wallet_list) >= settings.max_allowed_wallets
 
     @staticmethod
     def calculate_total_balance(wallet_list: list[models.Wallet]) -> float:
@@ -173,8 +156,30 @@ class WalletService(BaseService):
 
         return sum(wallet.balance for wallet in wallet_list)
 
-    @staticmethod
-    def has_user_access_to_wallet(user: models.User, wallet: models.Wallet) -> bool:
+    async def validate_access_to_wallet(
+        self, user: models.User, wallet_id: int
+    ) -> None:
+        """
+        Validates if the user has access to the wallet.
+
+        Args:
+            user: The user object.
+            wallet_id: The wallet ID.
+
+        Raises:
+            WalletAccessDeniedException: If the user does not have access to the wallet.
+        """
+
+        wallet = await self.__get_wallet_by_id(wallet_id)
+
+        if not self.has_user_access_to_wallet(user, wallet):
+            raise WalletAccessDeniedException(user, wallet)
+
+        return
+
+    def has_user_access_to_wallet(
+        self, user: models.User, wallet: models.Wallet
+    ) -> bool:
         """
         Check if the user has access to the wallet.
 
@@ -185,4 +190,5 @@ class WalletService(BaseService):
         Returns:
             bool: True if the user has access to the wallet, False otherwise.
         """
+
         return user.id == wallet.user_id
