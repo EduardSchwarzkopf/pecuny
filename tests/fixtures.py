@@ -20,7 +20,14 @@ from app.utils.enums import DatabaseFilterOperator, Frequency
 
 
 @pytest.fixture(name="test_user_data", scope="session")
-async def test_user_data():
+async def fixture_test_user_data():
+    """
+    Fixture that provides test data for a user in the form of a UserCreate schema.
+
+    Returns:
+        schemas.UserCreate: Test data for creating a user.
+    """
+
     return schemas.UserCreate(
         email="test_user@example.com",
         password="password123",
