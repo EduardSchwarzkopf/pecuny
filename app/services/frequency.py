@@ -1,7 +1,4 @@
-from typing import Optional
-
 from app import models
-from app.repository import Repository
 from app.services.base import BaseService
 
 
