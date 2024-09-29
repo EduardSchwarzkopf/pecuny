@@ -21,7 +21,8 @@ async def assert_error_response(
 
     Args:
         status_code: The expected status code of the response.
-        expected_status_code: The optional expected status code to compare with the response status code.
+        expected_status_code: The optional expected status code to
+            compare with the response status code.
     """
 
     res = await make_http_request(
