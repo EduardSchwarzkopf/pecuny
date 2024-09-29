@@ -8,9 +8,6 @@ from app.services.base import BaseService
 
 class CategoryService(BaseService):
 
-    def __init__(self, repository: Optional[Repository] = None):
-        super().__init__(repository)
-
     async def get_categories(
         self,
         current_user: models.User,
