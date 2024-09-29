@@ -27,6 +27,16 @@ HTTPExceptionT = TypeVar("HTTPExceptionT", bound=HTTPException)
 async def __get_http_exception(
     exc_class_or_status_code: int | HTTPExceptionT, exception: Type[HTTPExceptionT]
 ) -> HTTPExceptionT:
+    """
+    Returns an HTTP exception instance based on the input.
+
+    Args:
+        exc_class_or_status_code: HTTP status code or exception class.
+        exception: Exception type to instantiate if status code is provided.
+
+    Returns:
+        An instance of the HTTP exception.
+    """
 
     if isinstance(exc_class_or_status_code, int):
         return exception()
@@ -51,6 +61,16 @@ async def unauthorized_exception_handler(
 async def entity_not_found_exception_handler(
     request: Request, exc: EntityNotFoundException
 ):
+    """
+    Handles unauthorized exceptions for both API and non-API requests.
+
+    Args:
+        request: The incoming request object.
+        exc_class_or_status_code: HTTP status code or HTTPUnauthorizedException.
+
+    Returns:
+        JSONResponse for API requests, or TemplateResponse for non-API requests.
+    """
 
     return await not_found_exception_handler(request, HTTPNotFoundException())
 
@@ -58,6 +78,16 @@ async def entity_not_found_exception_handler(
 async def entity_access_denied_exception_handler(
     request: Request, exc: EntityAccessDeniedException
 ):
+    """
+    Handles access denied exceptions for both API and non-API requests.
+
+    Args:
+        request: The incoming request object.
+        exc: EntityAccessDeniedException.
+
+    Returns:
+        JSONResponse for API requests, or RedirectResponse for non-API requests.
+    """
 
     return await not_found_exception_handler(request, HTTPNotFoundException())
 
@@ -66,14 +96,15 @@ async def forbidden_exception_handler(
     request: Request, exc_class_or_status_code: int | HTTPForbiddenException
 ):
     """
-    Handles exceptions with status code 403 (Forbidden).
+    Handles access forbidden exception for both API and non-API requests.
 
     Args:
-        request: The request object associated with the exception.
-        exc: The UnauthorizedPageException instance raised.
+        request: The incoming request object.
+        exc_class_or_status_code: HTTP status code or HTTPNotFoundException.
+
 
     Returns:
-        JSONResponse or RedirectResponse based on the request path.
+        JSONResponse for API requests, or TemplateResponse for non-API requests.
     """
 
     return await not_found_exception_handler(request, HTTPNotFoundException())
@@ -82,15 +113,17 @@ async def forbidden_exception_handler(
 async def validation_exception_handler(
     request: Request, exc_class_or_status_code: int | RequestValidationError
 ):
-    """Exception handler for RequestValidationError.
+    """
+    Handles validation exceptions for both API and non-API requests.
 
     Args:
-        request: The request object.
-        exc: The RequestValidationError object.
+        request: The incoming request object.
+        exc_class_or_status_code: HTTP status code or RequestValidationError.
 
     Returns:
-        Response: The response to return.
+        JSONResponse for API requests, or TemplateResponse for non-API requests.
     """
+
     exc = exc_class_or_status_code
 
     if isinstance(exc, int):
@@ -113,14 +146,15 @@ async def validation_exception_handler(
 async def not_found_exception_handler(
     request: Request, exc_class_or_status_code: int | HTTPNotFoundException
 ):
-    """Exception handler for 404 Page Not Found errors.
+    """
+    Handles validation exceptions for both API and non-API requests.
 
     Args:
-        request: The request object.
-        exc: The HTTPException object.
+        request: The incoming request object.
+        exc_class_or_status_code: HTTP status code or HTTPNotFoundException.
 
     Returns:
-        Response: The response to return.
+        JSONResponse for API requests, or TemplateResponse for non-API requests.
     """
 
     exc = await __get_http_exception(exc_class_or_status_code, HTTPNotFoundException)
@@ -137,14 +171,15 @@ async def not_found_exception_handler(
 async def bad_request_exception_handler(
     request: Request, exc_class_or_status_code: int | HTTPBadRequestException
 ):
-    """Exception handler for 400 Bad Request errors.
+    """
+    Handles validation exceptions for both API and non-API requests.
 
     Args:
-        request: The request object.
-        exc: HTTPBadRequestException object.
+        request: The incoming request object.
+        exc_class_or_status_code: HTTP status code or HTTPBadRequestException.
 
     Returns:
-        Response: The response to return.
+        JSONResponse for API requests, or TemplateResponse for non-API requests.
     """
     exc = await __get_http_exception(exc_class_or_status_code, HTTPBadRequestException)
 
@@ -161,6 +196,16 @@ async def bad_request_exception_handler(
 async def method_not_allowed_exception_handler(
     request: Request, exc_class_or_status_code: int | HTTPMethodNotAllowedException
 ) -> JSONResponse:
+    """
+    Handles validation exceptions for both API and non-API requests.
+
+    Args:
+        request: The incoming request object.
+        exc_class_or_status_code: HTTP status code or HTTPMethodNotAllowedException.
+
+    Returns:
+        JSONResponse for API requests, or TemplateResponse for non-API requests.
+    """
 
     exc = await __get_http_exception(
         exc_class_or_status_code, HTTPMethodNotAllowedException
@@ -178,12 +223,32 @@ async def method_not_allowed_exception_handler(
 
 async def unhandeled_http_exception_handler(
     request: Request, exc_class_or_status_code: int | HTTPException
-) -> Union[JSONResponse, Response]:
+):
+    """
+    Handles unhandled HTTP exceptions.
+
+    Args:
+        request: The incoming request object.
+        exc_class_or_status_code: HTTP status code or HTTPException.
+
+    Returns:
+        JSONResponse for API requests, or TemplateResponse for non-API requests.
+    """
     exc = await __get_http_exception(exc_class_or_status_code, HTTPException)
     return await internal_server_exception_handler(request, exc)
 
 
 async def unhandled_exception_handler(request: Request, exc: Exception | int):
+    """
+    Handles general unhandled exceptions.
+
+    Args:
+        request: The incoming request object.
+        exc: The exception or status code.
+
+    Returns:
+        JSONResponse for API requests, or TemplateResponse for non-API requests.
+    """
 
     return await internal_server_exception_handler(
         request,
@@ -194,6 +259,20 @@ async def unhandled_exception_handler(request: Request, exc: Exception | int):
 async def internal_server_exception_handler(
     request: Request, exc: HTTPInternalServerException
 ):
+    """
+    Handles internal server exceptions.
+
+    Args:
+        request: The incoming request object.
+        exc: The HTTPInternalServerException.
+
+    Returns:
+        JSONResponse for API requests, or TemplateResponse for non-API requests.
+
+    Logs:
+        Exception details including method, URL, and exception name.
+    """
+
     url = (
         f"{request.url.path}?{request.query_params}"
         if request.query_params
