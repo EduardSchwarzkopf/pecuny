@@ -6,7 +6,6 @@ from app.exceptions.wallet_service_exceptions import (
     WalletAccessDeniedException,
     WalletLimitReachedException,
 )
-from app.repository import Repository
 from app.services.base import BaseService
 
 
@@ -31,9 +30,32 @@ class WalletService(BaseService):
         )
 
     async def __get_wallet_by_id(self, wallet_id: int):
+        """
+        Retrieves a wallet by its ID using the repository.
+
+        Args:
+            wallet_id: The ID of the wallet to retrieve.
+
+        Returns:
+            models.Wallet: The wallet object associated with the provided ID.
+        """
+
         return await self.repository.get(models.Wallet, wallet_id)
 
     async def get_wallet(self, user: models.User, wallet_id: int) -> models.Wallet:
+        """
+        Retrieves a wallet for a specific user based on the wallet ID.
+
+        Args:
+            user: The user for whom the wallet is being retrieved.
+            wallet_id: The ID of the wallet to retrieve.
+
+        Returns:
+            models.Wallet: The wallet associated with the provided ID.
+
+        Raises:
+            WalletAccessDeniedException: If the user does not have access to the wallet.
+        """
 
         wallet = await self.__get_wallet_by_id(wallet_id)
 
@@ -45,6 +67,19 @@ class WalletService(BaseService):
     async def create_wallet(
         self, user: models.User, wallet: schemas.Wallet
     ) -> models.Wallet:
+        """
+        Creates a new wallet for a user based on the provided wallet data.
+
+        Args:
+            user: The user for whom the wallet is being created.
+            wallet: The wallet data to create the new wallet.
+
+        Returns:
+            models.Wallet: The newly created wallet object.
+
+        Raises:
+            WalletLimitReachedException: If the user has reached the wallet limit.
+        """
 
         if await self.has_reached_wallet_limit(user):
             raise WalletLimitReachedException(user)
@@ -56,6 +91,17 @@ class WalletService(BaseService):
     async def update_wallet(
         self, user: models.User, wallet_id, wallet_data: schemas.WalletData
     ) -> models.Wallet:
+        """
+        Updates an existing wallet for a user with the provided wallet data.
+
+        Args:
+            user: The user for whom the wallet is being updated.
+            wallet_id: The ID of the wallet to update.
+            wallet_data: The updated wallet data.
+
+        Returns:
+            models.Wallet: The updated wallet object.
+        """
 
         db_wallet = await self.get_wallet(user, wallet_id)
 
@@ -66,6 +112,16 @@ class WalletService(BaseService):
         return db_wallet
 
     async def delete_wallet(self, user: models.User, wallet_id: int) -> True:
+        """
+        Deletes a wallet for a specific user based on the wallet ID.
+
+        Args:
+            user: The user for whom the wallet is being deleted.
+            wallet_id: The ID of the wallet to delete.
+
+        Returns:
+            True: If the wallet is successfully deleted.
+        """
 
         wallet = await self.get_wallet(user, wallet_id)
         await self.repository.delete(wallet)
