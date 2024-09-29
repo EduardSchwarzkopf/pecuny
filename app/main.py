@@ -44,7 +44,6 @@ from app.exceptions.base_service_exception import (
     EntityAccessDeniedException,
     EntityNotFoundException,
 )
-from app.exceptions.http_exceptions import HTTPInternalServerException
 from app.logger import get_logger
 from app.middleware import HeaderLinkMiddleware
 from app.repository import Repository
