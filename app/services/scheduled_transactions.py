@@ -129,7 +129,7 @@ class ScheduledTransactionService(BaseTransactionService):
             offset_wallet_id=offset_wallet_id,
         )
 
-        if transaction_information.offset_wallet_id:
+        if offset_wallet_id:
             await self.wallet_service.validate_access_to_wallet(user, offset_wallet_id)
 
         await self.repository.save([transaction, db_transaction_information])
