@@ -1,4 +1,4 @@
-from typing import Optional, Type, Union
+from typing import Literal, Optional, Type, Union
 
 from app import models, schemas
 from app.repository import Repository
@@ -35,7 +35,9 @@ class BaseTransactionService(BaseService):
             load_relationships_list=[self.service_model.offset_transaction],
         )
 
-    async def delete_transaction(self, user: models.User, transaction_id: int) -> True:
+    async def delete_transaction(
+        self, user: models.User, transaction_id: int
+    ) -> Literal[True]:
         """
         Deletes a transaction for the current user by ID.
 
