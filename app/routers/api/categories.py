@@ -1,5 +1,4 @@
-from fastapi import Depends, status
-from fastapi.exceptions import HTTPException
+from fastapi import Depends
 
 from app import schemas
 from app.models import User
