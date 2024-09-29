@@ -154,7 +154,7 @@ async def test_view_redirect_to_login_unauthenticated(url: str):
 
     assert res.history[0].status_code == HTTP_307_TEMPORARY_REDIRECT
 
-    res.status_code == HTTP_200_OK
+    assert res.status_code == HTTP_200_OK
 
     soup = BeautifulSoup(res.text)
     form = soup.find("form")
