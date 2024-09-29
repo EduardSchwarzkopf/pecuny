@@ -118,9 +118,8 @@ async def test_delete_wallet(test_wallet: models.Wallet, repository: Repository)
         await repository.get(models.Wallet, test_wallet.id)
 
 
-async def test_invalid_delete_wallet(
-    test_user: models.User, test_wallet: models.Wallet, repository: Repository
-):
+@pytest.mark.usefixtures("test_wallet")
+async def test_invalid_delete_wallet(test_user: models.User, repository: Repository):
     """
     Test case for deleting an wallet.
 
