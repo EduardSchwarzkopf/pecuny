@@ -2,7 +2,6 @@ from typing import Type, TypeVar, Union
 
 from fastapi import Request, status
 from fastapi.encoders import jsonable_encoder
-from fastapi.exception_handlers import http_exception_handler as _http_exception_handler
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 
