@@ -47,6 +47,16 @@ async def __get_http_exception(
 async def unauthorized_exception_handler(
     request: Request, exc_class_or_status_code: int | HTTPUnauthorizedException
 ):
+    """
+    Handles unauthorized exceptions for both API and non-API requests.
+
+    Args:
+        request: The incoming request object.
+        exc_class_or_status_code: HTTP status code or HTTPUnauthorizedException.
+
+    Returns:
+        JSONResponse for API requests, or TemplateResponse for non-API requests.
+    """
 
     exc = await __get_http_exception(
         exc_class_or_status_code, HTTPUnauthorizedException
@@ -59,14 +69,14 @@ async def unauthorized_exception_handler(
 
 
 async def entity_not_found_exception_handler(
-    request: Request, exc: EntityNotFoundException
+    request: Request, exc_: EntityNotFoundException
 ):
     """
-    Handles unauthorized exceptions for both API and non-API requests.
+    Handles repository entity not found exceptions.
 
     Args:
         request: The incoming request object.
-        exc_class_or_status_code: HTTP status code or HTTPUnauthorizedException.
+        exc: HTTP status code or EntityNotFoundException.
 
     Returns:
         JSONResponse for API requests, or TemplateResponse for non-API requests.
