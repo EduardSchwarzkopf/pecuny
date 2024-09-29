@@ -3,6 +3,23 @@ from fastapi.exceptions import RequestValidationError
 
 
 def raise_http_error(status_code: int):
+    """
+    Raises an appropriate HTTP-related exception based on the provided status code.
+
+    Args:
+        status_code: The HTTP status code to determine the type of exception to raise.
+
+    Raises:
+        HTTPBadRequestException: If status_code is 400.
+        HTTPUnauthorizedException: If status_code is 401.
+        HTTPForbiddenException: If status_code is 403.
+        HTTPNotFoundException: If status_code is 404.
+        HTTPMethodNotAllowedException: If status_code is 405.
+        RequestValidationError: If status_code is 422.
+        HTTPInternalServerException: If status_code is 500.
+        Exception: If status_code is 666.
+        HTTPException: If status_code does not match any specific exception.
+    """
 
     if status_code == 400:
         raise HTTPBadRequestException()
@@ -26,7 +43,10 @@ def raise_http_error(status_code: int):
         raise HTTPInternalServerException()
 
     if status_code == 666:
-        raise Exception("This is a custom exception.")
+        # pylint: disable=broad-exception-raised
+        raise Exception(  # sourcery skip: raise-specific-error
+            "This is a custom exception."
+        )
 
     raise HTTPException(status_code=status_code, detail="Custom error")
 
