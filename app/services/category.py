@@ -9,7 +9,7 @@ class CategoryService(BaseService):
 
     async def get_categories(
         self,
-        current_user: models.User,
+        _current_user: models.User,
     ) -> Optional[list[models.TransactionCategory]]:
         """
         Retrieves a list of transaction categories.
