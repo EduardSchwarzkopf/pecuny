@@ -292,7 +292,7 @@ async def internal_server_exception_handler(
     exception_name = exc.__class__.__name__
 
     logger.exception(
-        f"{request.method} {url} - [500 INTERNAL SERVER ERROR] {exception_name}"
+        "%s %s - [500 INTERNAL SERVER ERROR] %s", request.method, url, exception_name
     )
 
     if request.url.path.startswith("/api/"):
