@@ -332,7 +332,7 @@ class Repository:
         """
         return await self.session.refresh(obj)
 
-    async def refresh_all(self, object_list: list[Type[ModelT]]) -> None:
+    async def refresh_all(self, object_list: List[ModelT]) -> None:
         """Refresh the state of multiple objects from the database.
 
         Args:
