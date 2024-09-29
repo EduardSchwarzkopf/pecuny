@@ -1,5 +1,3 @@
-from pydantic import EmailStr
-
 from app.exceptions.base_service_exception import BaseServiceException
 
 
