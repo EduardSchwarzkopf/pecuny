@@ -1,4 +1,4 @@
-from typing import Type, TypeVar
+from typing import Type
 
 from fastapi import Request, status
 from fastapi.encoders import jsonable_encoder
@@ -19,9 +19,9 @@ from app.exceptions.http_exceptions import (
     HTTPUnauthorizedException,
 )
 from app.logger import get_logger
+from app.utils.types import HTTPExceptionT
 
 logger = get_logger(__name__)
-HTTPExceptionT = TypeVar("HTTPExceptionT", bound=HTTPException)
 
 
 async def __get_http_exception(
