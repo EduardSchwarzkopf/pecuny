@@ -26,7 +26,6 @@ from app import models, templates
 from app.authentication.dependencies import get_strategy
 from app.authentication.strategies import JWTAccessRefreshStrategy
 from app.config import settings
-from app.database import db
 from app.exception_handler import (
     bad_request_exception_handler,
     entity_access_denied_exception_handler,
@@ -69,13 +68,10 @@ async def lifespan(_api_app: FastAPI):
     """
 
     try:
-        await db.init()
         add_jobs_to_scheduler(scheduler)
         yield
     finally:
         scheduler.shutdown()
-        if db.session is not None:
-            await db.session.close()
 
 
 app = FastAPI(lifespan=lifespan)
