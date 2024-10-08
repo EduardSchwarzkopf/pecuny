@@ -1,11 +1,19 @@
 import pytest
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from app.config import settings
 from app.data import categories, frequencies
-from app.database import db
 from app.models import Base
 from app.repository import Repository
 
 BASE_URL = "http://test"
+
+
+engine = create_async_engine(settings.db_url, future=True)
+TestSessionLocal = async_sessionmaker(
+    expire_on_commit=False,
+    bind=engine,
+)
 
 
 async def populate_db():
@@ -33,7 +41,7 @@ async def populate_db():
         models.Frequency(**frequency) for frequency in frequency_list
     ]
 
-    async with db.get_session() as session, session.begin():
+    async with TestSessionLocal() as session, session.begin():
         session.add_all(
             transaction_category_list
             + transaction_section_list
@@ -50,14 +58,13 @@ async def fixture_init_db():
         None
     """
 
-    await db.init()
-    async with db.engine.begin() as conn:
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
     await populate_db()
 
-    await db.engine.dispose()
+    await engine.dispose()
 
 
 @pytest.fixture(scope="session", autouse=True)

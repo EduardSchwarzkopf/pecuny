@@ -10,14 +10,12 @@ from pydantic import ValidationError
 from app import models, schemas
 from app.celery import celery
 from app.config import settings
-from app.database import db
 from app.date_manager import get_today
 from app.exceptions.base_service_exception import EntityNotFoundException
 from app.exceptions.wallet_service_exceptions import WalletAccessDeniedException
 from app.repository import Repository
 from app.services.email import send_transaction_import_report
 from app.services.transactions import TransactionService
-from app.session_transaction_manager import transaction
 from app.utils.dataclasses_utils import FailedImportedTransaction
 from app.utils.enums import DatabaseFilterOperator, Frequency
 
@@ -114,15 +112,14 @@ async def _process_transaction_row(
         failed_transaction.reason = error_message
         return failed_transaction
 
-    async with transaction():
-        try:
-            await service.create_transaction(
-                user,
-                transaction_data,
-            )
-        except (EntityNotFoundException, WalletAccessDeniedException) as e:
-            failed_transaction.reason = e.message
-            return failed_transaction
+    try:
+        await service.create_transaction(
+            user,
+            transaction_data,
+        )
+    except (EntityNotFoundException, WalletAccessDeniedException) as e:
+        failed_transaction.reason = e.message
+        return failed_transaction
 
     return None
 
@@ -150,15 +147,11 @@ async def import_transactions_from_csv(
 
     reader = csv.DictReader(csv_file, delimiter=";")
 
-    await db.init()
     repo = Repository()
-
+    # TODO: Use user service here:
     user = await repo.get(models.User, user_id)
 
-    if user is None:
-        raise ValueError("User not found")
-
-    service = TransactionService(repo)
+    service = TransactionService()
     failed_transaction_list: List[FailedImportedTransaction] = []
 
     for row in reader:
@@ -206,8 +199,7 @@ async def _create_transaction(
         scheduled_transaction_id=scheduled_transaction.id,
     )
 
-    async with transaction():
-        await service.create_transaction(user, new_transaction)
+    await service.create_transaction(user, new_transaction)
 
 
 @celery.task
@@ -217,9 +209,8 @@ async def process_scheduled_transactions():
     creating corresponding transactions.
     """
 
-    await db.init()
     repo = Repository()
-    service = TransactionService(repo)
+    service = TransactionService()
     today = get_today()
 
     scheduled_transaction_list = []

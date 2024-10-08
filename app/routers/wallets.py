@@ -334,9 +334,9 @@ async def page_update_wallet(
             },
         )
 
-    wallet = schemas.Wallet(**form.data, balance=wallet.balance)
+    wallet = schemas.WalletData(**form.data, id=wallet_id, balance=wallet.balance)
 
-    await service.update_wallet(user, wallet_id, wallet)
+    await service.update_wallet(user, wallet)
 
     return RedirectResponse(
         router.url_path_for("page_get_wallet", wallet_id=wallet_id), status_code=302

@@ -1,7 +1,6 @@
 from fastapi import Depends, status
 
 from app import schemas
-from app import session_transaction_manager as tm
 from app.models import User
 from app.routers.api.users import current_active_verified_user
 from app.services.scheduled_transactions import ScheduledTransactionService
@@ -89,10 +88,9 @@ async def api_create_scheduled_transaction(
         HTTPException: If the scheduled transaction is not created.
     """
 
-    async with tm.transaction():
-        return await service.create_scheduled_transaction(
-            current_user, transaction_information
-        )
+    return await service.create_scheduled_transaction(
+        current_user, transaction_information
+    )
 
 
 @router.post("/{transaction_id}", response_model=ResponseModel)

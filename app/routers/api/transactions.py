@@ -3,7 +3,6 @@ from datetime import datetime
 from fastapi import Depends, status
 
 from app import schemas
-from app import session_transaction_manager as tm
 from app.models import User
 from app.routers.api.users import current_active_verified_user
 from app.services.transactions import TransactionService
@@ -90,8 +89,7 @@ async def api_create_transaction(
 
     transaction_data = schemas.TransactionData(**transaction_information.model_dump())
 
-    async with tm.transaction():
-        return await service.create_transaction(current_user, transaction_data)
+    return await service.create_transaction(current_user, transaction_data)
 
 
 @router.post("/{transaction_id}", response_model=schemas.TransactionResponse)
@@ -116,14 +114,11 @@ async def api_update_transaction(
         HTTPException: If the transaction is not found.
     """
 
-    async with tm.transaction():
-        transaction = await service.update_transaction(
-            current_user,
-            transaction_id,
-            transaction_information,
-        )
-
-    return transaction
+    return await service.update_transaction(
+        current_user,
+        transaction_id,
+        transaction_information,
+    )
 
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -146,5 +141,4 @@ async def api_delete_transaction(
         HTTPException: If the transaction is not found.
     """
 
-    async with tm.transaction():
-        return await service.delete_transaction(current_user, transaction_id)
+    return await service.delete_transaction(current_user, transaction_id)

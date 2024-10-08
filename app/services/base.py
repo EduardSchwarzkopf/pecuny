@@ -1,15 +1,11 @@
 from abc import ABC
-from typing import Optional
 
 from app.repository import Repository
 
 
 class BaseService(ABC):
-    def __init__(self, repository: Optional[Repository] = None):
-        if repository is None:
-            repository = Repository()
-
-        self.repository = repository
+    def __init__(self):
+        self.repository = Repository()
 
     @classmethod
     def get_instance(cls):
