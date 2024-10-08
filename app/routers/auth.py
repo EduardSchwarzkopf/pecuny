@@ -9,8 +9,6 @@ from starlette_wtf import csrf_protect
 
 from app import schemas, templates
 from app.auth_manager import auth_backend, optional_current_active_verified_user
-from app.authentication.dependencies import get_user_manager
-from app.authentication.management import UserManager
 from app.authentication.strategies import JWTStrategy
 from app.exceptions.user_service_exceptions import (
     UserAlreadyExistsException,
@@ -82,7 +80,7 @@ async def get_login(
 async def login(
     request: Request,
     credentials: OAuth2PasswordRequestForm = Depends(),
-    user_manager: UserManager = Depends(get_user_manager),
+    user_service: UserService = Depends(UserService.get_instance),
     strategy: JWTStrategy = Depends(auth_backend.get_strategy),
 ):
     """
@@ -98,7 +96,7 @@ async def login(
         RedirectResponse: A redirect response to the home page.
     """
 
-    user = await user_manager.authenticate(credentials)
+    user = await user_service.user_manager.authenticate(credentials)
 
     if user is None:
         set_feedback(request, FeedbackType.ERROR, "Wrong credentials provided")
