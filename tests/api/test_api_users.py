@@ -60,7 +60,7 @@ async def update_user_test(
             continue
 
         if key == "email":
-            db_user: models.User = await user_service.user_manager.get(test_user.id)
+            db_user = await user_service.repository.get(models.User, test_user.id)
             assert db_user.is_verified is False
 
         assert getattr(user, key) == value
@@ -224,13 +224,12 @@ async def test_update_email(
 
     assert res.status_code == HTTP_200_OK
 
-    manager = user_service.user_manager
-    user = await manager.get(active_verified_user.id)
+    user = await user_service.repository.get(models.User, active_verified_user.id)
 
     assert user.is_active is True
     assert user.is_verified is False
 
-    token = user_service.user_manager.get_token(active_verified_user)
+    token = user_service.user_manager.get_token(user)
 
     verify_response = await make_http_request(
         "/api/auth/verify",
@@ -239,9 +238,11 @@ async def test_update_email(
         json={"token": token},
     )
 
-    verify_response.status_code == HTTP_200_OK  # pylint: disable=pointless-statement
+    assert verify_response.status_code == HTTP_200_OK
 
-    verified_user = await manager.get(active_verified_user.id)
+    verified_user = await user_service.repository.get(
+        models.User, active_verified_user.id
+    )
 
     assert verified_user.is_active is True
     assert verified_user.is_verified is True

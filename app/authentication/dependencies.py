@@ -1,18 +1,16 @@
 from functools import lru_cache
 from typing import AsyncGenerator
 
-from fastapi import Depends
-from fastapi_users.db import SQLAlchemyUserDatabase
+from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 
+from app import models
 from app.authentication.management import UserManager
 from app.authentication.strategies import JWTAccessRefreshStrategy
 from app.config import settings
-from app.database import get_user_db
+from app.database import SessionLocal
 
 
-async def get_user_manager(
-    user_db: SQLAlchemyUserDatabase = Depends(get_user_db),
-) -> AsyncGenerator[UserManager, None]:
+async def get_user_manager() -> AsyncGenerator[UserManager, None]:
     """
     Asynchronously yields a UserManager for the provided user.
 
@@ -26,7 +24,9 @@ async def get_user_manager(
         UserInactive: If the user is inactive.
         UserAlreadyVerified: If the user is already verified.
     """
-    yield UserManager(user_db)
+    async with SessionLocal() as session:
+        user_db = SQLAlchemyUserDatabase(session, models.User, models.OAuthAccount)
+        yield UserManager(user_db)
 
 
 @lru_cache

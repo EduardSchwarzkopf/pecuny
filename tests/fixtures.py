@@ -1,12 +1,16 @@
 import asyncio
+import contextlib
 import datetime
 import itertools
 
 import pytest
 from sqlalchemy import and_, exists, func, select
 
-from app import models, schemas, session_transaction_manager
+from app import models, schemas
+from app.authentication.dependencies import get_user_manager
+from app.database import SessionLocal
 from app.date_manager import get_day_delta, get_today, get_tomorrow, get_yesterday
+from app.exceptions.base_service_exception import EntityNotFoundException
 from app.repository import Repository
 from app.services.scheduled_transactions import ScheduledTransactionService
 from app.services.transactions import TransactionService
@@ -60,7 +64,8 @@ async def fixture_user_service():
         UserService: The user service fixture.
 
     """
-    yield UserService()
+    user_manager = await get_user_manager().__anext__()
+    yield UserService(user_manager)
 
 
 @pytest.fixture(name="create_test_users", scope="session")
@@ -154,7 +159,8 @@ async def create_and_yield_user(
     yield user
 
     if user:
-        await user_service.delete_self(user)
+        with contextlib.suppress(EntityNotFoundException):
+            await user_service.delete_self(user)
 
 
 @pytest.fixture(name="active_user")
@@ -259,10 +265,7 @@ async def fixture_create_test_wallets(create_test_users: list[models.User]):
         )
         create_task_list.append(task)
 
-    async with session_transaction_manager.transaction():
-        wallet_list = await asyncio.gather(*create_task_list)
-
-    yield wallet_list
+    yield await asyncio.gather(*create_task_list)
 
 
 @pytest.fixture(name="test_wallet")
@@ -281,13 +284,13 @@ async def fixture_test_wallet(
 
     """
 
-    wallet = await repository.filter_by(
+    wallet_list = await repository.filter_by(
         models.Wallet,
         models.Wallet.user_id,
         test_user.id,
         load_relationships_list=[models.Wallet.user],
     )
-    yield wallet[0]
+    yield wallet_list[0]
 
 
 @pytest.fixture(name="test_wallets")
@@ -398,10 +401,7 @@ async def fixture_create_transactions(
             ]
         )
 
-    async with session_transaction_manager.transaction():
-        transaction_list = await asyncio.gather(*create_task)
-
-    yield transaction_list
+    yield await asyncio.gather(*create_task)
 
 
 @pytest.fixture(name="create_scheduled_transactions")
@@ -549,10 +549,7 @@ async def fixture_create_scheduled_transactions(
             ]
         )
 
-    async with session_transaction_manager.transaction():
-        scheduled_transaction_list = await asyncio.gather(*create_task)
-
-    yield scheduled_transaction_list
+    yield await asyncio.gather(*create_task)
 
     delete_task = []
 
@@ -592,22 +589,24 @@ async def fixture_test_wallet_scheduled_transaction_list(
     today = get_today()
     model = models.TransactionScheduled
 
-    result = await repository.session.execute(
-        select(model).where(
-            and_(
-                model.wallet_id == test_wallet.id,
-                model.date_start <= today,
-                model.date_end >= today,
-                model.is_active == True,  # pylint: disable=singleton-comparison
-                ~exists().where(
-                    and_(
-                        models.Transaction.scheduled_transaction_id == model.id,
-                        func.date(models.Transaction.created_at) == func.date(today),
-                    )
-                ),
+    async with SessionLocal() as session:
+        result = await session.execute(
+            select(model).where(
+                and_(
+                    model.wallet_id == test_wallet.id,
+                    model.date_start <= today,
+                    model.date_end >= today,
+                    model.is_active == True,  # pylint: disable=singleton-comparison
+                    ~exists().where(
+                        and_(
+                            models.Transaction.scheduled_transaction_id == model.id,
+                            func.date(models.Transaction.created_at)
+                            == func.date(today),
+                        )
+                    ),
+                )
             )
         )
-    )
 
     return result.scalars().all()
 

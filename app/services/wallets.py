@@ -84,12 +84,12 @@ class WalletService(BaseService):
         if await self.has_reached_wallet_limit(user):
             raise WalletLimitReachedException(user)
 
-        db_wallet = models.Wallet(user=user, **wallet.model_dump())
+        db_wallet = models.Wallet(user_id=user.id, **wallet.model_dump())
         await self.repository.save(db_wallet)
         return db_wallet
 
     async def update_wallet(
-        self, user: models.User, wallet_id, wallet_data: schemas.WalletData
+        self, user: models.User, wallet_data: schemas.WalletData
     ) -> models.Wallet:
         """
         Updates an existing wallet for a user with the provided wallet data.
@@ -103,13 +103,13 @@ class WalletService(BaseService):
             models.Wallet: The updated wallet object.
         """
 
-        db_wallet = await self.get_wallet(user, wallet_id)
+        wallet = await self.get_wallet(user, wallet_data.id)
 
-        await self.repository.update(
-            models.Wallet, db_wallet.id, **wallet_data.model_dump()
-        )
+        wallet.add_attributes_from_dict(wallet_data.model_dump())
 
-        return db_wallet
+        await self.repository.save(wallet)
+
+        return wallet
 
     async def delete_wallet(self, user: models.User, wallet_id: int) -> Literal[True]:
         """

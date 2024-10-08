@@ -195,7 +195,6 @@ async def test_update_wallet(
     for key, value in values.items():
         wallet_val = getattr(wallet, key)
         db_wallet_val = getattr(db_wallet, key)
-        print(f"key: {key} | value: {value} | wallet_val: {wallet_val}")
         if isinstance(value, float):
 
             assert db_wallet_val == RoundedDecimal(value)
@@ -283,8 +282,6 @@ async def test_import_transaction(
 
     time.sleep(1)
 
-    # because the import is done in another session we also need a new one
-    repository.session.expire_all()
     wallet_refresh = await repository.get(models.Wallet, wallet_id)
     assert wallet_refresh is not None
     new_balance = wallet_balance + total_amount
@@ -354,7 +351,6 @@ async def test_import_transaction_fail(
         )
 
     assert response.status_code == HTTP_202_ACCEPTED
-    repository.session.expire_all()
     wallet_refresh = await repository.get(models.Wallet, wallet_id)
     assert wallet_refresh is not None
     assert balance == wallet_refresh.balance
@@ -456,7 +452,6 @@ async def test_example_import_file(
         assert response.status_code == HTTP_202_ACCEPTED
 
         time.sleep(1)  # give the queue some time to process
-        repository.session.expire_all()
 
         for row in reader:
             date = row.get("date")

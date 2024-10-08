@@ -1,14 +1,13 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 
 from app import models
-from app.repository import Repository
 from app.services.base_transaction import BaseTransactionService
 
 
 class TransactionService(BaseTransactionService):
-    def __init__(self, repository: Optional[Repository] = None):
-        super().__init__(models.Transaction, repository)
+    def __init__(self):
+        super().__init__(models.Transaction)
 
     async def __get_transaction_by_id(self, transaction_id: int):
         return await self.repository.get(

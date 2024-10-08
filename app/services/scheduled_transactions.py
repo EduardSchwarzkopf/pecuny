@@ -1,8 +1,6 @@
 import asyncio
-from typing import Optional
 
 from app.models import Transaction, TransactionInformation, TransactionScheduled, User
-from app.repository import Repository
 from app.schemas import (
     ScheduledTransactionInformationCreate,
     ScheduledTransactionInformtionUpdate,
@@ -14,8 +12,8 @@ from app.services.wallets import WalletService
 
 
 class ScheduledTransactionService(BaseTransactionService):
-    def __init__(self, repository: Optional[Repository] = None):
-        super().__init__(TransactionScheduled, repository)
+    def __init__(self):
+        super().__init__(TransactionScheduled)
 
     async def _get_scheduled_transaction_by_id(
         self, scheduled_transaction_id: int
@@ -162,19 +160,16 @@ class ScheduledTransactionService(BaseTransactionService):
             offset_wallet_id = transaction_information.offset_wallet_id
             await self.wallet_service.validate_access_to_wallet(user, offset_wallet_id)
 
-        transaction_values = {
-            "amount": transaction_information.amount,
-            "reference": transaction_information.reference,
-            "category_id": transaction_information.category_id,
-        }
-
-        await self.repository.update(
-            TransactionInformation,
-            transaction.information.id,
-            **transaction_values,
+        transaction.frequency = await FrequencyService().get_frequency(
+            transaction_information.frequency_id
         )
+        transaction.date_start = transaction_information.date_start
+        transaction.date_end = transaction_information.date_end
 
-        transaction.add_attributes_from_dict(transaction_information.model_dump())
+        transaction.information.amount = transaction_information.amount
+        transaction.information.reference = transaction_information.reference
+        transaction.information.category_id = transaction_information.category_id
+
         await self.repository.save(transaction)
 
         return transaction

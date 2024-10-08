@@ -1,16 +1,15 @@
 from typing import Optional
 
-from fastapi import Request
+from fastapi import Depends, Request
 from fastapi_users import exceptions
 
-from app import database, models, schemas
+from app import models, schemas
+from app.authentication.dependencies import get_user_manager
 from app.authentication.management import UserManager
-from app.database import db
 from app.exceptions.user_service_exceptions import (
     UserAlreadyExistsException,
     UserNotFoundException,
 )
-from app.repository import Repository
 from app.schemas import EmailStr, UserCreate
 from app.services.base import BaseService
 from app.utils.dataclasses_utils import CreateUserData
@@ -32,7 +31,7 @@ class UserService(BaseService):
     - reset_password: Resets a user's password.
     """
 
-    def __init__(self, repository: Optional[Repository] = None):
+    def __init__(self, user_manager: UserManager):
         """
         Initializes the UserService.
 
@@ -43,25 +42,8 @@ class UserService(BaseService):
             None
         """
 
-        super().__init__(repository)
-        self.user_manager = self._get_user_manager()
-
-    def _get_user_manager(self):
-        """
-        Gets the user manager.
-
-        Args:
-            self: The UserService instance.
-
-        Returns:
-            UserManager: The user manager instance.
-        """
-
-        user_db = database.SQLAlchemyUserDatabase(
-            db.session, models.User, models.OAuthAccount
-        )
-
-        return UserManager(user_db)
+        self.user_manager = user_manager
+        super().__init__()
 
     async def delete_self(self, current_user: models.User) -> bool:
         """
@@ -74,7 +56,7 @@ class UserService(BaseService):
             bool: True if the user is successfully deleted, False otherwise.
         """
 
-        await self.repository.delete(current_user)
+        await self.user_manager.delete(current_user)
 
         return True
 
@@ -127,7 +109,10 @@ class UserService(BaseService):
             request=request,
         )
 
-    async def validate_new_user(self, email) -> None:
+    async def validate_new_user(
+        self,
+        email,
+    ) -> None:
         """
         Validates a new user with the given email.
 
@@ -150,7 +135,10 @@ class UserService(BaseService):
         if existing_user is not None:
             raise UserAlreadyExistsException()
 
-    async def verify_email(self, token: str) -> EmailVerificationStatus:
+    async def verify_email(
+        self,
+        token: str,
+    ) -> EmailVerificationStatus:
         """
         Verifies an email with the given token.
 
@@ -172,7 +160,10 @@ class UserService(BaseService):
         except exceptions.UserAlreadyVerified:
             return EmailVerificationStatus.ALREADY_VERIFIED
 
-    async def forgot_password(self, email: EmailStr) -> None:
+    async def forgot_password(
+        self,
+        email: EmailStr,
+    ) -> None:
         """
         Processes the forgot password request for the given email.
 
@@ -194,7 +185,11 @@ class UserService(BaseService):
         except exceptions.UserNotExists as e:
             raise UserNotFoundException() from e
 
-    async def reset_password(self, password: str, token: str) -> bool:
+    async def reset_password(
+        self,
+        password: str,
+        token: str,
+    ) -> bool:
         """
         Resets the password with the given token.
 
@@ -213,3 +208,7 @@ class UserService(BaseService):
 
         await self.user_manager.reset_password(token, password)
         return True
+
+    @classmethod
+    def get_instance(cls, user_manager: UserManager = Depends(get_user_manager)):
+        return cls(user_manager)

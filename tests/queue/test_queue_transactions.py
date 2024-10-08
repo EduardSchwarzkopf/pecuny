@@ -98,7 +98,6 @@ async def test_create_transactions_from_schedule(
     expected_wallet_balance = balance + total_balance
 
     _process_scheduled_transactions()
-    repository.session.expire(test_wallet)
 
     wallet = await repository.get(models.Wallet, wallet_id)
 
@@ -273,7 +272,7 @@ async def _assert_scheduled_transaction_already_exist(
     )
     assert scheduled_transaction is not None
 
-    service = TransactionService(repository)
+    service = TransactionService()
 
     information = scheduled_transaction.information
 
@@ -290,8 +289,6 @@ async def _assert_scheduled_transaction_already_exist(
             scheduled_transaction_id=scheduled_transaction.id,
         ),
     )
-
-    await repository.session.commit()
 
     _process_scheduled_transactions()
 

@@ -36,6 +36,7 @@ async def test_create_transaction(
     category_id: int,
     test_wallet: models.Wallet,
     test_user: models.User,
+    repository: Repository,
 ):
     """
     Test case for creating a transaction.
@@ -65,8 +66,11 @@ async def test_create_transaction(
     new_transaction = schemas.Transaction(**json_response)
 
     assert res.status_code == HTTP_201_CREATED
-    assert wallet_balance + Decimal(amount) == test_wallet.balance
-    assert new_transaction.wallet_id == test_wallet.id
+
+    wallet = await repository.get(models.Wallet, test_wallet.id)
+
+    assert wallet_balance + Decimal(amount) == wallet.balance
+    assert new_transaction.wallet_id == wallet.id
     assert new_transaction.information.amount == amount
     assert isinstance(json_response["information"]["amount"], float)
     assert isinstance(new_transaction.information.amount, Decimal)
@@ -132,12 +136,12 @@ async def test_updated_transaction(
 
     transaction = schemas.Transaction(**res.json())
 
-    await repository.refresh(test_wallet)
+    refreshed_wallet = await repository.get(models.Wallet, test_wallet.id)
 
     amount = RoundedDecimal(amount)
     difference = RoundedDecimal(transaction_amount_before - amount)
 
-    assert test_wallet.balance == wallet_balance - difference
+    assert refreshed_wallet.balance == wallet_balance - difference
     assert transaction.information.amount == amount
     assert transaction.information.reference == reference
     assert transaction.information.category_id == category_id
@@ -160,7 +164,8 @@ async def test_delete_transactions(
 
     for transaction in test_wallet_transaction_list:
 
-        wallet_balance = test_wallet.balance
+        wallet_before = await repository.get(models.Wallet, test_wallet.id)
+        wallet_balance = wallet_before.balance
         amount = transaction.information.amount
         transaction_id = transaction.id
 
@@ -250,7 +255,10 @@ async def test_create_offset_transaction(
     """
 
     wallet_id = test_wallet.id
+    wallet_balance = test_wallet.balance
+
     offset_wallet = await get_user_offset_wallet(test_wallet, repository)
+    offset_wallet_balance = offset_wallet.balance
 
     reference = f"test_create_offset_transaction - {amount}"
     res = await make_http_request(
@@ -288,6 +296,15 @@ async def test_create_offset_transaction(
 
     assert new_transaction.information.reference == reference
     assert new_offset_transaction.information.reference == reference
+
+    refreshed_wallet = await repository.get(models.Wallet, wallet_id)
+    refreshed_offset_wallet = await repository.get(models.Wallet, offset_wallet.id)
+
+    assert wallet_balance + RoundedDecimal(amount) == refreshed_wallet.balance
+    assert (
+        offset_wallet_balance + RoundedDecimal(expected_offset_amount)
+        == refreshed_offset_wallet.balance
+    )
 
 
 async def test_create_offset_transaction_other_wallet_fail(
@@ -414,10 +431,11 @@ async def test_updated_offset_transaction(
     assert transaction.information.reference == reference
     assert transaction.information.category_id == category_id
 
-    await repository.refresh_all([test_wallet, offset_wallet])
+    refreshed_wallet = await repository.get(models.Wallet, wallet_id)
+    refreshed_offset_wallet = await repository.get(models.Wallet, offset_wallet_id)
 
-    assert test_wallet.balance == wallet_balance + amount
-    assert offset_wallet.balance == offset_wallet_balance - amount
+    assert refreshed_wallet.balance == wallet_balance + amount
+    assert refreshed_offset_wallet.balance == offset_wallet_balance - amount
 
 
 @pytest.mark.parametrize(
@@ -485,8 +503,8 @@ async def test_delete_offset_transaction(
     wallet_refresh = await repository.get(models.Wallet, test_wallet.id)
     offset_wallet_refresh = await repository.get(models.Wallet, offset_wallet.id)
 
-    assert offset_wallet_balance == offset_wallet_refresh.balance
     assert wallet_balance == wallet_refresh.balance
+    assert offset_wallet_balance == offset_wallet_refresh.balance
 
 
 async def test_transaction_amount_is_number(

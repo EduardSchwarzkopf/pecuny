@@ -1,7 +1,6 @@
 from fastapi import Depends, File, Response, UploadFile, status
 
 from app import schemas
-from app import session_transaction_manager as tm
 from app.models import User
 from app.routers.api.users import current_active_verified_user
 from app.services.wallets import WalletService
@@ -70,8 +69,7 @@ async def api_create_wallet(
         ResponseModel: The created wallet information.
     """
 
-    async with tm.transaction():
-        return await service.create_wallet(current_user, wallet)
+    return await service.create_wallet(current_user, wallet)
 
 
 @router.post("/{wallet_id}", response_model=ResponseModel)
@@ -93,8 +91,8 @@ async def api_update_wallet(
         ResponseModel: The updated wallet information.
     """
 
-    async with tm.transaction():
-        return await service.update_wallet(current_user, wallet_id, wallet_data)
+    wallet_data = schemas.WalletData(id=wallet_id, **wallet_data.model_dump())
+    return await service.update_wallet(current_user, wallet_data)
 
 
 @router.delete("/{wallet_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -117,8 +115,7 @@ async def api_delete_wallet(
         HTTPException: If the wallet is not found.
     """
 
-    async with tm.transaction():
-        return await service.delete_wallet(current_user, wallet_id)
+    return await service.delete_wallet(current_user, wallet_id)
 
 
 @router.post("/{wallet_id}/import")

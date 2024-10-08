@@ -1,7 +1,6 @@
-from typing import Literal, Optional, Type, Union
+from typing import Literal, Type, Union
 
 from app import models, schemas
-from app.repository import Repository
 from app.services.base import BaseService
 from app.services.category import CategoryService
 from app.services.wallets import WalletService
@@ -12,11 +11,10 @@ class BaseTransactionService(BaseService):
     def __init__(
         self,
         service_model: Type[Union[models.Transaction, models.TransactionScheduled]],
-        repository: Optional[Repository] = None,
     ):
         self.service_model = service_model
-        self.wallet_service = WalletService(repository)
-        super().__init__(repository)
+        self.wallet_service = WalletService()
+        super().__init__()
 
     async def __get_transaction_by_id(self, transaction_id: int):
         """
@@ -57,15 +55,23 @@ class BaseTransactionService(BaseService):
         amount = transaction.information.amount
 
         if transaction.offset_transaction:
-            offset_transaction = transaction.offset_transaction
+            offset_transaction = await self.__get_transaction_by_id(
+                transaction.offset_transaction.id
+            )
             offset_wallet = await self.wallet_service.get_wallet(
                 user, offset_transaction.wallet_id
             )
 
             offset_wallet.balance += amount
-            await self.repository.delete(transaction.offset_transaction)
+            await self.wallet_service.update_wallet(
+                user, schemas.WalletData(**offset_wallet.__dict__)
+            )
+            await self.repository.delete(offset_transaction)
 
         wallet.balance -= amount
+        await self.wallet_service.update_wallet(
+            user, schemas.WalletData(**wallet.__dict__)
+        )
         await self.repository.delete(transaction)
 
         return True
@@ -158,7 +164,7 @@ class BaseTransactionService(BaseService):
             scheduled_transaction_id=transaction_data.scheduled_transaction_id,
         )
 
-        await self.repository.save(offset_transaction)
+        await self.repository.save([offset_wallet, offset_transaction])
 
         return offset_transaction
 
@@ -189,28 +195,36 @@ class BaseTransactionService(BaseService):
         )
 
         if transaction.offset_transaction:
-            offset_transaction: models.Transaction = transaction.offset_transaction
+            offset_transaction: models.Transaction = await self.__get_transaction_by_id(
+                transaction.offset_transaction.id
+            )
             offset_wallet = await self.wallet_service.get_wallet(
                 user, offset_transaction.wallet_id
             )
 
             offset_wallet.balance -= amount_updated
-            offset_transaction.information.amount = transaction_information.amount * -1
+            await self.wallet_service.update_wallet(
+                user, schemas.WalletData(**offset_wallet.__dict__)
+            )
 
-        wallet_data = schemas.WalletData(**wallet.__dict__)
-        wallet_data.balance = wallet.balance + amount_updated
-        await self.wallet_service.update_wallet(user, wallet.id, wallet_data)
+            offset_information: models.TransactionInformation = (
+                offset_transaction.information
+            )
+            offset_information.add_attributes_from_dict(
+                transaction_information.model_dump()
+            )
+            offset_information.amount = transaction_information.amount * -1
 
-        transaction_values = {
-            "amount": transaction_information.amount,
-            "reference": transaction_information.reference,
-            "date": transaction_information.date,
-            "category_id": transaction_information.category_id,
-        }
-        await self.repository.update(
-            models.TransactionInformation,
-            transaction.information.id,
-            **transaction_values,
+            await self.repository.save([offset_transaction, offset_information])
+
+        wallet.balance += amount_updated
+        await self.wallet_service.update_wallet(
+            user, schemas.WalletData(**wallet.__dict__)
         )
+
+        transaction.add_attributes_from_dict(transaction_information.model_dump())
+        information: models.TransactionInformation = transaction.information
+        information.add_attributes_from_dict(transaction_information.model_dump())
+        await self.repository.save([transaction, information])
 
         return transaction

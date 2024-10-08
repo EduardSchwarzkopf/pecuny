@@ -140,7 +140,10 @@ async def test_update_scheduled_transaction(
     reference = "Updated reference"
     amount = 10000
     category_id = 3
-    frequency_id = 2
+
+    # pick a frequency_id that is not the same as the one in the transaction
+    frequency_id = 1 if transaction.frequency_id == 2 else 2
+
     date_start = get_day_delta(now_, -3)
     date_end = get_day_delta(now_, +3)
 
