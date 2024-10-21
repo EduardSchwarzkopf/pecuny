@@ -278,7 +278,14 @@ async def populate_transaction_form_category_choices(
 
 
 async def populate_transaction_form_frequency_choices(
-    form: schemas.CreateScheduledTransactionForm,
+    form: Type[
+        Union[
+            schemas.CreateScheduledTransactionForm,
+            schemas.UpdateScheduledTransactionForm,
+            schemas.UpdateTransactionForm,
+            schemas.CreateTransactionForm,
+        ]
+    ]
 ) -> None:
     """
     Populates the frequency choices in the transaction form.
