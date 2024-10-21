@@ -12,9 +12,9 @@ if "pytest" in sys.modules:
     ENV = "test"
 
 
-dotenv_path = f".env.{ENV}"
+DOTENV_PATH = f".env.{ENV}"
 
-load_dotenv(dotenv_path=dotenv_path, override=True)
+load_dotenv(dotenv_path=DOTENV_PATH, override=True)
 
 
 class Settings(BaseSettings):
