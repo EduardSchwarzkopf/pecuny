@@ -215,8 +215,8 @@ async def test_login_inactive_user(
         ("hello123@pytest.de", "wrongPassword", HTTP_400_BAD_REQUEST),
         ("aaaa", "wrongPassword", HTTP_400_BAD_REQUEST),
         ("*39goa", "wrongPassword", HTTP_400_BAD_REQUEST),
-        (None, "wrongPassword", HTTP_422_UNPROCESSABLE_ENTITY),
-        ("wrongemail@gmail.com", None, HTTP_422_UNPROCESSABLE_ENTITY),
+        (None, "wrongPassword", HTTP_400_BAD_REQUEST),
+        ("wrongemail@gmail.com", None, HTTP_400_BAD_REQUEST),
     ],
 )
 async def test_invalid_login_inactive_user(
