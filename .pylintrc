@@ -7,3 +7,4 @@ disable=missing-module-docstring,missing-class-docstring,too-few-public-methods,
 
 [DESIGN]
 max-locals = 20
+max-positional-arguments=10
